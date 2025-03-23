@@ -1,6 +1,6 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Brain } from 'lucide-react';
+import React from "react";
+import { Link } from "react-router-dom";
+import { Brain } from "lucide-react";
 
 const SignUp = () => {
   return (
@@ -18,7 +18,10 @@ const SignUp = () => {
         <form className="mt-8 space-y-6">
           <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Full Name
               </label>
               <input
@@ -31,7 +34,10 @@ const SignUp = () => {
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email
               </label>
               <input
@@ -44,7 +50,10 @@ const SignUp = () => {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <input
@@ -67,11 +76,11 @@ const SignUp = () => {
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
             <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-              I agree to the{' '}
+              I agree to the{" "}
               <a href="#" className="text-blue-600 hover:text-blue-500">
                 Terms of Service
-              </a>{' '}
-              and{' '}
+              </a>{" "}
+              and{" "}
               <a href="#" className="text-blue-600 hover:text-blue-500">
                 Privacy Policy
               </a>
@@ -87,8 +96,11 @@ const SignUp = () => {
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link to="/signin" className="font-medium text-blue-600 hover:text-blue-500">
+          Already have an account?{" "}
+          <Link
+            to="/signin"
+            className="font-medium text-blue-600 hover:text-blue-500"
+          >
             Sign in
           </Link>
         </p>
