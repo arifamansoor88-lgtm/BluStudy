@@ -7,7 +7,7 @@ from typing import List, Dict, Any
 import msal
 import json
 from jose import jwt
-
+from database import client, container  
 # Load the environment variables
 load_dotenv()
 
@@ -80,14 +80,23 @@ DEMO_TASKS = [
 # Root endpoint - public
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to Blue Marble Academy API"}
+    return {"message": "Backend is running and connected to Cosmos DB!"}
 
 # Get all tasks - protected
 @app.get("/tasks", response_model=List[Dict[str, Any]])
 async def read_tasks(user_claims: dict = Depends(validate_token)):
-    # In a real app, you'd fetch tasks from a database for the specific user
-    # using the user ID from the token (user_claims["sub"])
-    return DEMO_TASKS
+    try:
+        user_id = user_claims["sub"]
+        items = container.query_items(
+            query="SELECT * FROM c WHERE c.userId = @userId",
+            parameters=[{"name": "@userId", "value": user_id}]
+        )
+        return list(items)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve tasks: {str(e)}"
+        )
 
 # Health check endpoint - public
 @app.get("/health")
