@@ -5,3 +5,4 @@ python-jose[cryptography]>=3.3.0
 msal>=1.25.0
 python-dotenv>=1.0.0
 pydantic>=2.3.0 
+azure-cosmos>=4.5.0 
