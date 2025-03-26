@@ -1,13 +1,19 @@
 import os
-from fastapi import FastAPI, Depends, HTTPException, status
+import json
+import uuid
+from datetime import datetime
+from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import msal
-import json
 from jose import jwt
 from database import client, container  
+from pdf_utils import extract_text_from_pdf
+from openai_client import generate_quiz
+from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt
+
 # Load the environment variables
 load_dotenv()
 
@@ -17,10 +23,10 @@ app = FastAPI(title="Blue Marble Academy API")
 # Add CORS middleware to allow the frontend React app to call the API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Allow the frontend React app (Vite uses port 5173 by default)
+    allow_origins=["http://localhost:5173"],  
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],  
+    allow_headers=["*"],  
 )
 
 # OAuth2 scheme to extract the token from the Authorization header
@@ -37,10 +43,8 @@ def get_msal_app():
 # Validate the JWT token from Azure AD B2C
 async def validate_token(token: str = Depends(oauth2_scheme)):
     try:
-        # For development/demo purposes only
-        # In production, you should properly validate the token with the issuer's public key
-        # For Azure AD B2C tokens, we'll just decode without verification for this demo
-        
+        # we're skipping proper token validation for now
+        # We'd need to verify the token properly against Azure AD B2C's public key
         # Use a dummy key for development
         dummy_key = "development_key_not_for_production"
         
@@ -70,32 +74,261 @@ async def validate_token(token: str = Depends(oauth2_scheme)):
             detail=f"Authentication failed: {str(e)}"
         )
 
-# Demo data - in a real app, this would come from a database
-DEMO_TASKS = [
-    {"id": 1, "title": "Learn FastAPI", "completed": False},
-    {"id": 2, "title": "Implement Azure AD B2C Auth", "completed": False},
-    {"id": 3, "title": "Connect Frontend to Backend", "completed": False},
-]
-
 # Root endpoint - public
 @app.get("/")
 def read_root():
     return {"message": "Backend is running and connected to Cosmos DB!"}
 
-# Get all tasks - protected
-@app.get("/tasks", response_model=List[Dict[str, Any]])
-async def read_tasks(user_claims: dict = Depends(validate_token)):
+# PDF upload and quiz generation endpoint - protected
+@app.post("/generate-quiz")
+async def create_quiz(
+    file: UploadFile = File(...), 
+    num_questions: Optional[int] = Form(10),
+    focus_topics: Optional[str] = Form(""),
+    question_formats: Optional[str] = Form("{}"),
+    user_claims: dict = Depends(validate_token)
+):
     try:
-        user_id = user_claims["sub"]
-        items = container.query_items(
-            query="SELECT * FROM c WHERE c.userId = @userId",
-            parameters=[{"name": "@userId", "value": user_id}]
+        # Save the uploaded file temporarily
+        file_path = f"./temp_{file.filename}"
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+        
+        # Extract text from the PDF
+        text = extract_text_from_pdf(file_path)
+        
+        # Parse question formats from string to dict
+        try:
+            formats_dict = json.loads(question_formats)
+        except:
+            formats_dict = {
+                "multiple_choice": True,
+                "multi_select": True,
+                "drag_and_drop": True
+            }
+        
+        # Get selected formats as a list
+        selected_formats = [format for format, selected in formats_dict.items() if selected]
+        
+        # Validate inputs
+        if num_questions < 10:
+            num_questions = 10
+        elif num_questions > 40:
+            num_questions = 40
+            
+        if not selected_formats:
+            selected_formats = ["multiple_choice"]
+            
+        # Generate quiz using Azure OpenAI with customization options
+        quiz_json = generate_quiz(
+            text=text,
+            num_questions=num_questions,
+            focus_topics=focus_topics.strip(),
+            question_formats=selected_formats
         )
-        return list(items)
+        
+        # Clean up the temporary file
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        
+        quiz_data = json.loads(quiz_json)
+        
+        # Automatically save the quiz
+        quiz_document = {
+            "id": str(uuid.uuid4()),
+            "userId": user_claims["sub"],
+            "contentType": "quiz",
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": {
+                "title": quiz_data["quiz_title"],
+                "questions": quiz_data["questions"],
+                "userAnswers": None,
+                "score": None,
+                "timeTaken": 0,
+                "resourceName": file.filename,
+                "options": {
+                    "numQuestions": num_questions,
+                    "selectedTopics": focus_topics.split(",") if focus_topics else [],
+                    "customTopics": focus_topics,
+                    "questionFormats": formats_dict
+                },
+                "attempts": []
+            }
+        }
+        
+        # Save to Cosmos DB
+        container.create_item(body=quiz_document)
+        
+        # Return the quiz data with the ID
+        quiz_data["id"] = quiz_document["id"]
+        return quiz_data
     except Exception as e:
+        print(f"Error generating quiz: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve tasks: {str(e)}"
+            detail=f"Failed to generate quiz: {str(e)}"
+        )
+
+# Save quiz endpoint - protected 
+@app.post("/save-quiz", response_model=SavedQuizResponse)
+async def save_quiz(quiz: QuizDocument, user_claims: dict = Depends(validate_token)):
+    try:
+        # Prepare document for Cosmos DB
+        document = {
+            "id": str(uuid.uuid4()),
+            "userId": user_claims["sub"],  
+            "contentType": quiz.contentType,
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": quiz.data.dict()  
+        }
+        
+        # Save to Cosmos DB
+        container.create_item(body=document)
+        return {"id": document["id"], "message": "Quiz saved successfully"}
+    except Exception as e:
+        print(f"Error saving quiz: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to save quiz: {str(e)}"
+        )
+
+# Save quiz attempt endpoint - protected
+@app.post("/save-quiz-attempt", response_model=SaveQuizAttemptResponse)
+async def save_quiz_attempt(attempt: SaveQuizAttemptRequest, user_claims: dict = Depends(validate_token)):
+    try:
+        # First, retrieve the original quiz
+        quiz_id = attempt.quizId
+        
+        try:
+            # Get the quiz from Cosmos DB
+            quiz = container.read_item(
+                item=quiz_id, 
+                partition_key=user_claims["sub"]
+            )
+            
+            # Verify the quiz belongs to the user
+            if quiz["userId"] != user_claims["sub"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, 
+                    detail="Access denied"
+                )
+                
+        except Exception as e:
+            print(f"Error retrieving quiz: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="Quiz not found"
+            )
+        
+        # Create a new attempt record
+        attempt_id = str(uuid.uuid4())
+        new_attempt = {
+            "attemptId": attempt_id,
+            "timestamp": datetime.utcnow().isoformat(),
+            "score": attempt.score,
+            "timeTaken": attempt.timeTaken,
+            "userAnswers": attempt.userAnswers,
+            "mode": attempt.mode
+        }
+        
+        # Add the attempt to the quiz's attempts array
+        if "attempts" not in quiz["data"]:
+            quiz["data"]["attempts"] = []
+            
+        quiz["data"]["attempts"].append(new_attempt)
+        
+        # Update the quiz in Cosmos DB
+        container.replace_item(
+            item=quiz_id,
+            body=quiz
+        )
+        
+        return {
+            "quizId": quiz_id,
+            "attemptId": attempt_id,
+            "message": "Quiz attempt saved successfully"
+        }
+        
+    except HTTPException as http_e:
+        # Re-raise HTTP exceptions
+        raise http_e
+    except Exception as e:
+        print(f"Error saving quiz attempt: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to save quiz attempt: {str(e)}"
+        )
+
+# Get all quizzes for a user - protected
+@app.get("/quizzes")
+async def get_quizzes(user_claims: dict = Depends(validate_token)):
+    try:
+        # Query parameters for Cosmos DB
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'quiz' ORDER BY c.createdAt DESC"
+        parameters = [{"name": "@userId", "value": user_claims["sub"]}]
+        
+        # Query Cosmos DB
+        items = list(container.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=True
+        ))
+        return items
+    except Exception as e:
+        print(f"Error fetching quizzes: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to fetch quizzes: {str(e)}"
+        )
+
+# Get a specific quiz by ID - protected
+@app.get("/quizzes/{quiz_id}")
+async def get_quiz(quiz_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the quiz from Cosmos DB (using partition key)
+        quiz = container.read_item(
+            item=quiz_id, 
+            partition_key=user_claims["sub"]
+        )
+        
+        # Verify the quiz belongs to the user
+        if quiz["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Access denied"
+            )
+            
+        return quiz
+    except Exception as e:
+        print(f"Error fetching quiz: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Quiz not found"
+        )
+
+# Get quiz with attempt history endpoint - protected
+@app.get("/quizzes/{quiz_id}/with-history")
+async def get_quiz_with_history(quiz_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the quiz from Cosmos DB
+        quiz = container.read_item(
+            item=quiz_id, 
+            partition_key=user_claims["sub"]
+        )
+        
+        # Verify the quiz belongs to the user
+        if quiz["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Access denied"
+            )
+            
+        return quiz
+    except Exception as e:
+        print(f"Error fetching quiz with history: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Quiz not found"
         )
 
 # Health check endpoint - public
