@@ -9,7 +9,7 @@ import SignUp from "./pages/SignUp";
 import AIFlashcards from "./pages/tools/AIFlashcards";
 import VoiceNotes from "./pages/tools/VoiceNotes";
 import MindMaps from "./pages/tools/MindMaps";
-import PracticeTests from "./pages/tools/PracticeTests";
+import PracticeTests from "./pages/tools/PracticeTests/PracticeTests";
 
 function App() {
   return (
