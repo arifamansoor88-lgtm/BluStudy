@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from openai import AzureOpenAI
-from typing import List, Optional
+from typing import List, Optional, Union, Dict, Any
 
 load_dotenv()
 
@@ -152,4 +152,167 @@ This structured format will maintain consistency and ensure the generated quizze
         response_format={"type": "json_object"}
     )
     return response.choices[0].message.content
+
+def generate_answer_explanation(
+    question: dict,
+    user_answer,
+    is_correct: bool
+):
+    """
+    Generate an explanation for why the user's answer is correct or incorrect
+    
+    Args:
+        question: The question object with all its details
+        user_answer: The answer provided by the user
+        is_correct: Whether the user's answer is correct
+    
+    Returns:
+        A string containing the AI-generated explanation
+    """
+    # Format the question and answer information
+    question_type = question.get("type", "unknown")
+    question_text = question.get("question", "")
+    
+    # Format correct answer(s) based on question type
+    if question_type == "multiple_choice":
+        correct_answer = question.get("correct_answer", "")
+        options = question.get("options", [])
+        correct_answer_info = f"The correct answer is: {correct_answer}"
+    elif question_type == "multi_select":
+        correct_answers = question.get("correct_answers", [])
+        options = question.get("options", [])
+        correct_answer_info = f"The correct answers are: {', '.join(correct_answers)}"
+    elif question_type == "drag_and_drop":
+        correct_mapping = question.get("correct_mapping", {})
+        correct_answer_info = "The correct mappings are: " + ", ".join([f"{k} → {v}" for k, v in correct_mapping.items()])
+    elif question_type in ["short_answer", "fill_in_blank"]:
+        correct_answer = question.get("correct_answer", "")
+        acceptable_answers = question.get("acceptable_answers", [])
+        if acceptable_answers:
+            correct_answer_info = f"The correct answer is: {correct_answer} (or alternatively: {', '.join(acceptable_answers)})"
+        else:
+            correct_answer_info = f"The correct answer is: {correct_answer}"
+    else:
+        correct_answer_info = "The correct answer information is not available."
+    
+    # Format user's answer based on question type
+    if question_type == "multiple_choice":
+        user_answer_formatted = f"You selected: {user_answer}"
+    elif question_type == "multi_select":
+        if isinstance(user_answer, list):
+            user_answer_formatted = f"You selected: {', '.join(user_answer)}"
+        else:
+            user_answer_formatted = f"You selected: {user_answer}"
+    elif question_type == "drag_and_drop":
+        if isinstance(user_answer, dict):
+            user_answer_formatted = "Your mappings: " + ", ".join([f"{k} → {v}" for k, v in user_answer.items()])
+        else:
+            user_answer_formatted = f"Your answer: {user_answer}"
+    else:
+        user_answer_formatted = f"Your answer: {user_answer}"
+    
+    # Create the system prompt
+    system_prompt = f"""You are an educational AI tutor providing explanations for quiz answers.
+Provide a clear, helpful explanation for why the user's answer to a quiz question is {("correct" if is_correct else "incorrect")}.
+
+Be educational, supportive, and concise in your explanation. If the answer is incorrect, point out what the user may have misunderstood.
+Focus on explaining the underlying concept and why the correct answer is right.
+
+FORMAT YOUR RESPONSE USING MARKDOWN:
+- Use **bold** for important concepts or terms
+- Use bullet points or numbered lists where appropriate
+- Use mathematical notation with proper markdown formatting when relevant
+- Organize your explanation with clear structure
+
+Aim for 3-5 sentences that are helpful for learning but not overly verbose.
+"""
+
+    # Create the user message with all relevant information
+    user_message = f"""
+Question: {question_text}
+Question Type: {question_type}
+{user_answer_formatted}
+{correct_answer_info}
+Is Correct: {is_correct}
+
+Please explain why this answer is {("correct" if is_correct else "incorrect")}.
+Use markdown formatting in your explanation for better readability.
+"""
+
+    # Call the API
+    response = client.chat.completions.create(
+        model=DEPLOYMENT_NAME,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message}
+        ]
+    )
+    
+    return response.choices[0].message.content.strip()
+
+def evaluate_short_answer(
+    question: Dict[str, Any],
+    user_answer: str
+) -> Dict[str, Any]:
+    """
+    Evaluate a short answer or fill-in-blank response using OpenAI
+    
+    Args:
+        question: The question object with all its details including correct answer(s)
+        user_answer: The answer provided by the user
+        
+    Returns:
+        Dictionary with evaluation result: {"is_correct": bool, "explanation": str}
+    """
+    question_type = question.get("type", "unknown")
+    question_text = question.get("question", "")
+    correct_answer = question.get("correct_answer", "")
+    acceptable_answers = question.get("acceptable_answers", [])
+    
+    # Create a formatted string of correct answers
+    correct_answer_text = correct_answer
+    if acceptable_answers and len(acceptable_answers) > 0:
+        correct_answer_text += f" (Acceptable alternatives: {', '.join(acceptable_answers)})"
+    
+    # Create the system prompt
+    system_prompt = """You are an educational assessment AI that evaluates student answers.
+Your task is to determine if a student's response to a short answer or fill-in-blank question is semantically correct.
+
+Consider the following guidelines:
+1. Focus on the meaning/concept rather than exact wording
+2. Ignore minor spelling errors if the intent is clear
+3. Ignore capitalization and punctuation differences
+4. Accept synonyms or equivalent phrases
+5. For numerical answers, consider if different formats are semantically equivalent
+6. Respond with ONLY "correct" or "incorrect" without any explanation
+"""
+
+    # Create the user message with question and answer information
+    user_message = f"""
+Question: {question_text}
+Question Type: {question_type}
+Correct Answer(s): {correct_answer_text}
+Student's Answer: {user_answer}
+
+Is the student's answer semantically correct? Respond with ONLY "correct" or "incorrect".
+"""
+
+    # Call the API
+    response = client.chat.completions.create(
+        model=DEPLOYMENT_NAME,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message}
+        ],
+        max_tokens=10  # Keep response small since we only need "correct" or "incorrect"
+    )
+    
+    # Get the result and determine if it's correct
+    result = response.choices[0].message.content.strip().lower()
+    is_correct = result == "correct"
+    
+    return {
+        "is_correct": is_correct,
+        "ai_response": result
+    }
 

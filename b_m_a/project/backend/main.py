@@ -1,18 +1,19 @@
 import os
 import json
 import uuid
-from datetime import datetime
-from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form
-from fastapi.security import OAuth2PasswordBearer
+from datetime import datetime, timedelta
+from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form, Query
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 import msal
 from jose import jwt
 from database import client, container  
 from pdf_utils import extract_text_from_pdf
-from openai_client import generate_quiz
+from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer
 from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt
+from pydantic import BaseModel
 
 # Load the environment variables
 load_dotenv()
@@ -335,6 +336,63 @@ async def get_quiz_with_history(quiz_id: str, user_claims: dict = Depends(valida
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
+# Explanation request model
+class ExplanationRequest(BaseModel):
+    question: Dict[str, Any]
+    userAnswer: Any
+    isCorrect: bool
+
+# Explanation response model
+class ExplanationResponse(BaseModel):
+    explanation: str
+
+# Generate answer explanation endpoint - protected
+@app.post("/explain-answer", response_model=ExplanationResponse)
+async def explain_answer(request: ExplanationRequest, user_claims: dict = Depends(validate_token)):
+    try:
+        # Call the OpenAI API to generate an explanation
+        explanation = generate_answer_explanation(
+            question=request.question,
+            user_answer=request.userAnswer,
+            is_correct=request.isCorrect
+        )
+        
+        return {"explanation": explanation}
+    except Exception as e:
+        print(f"Error generating explanation: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate explanation: {str(e)}"
+        )
+
+# Short answer evaluation request model
+class ShortAnswerEvaluationRequest(BaseModel):
+    question: Dict[str, Any]
+    userAnswer: str
+
+# Short answer evaluation response model
+class ShortAnswerEvaluationResponse(BaseModel):
+    isCorrect: bool
+    aiResponse: str
+
+# Evaluate short answer endpoint - protected
+@app.post("/evaluate-short-answer", response_model=ShortAnswerEvaluationResponse)
+async def evaluate_answer(request: ShortAnswerEvaluationRequest, user_claims: dict = Depends(validate_token)):
+    try:
+        # Call the OpenAI API to evaluate the short answer
+        result = evaluate_short_answer(
+            question=request.question,
+            user_answer=request.userAnswer
+        )
+        
+        return {"isCorrect": result["is_correct"], "aiResponse": result["ai_response"]}
+    except Exception as e:
+        print(f"Error evaluating short answer: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to evaluate answer: {str(e)}"
+        )
 
 # For development purposes
 if __name__ == "__main__":

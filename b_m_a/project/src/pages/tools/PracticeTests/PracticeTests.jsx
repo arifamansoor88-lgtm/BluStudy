@@ -4,6 +4,11 @@ import QuizWizard from "./QuizWizard";
 import QuizDisplay from "./QuizDisplay";
 import SavedQuizzesList from "./SavedQuizzesList";
 import { useQuizTimer, useQuizData } from "./hooks";
+import { isAnswerCorrect, shouldUseAIEvaluation } from "./utils";
+import {
+  getAnswerExplanation,
+  evaluateShortAnswer,
+} from "../../../api/apiService";
 
 /**
  * Main PracticeTests component that coordinates all other components
@@ -23,6 +28,8 @@ const PracticeTests = () => {
   const [quizMode, setQuizMode] = useState("quiz"); // "quiz" or "review"
   const [showAnswerFeedback, setShowAnswerFeedback] = useState(false);
   const [showAttemptHistory, setShowAttemptHistory] = useState(false);
+  const [aiExplanation, setAiExplanation] = useState("");
+  const [loadingExplanation, setLoadingExplanation] = useState(false);
 
   // Quiz wizard state
   const [currentStep, setCurrentStep] = useState(1);
@@ -55,6 +62,10 @@ const PracticeTests = () => {
     saveQuiz,
     saveQuizAttempt,
   } = useQuizData();
+
+  // New state for AI-evaluated answers
+  const [aiEvaluatedAnswers, setAiEvaluatedAnswers] = useState({});
+  const [evaluatingAnswer, setEvaluatingAnswer] = useState(false);
 
   // Fetch saved quizzes on component mount
   useEffect(() => {
@@ -216,8 +227,146 @@ const PracticeTests = () => {
 
       if (quizMode === "review") {
         setShowAnswerFeedback(false);
+
+        // Clear AI evaluation for this question when the answer changes
+        if (aiEvaluatedAnswers[questionIndex]) {
+          const newEvaluations = { ...aiEvaluatedAnswers };
+          delete newEvaluations[questionIndex];
+          setAiEvaluatedAnswers(newEvaluations);
+        }
       }
     }
+  };
+
+  // AI evaluation of answers
+  const evaluateAnswerWithAI = async (questionIndex) => {
+    const question = generatedQuiz.questions[questionIndex];
+    const userAnswer = userAnswers[questionIndex];
+
+    // Only evaluate short answer and fill-in-blank questions
+    if (!shouldUseAIEvaluation(question.type) || !userAnswer) {
+      return isAnswerCorrect(question, userAnswer);
+    }
+
+    // Check if we already have an evaluation for this answer
+    const answerKey = `${questionIndex}-${userAnswer}`;
+    if (aiEvaluatedAnswers[questionIndex]) {
+      return aiEvaluatedAnswers[questionIndex].isCorrect;
+    }
+
+    // If not, make the API call to evaluate
+    setEvaluatingAnswer(true);
+
+    try {
+      const result = await evaluateShortAnswer(question, userAnswer);
+
+      // Save the evaluation result
+      const newEvaluations = { ...aiEvaluatedAnswers };
+      newEvaluations[questionIndex] = result;
+      setAiEvaluatedAnswers(newEvaluations);
+
+      return result.isCorrect;
+    } catch (error) {
+      console.error("Error evaluating answer:", error);
+      // Fall back to the simple evaluation if AI fails
+      return isAnswerCorrect(question, userAnswer);
+    } finally {
+      setEvaluatingAnswer(false);
+    }
+  };
+
+  const checkAnswer = async () => {
+    // Get the current question and answer
+    const currentQuestion = generatedQuiz.questions[currentQuizQuestion];
+    const userAnswer = userAnswers[currentQuizQuestion];
+
+    // For short answer and fill-in-blank questions, evaluate with AI
+    let answerIsCorrect;
+
+    if (shouldUseAIEvaluation(currentQuestion.type)) {
+      // Start the AI evaluation and show loading state
+      setLoadingExplanation(true);
+      answerIsCorrect = await evaluateAnswerWithAI(currentQuizQuestion);
+    } else {
+      // For other question types, use the standard evaluation
+      answerIsCorrect = isAnswerCorrect(currentQuestion, userAnswer);
+    }
+
+    // In review mode, get AI explanation
+    if (quizMode === "review") {
+      if (!loadingExplanation) setLoadingExplanation(true);
+
+      try {
+        // Get explanation from the API
+        const explanation = await getAnswerExplanation(
+          currentQuestion,
+          userAnswer,
+          answerIsCorrect
+        );
+
+        // Set the explanation
+        setAiExplanation(explanation);
+      } catch (error) {
+        console.error("Error getting explanation:", error);
+        setAiExplanation(
+          "Failed to generate an explanation. Please try again."
+        );
+      } finally {
+        setLoadingExplanation(false);
+      }
+    }
+
+    // Show the feedback
+    setShowAnswerFeedback(true);
+  };
+
+  // For the final summary and score calculation, we need to evaluate all answers
+  const evaluateAllAnswers = async () => {
+    // Only do this in quiz mode when completing the quiz
+    if (quizMode !== "quiz" || quizStatus !== "in-progress") return;
+
+    // Set loading state
+    setShowSummary(false);
+
+    // Questions that need AI evaluation
+    const questionsToEvaluate = generatedQuiz.questions
+      .map((q, idx) => ({ question: q, index: idx }))
+      .filter(
+        ({ question, index }) =>
+          shouldUseAIEvaluation(question.type) &&
+          userAnswers[index] !== null &&
+          !aiEvaluatedAnswers[index]
+      );
+
+    // If no questions need evaluation, proceed
+    if (questionsToEvaluate.length === 0) {
+      completeQuiz();
+      return;
+    }
+
+    // Evaluate all questions that need it
+    try {
+      // We'll use Promise.all to evaluate all questions in parallel
+      await Promise.all(
+        questionsToEvaluate.map(({ index }) => evaluateAnswerWithAI(index))
+      );
+
+      // Once all evaluations are complete, complete the quiz
+      completeQuiz();
+    } catch (error) {
+      console.error("Error evaluating all answers:", error);
+      // Still complete the quiz even if there's an error
+      completeQuiz();
+    }
+  };
+
+  // Function to complete the quiz after evaluation
+  const completeQuiz = () => {
+    setQuizStatus("completed");
+    setShowSummary(true);
+
+    // Auto-save the quiz attempt when completed
+    saveQuizAttempt(generatedQuiz, userAnswers, timer, quizMode);
   };
 
   const nextQuizQuestion = () => {
@@ -229,12 +378,17 @@ const PracticeTests = () => {
         setShowAnswerFeedback(false);
       }
     } else {
-      // Complete the quiz if this is the last question
-      setQuizStatus("completed");
-      setShowSummary(true);
+      // If this is the last question, evaluate all answers before completing
+      if (quizMode === "quiz") {
+        evaluateAllAnswers();
+      } else {
+        // In review mode, just complete the quiz
+        setQuizStatus("completed");
+        setShowSummary(true);
 
-      // Auto-save the quiz attempt when completed
-      saveQuizAttempt(generatedQuiz, userAnswers, timer, quizMode);
+        // Auto-save the quiz attempt when completed
+        saveQuizAttempt(generatedQuiz, userAnswers, timer, quizMode);
+      }
     }
   };
 
@@ -247,10 +401,6 @@ const PracticeTests = () => {
         setShowAnswerFeedback(false);
       }
     }
-  };
-
-  const checkAnswer = () => {
-    setShowAnswerFeedback(true);
   };
 
   const toggleAttemptHistory = (visible) => {
@@ -401,6 +551,25 @@ const PracticeTests = () => {
               onReviewQuestions={setShowSummary}
               onReturnToTests={goBack}
               onToggleHistory={toggleAttemptHistory}
+              aiExplanation={aiExplanation}
+              loadingExplanation={loadingExplanation}
+              evaluatingAnswer={evaluatingAnswer}
+              aiEvaluatedAnswers={aiEvaluatedAnswers}
+              getAnswerCorrectness={(questionIndex) => {
+                const question = generatedQuiz.questions[questionIndex];
+                const userAnswer = userAnswers[questionIndex];
+
+                // For questions that use AI evaluation
+                if (
+                  shouldUseAIEvaluation(question.type) &&
+                  aiEvaluatedAnswers[questionIndex]
+                ) {
+                  return aiEvaluatedAnswers[questionIndex].isCorrect;
+                }
+
+                // Fall back to standard evaluation
+                return isAnswerCorrect(question, userAnswer);
+              }}
             />
           )}
         </>
