@@ -96,3 +96,62 @@ export const callProtectedApi = async (endpoint, options = {}) => {
 export const getTasks = async () => {
   return callProtectedApi(protectedResources.todoListApi.endpoint);
 };
+
+/**
+ * Generate an explanation for a quiz answer using the AI
+ * @param {Object} question - The complete question object
+ * @param {*} userAnswer - The user's answer to the question
+ * @param {Boolean} isCorrect - Whether the answer is correct or not
+ * @returns {Promise<string>} - The AI-generated explanation
+ */
+export const getAnswerExplanation = async (question, userAnswer, isCorrect) => {
+  const endpoint = "http://localhost:8000/explain-answer";
+
+  const requestBody = {
+    question,
+    userAnswer,
+    isCorrect,
+  };
+
+  const options = {
+    method: "POST",
+    body: JSON.stringify(requestBody),
+  };
+
+  try {
+    const response = await callProtectedApi(endpoint, options);
+    return response.explanation;
+  } catch (error) {
+    console.error("Error getting explanation:", error);
+    return "Unable to generate explanation at this time.";
+  }
+};
+
+/**
+ * Evaluate a short answer or fill-in-blank response using OpenAI
+ * @param {Object} question - The complete question object
+ * @param {string} userAnswer - The user's answer to the question
+ * @returns {Promise<Object>} - Object with isCorrect boolean and AI response
+ */
+export const evaluateShortAnswer = async (question, userAnswer) => {
+  const endpoint = "http://localhost:8000/evaluate-short-answer";
+
+  const requestBody = {
+    question,
+    userAnswer,
+  };
+
+  const options = {
+    method: "POST",
+    body: JSON.stringify(requestBody),
+  };
+
+  try {
+    const response = await callProtectedApi(endpoint, options);
+    return response;
+  } catch (error) {
+    console.error("Error evaluating short answer:", error);
+    // Return a default response if the API call fails
+    return { isCorrect: false, aiResponse: "error" };
+  }
+};

@@ -1,16 +1,16 @@
-@import url('https://rsms.me/inter/inter.css');
+@import url("https://rsms.me/inter/inter.css");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 html {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 @supports (font-variation-settings: normal) {
   html {
-    font-family: 'Inter var', sans-serif;
+    font-family: "Inter var", sans-serif;
   }
 }
 
@@ -42,4 +42,90 @@ body {
 
 .input-field {
   @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+}
+
+/* Markdown content styling */
+.markdown-content {
+  /* Base styles */
+  @apply text-gray-700 leading-relaxed;
+
+  /* Headings */
+  & h1,
+  & h2,
+  & h3,
+  & h4,
+  & h5,
+  & h6 {
+    @apply font-medium text-gray-900 my-2;
+  }
+
+  & h1 {
+    @apply text-xl;
+  }
+
+  & h2 {
+    @apply text-lg;
+  }
+
+  /* Lists */
+  & ul,
+  & ol {
+    @apply pl-6 my-2;
+  }
+
+  & ul {
+    @apply list-disc;
+  }
+
+  & ol {
+    @apply list-decimal;
+  }
+
+  /* Bold and italic */
+  & strong {
+    @apply font-bold;
+  }
+
+  & em {
+    @apply italic;
+  }
+
+  /* Links */
+  & a {
+    @apply text-blue-600 hover:underline;
+  }
+
+  /* Code blocks */
+  & code {
+    @apply bg-gray-100 px-1 py-0.5 rounded text-sm;
+  }
+
+  & pre {
+    @apply bg-gray-100 p-3 rounded my-2 overflow-x-auto;
+  }
+
+  /* Blockquotes */
+  & blockquote {
+    @apply border-l-4 border-gray-300 pl-4 italic my-2;
+  }
+
+  /* Tables */
+  & table {
+    @apply border-collapse border border-gray-300 my-2;
+  }
+
+  & th,
+  & td {
+    @apply border border-gray-300 px-2 py-1;
+  }
+
+  /* Paragraphs and spacing */
+  & p {
+    @apply my-2;
+  }
+
+  /* Math equations */
+  & .math {
+    @apply overflow-x-auto;
+  }
 }

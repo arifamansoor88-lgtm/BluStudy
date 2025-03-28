@@ -13,6 +13,10 @@ export const formatTime = (time) => {
 
 /**
  * Check if an answer is correct for a particular question
+ * This is a synchronous function that performs a simple check
+ * For short answer and fill_in_blank, it uses exact matching
+ * Use evaluateAnswerWithAI for AI-based evaluation of short answers
+ *
  * @param {Object} question - The question object
  * @param {any} userAnswer - The user's answer
  * @returns {boolean|null} - Whether the answer is correct, or null if can't determine
@@ -42,6 +46,7 @@ export const isAnswerCorrect = (question, userAnswer) => {
     case "short_answer":
     case "fill_in_blank":
       // For text inputs, check against correct answer and acceptable alternatives
+      // This is a simple exact match, the AI evaluation provides better results
       return (
         userAnswer === question.correct_answer ||
         (question.acceptable_answers &&
@@ -82,4 +87,13 @@ export const getCorrectAnswerCount = (questions, userAnswers) => {
   return questions.filter((question, index) =>
     isAnswerCorrect(question, userAnswers[index])
   ).length;
+};
+
+/**
+ * Determines if a question type should use AI evaluation
+ * @param {string} questionType - The type of question
+ * @returns {boolean} - Whether AI evaluation should be used
+ */
+export const shouldUseAIEvaluation = (questionType) => {
+  return questionType === "short_answer" || questionType === "fill_in_blank";
 };

@@ -1,5 +1,6 @@
 import React from "react";
-import { Clock, ArrowRight, Check, X } from "lucide-react";
+import { Clock, ArrowRight, Check, X, Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { formatTime } from "./utils";
 import QuizQuestion from "./QuizQuestion";
 import QuizSummary from "./QuizSummary";
@@ -29,6 +30,11 @@ const QuizDisplay = ({
   onReviewQuestions,
   onReturnToTests,
   onToggleHistory,
+  aiExplanation,
+  loadingExplanation,
+  evaluatingAnswer,
+  aiEvaluatedAnswers,
+  getAnswerCorrectness,
 }) => {
   // No quiz data available
   if (!quiz && status !== "loading") {
@@ -136,6 +142,17 @@ const QuizDisplay = ({
     );
   }
 
+  // Helper function to check if answer is correct
+  const isCurrentAnswerCorrect = () => {
+    if (getAnswerCorrectness) {
+      return getAnswerCorrectness(currentQuestionIndex);
+    }
+    return isAnswerCorrectInline(
+      quiz.questions[currentQuestionIndex],
+      userAnswers[currentQuestionIndex]
+    );
+  };
+
   // In progress
   if (status === "in-progress") {
     const currentQuestion = quiz.questions[currentQuestionIndex];
@@ -162,11 +179,10 @@ const QuizDisplay = ({
 
               if (userAnswers[i] !== null) {
                 if (status === "completed" || showSummary) {
-                  // Use isAnswerCorrect from utils but we'll have to check inside the component
-                  const isCorrect = isAnswerCorrectInline(
-                    quiz.questions[i],
-                    userAnswers[i]
-                  );
+                  // Use getAnswerCorrectness if available
+                  const isCorrect = getAnswerCorrectness
+                    ? getAnswerCorrectness(i)
+                    : isAnswerCorrectInline(quiz.questions[i], userAnswers[i]);
                   bgColor = isCorrect ? "bg-green-500" : "bg-red-500"; // Correct/Incorrect
                 } else {
                   bgColor = "bg-blue-500"; // Answered but not yet evaluated
@@ -201,10 +217,7 @@ const QuizDisplay = ({
           {quizMode === "review" && showAnswerFeedback && (
             <div
               className={`mt-4 p-4 rounded-lg ${
-                isAnswerCorrectInline(
-                  currentQuestion,
-                  userAnswers[currentQuestionIndex]
-                )
+                isCurrentAnswerCorrect()
                   ? "bg-green-50 border border-green-200"
                   : "bg-red-50 border border-red-200"
               }`}
@@ -212,18 +225,10 @@ const QuizDisplay = ({
               <div className="flex items-start">
                 <div
                   className={`flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center ${
-                    isAnswerCorrectInline(
-                      currentQuestion,
-                      userAnswers[currentQuestionIndex]
-                    )
-                      ? "bg-green-100"
-                      : "bg-red-100"
+                    isCurrentAnswerCorrect() ? "bg-green-100" : "bg-red-100"
                   }`}
                 >
-                  {isAnswerCorrectInline(
-                    currentQuestion,
-                    userAnswers[currentQuestionIndex]
-                  ) ? (
+                  {isCurrentAnswerCorrect() ? (
                     <Check className="h-4 w-4 text-green-500" />
                   ) : (
                     <X className="h-4 w-4 text-red-500" />
@@ -232,28 +237,44 @@ const QuizDisplay = ({
                 <div className="ml-3">
                   <h3
                     className={`text-sm font-medium ${
-                      isAnswerCorrectInline(
-                        currentQuestion,
-                        userAnswers[currentQuestionIndex]
-                      )
+                      isCurrentAnswerCorrect()
                         ? "text-green-800"
                         : "text-red-800"
                     }`}
                   >
-                    {isAnswerCorrectInline(
-                      currentQuestion,
-                      userAnswers[currentQuestionIndex]
-                    )
-                      ? "Correct!"
-                      : "Incorrect"}
+                    {isCurrentAnswerCorrect() ? "Correct!" : "Incorrect"}
                   </h3>
                   <div className="mt-2 text-sm">
-                    {currentQuestion.explanation && (
-                      <p className="text-gray-700">
-                        {currentQuestion.explanation}
-                      </p>
-                    )}
+                    {isCurrentAnswerCorrect()
+                      ? "Well done! You got this right."
+                      : "The correct answer is: " +
+                        formatCorrectAnswer(currentQuestion)}
                   </div>
+
+                  {/* Show AI explanation when available */}
+                  {(loadingExplanation || evaluatingAnswer) && (
+                    <div className="mt-3 flex items-center text-gray-600">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <span>
+                        {evaluatingAnswer
+                          ? "Evaluating your answer..."
+                          : "Generating AI explanation..."}
+                      </span>
+                    </div>
+                  )}
+
+                  {!loadingExplanation &&
+                    !evaluatingAnswer &&
+                    aiExplanation && (
+                      <div className="mt-3 bg-white p-3 rounded border border-gray-200">
+                        <h4 className="text-sm font-medium text-gray-800 mb-1">
+                          AI Explanation:
+                        </h4>
+                        <div className="text-sm text-gray-700 markdown-content">
+                          <ReactMarkdown>{aiExplanation}</ReactMarkdown>
+                        </div>
+                      </div>
+                    )}
                 </div>
               </div>
             </div>
@@ -261,10 +282,7 @@ const QuizDisplay = ({
 
           <div className="flex justify-between mt-8">
             <button
-              onClick={() =>
-                currentQuestionIndex > 0 &&
-                onGoToQuestion(currentQuestionIndex - 1)
-              }
+              onClick={onPreviousQuestion}
               disabled={currentQuestionIndex === 0}
               className={`px-4 py-2 border rounded-md ${
                 currentQuestionIndex === 0
@@ -283,8 +301,16 @@ const QuizDisplay = ({
                   <button
                     onClick={onCheckAnswer}
                     className="px-4 py-2 border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50"
+                    disabled={evaluatingAnswer || loadingExplanation}
                   >
-                    Check My Answer
+                    {evaluatingAnswer || loadingExplanation ? (
+                      <span className="flex items-center">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Checking...
+                      </span>
+                    ) : (
+                      "Check My Answer"
+                    )}
                   </button>
                 )}
 
@@ -381,6 +407,35 @@ const QuizDisplay = ({
 };
 
 // Helper functions
+
+// Format the correct answer based on question type
+function formatCorrectAnswer(question) {
+  if (!question) return "";
+
+  switch (question.type) {
+    case "multiple_choice":
+      return question.correct_answer;
+    case "multi_select":
+      return question.correct_answers.join(", ");
+    case "drag_and_drop":
+      return Object.entries(question.correct_mapping)
+        .map(([key, value]) => `${key} → ${value}`)
+        .join(", ");
+    case "short_answer":
+    case "fill_in_blank":
+      if (
+        question.acceptable_answers &&
+        question.acceptable_answers.length > 0
+      ) {
+        return `${
+          question.correct_answer
+        } (or ${question.acceptable_answers.join(", ")})`;
+      }
+      return question.correct_answer;
+    default:
+      return "";
+  }
+}
 
 // Simple version of isAnswerCorrect for use within the component
 function isAnswerCorrectInline(question, userAnswer) {
