@@ -166,14 +166,18 @@ export const useQuizData = () => {
         // Create a FormData object to send the file
         const formData = new FormData();
         formData.append("file", selectedFile);
-        formData.append("num_questions", numQuestions);
+        formData.append("num_questions", numQuestions.toString()); // Convert to string
 
         // Combine selected topics and custom topics
         const allTopics = [...selectedTopics];
         if (customTopics) {
           allTopics.push(...customTopics.split(",").map((t) => t.trim()));
         }
-        formData.append("focus_topics", allTopics.join(", "));
+        // Filter out empty topics
+        const filteredTopics = allTopics.filter(
+          (topic) => topic && topic.trim() !== ""
+        );
+        formData.append("focus_topics", filteredTopics.join(", "));
 
         // Map UI question formats to backend expected formats
         const formatMapping = {
@@ -204,17 +208,16 @@ export const useQuizData = () => {
           )
         );
 
+        // Use a direct URL string to avoid URL construction issues
+        const apiUrl = "http://localhost:8000/generate-quiz";
+
         // Send the file to the backend API
-        const response = await axios.post(
-          "http://localhost:8000/generate-quiz",
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
+        const response = await axios.post(apiUrl, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
 
         return response.data;
       } catch (err) {

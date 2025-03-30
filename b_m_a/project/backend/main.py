@@ -11,8 +11,8 @@ import msal
 from jose import jwt
 from database import client, container  
 from pdf_utils import extract_text_from_pdf
-from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer
-from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt
+from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan
+from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse
 from pydantic import BaseModel
 
 # Load the environment variables
@@ -392,6 +392,320 @@ async def evaluate_answer(request: ShortAnswerEvaluationRequest, user_claims: di
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to evaluate answer: {str(e)}"
+        )
+
+# Study plan generation endpoint - protected
+@app.post("/generate-study-plan", response_model=Dict[str, Any])
+async def create_study_plan(
+    files: List[UploadFile] = File(...),
+    title: str = Form(...),
+    description: str = Form(""),
+    tags: str = Form(""),
+    duration_metadata: Optional[str] = Form(None),
+    user_claims: dict = Depends(validate_token)
+):
+    try:
+        # Validate inputs
+        if not files:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="No files provided"
+            )
+            
+        if not title:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Title is required"
+            )
+        
+        # Process all files and extract text
+        all_text = ""
+        pdf_names = []
+        
+        for file in files:
+            try:
+                # Validate file type
+                if not file.filename.lower().endswith('.pdf'):
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail=f"File {file.filename} is not a PDF"
+                    )
+                
+                # Save the uploaded file temporarily
+                file_path = f"./temp_{file.filename}"
+                try:
+                    with open(file_path, "wb") as f:
+                        f.write(await file.read())
+                except Exception as file_write_error:
+                    print(f"Error writing file: {str(file_write_error)}")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"Error saving uploaded file: {str(file_write_error)}"
+                    )
+                
+                # Extract text from the PDF
+                try:
+                    text = extract_text_from_pdf(file_path)
+                    all_text += text + "\n\n"
+                    pdf_names.append(file.filename)
+                except Exception as text_extract_error:
+                    print(f"Error extracting PDF text: {str(text_extract_error)}")
+                    # Continue with a warning instead of failing
+                    all_text += f"[Failed to extract text from {file.filename}]\n\n"
+                    pdf_names.append(file.filename)
+                
+                # Clean up the temporary file
+                if os.path.exists(file_path):
+                    try:
+                        os.remove(file_path)
+                    except Exception as cleanup_error:
+                        print(f"Error cleaning up file: {str(cleanup_error)}")
+                        # Continue without failing
+            except HTTPException:
+                # Re-raise HTTP exceptions
+                raise
+            except Exception as file_error:
+                print(f"Error processing file {file.filename}: {str(file_error)}")
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Error processing file {file.filename}: {str(file_error)}"
+                )
+        
+        # Check if we have any text to process
+        if not all_text.strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Could not extract any text from the provided PDFs"
+            )
+        
+        # Parse tags list
+        tag_list = [tag.strip() for tag in tags.split(",") if tag.strip()]
+        
+        # Parse duration metadata if provided
+        duration_info = None
+        if duration_metadata:
+            try:
+                duration_info = json.loads(duration_metadata)
+                print(f"Duration info provided: {duration_info}")
+            except json.JSONDecodeError:
+                print(f"Invalid duration metadata format: {duration_metadata}")
+                # Continue without failing - we'll use it as a string if needed
+        
+        # Generate study plan using Azure OpenAI
+        try:
+            study_plan_json = generate_study_plan(
+                text=all_text,
+                title=title,
+                tags=tag_list,
+                duration_info=duration_info
+            )
+        except Exception as openai_error:
+            print(f"Error calling OpenAI: {str(openai_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error generating study plan with AI: {str(openai_error)}"
+            )
+        
+        # Parse the generated JSON
+        try:
+            study_plan_data = json.loads(study_plan_json)
+        except json.JSONDecodeError as json_error:
+            print(f"Error parsing AI response: {str(json_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error parsing AI response. The generated study plan was not valid JSON."
+            )
+        
+        # Automatically save the study plan
+        study_plan_document = {
+            "id": str(uuid.uuid4()),
+            "userId": user_claims["sub"],
+            "contentType": "study_plan",
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": {
+                "title": title,
+                "description": description if description else study_plan_data.get("description", ""),
+                "content": study_plan_data,
+                "tags": tag_list,
+                "pdfs": pdf_names,
+                "duration_info": duration_info,  # Save duration info in the document
+                "updatedAt": None
+            }
+        }
+        
+        # Save to Cosmos DB
+        try:
+            container.create_item(body=study_plan_document)
+        except Exception as db_error:
+            print(f"Error saving to database: {str(db_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error saving study plan to database: {str(db_error)}"
+            )
+        
+        # Return the study plan data with the ID
+        return {
+            "id": study_plan_document["id"],
+            "plan": study_plan_data,
+            "message": "Study plan created successfully"
+        }
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        print(f"Error generating study plan: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate study plan: {str(e)}"
+        )
+
+# Get study plans endpoint - protected
+@app.get("/study-plans")
+async def get_study_plans(user_claims: dict = Depends(validate_token)):
+    try:
+        # Query all study plans for the user
+        query = f"SELECT * FROM c WHERE c.userId = '{user_claims['sub']}' AND c.contentType = 'study_plan' ORDER BY c.createdAt DESC"
+        
+        items = list(container.query_items(
+            query=query,
+            enable_cross_partition_query=True
+        ))
+        
+        # Format the response
+        study_plans = []
+        for item in items:
+            study_plans.append({
+                "id": item["id"],
+                "title": item["data"]["title"],
+                "description": item["data"]["description"],
+                "tags": item["data"]["tags"],
+                "createdAt": item["createdAt"],
+                "updatedAt": item["data"]["updatedAt"]
+            })
+        
+        return {"study_plans": study_plans}
+    except Exception as e:
+        print(f"Error retrieving study plans: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve study plans: {str(e)}"
+        )
+
+# Get a specific study plan - protected
+@app.get("/study-plans/{plan_id}")
+async def get_study_plan(plan_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the study plan from Cosmos DB
+        study_plan = container.read_item(
+            item=plan_id, 
+            partition_key=user_claims["sub"]
+        )
+        
+        # Verify the plan belongs to the user
+        if study_plan["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Access denied"
+            )
+            
+        return study_plan
+    except Exception as e:
+        print(f"Error retrieving study plan: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Study plan not found"
+        )
+
+# Update a study plan based on quiz results - protected
+@app.post("/update-study-plan", response_model=UpdateStudyPlanResponse)
+async def update_study_plan_endpoint(request: UpdateStudyPlanRequest, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the original study plan
+        plan_id = request.planId
+        
+        try:
+            # Get the study plan from Cosmos DB
+            study_plan = container.read_item(
+                item=plan_id, 
+                partition_key=user_claims["sub"]
+            )
+            
+            # Verify the plan belongs to the user
+            if study_plan["userId"] != user_claims["sub"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, 
+                    detail="Access denied"
+                )
+                
+        except Exception as e:
+            print(f"Error retrieving study plan: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="Study plan not found"
+            )
+        
+        # Collect quiz attempt data
+        quiz_results = []
+        for quiz_id in request.quizIds:
+            try:
+                # Get quiz with history
+                quiz = container.read_item(
+                    item=quiz_id, 
+                    partition_key=user_claims["sub"]
+                )
+                
+                # Skip if no attempts are available
+                if not quiz["data"].get("attempts"):
+                    continue
+                
+                # Get the most recent attempt
+                latest_attempt = max(quiz["data"]["attempts"], key=lambda x: x["timestamp"])
+                
+                # Add to results with quiz info
+                quiz_results.append({
+                    "quizId": quiz_id,
+                    "title": quiz["data"].get("title", ""),
+                    "score": latest_attempt.get("score"),
+                    "timestamp": latest_attempt.get("timestamp"),
+                    "questions": quiz["data"].get("questions"),
+                    "userAnswers": latest_attempt.get("userAnswers"),
+                    "tags": study_plan["data"]["tags"]  # Use the study plan tags
+                })
+                
+            except Exception as e:
+                print(f"Error retrieving quiz {quiz_id}: {str(e)}")
+                # Continue with other quizzes even if one fails
+                continue
+        
+        # Update the study plan
+        updated_plan_json = update_study_plan(
+            original_plan=study_plan["data"]["content"],
+            quiz_results=quiz_results
+        )
+        
+        # Parse the updated JSON
+        updated_plan_data = json.loads(updated_plan_json)
+        
+        # Update the study plan document
+        study_plan["data"]["content"] = updated_plan_data
+        study_plan["data"]["updatedAt"] = datetime.utcnow().isoformat()
+        
+        # Save to Cosmos DB
+        container.replace_item(
+            item=plan_id,
+            body=study_plan
+        )
+        
+        return {
+            "id": plan_id,
+            "message": "Study plan updated successfully",
+            "updatedPlan": updated_plan_data
+        }
+    except Exception as e:
+        print(f"Error updating study plan: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update study plan: {str(e)}"
         )
 
 # For development purposes

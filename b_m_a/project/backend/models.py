@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 
 class QuizOptions(BaseModel):
@@ -46,3 +46,28 @@ class SaveQuizAttemptResponse(BaseModel):
     quizId: str
     attemptId: str
     message: str
+
+class StudyPlanData(BaseModel):
+    title: str
+    description: str
+    content: Dict[str, Any]
+    tags: List[str] = []
+    pdfs: List[str] = []
+    updatedAt: Optional[str] = None
+
+class StudyPlanDocument(BaseModel):
+    contentType: str = "study_plan"
+    data: StudyPlanData
+
+class SaveStudyPlanResponse(BaseModel):
+    id: str
+    message: str
+
+class UpdateStudyPlanRequest(BaseModel):
+    planId: str
+    quizIds: List[str] = []
+
+class UpdateStudyPlanResponse(BaseModel):
+    id: str
+    message: str
+    updatedPlan: Dict[str, Any]
