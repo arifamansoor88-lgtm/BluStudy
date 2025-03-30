@@ -316,3 +316,196 @@ Is the student's answer semantically correct? Respond with ONLY "correct" or "in
         "ai_response": result
     }
 
+def generate_study_plan(text: str, title: str, tags: List[str] = None, duration_info: dict = None):
+    """
+    Generate a personalized study plan based on the provided content
+    
+    Args:
+        text: The text content extracted from uploaded materials
+        title: The title/name of the study plan
+        tags: Optional list of tags associated with the study plan
+        duration_info: Optional dictionary with duration and unit info for the study plan
+    
+    Returns:
+        A JSON string representing the study plan
+    """
+    # Prepare tag information if available
+    tag_info = ""
+    if tags and len(tags) > 0:
+        tag_info = f"\nThis study plan is tagged with: {', '.join(tags)}"
+    
+    # Prepare duration information if available
+    duration_instruction = ""
+    if duration_info and isinstance(duration_info, dict):
+        duration_value = duration_info.get('duration')
+        duration_unit = duration_info.get('unit')
+        if duration_value and duration_unit:
+            duration_instruction = f"\n\nIMPORTANT: Create a study plan that spans exactly {duration_value} {duration_unit}. The weekly_schedule should cover this exact duration, not more or less."
+    
+    system_prompt = f"""You are an AI education specialist that creates personalized study plans based on educational content. Your task is to analyze the provided content and create a comprehensive, adaptive study plan titled "{title}".{tag_info}{duration_instruction}
+
+---
+
+# Study Plan Requirements:
+- Create a structured study plan with daily and weekly goals
+- Include specific topics from the provided content
+- Organize content by difficulty and importance
+- Create a recommended schedule that is sustainable and effective
+- Recommend specific study techniques for different types of content
+- Include references to learning tools available in the application (flashcards, practice quizzes, AI summarizer)
+
+---
+
+# Output Format:
+
+Return a JSON object structured as follows:
+
+{{
+  "title": "{title}",
+  "description": "A brief description of this study plan",
+  "duration": "Recommended duration (e.g., 4 weeks)",
+  "overview": "High-level overview of what this plan covers",
+  "weekly_schedule": [
+    {{
+      "week": 1,
+      "theme": "Title of this week's focus",
+      "description": "Short description of week's goals",
+      "days": [
+        {{
+          "day": 1,
+          "topics": [
+            {{
+              "title": "Topic title",
+              "description": "Brief description",
+              "activities": [
+                {{
+                  "type": "reading",
+                  "description": "Specific reading assignment",
+                  "duration": "30 minutes",
+                  "priority": "high",
+                  "completed": false
+                }},
+                {{
+                  "type": "tool",
+                  "tool": "flashcards",
+                  "description": "Create flashcards on key terms",
+                  "duration": "20 minutes", 
+                  "priority": "medium",
+                  "completed": false
+                }}
+              ]
+            }}
+          ]
+        }}
+      ],
+      "weekly_goals": [
+        "Goal 1",
+        "Goal 2"
+      ],
+      "assessment": "Suggested method to assess progress at week's end"
+    }}
+  ],
+  "study_techniques": [
+    {{
+      "technique": "Name of study technique",
+      "description": "How to apply this technique",
+      "best_for": "Types of content this works best for"
+    }}
+  ],
+  "resources": [
+    {{
+      "title": "Resource title",
+      "type": "article/video/tool",
+      "description": "Why this resource is helpful"
+    }}
+  ]
+}}
+
+Note: The 'weekly_schedule' should be detailed enough to guide the student through each day, but flexible enough to adapt to different learning paces. The 'completed' field for activities will initially be false, allowing users to mark items as completed.
+
+When suggesting application tools, reference the following:
+- Flashcard Generator (for memorization)
+- Practice Test Generator (for assessment)
+- Voice Notes (for audio learning)
+- Mind Maps (for visual organization)
+- AI Summarizer (for condensing key information)
+
+Create a comprehensive plan that identifies key concepts, organizes them logically, and creates a realistic study timeline.
+"""
+
+    response = client.chat.completions.create(
+        model=DEPLOYMENT_NAME,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Generate a study plan from the following content:\n\n{text}"}
+        ],
+        response_format={"type": "json_object"}
+    )
+    return response.choices[0].message.content
+
+def update_study_plan(original_plan: dict, quiz_results: List[dict], text: str = ""):
+    """
+    Update an existing study plan based on quiz performance data
+    
+    Args:
+        original_plan: The original study plan to update
+        quiz_results: List of quiz attempt data showing performance
+        text: Optional additional text content
+    
+    Returns:
+        A JSON string representing the updated study plan
+    """
+    # Serialize the original plan and quiz results
+    import json
+    original_plan_json = json.dumps(original_plan)
+    quiz_results_json = json.dumps(quiz_results)
+    
+    system_prompt = """You are an AI education specialist that updates personalized study plans based on student performance data. Your task is to analyze the provided quiz results and original study plan, then create an improved, adaptive updated study plan.
+
+---
+
+# Your task:
+- Analyze the quiz results to identify strengths and weaknesses
+- Modify the original study plan to address weak areas
+- Add additional practice for topics with low scores
+- Reinforce successful areas with advanced content
+- Adjust time allocations based on performance
+- Keep the same basic structure but with targeted improvements
+- Add specific recommendations based on performance patterns
+
+---
+
+# Output Format:
+
+Return a complete updated JSON study plan that follows the same structure as the original plan, but with modifications to address the student's needs based on quiz results. Add a new 'performance_analysis' field at the top level with:
+
+{
+  "performance_analysis": {
+    "strengths": ["Topic 1", "Topic 2"],
+    "areas_for_improvement": ["Topic 3", "Topic 4"],
+    "recommendations": ["Recommendation 1", "Recommendation 2"]
+  },
+  // Rest of the original study plan structure with updates
+}
+
+The updated plan should specifically address weak areas identified in the quiz results while maintaining all other aspects of the original plan. Be sure to update the description to indicate this is a revised plan based on performance data.
+
+When suggesting tools, continue to reference:
+- Flashcard Generator (especially useful for weak areas)
+- Practice Test Generator (for additional assessment)
+- Voice Notes (for audio learning)
+- Mind Maps (for visual organization of complex topics)
+- AI Summarizer (for reviewing key information)
+
+Create a targeted plan that addresses specific weaknesses while building on the student's strengths."""
+
+    response = client.chat.completions.create(
+        model=DEPLOYMENT_NAME,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Original study plan:\n{original_plan_json}\n\nQuiz results:\n{quiz_results_json}\n\nAdditional content (if any):\n{text}"}
+        ],
+        response_format={"type": "json_object"}
+    )
+    return response.choices[0].message.content
+

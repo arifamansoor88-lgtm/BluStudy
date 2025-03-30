@@ -512,20 +512,24 @@ const PracticeTests = () => {
           {quizStatus === "idle" ? (
             <QuizWizard
               currentStep={currentStep}
+              setCurrentStep={setCurrentStep}
               selectedFile={selectedFile}
+              setSelectedFile={setSelectedFile}
               selectedTopics={selectedTopics}
+              setSelectedTopics={setSelectedTopics}
               customTopics={customTopics}
+              setCustomTopics={setCustomTopics}
               numQuestions={numQuestions}
+              setNumQuestions={setNumQuestions}
               questionFormats={questionFormats}
+              toggleQuestionFormat={toggleQuestionFormat}
+              handleNextStep={handleNextStep}
+              handlePrevStep={handlePrevStep}
+              handleFileSelect={handleFileSelect}
+              handleToggleTopic={toggleTopic}
               error={error}
               uploading={uploading}
-              onFileSelect={handleFileSelect}
-              onTopicToggle={toggleTopic}
-              onCustomTopicsChange={setCustomTopics}
-              onNumQuestionsChange={setNumQuestions}
-              onQuestionFormatToggle={toggleQuestionFormat}
-              onNextStep={handleNextStep}
-              onPrevStep={handlePrevStep}
+              quizData={generatedQuiz}
               onBack={goBack}
             />
           ) : (

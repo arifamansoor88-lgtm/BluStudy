@@ -1,7 +1,16 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Brain, Mic, Network as Network2, TestTube, Sparkles, BookOpen, PenTool, Zap } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React from "react";
+import { Link } from "react-router-dom";
+import {
+  Brain,
+  Mic,
+  Network as Network2,
+  TestTube,
+  Sparkles,
+  BookOpen,
+  PenTool,
+  Zap,
+} from "lucide-react";
+import { motion } from "framer-motion";
 
 const StudyTools = () => {
   const tools = [
@@ -119,7 +128,16 @@ const StudyTools = () => {
   );
 };
 
-const ToolCard = ({ to, icon: Icon, title, description, color, bgColor, borderColor, index }) => (
+const ToolCard = ({
+  to,
+  icon: Icon,
+  title,
+  description,
+  color,
+  bgColor,
+  borderColor,
+  index,
+}) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -129,7 +147,9 @@ const ToolCard = ({ to, icon: Icon, title, description, color, bgColor, borderCo
       to={to}
       className={`block p-6 rounded-xl bg-white border ${borderColor} hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}
     >
-      <div className={`${bgColor} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}>
+      <div
+        className={`${bgColor} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}
+      >
         <Icon className={`h-6 w-6 ${color}`} />
       </div>
       <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>

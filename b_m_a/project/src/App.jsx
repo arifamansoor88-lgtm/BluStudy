@@ -10,6 +10,7 @@ import AIFlashcards from "./pages/tools/AIFlashcards";
 import VoiceNotes from "./pages/tools/VoiceNotes";
 import MindMaps from "./pages/tools/MindMaps";
 import PracticeTests from "./pages/tools/PracticeTests/PracticeTests";
+import StudyPlans from "./pages/tools/studyPlans/StudyPlans";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/tools/voice-notes" element={<VoiceNotes />} />
           <Route path="/tools/mind-maps" element={<MindMaps />} />
           <Route path="/tools/practice-tests" element={<PracticeTests />} />
+          <Route path="/tools/study-planner" element={<StudyPlans />} />
         </Routes>
       </div>
     </Router>

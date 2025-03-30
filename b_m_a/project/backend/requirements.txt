@@ -6,3 +6,4 @@ msal>=1.25.0
 python-dotenv>=1.0.0
 pydantic>=2.3.0 
 azure-cosmos>=4.5.0 
+pymupdf>=1.23.4
