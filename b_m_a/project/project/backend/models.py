@@ -2,7 +2,6 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
 
-
 class QuizOptions(BaseModel):
     numQuestions: int
     selectedTopics: List[str]
@@ -72,7 +71,3 @@ class UpdateStudyPlanResponse(BaseModel):
     id: str
     message: str
     updatedPlan: Dict[str, Any]
-
-class Summary(BaseModel):
-    summary: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)

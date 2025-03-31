@@ -43,12 +43,15 @@ export const callProtectedApi = async (endpoint, options = {}) => {
       account: account,
     });
 
-    // Add token to headers
-    const headers = {
+    // Merge headers and conditionally set Content-Type only if body is not FormData
+    let headers = {
       ...options.headers,
       Authorization: `Bearer ${response.accessToken}`,
-      "Content-Type": "application/json",
     };
+
+    if (!(options.body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+    }
 
     // Make API call
     const apiResponse = await fetch(endpoint, {
@@ -223,7 +226,7 @@ export const generateStudyPlan = async (
       body: formData,
       headers: {
         Authorization: `Bearer ${tokenResponse.accessToken}`,
-        // Don't set Content-Type for FormData, browser will set it with boundary
+        // Don't set Content-Type for FormData; browser will set it automatically.
       },
     });
 
@@ -333,6 +336,42 @@ export const getQuizzes = async () => {
     return response;
   } catch (error) {
     console.error("Error fetching quizzes:", error);
+    throw error;
+  }
+};
+
+/**
+ * Generate a summary for the given input.
+ * If payload is a FormData instance (i.e. file upload), it sends it as multipart/form-data.
+ * Otherwise, it assumes payload is an object containing { text: "..." }.
+ * @param {FormData|Object} payload - Either a FormData (for file upload) or a plain object with text.
+ * @returns {Promise<Object>} - The JSON response containing the summary.
+ */
+export const generateSummary = async (payload) => {
+  const endpoint = "http://localhost:8000/summarize";
+  let options = {};
+
+  if (payload instanceof FormData) {
+    options = {
+      method: "POST",
+      body: payload,
+      // Do not set Content-Type for FormData; browser will set it automatically.
+    };
+  } else {
+    options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    };
+  }
+
+  try {
+    const response = await callProtectedApi(endpoint, options);
+    return response; // Expected format: { summary: "..." }
+  } catch (error) {
+    console.error("Error generating summary:", error);
     throw error;
   }
 };
