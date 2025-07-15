@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Brain, Plus, X } from 'lucide-react';
+import { Brain, Plus, X, Save } from 'lucide-react';
 
 const AIFlashcards = () => {
   const [cards, setCards] = useState([]);
+  const [decks, setDecks] = useState([]);
   const [newQuestion, setNewQuestion] = useState('');
   const [newAnswer, setNewAnswer] = useState('');
 
@@ -30,7 +31,7 @@ const AIFlashcards = () => {
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Create New Flashcard</h2>
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Create New Flashcard Deck</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Question</label>
@@ -76,6 +77,13 @@ const AIFlashcards = () => {
               className="hidden"
               onChange={handleFileUpload}
             />
+            <button
+                onClick={removeCard}
+                className={`flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg
+                    transition-all duration-300 hover:bg-blue-700`}>
+                    <Save className="h-4 w-4" />
+                    Save Deck
+            </button>
           </div>
         </div>
       </div>
@@ -96,6 +104,42 @@ const AIFlashcards = () => {
             <p className="text-gray-600">{card.answer}</p>
           </div>
         ))}
+      </div>
+      
+      {/* Saved notes */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Saved Decks</h2>
+        {decks.length === 0 ? (
+          <div className="text-center py-8 bg-gray-50 rounded-lg">
+            <p className="text-gray-500">No saved decks yet.</p>
+          </div>
+        ) : (
+          decks.map(deck => (
+            <div
+              key={deck.title}
+              className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-medium text-gray-500">{note.timestamp}</span>
+                    <span className="text-sm text-gray-400">({formatDuration(note.duration)})</span>
+                  </div>
+                  <p className="text-gray-900 mb-4">{note.text}</p>
+                  {note.audioUrl && (
+                    <audio controls src={note.audioUrl} className="w-full" />
+                  )}
+                </div>
+                <button
+                  onClick={() => deleteNote(note.id)}
+                  className="text-gray-400 hover:text-red-600 transition-colors duration-200"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
