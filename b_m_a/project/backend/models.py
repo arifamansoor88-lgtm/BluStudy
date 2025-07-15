@@ -3,8 +3,8 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 
 class Flashcard(BaseModel):
-    frontSide: str
-    backSide: str
+    question: str
+    answer: str
 
 class FlashcardDeck(BaseModel):
     cards: List[Flashcard]
