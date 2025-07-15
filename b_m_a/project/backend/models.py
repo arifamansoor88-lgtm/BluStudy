@@ -2,6 +2,12 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
 
+class Flashcard(BaseModel):
+    frontSide: str
+    backSide: str
+
+class FlashcardDeck(BaseModel):
+    cards: List[Flashcard]
 
 class QuizOptions(BaseModel):
     numQuestions: int
