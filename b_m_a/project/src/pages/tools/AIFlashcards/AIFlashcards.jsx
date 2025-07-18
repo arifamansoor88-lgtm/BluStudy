@@ -1,18 +1,22 @@
-import React, { useState, useEffect} from 'react';
-import { Brain, Plus, X, Save } from 'lucide-react';
-import {useDeckData} from './hooks';
+import React, { useState, useEffect } from 'react';
+import { Brain, Plus, X, Save, Star } from 'lucide-react';
+import { useDeckData } from './hooks';
+import FlashcardDifficultySelector from "./FlashcardDifficultySelector";
+import StarSelector from "./StarSelector"
 
 const AIFlashcards = () => {
     const [cards, setCards] = useState([]);
     const [decks, setDecks] = useState([]);
     const [newQuestion, setNewQuestion] = useState('');
     const [newAnswer, setNewAnswer] = useState('');
+    const [difficulty, setDifficulty] = useState(null);
 
     const addCard = () => {
-        if (newQuestion && newAnswer) {
-            setCards([...cards, { question: newQuestion, answer: newAnswer }]);
+        if (newQuestion && newAnswer && difficulty) {
+            setCards([...cards, { question: newQuestion, answer: newAnswer, difficulty: difficulty, important: false }]);
             setNewQuestion('');
             setNewAnswer('');
+            setDifficulty(null);
         }
     };
 
@@ -73,6 +77,10 @@ const AIFlashcards = () => {
                             placeholder="Enter the answer"
                         />
                     </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                        <FlashcardDifficultySelector onSelect={setDifficulty} />
+                    </div>
                     {/* Flex container for side-by-side buttons */}
                     <div className="flex gap-4">
                         <button
@@ -98,7 +106,7 @@ const AIFlashcards = () => {
                             onChange={handleFileUpload}
                         />
                         <button
-                            onClick={removeCard}
+                            onClick={console.log(cards)}
                             className={`flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg
                     transition-all duration-300 hover:bg-blue-700`}>
                             <Save className="h-4 w-4" />
@@ -109,19 +117,28 @@ const AIFlashcards = () => {
             </div>
 
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                 {cards.map((card, index) => (
-                    <div key={index} className="bg-white p-6 rounded-lg shadow-sm relative group">
+                    <div key={index} className="bg-white p-6 rounded-lg shadow-sm relative group flex flex-col h-full">
                         <button
                             onClick={() => removeCard(index)}
                             className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                             <X className="h-4 w-4" />
                         </button>
+                        <StarSelector onSelect={(isImportant) => {
+                            const updatedCards = [...cards];
+                            updatedCards[index].important = isImportant;
+                            setCards(updatedCards);
+                        }} />
                         <h3 className="font-medium text-gray-900 mb-2">Question:</h3>
                         <p className="text-gray-600 mb-4">{card.question}</p>
                         <h3 className="font-medium text-gray-900 mb-2">Answer:</h3>
                         <p className="text-gray-600">{card.answer}</p>
+                        <h3 className="font-medium text-gray-900 mb-2">Difficulty:</h3>
+                        <p className="text-gray-600">{card.difficulty}</p>
+                        <h3 className="font-medium text-gray-900 mb-2">Importance:</h3>
+                        <p className="text-gray-600">{card.important.toString()}</p>
                     </div>
                 ))}
             </div>
