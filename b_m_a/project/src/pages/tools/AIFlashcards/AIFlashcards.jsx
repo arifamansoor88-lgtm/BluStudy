@@ -24,6 +24,11 @@ const AIFlashcards = () => {
         setCards(cards.filter((_, i) => i !== index));
     };
 
+    const saveCard = () => {
+        let deckName = prompt("Choose a name for this deck");
+        saveDeck(deckName, cards);
+    }
+
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
         console.log(file);
@@ -106,7 +111,7 @@ const AIFlashcards = () => {
                             onChange={handleFileUpload}
                         />
                         <button
-                            onClick={console.log(cards)}
+                            onClick={saveCard}
                             className={`flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg
                     transition-all duration-300 hover:bg-blue-700`}>
                             <Save className="h-4 w-4" />
