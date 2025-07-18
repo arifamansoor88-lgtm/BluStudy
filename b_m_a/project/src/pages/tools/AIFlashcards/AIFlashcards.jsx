@@ -196,7 +196,6 @@ const AIFlashcards = () => {
                 <p className="text-gray-600 mb-4">{card.question}</p>
                 <h3 className="font-medium text-gray-900 mb-2">Answer:</h3>
                 <p className="text-gray-600">{card.answer}</p>
-                <h3 className="font-medium text-gray-900 mb-2">Difficulty:</h3>
                 <div className="flex items-center gap-2 p-2 rounded-md bg-gray-100 shadow-sm transition-all duration-300 hover:scale-105">
                     <div className={`w-3 h-3 rounded-full ${
                         card.difficulty.toLowerCase() === 'easy' ? 'bg-green-500' :
