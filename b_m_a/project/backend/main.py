@@ -808,19 +808,19 @@ async def get_decks(user_claims: dict = Depends(validate_token)):
 async def get_decks(deck_id: str, user_claims: dict = Depends(validate_token)):
     try:
         # Get the deck from Cosmos DB (using partition key)
-        quiz = container.read_item(
+        deck = container.read_item(
             item=deck_id, 
             partition_key=user_claims["sub"]
         )
         
         # Verify the deck belongs to the user
-        if quiz["userId"] != user_claims["sub"]:
+        if deck["userId"] != user_claims["sub"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, 
                 detail="Access denied"
             )
             
-        return quiz
+        return deck
     except Exception as e:
         print(f"Error fetching deck: {str(e)}")
         raise HTTPException(
