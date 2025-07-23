@@ -3,7 +3,9 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import { Mic, Save, Trash2, Download, Share2, AudioWaveform as Waveform } from 'lucide-react';
 
 const VoiceNotes = () => {
-  const [notes, setNotes] = useState([]);
+  const [notes, setNotes] = useState(() => {
+    return JSON.parse(localStorage.getItem('voiceNotes')) || [];
+  });
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [audioUrl, setAudioUrl] = useState(null);
@@ -11,7 +13,7 @@ const VoiceNotes = () => {
   const [showSaveAnimation, setShowSaveAnimation] = useState(false);
   const [tag, setTag] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [privacySettings, setPrivacySettings] = useState({}); // track per note id
+  const [privacySettings, setPrivacySettings] = useState({});
 
   const mediaRecorderRef = useRef(null);
   const timerRef = useRef(null);
@@ -23,8 +25,7 @@ const VoiceNotes = () => {
 
   const { transcript, resetTranscript } = useSpeechRecognition();
 
-  // Canvas setup (omitted here for brevity, keep from your original code)
-  const setupCanvas = () => {
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
@@ -35,7 +36,7 @@ const VoiceNotes = () => {
     canvas.style.height = `${rect.height}px`;
     const ctx = canvas.getContext('2d');
     if (ctx) ctx.scale(dpr, dpr);
-  };
+  }, []);
 
   const drawWaveform = () => {
     const canvas = canvasRef.current;
@@ -77,60 +78,50 @@ const VoiceNotes = () => {
   };
 
   const startRecording = async () => {
-    try {
-      resetTranscript();
-      SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
+    resetTranscript();
+    SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      const localChunks = [];
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorderRef.current = new MediaRecorder(stream);
+    const localChunks = [];
 
-      mediaRecorderRef.current.ondataavailable = (e) => {
-        if (e.data.size > 0) localChunks.push(e.data);
-      };
+    mediaRecorderRef.current.ondataavailable = (e) => {
+      if (e.data.size > 0) localChunks.push(e.data);
+    };
 
-      mediaRecorderRef.current.onstop = () => {
-        const blob = new Blob(localChunks, { type: 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
-        setChunks(localChunks);
-      };
+    mediaRecorderRef.current.onstop = () => {
+      const blob = new Blob(localChunks, { type: 'audio/webm' });
+      const url = URL.createObjectURL(blob);
+      setAudioUrl(url);
+      setChunks(localChunks);
+    };
 
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      await audioContextRef.current.resume();
+    audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    await audioContextRef.current.resume();
 
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
+    analyserRef.current = audioContextRef.current.createAnalyser();
+    sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
+    sourceRef.current.connect(analyserRef.current);
+    drawWaveform();
 
-      sourceRef.current.connect(analyserRef.current);
-      drawWaveform();
-
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-      setRecordingDuration(0);
-      timerRef.current = setInterval(() => setRecordingDuration((prev) => prev + 1), 1000);
-    } catch (err) {
-      console.error('Microphone error:', err);
-    }
+    mediaRecorderRef.current.start();
+    setIsRecording(true);
+    setRecordingDuration(0);
+    timerRef.current = setInterval(() => setRecordingDuration((prev) => prev + 1), 1000);
   };
 
   const stopRecording = () => {
     SpeechRecognition.stopListening();
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
-    }
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    if (audioContextRef.current) audioContextRef.current.close();
+    mediaRecorderRef.current?.stop();
+    mediaRecorderRef.current?.stream.getTracks().forEach((track) => track.stop());
+    clearInterval(timerRef.current);
+    cancelAnimationFrame(animationRef.current);
+    audioContextRef.current?.close();
     setIsRecording(false);
   };
 
-  const toggleRecording = () => {
-    isRecording ? stopRecording() : startRecording();
-  };
+  const toggleRecording = () => (isRecording ? stopRecording() : startRecording());
 
-  // Save note after recording stopped and audioUrl is ready
   useEffect(() => {
     if (!isRecording && audioUrl && transcript.trim() !== '') {
       const newNote = {
@@ -140,9 +131,11 @@ const VoiceNotes = () => {
         tag: tag.trim(),
         audioUrl,
         duration: recordingDuration,
-        privacy: privacySettings['temp'] || 'Private', // Use temp privacy or default Private
+        visibility: privacySettings['temp'] || 'Private',
       };
-      setNotes((prev) => [newNote, ...prev]);
+      const updatedNotes = [newNote, ...notes];
+      setNotes(updatedNotes);
+      localStorage.setItem('voiceNotes', JSON.stringify(updatedNotes));
       setShowSaveAnimation(true);
       setTimeout(() => {
         resetTranscript();
@@ -157,35 +150,29 @@ const VoiceNotes = () => {
         setShowSaveAnimation(false);
       }, 500);
     }
-  }, [audioUrl, isRecording, transcript, recordingDuration, tag, privacySettings]);
+  }, [audioUrl, isRecording, transcript, recordingDuration]);
 
   const saveNote = () => {
     if (isRecording) {
-      // Save current privacy for temp use
       setPrivacySettings((prev) => ({ ...prev, temp: privacySettings['temp'] || 'Private' }));
       stopRecording();
     }
   };
 
-  const deleteNote = (id) => setNotes((prev) => prev.filter((n) => n.id !== id));
-
-  const formatDuration = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
-
-  // Filter notes by search query matching transcript or tag
-  const filteredNotes = notes.filter(
-    (note) =>
-      note.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      note.tag.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Handle privacy dropdown change per note
-  const handlePrivacyChange = (id, value) => {
-    setNotes((prev) =>
-      prev.map((note) => (note.id === id ? { ...note, privacy: value } : note))
-    );
+  const deleteNote = (id) => {
+    const updated = notes.filter((n) => n.id !== id);
+    setNotes(updated);
+    localStorage.setItem('voiceNotes', JSON.stringify(updated));
   };
 
-  // Share button handler using Web Share API fallback disabled if unsupported
+  const handlePrivacyChange = (id, value) => {
+    const updated = notes.map((note) =>
+      note.id === id ? { ...note, visibility: value } : note
+    );
+    setNotes(updated);
+    localStorage.setItem('voiceNotes', JSON.stringify(updated));
+  };
+
   const handleShare = async (note) => {
     if (navigator.share) {
       try {
@@ -198,9 +185,17 @@ const VoiceNotes = () => {
         alert('Share failed: ' + err.message);
       }
     } else {
-      alert('Web Share API not supported in this browser.');
+      alert('Web Share API not supported.');
     }
   };
+
+  const formatDuration = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+
+  const filteredNotes = notes.filter(
+    (note) =>
+      note.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      note.tag.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -217,14 +212,22 @@ const VoiceNotes = () => {
             <button
               onClick={toggleRecording}
               className={`p-4 rounded-full transition ${
-                isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+                isRecording
+                  ? 'bg-red-100 text-red-600 animate-pulse'
+                  : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
               }`}
             >
               <Mic className="h-6 w-6" />
             </button>
             <div>
-              <p className="text-sm text-gray-700">{isRecording ? 'Recording...' : 'Ready to record'}</p>
-              {isRecording && <p className="text-xs text-red-600">{formatDuration(recordingDuration)}</p>}
+              <p className="text-sm text-gray-700">
+                {isRecording ? 'Recording...' : 'Ready to record'}
+              </p>
+              {isRecording && (
+                <p className="text-xs text-red-600">
+                  {formatDuration(recordingDuration)}
+                </p>
+              )}
             </div>
           </div>
 
@@ -234,7 +237,10 @@ const VoiceNotes = () => {
                 className="mr-4 p-2 rounded border border-gray-300"
                 value={privacySettings['temp'] || 'Private'}
                 onChange={(e) =>
-                  setPrivacySettings((prev) => ({ ...prev, temp: e.target.value }))
+                  setPrivacySettings((prev) => ({
+                    ...prev,
+                    temp: e.target.value,
+                  }))
                 }
               >
                 <option>Private</option>
@@ -270,7 +276,7 @@ const VoiceNotes = () => {
 
         {audioUrl && !isRecording && (
           <div className="mt-6 flex items-center gap-4">
-            <audio id="playback" controls src={audioUrl} className="flex-1" />
+            <audio controls src={audioUrl} className="flex-1" />
             <a
               href={audioUrl}
               download={`voice_note_${Date.now()}.webm`}
@@ -306,17 +312,23 @@ const VoiceNotes = () => {
             <div className="flex-1">
               <div className="flex gap-2 mb-2 text-sm text-gray-500">
                 <span>{note.timestamp}</span>
-                <span className="text-gray-400">({formatDuration(note.duration)})</span>
+                <span className="text-gray-400">
+                  ({formatDuration(note.duration)})
+                </span>
                 <span className="ml-4 font-medium text-gray-600">Tag: {note.tag || '-'}</span>
-                <span className="ml-4 font-medium text-gray-600">Privacy: {note.privacy || 'Private'}</span>
+                <span className="ml-4 font-medium text-gray-600">
+                  Privacy: {note.visibility || 'Private'}
+                </span>
               </div>
               <p className="text-gray-900 mb-4">{note.text}</p>
-              {note.audioUrl && <audio controls src={note.audioUrl} className="w-full" />}
+              {note.audioUrl && (
+                <audio controls src={note.audioUrl} className="w-full" />
+              )}
             </div>
 
             <div className="flex items-center gap-4 mt-4 md:mt-0">
               <select
-                value={note.privacy || 'Private'}
+                value={note.visibility || 'Private'}
                 onChange={(e) => handlePrivacyChange(note.id, e.target.value)}
                 className="p-2 border border-gray-300 rounded"
               >
@@ -327,8 +339,6 @@ const VoiceNotes = () => {
               <button
                 onClick={() => handleShare(note)}
                 className="text-purple-600 hover:text-purple-800"
-                title="Share Note"
-                aria-label="Share Note"
               >
                 <Share2 className="h-6 w-6" />
               </button>
@@ -337,8 +347,6 @@ const VoiceNotes = () => {
                 href={note.audioUrl}
                 download={`voice_note_${note.id}.webm`}
                 className="text-purple-600 hover:text-purple-800"
-                title="Download Audio"
-                aria-label="Download Audio"
               >
                 <Download className="h-6 w-6" />
               </a>
@@ -346,8 +354,6 @@ const VoiceNotes = () => {
               <button
                 onClick={() => deleteNote(note.id)}
                 className="text-red-600 hover:text-red-800"
-                title="Delete Note"
-                aria-label="Delete Note"
               >
                 <Trash2 className="h-6 w-6" />
               </button>
