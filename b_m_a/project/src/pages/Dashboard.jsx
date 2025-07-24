@@ -2,15 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useMsal } from "@azure/msal-react";
 import { getTasks } from "../api/apiService";
 import { useNavigate } from "react-router-dom";
-import {
-  Clock,
-  Trophy,
-  Star,
-  Target,
-  BookOpen,
-  Calendar,
-  User,
-} from "lucide-react";
+import { Clock, Star, Target, BookOpen, Calendar, User, Flame, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 
 const Dashboard = () => {
@@ -20,6 +12,35 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
+
+  // making streak 
+    const [streak, setStreak] = useState(1);
+
+  useEffect(() => {
+    if (!userData) return;
+
+    const today = new Date().toDateString();
+    const lastLogin = localStorage.getItem("lastLoginDate");
+    let storedStreak = parseInt(localStorage.getItem("streakCount"), 10) || 1;
+
+    if (!lastLogin) {
+      storedStreak = 1;
+    } else {
+      const diffDays = Math.floor(
+        (new Date(today) - new Date(lastLogin)) / (1000 * 60 * 60 * 24)
+      );
+      if (diffDays === 1) {
+        storedStreak += 1;
+      } else if (diffDays > 1) {
+        storedStreak = 1;
+      }
+    }
+
+    setStreak(storedStreak);
+    localStorage.setItem("streakCount", storedStreak.toString());
+    localStorage.setItem("lastLoginDate", today);
+  }, [userData]);
+
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -52,11 +73,17 @@ const Dashboard = () => {
       "User";
 
     // Extract email from multiple possible locations
-    const email =
-      account?.username ||
-      (account?.idTokenClaims?.emails && account?.idTokenClaims?.emails[0]) ||
-      account?.idTokenClaims?.email ||
-      "Not available";
+    const rawEmails = account.idTokenClaims?.emails; 
+    const emailFromClaim = Array.isArray(rawEmails) ? rawEmails[0] : rawEmails; 
+    const email = 
+    account.username ||             // B2C username is the email 
+    emailFromClaim ||               // or the first element of emails[] 
+    account.idTokenClaims?.email || // or the standard email claim 
+    account.idTokenClaims?.upn ||   // or userPrincipalName 
+    account.idTokenClaims?.preferred_username ||  
+    "Not available";
+    console.log("ID token claims:", account.idTokenClaims);
+
 
     setUserData({
       name: name,
@@ -98,7 +125,7 @@ const Dashboard = () => {
   // Get user information
   const userName = userData?.name || "User";
   const firstName = userName.split(" ")[0];
-  const email = userData?.email || "Not available";
+  const email = userData?.email;
 
   const teachers = [
     {
@@ -301,11 +328,11 @@ const Dashboard = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <AchievementCard
-              icon={Trophy}
-              title="7 Day Streak"
+              icon={Flame}
+              title={`${streak} Day Streak`}
               description="Consistent learning pays off!"
-              color="text-blue-600"
-              bgColor="bg-blue-100"
+              color="text-red-600"
+              bgColor="bg-red-100"
             />
             <AchievementCard
               icon={Star}
