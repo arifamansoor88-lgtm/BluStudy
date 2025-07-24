@@ -6,7 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import StudyTools from "./pages/StudyTools";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
-import AIFlashcards from "./pages/tools/AIFlashcards";
+import AIFlashcards from "./pages/tools/AIFlashcards/AIFlashcards";
 import VoiceNotes from "./pages/tools/VoiceNotes";
 import MindMaps from "./pages/tools/MindMaps";
 import PracticeTests from "./pages/tools/PracticeTests/PracticeTests";
