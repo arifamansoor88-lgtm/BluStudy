@@ -11,7 +11,7 @@ class Difficulty(Enum):
 class Flashcard(BaseModel):
     question: str
     answer: str
-    difficulty: Difficulty
+    difficulty: str
     important: bool
 
 class FlashcardDeck(BaseModel):

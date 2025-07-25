@@ -25,6 +25,20 @@ const AIFlashcards = () => {
         setCards(cards.filter((_, i) => i !== index));
     };
 
+
+    const handleDeleteDeck = async (deckId, e) => {
+        e.stopPropagation(); // Prevent triggering onDeckSelect
+        if (window.confirm("Are you sure you want to delete this deck?")) {
+            try {
+                await deleteDeck(deckId);
+                decks.filter(deck => deck.id !== deckId);
+            } catch (err) {
+                console.error('Failed to delete deck:', err);
+            }
+        }
+    };
+  
+
     const handleDeckSelect = (deck) => {
         console.log("Selected deck:", deck);
     };
@@ -49,6 +63,7 @@ const AIFlashcards = () => {
         decksFetchedRef,
         fetchSavedDecks,
         saveDeck,
+        deleteDeck,
     } = useDeckData();
 
     // Fetch saved decks on component mount
@@ -222,47 +237,12 @@ const AIFlashcards = () => {
                 ))}
             </div>
 
-            {/* Saved decks */}
             <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">Saved Decks</h2>
-                {decks.length === 0 ? (
-                    <div className="text-center py-8 bg-gray-50 rounded-lg">
-                        <p className="text-gray-500">No saved decks yet.</p>
-                    </div>
-                ) : (
-                    decks.map(deck => (
-                        <div
-                            key={deck.title}
-                            className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200"
-                        >
-                            <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-sm font-medium text-gray-500">{note.timestamp}</span>
-                                        <span className="text-sm text-gray-400">({formatDuration(note.duration)})</span>
-                                    </div>
-                                    <p className="text-gray-900 mb-4">{note.text}</p>
-                                    {note.audioUrl && (
-                                        <audio controls src={note.audioUrl} className="w-full" />
-                                    )}
-                                </div>
-                                <button
-                                    onClick={() => saveDeck}
-                                    className="text-gray-400 hover:text-red-600 transition-colors duration-200"
-                                >
-                                    <Trash2 className="h-5 w-5" />
-                                </button>
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
-            {/* --- Saved Decks Section (Corrected) --- */}
-            <div className="mt-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Saved Decks</h2>
                 <FlashcardDeckList
                     decks={savedDecks}
                     onDeckSelect={handleDeckSelect}
+                    onDeckDelete={handleDeleteDeck}
                 />
             </div>
         </div>
