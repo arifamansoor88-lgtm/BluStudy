@@ -17,7 +17,6 @@ const AIFlashcards = () => {
             setCards([...cards, { question: newQuestion, answer: newAnswer, difficulty: difficulty, important: false }]);
             setNewQuestion('');
             setNewAnswer('');
-            setDifficulty(null);
         }
     };
 
@@ -25,18 +24,6 @@ const AIFlashcards = () => {
         setCards(cards.filter((_, i) => i !== index));
     };
 
-
-    const handleDeleteDeck = async (deckId, e) => {
-        e.stopPropagation(); // Prevent triggering onDeckSelect
-        if (window.confirm("Are you sure you want to delete this deck?")) {
-            try {
-                await deleteDeck(deckId);
-                decks.filter(deck => deck.id !== deckId);
-            } catch (err) {
-                console.error('Failed to delete deck:', err);
-            }
-        }
-    };
   
 
     const handleDeckSelect = (deck) => {
@@ -242,7 +229,6 @@ const AIFlashcards = () => {
                 <FlashcardDeckList
                     decks={savedDecks}
                     onDeckSelect={handleDeckSelect}
-                    onDeckDelete={handleDeleteDeck}
                 />
             </div>
         </div>

@@ -1,4 +1,6 @@
 import React from "react";
+import { X } from 'lucide-react';
+import { useDeckData } from "./hooks";
 
 const CardStackIcon = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}>
@@ -12,8 +14,21 @@ const StarIcon = (props) => (
   </svg>
 );
 
-
 const FlashcardDeckList = ({ decks, onDeckSelect }) => {
+  const { deleteDeck } = useDeckData();
+
+  const handleDeleteDeck = async (deckId, e) => {
+    e.stopPropagation(); // Prevent triggering onDeckSelect
+    if (window.confirm("Are you sure you want to delete this deck?")) {
+      try {
+        await deleteDeck(deckId); // Assume deleteDeck updates savedDecks in useDeckData
+      } catch (err) {
+        console.error('Failed to delete deck:', err);
+      }
+      window.location.reload()
+    }
+  };
+
   if (!decks || decks.length === 0) {
     return (
       <div className="text-center py-10 px-4">
@@ -29,65 +44,27 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
   return (
     <div className="space-y-4">
       {decks.map((deck) => {
-        // Default to an empty array if deck.cards is null or undefined
         const cards = deck.data.cards || [];
-
-        // Calculate stats using the safe 'cards' variable
-        const stats = cards.reduce(
-          (acc, card) => {
-            const difficulty = card.difficulty?.toLowerCase();
-            if (difficulty === 'easy') acc.easy++;
-            if (difficulty === 'medium') acc.medium++;
-            if (difficulty === 'hard') acc.hard++;
-            if (card.important) acc.important++;
-            return acc;
-          },
-          { easy: 0, medium: 0, hard: 0, important: 0 }
-        );
 
         return (
           <div
             key={deck.id}
-            className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md hover:shadow-lg cursor-pointer transition-shadow duration-200 ease-in-out"
+            className="relative group bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md hover:shadow-lg cursor-pointer transition-shadow duration-200 ease-in-out"
             onClick={() => onDeckSelect(deck)}
           >
+            <button
+              onClick={(e) => handleDeleteDeck(deck.id, e)}
+              className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <X className="h-4 w-4" />
+            </button>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
               {deck.data.title || "Untitled Deck"}
             </h3>
-
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-600 dark:text-gray-400">
-              {/* Now we use the safe 'cards' variable here */}
               <div className="flex items-center" title={`${cards.length} total cards`}>
                 <CardStackIcon className="h-5 w-5 mr-1.5" />
                 <span>{cards.length}</span>
-              </div>
-
-              {stats.important > 0 && (
-                <div className="flex items-center" title={`${stats.important} important cards`}>
-                  <StarIcon className="h-5 w-5 mr-1.5 text-yellow-400" />
-                  <span>{stats.important}</span>
-                </div>
-              )}
-
-              <div className="flex items-center gap-x-3 ml-auto">
-                {stats.easy > 0 && (
-                  <div className="flex items-center" title={`${stats.easy} easy cards`}>
-                    <span className="h-2.5 w-2.5 rounded-full bg-green-500 mr-1.5"></span>
-                    <span>{stats.easy}</span>
-                  </div>
-                )}
-                {stats.medium > 0 && (
-                  <div className="flex items-center" title={`${stats.medium} medium cards`}>
-                    <span className="h-2.5 w-2.5 rounded-full bg-yellow-500 mr-1.5"></span>
-                    <span>{stats.medium}</span>
-                  </div>
-                )}
-                {stats.hard > 0 && (
-                  <div className="flex items-center" title={`${stats.hard} hard cards`}>
-                    <span className="h-2.5 w-2.5 rounded-full bg-red-500 mr-1.5"></span>
-                    <span>{stats.hard}</span>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -98,4 +75,3 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
 };
 
 export default FlashcardDeckList;
-
