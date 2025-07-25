@@ -108,9 +108,9 @@ export const useDeckData = () => {
                 await fetchSavedDecks();
                 return response.data;
             } catch (error) {
-                console.error("Error saving quiz:", error);
+                console.error("Error saving deck:", error);
                 setError(
-                    "Failed to save quiz: " +
+                    "Failed to save deck: " +
                     (error.response?.data?.message || error.message)
                 );
                 return null;
@@ -121,6 +121,49 @@ export const useDeckData = () => {
         [getToken, fetchSavedDecks]
     );
 
+    // Delete a deck
+    const deleteDeck = useCallback(
+        async (deckId) => {
+            try {
+                setIsSaving(true);
+                setSaveSuccess(false);
+
+
+                const token = await getToken();
+                // Call API
+                const response = await axios.delete(
+                    `http://localhost:8000/delete-deck/${deckId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+
+
+                setSaveSuccess(true);
+                decksFetchedRef.current = false;
+                await fetchSavedDecks();
+                return response.data;
+            } catch (error) {
+                console.error("Error saving deck:", error);
+                setError(
+                    "Failed to delete deck: " +
+                    (error.response?.data?.message || error.message)
+                );
+                alert("Failed to delete deck!");
+                return null;
+            } finally {
+                setIsSaving(false);
+            }
+        },
+        [getToken, fetchSavedDecks]
+    );
+
+
+
+
     return {
         savedDecks,
         isSaving,
@@ -128,6 +171,7 @@ export const useDeckData = () => {
         error,
         fetchSavedDecks,
         saveDeck,
+        deleteDeck,
         decksFetchedRef,
     };
 }
