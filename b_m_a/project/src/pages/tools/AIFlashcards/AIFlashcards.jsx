@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, Plus, X, Save, Pencil } from 'lucide-react';
+import { Brain, Plus, X, Save, Pencil, MoveRight } from 'lucide-react';
 import { useDeckData } from './hooks';
 import FlashcardDifficultySelector from "./FlashcardDifficultySelector";
 import StarSelector from "./StarSelector"
 import FlashcardDeckList from './FlashcardDeckList';
+import FlashcardStudyPage from './FlashcardStudy';
+import { Link, useNavigate } from "react-router-dom";
+
 
 const AIFlashcards = () => {
     const [cards, setCards] = useState([]);
@@ -28,6 +31,7 @@ const AIFlashcards = () => {
 
     const handleDeckSelect = (deck) => {
         console.log("Selected deck:", deck);
+        
     };
 
 
@@ -125,6 +129,18 @@ const AIFlashcards = () => {
                             <Save className="h-4 w-4" />
                             Save Deck
                         </button>
+                        <Link
+                            to={"./FlashcardStudyPage"}
+                            state={{ flashcards: cards }}
+                          > 
+                        <button
+                            onClick={saveCard}
+                            className={`flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg
+                    transition-all duration-300 hover:bg-blue-700`}>
+                            Test Deck
+                            <MoveRight className="h-4 w-4" />
+                        </button>
+                        </Link>
                     </div>
                 </div>
             </div>
