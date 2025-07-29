@@ -27,7 +27,7 @@ const FlashcardStudyPage = () => {
             <div className="max-w-3xl mx-auto py-16 px-4 text-center">
                 <p className="text-gray-600 text-lg">No flashcards available.</p>
                 <Link
-                    to="/"
+                    to="/tools/flashcards"
                     className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                     <ArrowLeft className="w-4 h-4 mr-2" />
