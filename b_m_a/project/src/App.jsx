@@ -12,6 +12,7 @@ import MindMaps from "./pages/tools/MindMaps";
 import PracticeTests from "./pages/tools/PracticeTests/PracticeTests";
 import StudyPlans from "./pages/tools/studyPlans/StudyPlans";
 import Summarizer from "./pages/tools/Summarizer";
+import PublicLibrary from "./pages/publicLibrary";
 import FlashcardStudyPage from './pages/tools/AIFlashcards/FlashcardStudy';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
           <Route path="/tools/study-planner" element={<StudyPlans />} />
           <Route path="/tools/summarizer" element={<Summarizer />} />
           <Route path="/tools/flashcards/FlashcardStudyPage" element={<FlashcardStudyPage  />} />
+          <Route path="/public_Library" element={<PublicLibrary />} />
           {/* Add more routes as needed */}
         </Routes>
       </div>
