@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCw, ArrowLeft, FileDown } from 'lucide-react';
+import { RotateCw, ArrowLeft, FileDown, Volume2 } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
 
@@ -17,68 +17,82 @@ const FlashcardStudyPage = () => {
         setFlipped((prev) => !prev);
     };
 
+    const speakCard = () => {
+        const synth = window.speechSynthesis;
+        synth.cancel(); // Stop any ongoing speech
+
+        const text = flipped ? currentCard.answer : currentCard.question;
+        const utterance = new SpeechSynthesisUtterance(text);
+
+        utterance.lang = 'en-US'; // Optional: set language
+        utterance.rate = 1;       // Optional: set speed
+        utterance.pitch = 1;      // Optional: set pitch
+        synth.speak(utterance);
+    };
+
+
     const exportToPDF = () => {
         const doc = new jsPDF({
             orientation: 'portrait',
             unit: 'pt',
             format: 'a4'
         });
-    
+
         const cardWidth = 400;
         const cardHeight = 250;
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
-    
+
         const centerX = (pageWidth - cardWidth) / 2;
         const centerY = (pageHeight - cardHeight) / 2;
-    
+
         flashcards.forEach((card, i) => {
             // --- Question Side ---
             doc.setFillColor(255, 255, 255);
             doc.setDrawColor(200); // soft border
             doc.setLineWidth(1);
             doc.roundedRect(centerX, centerY, cardWidth, cardHeight, 10, 10, 'FD');
-    
+
             doc.setFontSize(16);
             doc.setTextColor(51, 51, 51);
             doc.setFont('helvetica', 'bold');
             doc.text(`Card ${i + 1}`, pageWidth / 2, centerY - 20, { align: 'center' });
-    
+
             doc.setFontSize(18);
             doc.setFont('helvetica', 'normal');
             doc.text(card.question, pageWidth / 2, pageHeight / 2, {
                 align: 'center',
                 maxWidth: cardWidth - 40
             });
-    
+
             doc.addPage();
-    
+
             // --- Answer Side ---
             doc.setFillColor(255, 255, 255);
             doc.setDrawColor(200);
             doc.setLineWidth(1);
             doc.roundedRect(centerX, centerY, cardWidth, cardHeight, 10, 10, 'FD');
-    
+
             doc.setFontSize(16);
             doc.setTextColor(51, 51, 51);
             doc.setFont('helvetica', 'bold');
             doc.text(`Answer to Card ${i + 1}`, pageWidth / 2, centerY - 20, { align: 'center' });
-    
+
             doc.setFontSize(18);
             doc.setFont('helvetica', 'normal');
             doc.text(card.answer, pageWidth / 2, pageHeight / 2, {
                 align: 'center',
                 maxWidth: cardWidth - 40
             });
-    
+
             if (i < flashcards.length - 1) {
                 doc.addPage();
             }
         });
-    
+
         doc.save('flashcards.pdf');
     };
-    
+
     if (flashcards.length === 0) {
         return (
             <div className="max-w-3xl mx-auto py-16 px-4 text-center">
@@ -116,12 +130,23 @@ const FlashcardStudyPage = () => {
             </div>
 
             <div
-                className="cursor-pointer w-full h-64 bg-white shadow-lg rounded-lg flex items-center justify-center text-center text-2xl font-semibold text-gray-700 transition-transform transform-gpu hover:scale-105"
+                className="relative cursor-pointer w-full h-64 bg-white shadow-lg rounded-lg flex items-center justify-center text-center text-2xl font-semibold text-gray-700 transition-transform transform-gpu hover:scale-105"
                 onClick={handleFlip}
             >
                 {flipped ? currentCard.answer : currentCard.question}
-            </div>
 
+                {/* Speak icon button */}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation(); // prevent flipping when clicking the icon
+                        speakCard();
+                    }}
+                    className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                    title="Speak"
+                >
+                    <Volume2 className="w-5 h-5" />
+                </button>
+            </div>
             <div className="mt-6 flex justify-between items-center">
                 <button
                     onClick={handleNext}
