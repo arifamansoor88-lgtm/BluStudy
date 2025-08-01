@@ -40,6 +40,73 @@ def summarize_text(text: str) -> str:
     except Exception as e:
         print(f"Error while calling Azure OpenAI for summarization: {str(e)}")
         raise Exception(f"Azure OpenAI summarization request failed: {str(e)}")
+    
+
+# ---------------------------
+# Flashcard Client & Function
+# ---------------------------
+flashcard_client = AzureOpenAI(
+    azure_endpoint=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_ENDPOINT"),
+    api_key=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_API_KEY"),
+    api_version="2024-05-01-preview"
+)
+FLASHCARD_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_DEPLOYMENT_NAME")
+
+def generate_flashcard(text: str,
+                       num_flashcards: int = 10) -> str:
+    """
+   Generates Flashcards based on inputted text
+    
+    Args:
+        text (str): The text to summarize.
+        num_flashcards: The number of flashcarrds to generate
+        
+    Returns:
+        str: JSON Flashcards
+    """
+    try:
+        response = flashcard_client.chat.completions.create(
+            model=SUMMARIZER_DEPLOYMENT_NAME,
+            messages=[
+                {"role": "system", "content": "You are a helpful AI that creates concise flashcards from educational content."},
+                {"role": "user", "content": f""""
+                    You are a flashcard generator for study purposes. Given the following educational text, extract {num_flashcards} key concepts or facts and convert them into flashcards. Each flashcard should consist of a concise question and a short, clear answer. Do not include explanations or extra formatting.
+
+                    ---
+
+                    # Output Format (as JSON array):
+                    {{
+                    "contentType": "flashcards",
+                    "data": {{
+                        "title": "Generated Flashcards",
+                        "cards": [
+                            {{
+                                "question": "...",
+                                "answer": "...",
+                                "difficulty": "...",
+                                "important": false
+                            }}
+                        ]
+                    }}
+                    }}
+
+Only return valid JSON. Do not explain or include any extra text.
+
+Make sure the questions are varied and focus on important points from the content.
+
+---
+
+Text:
+{text}
+"""}
+            ],
+            max_tokens=150,
+            temperature=0.5
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"Error while calling Azure OpenAI for flashcard generatiohn: {str(e)}")
+        raise Exception(f"Azure OpenAI generation request failed: {str(e)}")
 
 
 # ---------------------------

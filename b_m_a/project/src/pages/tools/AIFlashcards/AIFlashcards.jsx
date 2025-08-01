@@ -1,16 +1,23 @@
-import React, { useState, useEffect} from 'react';
-import { Brain, Plus, X, Save } from 'lucide-react';
-import {useDeckData} from './hooks';
+import React, { useState, useEffect } from 'react';
+import { Brain, Plus, X, Save, Pencil, MoveRight } from 'lucide-react';
+import { useDeckData } from './hooks';
+import FlashcardDifficultySelector from "./FlashcardDifficultySelector";
+import StarSelector from "./StarSelector"
+import FlashcardDeckList from './FlashcardDeckList';
+import FlashcardStudyPage from './FlashcardStudy';
+import { Link, useNavigate } from "react-router-dom";
+
 
 const AIFlashcards = () => {
     const [cards, setCards] = useState([]);
     const [decks, setDecks] = useState([]);
     const [newQuestion, setNewQuestion] = useState('');
     const [newAnswer, setNewAnswer] = useState('');
+    const [difficulty, setDifficulty] = useState(null);
 
     const addCard = () => {
-        if (newQuestion && newAnswer) {
-            setCards([...cards, { question: newQuestion, answer: newAnswer }]);
+        if (newQuestion && newAnswer && difficulty) {
+            setCards([...cards, { question: newQuestion, answer: newAnswer, difficulty: difficulty, important: false }]);
             setNewQuestion('');
             setNewAnswer('');
         }
@@ -19,6 +26,19 @@ const AIFlashcards = () => {
     const removeCard = (index) => {
         setCards(cards.filter((_, i) => i !== index));
     };
+
+  
+
+    const handleDeckSelect = (deck) => {
+        console.log("Selected deck:", deck);
+        
+    };
+
+
+    const saveCard = () => {
+        let deckName = prompt("Choose a name for this deck");
+        saveDeck(deckName, cards);
+    }
 
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
@@ -34,6 +54,7 @@ const AIFlashcards = () => {
         decksFetchedRef,
         fetchSavedDecks,
         saveDeck,
+        deleteDeck,
     } = useDeckData();
 
     // Fetch saved decks on component mount
@@ -73,6 +94,10 @@ const AIFlashcards = () => {
                             placeholder="Enter the answer"
                         />
                     </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                        <FlashcardDifficultySelector onSelect={setDifficulty} />
+                    </div>
                     {/* Flex container for side-by-side buttons */}
                     <div className="flex gap-4">
                         <button
@@ -98,68 +123,129 @@ const AIFlashcards = () => {
                             onChange={handleFileUpload}
                         />
                         <button
-                            onClick={removeCard}
+                            onClick={saveCard}
                             className={`flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg
                     transition-all duration-300 hover:bg-blue-700`}>
                             <Save className="h-4 w-4" />
                             Save Deck
                         </button>
+                        <Link
+                            to={"./FlashcardStudyPage"}
+                            state={{ flashcards: cards }}
+                          > 
+                        <button
+                            onClick={saveCard}
+                            className={`flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg
+                    transition-all duration-300 hover:bg-blue-700`}>
+                            Test Deck
+                            <MoveRight className="h-4 w-4" />
+                        </button>
+                        </Link>
                     </div>
                 </div>
             </div>
 
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                 {cards.map((card, index) => (
-                    <div key={index} className="bg-white p-6 rounded-lg shadow-sm relative group">
+                    <div key={index} className="bg-white p-6 rounded-lg shadow-sm relative group flex flex-col h-full">
                         <button
                             onClick={() => removeCard(index)}
                             className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                             <X className="h-4 w-4" />
                         </button>
-                        <h3 className="font-medium text-gray-900 mb-2">Question:</h3>
-                        <p className="text-gray-600 mb-4">{card.question}</p>
-                        <h3 className="font-medium text-gray-900 mb-2">Answer:</h3>
-                        <p className="text-gray-600">{card.answer}</p>
+                        <button
+                            onClick={() => {
+                                const updatedCards = [...cards];
+                                updatedCards[index].isEditing = !updatedCards[index].isEditing;
+                                setCards(updatedCards);
+                            }}
+                            className="absolute top-2 right-10 p-1 text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                            <Pencil className="h-4 w-4" />
+                        </button>
+                        <StarSelector onSelect={(isImportant) => {
+                            const updatedCards = [...cards];
+                            updatedCards[index].important = isImportant;
+                            setCards(updatedCards);
+                        }} />
+                        {card.isEditing ? (
+                            <>
+                                <h3 className="font-medium text-gray-900 mb-2">Question:</h3>
+                                <input
+                                    type="text"
+                                    value={card.question}
+                                    onChange={(e) => {
+                                        const updatedCards = [...cards];
+                                        updatedCards[index].question = e.target.value;
+                                        setCards(updatedCards);
+                                    }}
+                                    className="w-full p-2 mb-4 border rounded-md text-gray-600"
+                                />
+                                <h3 className="font-medium text-gray-900 mb-2">Answer:</h3>
+                                <input
+                                    type="text"
+                                    value={card.answer}
+                                    onChange={(e) => {
+                                        const updatedCards = [...cards];
+                                        updatedCards[index].answer = e.target.value;
+                                        setCards(updatedCards);
+                                    }}
+                                    className="w-full p-2 mb-4 border rounded-md text-gray-600"
+                                />
+                                <h3 className="font-medium text-gray-900 mb-2">Difficulty:</h3>
+                                <select
+                                    value={card.difficulty}
+                                    onChange={(e) => {
+                                        const updatedCards = [...cards];
+                                        updatedCards[index].difficulty = e.target.value;
+                                        setCards(updatedCards);
+                                    }}
+                                    className="w-full p-2 mb-4 border rounded-md text-gray-600"
+                                >
+                                    <option value="easy">Easy</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="hard">Hard</option>
+                                </select>
+                                <button
+                                    onClick={() => {
+                                        const updatedCards = [...cards];
+                                        updatedCards[index].isEditing = false;
+                                        setCards(updatedCards);
+                                    }}
+                                    className="mt-2 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                                >
+                                    Save
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="font-medium text-gray-900 mb-2">Question:</h3>
+                                <p className="text-gray-600 mb-4">{card.question}</p>
+                                <h3 className="font-medium text-gray-900 mb-2">Answer:</h3>
+                                <p className="text-gray-600">{card.answer}</p>
+                                <div className="flex items-center gap-2 p-2 rounded-md bg-gray-100 shadow-sm transition-all duration-300 hover:scale-105">
+                                    <div className={`w-3 h-3 rounded-full ${card.difficulty.toLowerCase() === 'easy' ? 'bg-green-500' :
+                                        card.difficulty.toLowerCase() === 'medium' ? 'bg-yellow-500' :
+                                            card.difficulty.toLowerCase() === 'hard' ? 'bg-red-500' : 'bg-gray-500'
+                                        } animate-pulse`}></div>
+                                    <p className="text-sm font-semibold text-gray-700">
+                                        {card.difficulty.charAt(0).toUpperCase() + card.difficulty.slice(1).toLowerCase()}
+                                    </p>
+                                </div>
+                            </>
+                        )}
                     </div>
                 ))}
             </div>
 
-            {/* Saved decks */}
             <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">Saved Decks</h2>
-                {decks.length === 0 ? (
-                    <div className="text-center py-8 bg-gray-50 rounded-lg">
-                        <p className="text-gray-500">No saved decks yet.</p>
-                    </div>
-                ) : (
-                    decks.map(deck => (
-                        <div
-                            key={deck.title}
-                            className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200"
-                        >
-                            <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-sm font-medium text-gray-500">{note.timestamp}</span>
-                                        <span className="text-sm text-gray-400">({formatDuration(note.duration)})</span>
-                                    </div>
-                                    <p className="text-gray-900 mb-4">{note.text}</p>
-                                    {note.audioUrl && (
-                                        <audio controls src={note.audioUrl} className="w-full" />
-                                    )}
-                                </div>
-                                <button
-                                    onClick={() => saveDeck}
-                                    className="text-gray-400 hover:text-red-600 transition-colors duration-200"
-                                >
-                                    <Trash2 className="h-5 w-5" />
-                                </button>
-                            </div>
-                        </div>
-                    ))
-                )}
+                <FlashcardDeckList
+                    decks={savedDecks}
+                    onDeckSelect={handleDeckSelect}
+                />
             </div>
         </div>
     );
