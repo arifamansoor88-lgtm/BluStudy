@@ -28,7 +28,11 @@ export const msalConfig = {
 
 export const protectedResources = {
   todoListApi: {
-    endpoint: "http://localhost:8000/tasks",
+    endpoint: "http://127.0.0.1:8000",
+    scopes: ["https://bluemarbleacademy.onmicrosoft.com/tasks-api/tasks.read"],
+  },
+  quizApi: {
+    endpoint: "http://127.0.0.1:8000",
     scopes: ["https://bluemarbleacademy.onmicrosoft.com/tasks-api/tasks.read"],
   },
 };

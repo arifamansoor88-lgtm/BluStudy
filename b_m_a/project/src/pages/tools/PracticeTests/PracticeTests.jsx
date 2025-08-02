@@ -163,6 +163,11 @@ const PracticeTests = () => {
       return;
     }
 
+    if (!selectedFile) {
+      setError("Please select a PDF file");
+      return;
+    }
+
     setError("");
     setUploading(true);
 
@@ -172,6 +177,16 @@ const PracticeTests = () => {
     setCurrentStep(3);
 
     try {
+      console.log("=== Starting Quiz Generation ===");
+      console.log("File:", selectedFile);
+      console.log("File name:", selectedFile.name);
+      console.log("File size:", selectedFile.size);
+      console.log("File type:", selectedFile.type);
+      console.log("Number of questions:", numQuestions);
+      console.log("Selected topics:", selectedTopics);
+      console.log("Custom topics:", customTopics);
+      console.log("Question formats:", questionFormats);
+      
       // Generate quiz using the hook
       const quizData = await generateQuiz(
         selectedFile,
@@ -180,6 +195,12 @@ const PracticeTests = () => {
         customTopics,
         questionFormats
       );
+
+      console.log("=== Quiz Generation Successful ===");
+      console.log("Quiz data received:", quizData);
+      console.log("Quiz ID:", quizData.id);
+      console.log("Quiz title:", quizData.quiz_title);
+      console.log("Number of questions:", quizData.questions?.length);
 
       // Set the generated quiz data from the response
       setGeneratedQuiz(quizData);
@@ -191,8 +212,23 @@ const PracticeTests = () => {
 
       setCurrentQuizQuestion(0);
       resetTimer();
+      
+      // Refresh the saved quizzes list since a new quiz was created
+      quizzesFetchedRef.current = false;
+      await fetchSavedQuizzes();
+      
     } catch (err) {
-      console.error("Error generating quiz:", err);
+      console.error("=== Quiz Generation Failed ===");
+      console.error("Error object:", err);
+      console.error("Error message:", err.message);
+      console.error("Error stack:", err.stack);
+      
+      if (err.response) {
+        console.error("Response status:", err.response.status);
+        console.error("Response data:", err.response.data);
+        console.error("Response headers:", err.response.headers);
+      }
+      
       setError(err.message || "Failed to generate quiz");
       // Make sure we return to the wizard UI with an appropriate error
       setQuizStatus("idle");
