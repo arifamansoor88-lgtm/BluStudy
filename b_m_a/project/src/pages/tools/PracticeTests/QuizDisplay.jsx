@@ -153,6 +153,49 @@ const QuizDisplay = ({
     );
   };
 
+  // Helper function to check if current question is answered
+  const isCurrentQuestionAnswered = () => {
+    const currentAnswer = userAnswers[currentQuestionIndex];
+    
+    // For null/undefined/empty string answers
+    if (currentAnswer === null || currentAnswer === undefined || currentAnswer === "") {
+      return false;
+    }
+    
+    // For multi-select questions, check if at least one option is selected
+    if (Array.isArray(currentAnswer)) {
+      return currentAnswer.length > 0;
+    }
+    
+    // For drag and drop questions, check if at least one mapping is filled
+    if (typeof currentAnswer === 'object' && currentAnswer !== null) {
+      return Object.values(currentAnswer).some(value => 
+        value !== null && value !== undefined && value !== ""
+      );
+    }
+    
+    // For other question types (multiple choice, short answer, etc.)
+    return true;
+  };
+
+  // Helper function to check if all questions are answered
+  const areAllQuestionsAnswered = () => {
+    return userAnswers.every(answer => {
+      if (answer === null || answer === undefined || answer === "") {
+        return false;
+      }
+      if (Array.isArray(answer)) {
+        return answer.length > 0;
+      }
+      if (typeof answer === 'object' && answer !== null) {
+        return Object.values(answer).some(value => 
+          value !== null && value !== undefined && value !== ""
+        );
+      }
+      return true;
+    });
+  };
+
   // In progress
   if (status === "in-progress") {
     const currentQuestion = quiz.questions[currentQuestionIndex];
@@ -165,27 +208,74 @@ const QuizDisplay = ({
             <Clock className="h-5 w-5 mr-2" />
             <span className="font-medium">{formatTime(timer)}</span>
           </div>
-          <div className="text-gray-700">
-            Question {currentQuestionIndex + 1} of {quiz.questions.length}
+          <div className="flex items-center gap-4 text-gray-700">
+            <div className="text-sm">
+              {userAnswers.filter(answer => {
+                if (answer === null || answer === undefined || answer === "") return false;
+                if (Array.isArray(answer)) return answer.length > 0;
+                if (typeof answer === 'object' && answer !== null) {
+                  return Object.values(answer).some(value => 
+                    value !== null && value !== undefined && value !== ""
+                  );
+                }
+                return true;
+              }).length} of {quiz.questions.length} answered
+            </div>
+            <div>
+              Question {currentQuestionIndex + 1} of {quiz.questions.length}
+            </div>
           </div>
         </div>
 
         {/* Quiz Mini-map */}
         <div className="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-700">Question Progress</h3>
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-gray-200 rounded-full"></div>
+                <span>Unanswered</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span>Answered</span>
+              </div>
+            </div>
+          </div>
           <div className="flex flex-wrap gap-2">
             {quiz.questions.map((_, i) => {
+              // Helper function to check if a specific question is answered
+              const isQuestionAnswered = () => {
+                const answer = userAnswers[i];
+                if (answer === null || answer === undefined || answer === "") {
+                  return false;
+                }
+                if (Array.isArray(answer)) {
+                  return answer.length > 0;
+                }
+                if (typeof answer === 'object' && answer !== null) {
+                  return Object.values(answer).some(value => 
+                    value !== null && value !== undefined && value !== ""
+                  );
+                }
+                return true;
+              };
+
               // Determine the button's background color based on answer status
               let bgColor = "bg-gray-200"; // Unanswered
+              let textColor = "text-gray-600";
 
-              if (userAnswers[i] !== null) {
+              if (isQuestionAnswered()) {
                 if (status === "completed" || showSummary) {
                   // Use getAnswerCorrectness if available
                   const isCorrect = getAnswerCorrectness
                     ? getAnswerCorrectness(i)
                     : isAnswerCorrectInline(quiz.questions[i], userAnswers[i]);
                   bgColor = isCorrect ? "bg-green-500" : "bg-red-500"; // Correct/Incorrect
+                  textColor = "text-white";
                 } else {
                   bgColor = "bg-blue-500"; // Answered but not yet evaluated
+                  textColor = "text-white";
                 }
               }
 
@@ -195,7 +285,8 @@ const QuizDisplay = ({
                   onClick={() => onGoToQuestion(i)}
                   className={`${bgColor} ${
                     i === currentQuestionIndex ? "ring-2 ring-gray-800" : ""
-                  } text-white w-8 h-8 flex items-center justify-center rounded-full font-medium`}
+                  } ${textColor} w-8 h-8 flex items-center justify-center rounded-full font-medium hover:opacity-80 transition-opacity`}
+                  title={`Question ${i + 1}${isQuestionAnswered() ? ' - Answered' : ' - Unanswered'}`}
                 >
                   {i + 1}
                 </button>
@@ -206,6 +297,24 @@ const QuizDisplay = ({
 
         {/* Current Question */}
         <div className="bg-white p-6 rounded-lg shadow-sm">
+          {/* Warning message when trying to finish with unanswered questions */}
+          {currentQuestionIndex === quiz.questions.length - 1 && !areAllQuestionsAnswered() && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-800">
+                    Please answer all questions before finishing the quiz. You can navigate between questions using the progress map above.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <QuizQuestion
             question={currentQuestion}
             index={currentQuestionIndex}
@@ -316,7 +425,12 @@ const QuizDisplay = ({
 
               <button
                 onClick={onNextQuestion}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-2"
+                disabled={currentQuestionIndex === quiz.questions.length - 1 && !areAllQuestionsAnswered()}
+                className={`px-4 py-2 flex items-center gap-2 rounded-md ${
+                  currentQuestionIndex === quiz.questions.length - 1 && !areAllQuestionsAnswered()
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-red-600 text-white hover:bg-red-700"
+                }`}
               >
                 {currentQuestionIndex === quiz.questions.length - 1
                   ? "Finish Quiz"
