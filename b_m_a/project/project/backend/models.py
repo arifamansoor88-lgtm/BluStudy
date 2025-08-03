@@ -1,31 +1,6 @@
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
-from enum import Enum
-
-class Difficulty(Enum):
-    EASY = 1
-    MEDUIUM = 2
-    HARD = 3
-
-class Flashcard(BaseModel):
-    question: str
-    answer: str
-    difficulty: str
-    important: bool
-
-class FlashcardDeck(BaseModel):
-    title: str
-    cards: List[Flashcard]
-    resourceName: Optional[str] = None
-
-class FlashcardDocument(BaseModel):
-    contentType: str
-    data: FlashcardDeck
-
-class SaveFlashcardResponse(BaseModel):
-    id: str
-    message: str
 
 class QuizOptions(BaseModel):
     numQuestions: int
@@ -97,9 +72,6 @@ class UpdateStudyPlanResponse(BaseModel):
     message: str
     updatedPlan: Dict[str, Any]
 
-class Summary(BaseModel):
-    summary: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
 class VoiceNoteResponse(BaseModel):
     id: str
     title: str
