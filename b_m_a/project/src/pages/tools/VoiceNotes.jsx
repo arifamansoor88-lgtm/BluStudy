@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { Mic, Save, Trash2, Download, Share2, AudioWaveform as Waveform } from 'lucide-react';
 
+const API_URL = "http://localhost:8000"; // ✅ Change this when deploying
+
 const VoiceNotes = () => {
-  const [notes, setNotes] = useState(() => JSON.parse(localStorage.getItem('voiceNotes')) || []);
-  const [folders, setFolders] = useState(() => JSON.parse(localStorage.getItem('voiceNoteFolders')) || ['General']);
+  const [notes, setNotes] = useState([]);
+  const [folders, setFolders] = useState(['General']);
   const [selectedFolder, setSelectedFolder] = useState('General');
   const [noteTitle, setNoteTitle] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -25,6 +28,20 @@ const VoiceNotes = () => {
 
   const { transcript, resetTranscript } = useSpeechRecognition();
 
+  // ✅ Fetch all notes on load
+  useEffect(() => {
+    axios.get(`${API_URL}/voice-notes`)
+      .then(res => {
+        console.log("✅ Voice notes fetched:", res.data);
+        setNotes(res.data); // ✅ Use res.data directly
+
+        const uniqueFolders = [...new Set(res.data.map(n => n.folder))];
+        setFolders(prev => Array.from(new Set([...prev, ...uniqueFolders])));
+      })
+      .catch(err => console.error("Error fetching notes:", err));
+  }, []);
+
+  // ✅ Draw waveform for live recording
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -96,7 +113,7 @@ const VoiceNotes = () => {
       setChunks(localChunks);
 
       setTimeout(() => {
-        saveNote(blob, url, localChunks);
+        saveNoteToBackend(blob);
       }, 100);
     };
 
@@ -126,55 +143,58 @@ const VoiceNotes = () => {
 
   const toggleRecording = () => (isRecording ? stopRecording() : startRecording());
 
-  const saveNote = async (optionalBlob = null, optionalUrl = null, optionalChunks = null) => {
-    const finalChunks = optionalChunks || chunks;
-    const finalBlob = optionalBlob || new Blob(finalChunks, { type: 'audio/webm' });
-    const finalUrl = optionalUrl || URL.createObjectURL(finalBlob);
+  // ✅ Save note to backend
+  const saveNoteToBackend = async (blob) => {
+    if (!blob || !transcript.trim() || !noteTitle.trim()) return;
 
-    if (!finalChunks.length || !transcript.trim() || !noteTitle.trim()) return;
+    const formData = new FormData();
+    formData.append('audio', blob, `note_${Date.now()}.webm`); // ✅ Match backend field name
+    formData.append('title', noteTitle.trim());
+    formData.append('text', transcript);
+    formData.append('folder', selectedFolder);
+    formData.append('duration', recordingDuration);
+    formData.append('visibility', privacySettings['temp'] || 'Private');
 
-    const newNote = {
-      id: Date.now().toString(),
-      title: noteTitle.trim(),
-      timestamp: new Date().toLocaleString(),
-      text: transcript,
-      folder: selectedFolder,
-      audioUrl: finalUrl,
-      duration: recordingDuration,
-      visibility: privacySettings['temp'] || 'Private',
-    };
-
-    const updatedNotes = [newNote, ...notes];
-    setNotes(updatedNotes);
-    localStorage.setItem('voiceNotes', JSON.stringify(updatedNotes));
-
-    setShowSaveAnimation(true);
-    setTimeout(() => {
-      resetTranscript();
-      setAudioUrl(null);
-      setChunks([]);
-      setNoteTitle('');
-      setPrivacySettings((prev) => {
-        const newSettings = { ...prev };
-        delete newSettings['temp'];
-        return newSettings;
+    try {
+      const res = await axios.post(`${API_URL}/voice-notes`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-      setShowSaveAnimation(false);
-    }, 500);
+
+      console.log("✅ Saved note:", res.data);
+
+      const newNote = res.data;
+      setNotes(prev => [newNote, ...prev]);
+
+      setShowSaveAnimation(true);
+      setTimeout(() => {
+        resetTranscript();
+        setAudioUrl(null);
+        setChunks([]);
+        setNoteTitle('');
+        setShowSaveAnimation(false);
+      }, 500);
+    } catch (err) {
+      console.error("Error saving voice note:", err);
+    }
   };
 
-  const deleteNote = (id) => {
-    const updated = notes.filter((n) => n.id !== id);
-    setNotes(updated);
-    localStorage.setItem('voiceNotes', JSON.stringify(updated));
+  // ✅ Delete note from backend
+  const deleteNote = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/voice-notes/${id}`);
+      setNotes(prev => prev.filter(n => n.id !== id));
+    } catch (err) {
+      console.error("Error deleting note:", err);
+    }
   };
 
-  const handlePrivacyChange = (id, value) => {
-    const updated = notes.map((note) =>
-      note.id === id ? { ...note, visibility: value } : note
-    );
-    setNotes(updated);
-    localStorage.setItem('voiceNotes', JSON.stringify(updated));
+  const handlePrivacyChange = async (id, value) => {
+    try {
+      await axios.put(`${API_URL}/voice-notes/${id}`, { visibility: value });
+      setNotes(prev => prev.map(n => n.id === id ? { ...n, visibility: value } : n));
+    } catch (err) {
+      console.error("Error updating privacy:", err);
+    }
   };
 
   const handleShare = async (note) => {
@@ -183,14 +203,14 @@ const VoiceNotes = () => {
         await navigator.share({
           title: note.title || 'Voice Note',
           text: note.text,
-          url: note.audioUrl,
+          url: note.audio_url,
         });
       } catch (err) {
         alert('Share canceled or failed: ' + err.message);
       }
     } else {
       try {
-        const shareText = `Check out this voice note:\n\nTitle: ${note.title}\nTranscript: ${note.text}\nAudio: ${note.audioUrl}`;
+        const shareText = `Check out this voice note:\n\nTitle: ${note.title}\nTranscript: ${note.text}\nAudio: ${note.audio_url}`;
         await navigator.clipboard.writeText(shareText);
         alert('Share link copied to clipboard!');
       } catch (err) {
@@ -234,7 +254,6 @@ const VoiceNotes = () => {
                 const updated = [...folders, name];
                 setFolders(updated);
                 setSelectedFolder(name);
-                localStorage.setItem('voiceNoteFolders', JSON.stringify(updated));
               }
               e.target.value = '';
             }
@@ -294,7 +313,7 @@ const VoiceNotes = () => {
                 <option>Public</option>
               </select>
               <button
-                onClick={() => saveNote()}
+                onClick={() => saveNoteToBackend(new Blob(chunks, { type: 'audio/webm' }))}
                 disabled={!noteTitle.trim() || !transcript.trim()}
                 className={`flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition ${
                   showSaveAnimation ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
@@ -339,78 +358,82 @@ const VoiceNotes = () => {
       </div>
 
       <h2 className="text-xl font-semibold text-gray-900 mb-6">Saved Notes</h2>
-      {folders.map((folder) => {
-        const folderNotes = notes.filter(
-          (note) =>
-            note.folder === folder &&
-            (note.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             note.text.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
+      {Array.isArray(notes) && notes.length > 0 ? (
+        folders.map((folder) => {
+          const folderNotes = notes.filter(
+            (note) =>
+              note.folder === folder &&
+              (note.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               note.text?.toLowerCase().includes(searchQuery.toLowerCase()))
+          );
 
-        if (folderNotes.length === 0) return null;
+          if (folderNotes.length === 0) return null;
 
-        return (
-          <div key={folder} className="mb-8">
-            <h3 className="text-lg font-semibold text-purple-700 mb-4">{folder}</h3>
-            {folderNotes.map((note) => (
-              <div
-                key={note.id}
-                className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow mb-4 flex flex-col md:flex-row md:items-start md:justify-between"
-              >
-                <div className="flex-1">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-1">{note.title}</h4>
-                  <div className="flex gap-2 mb-2 text-sm text-gray-500">
-                    <span>{note.timestamp}</span>
-                    <span className="text-gray-400">
-                      ({formatDuration(note.duration)})
-                    </span>
-                    <span className="ml-4 font-medium text-gray-600">
-                      Privacy: {note.visibility || 'Private'}
-                    </span>
+          return (
+            <div key={folder} className="mb-8">
+              <h3 className="text-lg font-semibold text-purple-700 mb-4">{folder}</h3>
+              {folderNotes.map((note) => (
+                <div
+                  key={note.id}
+                  className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow mb-4 flex flex-col md:flex-row md:items-start md:justify-between"
+                >
+                  <div className="flex-1">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-1">{note.title}</h4>
+                    <div className="flex gap-2 mb-2 text-sm text-gray-500">
+                      <span>{note.timestamp}</span>
+                      <span className="text-gray-400">
+                        ({formatDuration(note.duration)})
+                      </span>
+                      <span className="ml-4 font-medium text-gray-600">
+                        Privacy: {note.visibility || 'Private'}
+                      </span>
+                    </div>
+                    <p className="text-gray-900 mb-4">{note.text}</p>
+                    {note.audio_url && (
+                      <audio controls src={note.audio_url} className="w-full" />
+                    )}
                   </div>
-                  <p className="text-gray-900 mb-4">{note.text}</p>
-                  {note.audioUrl && (
-                    <audio controls src={note.audioUrl} className="w-full" />
-                  )}
+
+                  <div className="flex items-center gap-4 mt-4 md:mt-0">
+                    <select
+                      value={note.visibility || 'Private'}
+                      onChange={(e) => handlePrivacyChange(note.id, e.target.value)}
+                      className="p-2 border border-gray-300 rounded"
+                    >
+                      <option>Private</option>
+                      <option>Public</option>
+                    </select>
+
+                    <button
+                      onClick={() => handleShare(note)}
+                      className="text-purple-600 hover:text-purple-800"
+                    >
+                      <Share2 className="h-6 w-6" />
+                    </button>
+
+                    <a
+                      href={note.audio_url}
+                      download={`voice_note_${note.id}.webm`}
+                      className="text-purple-600 hover:text-purple-800"
+                    >
+                      <Download className="h-6 w-6" />
+                    </a>
+
+                    <button
+                      onClick={() => deleteNote(note.id)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <Trash2 className="h-6 w-6" />
+                    </button>
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-4 mt-4 md:mt-0">
-                  <select
-                    value={note.visibility || 'Private'}
-                    onChange={(e) => handlePrivacyChange(note.id, e.target.value)}
-                    className="p-2 border border-gray-300 rounded"
-                  >
-                    <option>Private</option>
-                    <option>Public</option>
-                  </select>
-
-                  <button
-                    onClick={() => handleShare(note)}
-                    className="text-purple-600 hover:text-purple-800"
-                  >
-                    <Share2 className="h-6 w-6" />
-                  </button>
-
-                  <a
-                    href={note.audioUrl}
-                    download={`voice_note_${note.id}.webm`}
-                    className="text-purple-600 hover:text-purple-800"
-                  >
-                    <Download className="h-6 w-6" />
-                  </a>
-
-                  <button
-                    onClick={() => deleteNote(note.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    <Trash2 className="h-6 w-6" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        );
-      })}
+              ))}
+            </div>
+          );
+        })
+      ) : (
+        <p className="text-gray-500">No voice notes available.</p>
+      )}
     </div>
   );
 };

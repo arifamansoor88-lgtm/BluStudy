@@ -91,3 +91,12 @@ class UpdateStudyPlanResponse(BaseModel):
 class Summary(BaseModel):
     summary: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+class VoiceNoteResponse(BaseModel):
+    id: str
+    title: str
+    text: str
+    folder: str
+    duration: int
+    visibility: str
+    timestamp: str
+    audio_url: str
