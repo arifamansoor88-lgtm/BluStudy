@@ -31,11 +31,21 @@ const QuizDisplay = ({
   onReturnToTests,
   onToggleHistory,
   aiExplanation,
+  aiExplanations,
   loadingExplanation,
   evaluatingAnswer,
   aiEvaluatedAnswers,
+  checkedAnswers,
   getAnswerCorrectness,
 }) => {
+  // Helper function to get the current question's explanation
+  const getCurrentQuestionExplanation = () => {
+    if (aiExplanations && aiExplanations[currentQuestionIndex]) {
+      return aiExplanations[currentQuestionIndex];
+    }
+    return aiExplanation; // Fallback to the legacy aiExplanation
+  };
+
   // No quiz data available
   if (!quiz && status !== "loading") {
     return (
@@ -322,7 +332,7 @@ const QuizDisplay = ({
             onAnswerChange={onAnswerChange}
           />
 
-          {/* Show feedback in review mode when the user checks their answer */}
+          {/* Show feedback only in review mode */}
           {quizMode === "review" && showAnswerFeedback && (
             <div
               className={`mt-4 p-4 rounded-lg ${
@@ -343,7 +353,7 @@ const QuizDisplay = ({
                     <X className="h-4 w-4 text-red-500" />
                   )}
                 </div>
-                <div className="ml-3">
+                <div className="ml-3 flex-1">
                   <h3
                     className={`text-sm font-medium ${
                       isCurrentAnswerCorrect()
@@ -353,11 +363,19 @@ const QuizDisplay = ({
                   >
                     {isCurrentAnswerCorrect() ? "Correct!" : "Incorrect"}
                   </h3>
+                  
+                  {/* Correct Answer Section */}
                   <div className="mt-2 text-sm">
                     {isCurrentAnswerCorrect()
                       ? "Well done! You got this right."
-                      : "The correct answer is: " +
-                        formatCorrectAnswer(currentQuestion)}
+                      : (
+                        <div>
+                          <p className="font-medium text-red-800 mb-1">Correct Answer:</p>
+                          <p className="bg-white p-2 rounded border border-red-200 text-red-700">
+                            {formatCorrectAnswer(currentQuestion)}
+                          </p>
+                        </div>
+                      )}
                   </div>
 
                   {/* Show AI explanation when available */}
@@ -374,16 +392,31 @@ const QuizDisplay = ({
 
                   {!loadingExplanation &&
                     !evaluatingAnswer &&
-                    aiExplanation && (
+                    getCurrentQuestionExplanation() && (
                       <div className="mt-3 bg-white p-3 rounded border border-gray-200">
                         <h4 className="text-sm font-medium text-gray-800 mb-1">
                           AI Explanation:
                         </h4>
                         <div className="text-sm text-gray-700 markdown-content">
-                          <ReactMarkdown>{aiExplanation}</ReactMarkdown>
+                          <ReactMarkdown>{getCurrentQuestionExplanation()}</ReactMarkdown>
                         </div>
                       </div>
                     )}
+
+                  {/* Topics to Review Section - Extract from AI explanation */}
+                  {!isCurrentAnswerCorrect() && getCurrentQuestionExplanation() && (
+                    <div className="mt-3 bg-blue-50 p-3 rounded border border-blue-200">
+                      <h4 className="text-sm font-medium text-blue-800 mb-1">
+                        📚 Topics to Review:
+                      </h4>
+                      <div className="text-sm text-blue-700">
+                        {extractTopicsFromExplanation(getCurrentQuestionExplanation())}
+                        <p className="mt-2 text-xs text-blue-600">
+                          💡 Tip: Use the AI Flashcards tool to create study materials for these topics
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -406,7 +439,8 @@ const QuizDisplay = ({
               {/* Check My Answer button (only in review mode and when an answer is selected and not yet evaluated) */}
               {quizMode === "review" &&
                 !showAnswerFeedback &&
-                userAnswers[currentQuestionIndex] !== null && (
+                userAnswers[currentQuestionIndex] !== null &&
+                !checkedAnswers[currentQuestionIndex] && (
                   <button
                     onClick={onCheckAnswer}
                     className="px-4 py-2 border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50"
@@ -446,6 +480,29 @@ const QuizDisplay = ({
 
   // Completed
   if (status === "completed") {
+    // For quiz mode, always show the summary directly
+    if (quizMode === "quiz") {
+      const score = calculateScore(quiz.questions, userAnswers);
+      
+      return (
+        <QuizSummary
+          quiz={quiz}
+          userAnswers={userAnswers}
+          timer={timer}
+          score={score}
+          quizMode={quizMode}
+          onReviewQuestions={onGoToQuestion}
+          onReturnToTests={onReturnToTests}
+          isSaving={isSaving}
+          saveSuccess={saveSuccess}
+          quizAttempts={quizAttempts}
+          showAttemptHistory={showAttemptHistory}
+          onToggleHistory={onToggleHistory}
+        />
+      );
+    }
+    
+    // For review mode, show the question review first
     if (!showSummary) {
       const currentQuestion = quiz.questions[currentQuestionIndex];
 
@@ -504,6 +561,7 @@ const QuizDisplay = ({
           userAnswers={userAnswers}
           timer={timer}
           score={score}
+          quizMode={quizMode}
           onReviewQuestions={onGoToQuestion}
           onReturnToTests={onReturnToTests}
           isSaving={isSaving}
@@ -592,6 +650,50 @@ function calculateScore(questions, userAnswers) {
   });
 
   return Math.round((correct / questions.length) * 100);
+}
+
+// Extract topics to review from AI explanation
+function extractTopicsFromExplanation(explanation) {
+  if (!explanation) {
+    return (
+      <ul className="list-disc list-inside space-y-1">
+        <li>Key concepts related to this question</li>
+        <li>Common misconceptions in this area</li>
+        <li>Related foundational knowledge</li>
+      </ul>
+    );
+  }
+
+  // Look for the "📚 Topics to Review:" section
+  const topicsMatch = explanation.match(/📚 Topics to Review:\s*\n((?:- .*\n?)*)/);
+  
+  if (topicsMatch && topicsMatch[1]) {
+    const topicsText = topicsMatch[1];
+    const topics = topicsText
+      .split('\n')
+      .filter(line => line.trim().startsWith('- '))
+      .map(line => line.trim().substring(2))
+      .filter(topic => topic.length > 0);
+
+    if (topics.length > 0) {
+      return (
+        <ul className="list-disc list-inside space-y-1">
+          {topics.map((topic, index) => (
+            <li key={index}>{topic}</li>
+          ))}
+        </ul>
+      );
+    }
+  }
+
+  // Fallback to default topics if no specific topics found
+  return (
+    <ul className="list-disc list-inside space-y-1">
+      <li>Key concepts related to this question</li>
+      <li>Common misconceptions in this area</li>
+      <li>Related foundational knowledge</li>
+    </ul>
+  );
 }
 
 export default QuizDisplay;
