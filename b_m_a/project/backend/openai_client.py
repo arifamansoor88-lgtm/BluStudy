@@ -261,7 +261,7 @@ def generate_answer_explanation(
         is_correct (bool): Whether the user's answer is correct.
     
     Returns:
-        str: The AI-generated explanation.
+        str: The AI-generated explanation with topics to review.
     """
     question_type = question.get("type", "unknown")
     question_text = question.get("question", "")
@@ -300,18 +300,34 @@ def generate_answer_explanation(
     else:
         user_answer_formatted = f"Your answer: {user_answer}"
     
-    system_prompt = f"""You are an educational AI tutor providing explanations for quiz answers.
+    system_prompt = f"""You are an educational AI tutor providing comprehensive explanations for quiz answers.
 Provide a clear, helpful explanation for why the user's answer to a quiz question is {("correct" if is_correct else "incorrect")}.
 
-Be educational, supportive, and concise in your explanation. If the answer is incorrect, point out what the user may have misunderstood.
-Focus on explaining the underlying concept and why the correct answer is right.
+Your response should include:
+1. **Explanation**: Why the answer is correct or incorrect
+2. **Key Concepts**: Important terms and concepts related to this question
+3. **Topics to Review**: Specific areas the student should focus on for improvement
 
 FORMAT YOUR RESPONSE USING MARKDOWN:
 - Use **bold** for important concepts or terms
-- Use bullet points or numbered lists where appropriate
-- Organize your explanation with clear structure
+- Use bullet points for lists
+- Include a "📚 Topics to Review" section with specific, actionable items
+- Be educational, supportive, and concise
 
-Aim for 3-5 sentences that are helpful for learning but not overly verbose.
+Structure your response as:
+**Explanation:**
+[Your explanation here]
+
+**Key Concepts:**
+- [Concept 1]
+- [Concept 2]
+
+**📚 Topics to Review:**
+- [Specific topic 1]
+- [Specific topic 2]
+- [Specific topic 3]
+
+Aim for 4-6 sentences in the explanation section.
 """
 
     user_message = f"""
@@ -321,8 +337,8 @@ Question Type: {question_type}
 {correct_answer_info}
 Is Correct: {is_correct}
 
-Please explain why this answer is {("correct" if is_correct else "incorrect")}.
-Use markdown formatting in your explanation for better readability.
+Please provide a comprehensive explanation with topics to review.
+Use markdown formatting in your response.
 """
 
     response = quiz_client.chat.completions.create(
