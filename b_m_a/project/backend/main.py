@@ -6,13 +6,14 @@ from datetime import datetime, timedelta
 from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form, Query, HTTPException, Body
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from json_repair import repair_json
 from dotenv import load_dotenv
 from typing import List, Dict, Any, Optional, Union
 import msal
 from jose import jwt
 from database import client, container  
 from pdf_utils import extract_text_from_pdf
-from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text
+from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard
 from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument 
 from pydantic import BaseModel
 
@@ -863,4 +864,71 @@ async def delete_deck(deck_id: str, user_claims: dict = Depends(validate_token))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete deck: {str(e)}"
+        )
+
+# PDF upload and flashcard generation endpoint - protected
+@app.post("/generate-flashcard")
+async def generate_flashcard(
+    file: UploadFile = File(...), 
+    num_cards: int = Form(10),
+    user_claims: dict = Depends(validate_token)
+):
+    try:
+        # Save the uploaded file temporarily
+        file_path = f"./temp_{file.filename}"
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+        
+        # Extract text from the PDF
+        text = extract_text_from_pdf(file_path)
+        
+        # Validate inputs
+        if num_cards < 10:
+            num_cards = 10
+        elif num_cards > 40:
+            num_cards = 40
+            
+        # Generate quiz using Azure OpenAI with customization options
+        flashcard_json = openai_generate_flashcard(
+            text=text,
+            num_flashcards = 10,
+        )
+        
+        # Clean up the temporary file
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        print(flashcard_json)
+        flashcard_json = repair_json(flashcard_json)
+        flashcard_data = json.loads(flashcard_json)
+        
+        # Automatically save the quiz
+        flashcard_document = {
+            "id": str(uuid.uuid4()),
+            "userId": user_claims["sub"],
+            "contentType": "flashcard",
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": {
+                "title": flashcard_data["title"],
+                "cards": flashcard_data["cards"],
+                "resourceName": file.filename,
+            }
+        }
+        
+        # Save to Cosmos DB
+        container.create_item(body=flashcard_document)
+        
+        # Return the quiz data with the ID
+        flashcard_data["id"] = flashcard_document["id"]
+        return flashcard_data
+    except json.JSONDecodeError as e:
+        print(f"Failed to parse JSON: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to parse JSON: {str(e)}"
+        )
+    except Exception as e:
+        print(f"Error generating quiz: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate quiz: {str(e)}"
         )

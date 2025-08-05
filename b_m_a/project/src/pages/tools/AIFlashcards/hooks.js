@@ -161,6 +161,42 @@ export const useDeckData = () => {
         [getToken, fetchSavedDecks]
     );
 
+    // Generate a new deck
+  const generateFlashcards = useCallback(
+    async (
+      selectedFile,
+      numCards,
+    ) => {
+      try {
+        const token = await getToken();
+
+        // Create a FormData object to send the file
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("num_flashcards", numCards.toString()); // Convert to string
+
+
+        // Use a direct URL string to avoid URL construction issues
+        const apiUrl = "http://localhost:8000/generate-flashcard";
+
+        // Send the file to the backend API
+        const response = await axios.post(apiUrl, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        return response.data;
+      } catch (err) {
+        console.error("Error generating quiz:", err);
+        throw new Error(
+          err.response?.data?.detail || err.message || "Failed to generate quiz"
+        );
+      }
+    },
+    [getToken]
+  );
+
 
 
 
@@ -173,5 +209,6 @@ export const useDeckData = () => {
         saveDeck,
         deleteDeck,
         decksFetchedRef,
+        generateFlashcards,
     };
 }

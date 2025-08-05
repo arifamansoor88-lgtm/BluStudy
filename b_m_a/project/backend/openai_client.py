@@ -76,9 +76,7 @@ def generate_flashcard(text: str,
 
                     # Output Format (as JSON array):
                     {{
-                    "contentType": "flashcards",
-                    "data": {{
-                        "title": "Generated Flashcards",
+                        "title": "...",
                         "cards": [
                             {{
                                 "question": "...",
@@ -88,17 +86,16 @@ def generate_flashcard(text: str,
                             }}
                         ]
                     }}
-                    }}
 
-Only return valid JSON. Do not explain or include any extra text.
+                    Only return valid JSON. Do not explain or include any extra text.
 
-Make sure the questions are varied and focus on important points from the content.
+                    Make sure the questions are varied and focus on important points from the content.
 
----
+                    ---
 
-Text:
-{text}
-"""}
+                    Text:
+                    {text}
+                """}
             ],
             max_tokens=150,
             temperature=0.5

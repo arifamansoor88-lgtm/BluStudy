@@ -42,7 +42,7 @@ const AIFlashcards = () => {
 
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
-        console.log(file);
+        console.log(generateFlashcards(file, 10));
     }
 
     const {
@@ -55,6 +55,7 @@ const AIFlashcards = () => {
         fetchSavedDecks,
         saveDeck,
         deleteDeck,
+        generateFlashcards
     } = useDeckData();
 
     // Fetch saved decks on component mount
