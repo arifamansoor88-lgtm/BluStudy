@@ -97,7 +97,7 @@ def generate_flashcard(text: str,
                     {text}
                 """}
             ],
-            max_tokens=150,
+            max_tokens=600,
             temperature=0.5
         )
         return response.choices[0].message.content.strip()
