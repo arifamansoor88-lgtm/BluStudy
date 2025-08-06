@@ -1,35 +1,29 @@
 import React, { useState } from 'react';
-import { RotateCw, ArrowLeft, FileDown, Volume2 } from 'lucide-react';
+import { RotateCw, ArrowLeft, FileDown, Volume2, Pencil } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
 
 const FlashcardStudyPage = () => {
     const [index, setIndex] = useState(0);
     const [flipped, setFlipped] = useState(false);
-    const flashcards = useLocation().state?.flashcards || [];
+    const [isEditing, setIsEditing] = useState(false);
+    const [flashcards, setFlashcards] = useState(useLocation().state?.flashcards || []);
 
     const handleNext = () => {
         setIndex((prevIndex) => (prevIndex + 1) % flashcards.length);
         setFlipped(false);
     };
 
-    const handleFlip = () => {
-        setFlipped((prev) => !prev);
-    };
+    const handleFlip = () => setFlipped((prev) => !prev);
 
     const speakCard = () => {
         const synth = window.speechSynthesis;
-        synth.cancel(); // Stop any ongoing speech
-
-        const text = flipped ? currentCard.answer : currentCard.question;
+        synth.cancel();
+        const text = flipped ? flashcards[index].answer : flashcards[index].question;
         const utterance = new SpeechSynthesisUtterance(text);
-
-        utterance.lang = 'en-US'; // Optional: set language
-        utterance.rate = 1;       // Optional: set speed
-        utterance.pitch = 1;      // Optional: set pitch
+        utterance.lang = 'en-US';
         synth.speak(utterance);
     };
-
 
     const exportToPDF = () => {
         const doc = new jsPDF({
@@ -42,42 +36,36 @@ const FlashcardStudyPage = () => {
         const cardHeight = 250;
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
-
         const centerX = (pageWidth - cardWidth) / 2;
         const centerY = (pageHeight - cardHeight) / 2;
 
         flashcards.forEach((card, i) => {
-            // --- Question Side ---
+            // Question side
             doc.setFillColor(255, 255, 255);
-            doc.setDrawColor(200); // soft border
+            doc.setDrawColor(200);
             doc.setLineWidth(1);
             doc.roundedRect(centerX, centerY, cardWidth, cardHeight, 10, 10, 'FD');
-
             doc.setFontSize(16);
             doc.setTextColor(51, 51, 51);
             doc.setFont('helvetica', 'bold');
             doc.text(`Card ${i + 1}`, pageWidth / 2, centerY - 20, { align: 'center' });
-
             doc.setFontSize(18);
             doc.setFont('helvetica', 'normal');
             doc.text(card.question, pageWidth / 2, pageHeight / 2, {
                 align: 'center',
                 maxWidth: cardWidth - 40
             });
-
             doc.addPage();
 
-            // --- Answer Side ---
+            // Answer side
             doc.setFillColor(255, 255, 255);
             doc.setDrawColor(200);
             doc.setLineWidth(1);
             doc.roundedRect(centerX, centerY, cardWidth, cardHeight, 10, 10, 'FD');
-
             doc.setFontSize(16);
             doc.setTextColor(51, 51, 51);
             doc.setFont('helvetica', 'bold');
             doc.text(`Answer to Card ${i + 1}`, pageWidth / 2, centerY - 20, { align: 'center' });
-
             doc.setFontSize(18);
             doc.setFont('helvetica', 'normal');
             doc.text(card.answer, pageWidth / 2, pageHeight / 2, {
@@ -91,6 +79,12 @@ const FlashcardStudyPage = () => {
         });
 
         doc.save('flashcards.pdf');
+    };
+
+    const handleCardEdit = (i, field, value) => {
+        const updated = [...flashcards];
+        updated[i][field] = value;
+        setFlashcards(updated);
     };
 
     if (flashcards.length === 0) {
@@ -120,46 +114,78 @@ const FlashcardStudyPage = () => {
                     <ArrowLeft className="w-4 h-4 mr-1" />
                     Back to Flashcards
                 </Link>
-                <button
-                    onClick={exportToPDF}
-                    className="inline-flex items-center gap-2 text-sm text-green-600 hover:underline"
-                >
-                    <FileDown className="w-4 h-4" />
-                    Export to PDF
-                </button>
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={exportToPDF}
+                        className="inline-flex items-center gap-2 text-sm text-green-600 hover:underline"
+                    >
+                        <FileDown className="w-4 h-4" />
+                        Export to PDF
+                    </button>
+                    <button
+                        onClick={() => setIsEditing((prev) => !prev)}
+                        className="inline-flex items-center gap-2 text-sm text-gray-600 hover:underline"
+                    >
+                        <Pencil className="w-4 h-4" />
+                        {isEditing ? 'Close Editor' : 'Edit Cards'}
+                    </button>
+                </div>
             </div>
 
-            <div
-                className="relative cursor-pointer w-full h-64 bg-white shadow-lg rounded-lg flex items-center justify-center text-center text-2xl font-semibold text-gray-700 transition-transform transform-gpu hover:scale-105"
-                onClick={handleFlip}
-            >
-                {flipped ? currentCard.answer : currentCard.question}
+            {!isEditing ? (
+                <>
+                    <div
+                        className="relative cursor-pointer w-full h-64 bg-white shadow-lg rounded-lg flex items-center justify-center text-center text-2xl font-semibold text-gray-700 transition-transform transform-gpu hover:scale-105"
+                        onClick={handleFlip}
+                    >
+                        {flipped ? currentCard.answer : currentCard.question}
 
-                {/* Speak icon button */}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation(); // prevent flipping when clicking the icon
-                        speakCard();
-                    }}
-                    className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-                    title="Speak"
-                >
-                    <Volume2 className="w-5 h-5" />
-                </button>
-            </div>
-            <div className="mt-6 flex justify-between items-center">
-                <button
-                    onClick={handleNext}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                    <RotateCw className="w-4 h-4" />
-                    Next Card
-                </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                speakCard();
+                            }}
+                            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                            title="Speak"
+                        >
+                            <Volume2 className="w-5 h-5" />
+                        </button>
+                    </div>
 
-                <p className="text-sm text-gray-500">
-                    Card {index + 1} of {flashcards.length}
-                </p>
-            </div>
+                    <div className="mt-6 flex justify-between items-center">
+                        <button
+                            onClick={handleNext}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                        >
+                            <RotateCw className="w-4 h-4" />
+                            Next Card
+                        </button>
+                        <p className="text-sm text-gray-500">
+                            Card {index + 1} of {flashcards.length}
+                        </p>
+                    </div>
+                </>
+            ) : (
+                <div className="space-y-6">
+                    {flashcards.map((card, i) => (
+                        <div key={i} className="bg-white p-4 rounded-lg shadow">
+                            <p className="text-gray-600 font-medium mb-2">Card {i + 1}</p>
+                            <input
+                                className="w-full mb-2 px-3 py-2 border rounded-md text-sm"
+                                value={card.question}
+                                onChange={(e) => handleCardEdit(i, 'question', e.target.value)}
+                                placeholder="Edit question"
+                            />
+                            <input
+                                className="w-full px-3 py-2 border rounded-md text-sm"
+                                value={card.answer}
+                                onChange={(e) => handleCardEdit(i, 'answer', e.target.value)}
+                                placeholder="Edit answer"
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
