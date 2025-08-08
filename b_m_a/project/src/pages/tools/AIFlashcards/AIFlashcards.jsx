@@ -14,6 +14,7 @@ const AIFlashcards = () => {
     const [newQuestion, setNewQuestion] = useState('');
     const [newAnswer, setNewAnswer] = useState('');
     const [difficulty, setDifficulty] = useState(null);
+    const [selectedDeckID, setSelectedDeckID] = useState(null);
 
     const addCard = () => {
         if (newQuestion && newAnswer && difficulty) {
@@ -31,7 +32,7 @@ const AIFlashcards = () => {
 
     const handleDeckSelect = (deck) => {
         console.log("Selected deck:", deck);
-        
+        setSelectedDeckID(deck);
     };
 
 

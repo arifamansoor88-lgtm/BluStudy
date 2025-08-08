@@ -11,6 +11,7 @@ export const useDeckData = () => {
     const { instance, accounts, inProgress } = useMsal();
     const decksFetchedRef = useRef(false);
     const [savedDecks, setSavedDecks] = useState([]);
+    const [savedSpecificDeck, setSavedSpecificDeck] = useState([]);
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [error, setError] = useState("");
@@ -197,7 +198,32 @@ export const useDeckData = () => {
     [getToken]
   );
 
+  // Get Flashcard by ID
+  const getFlashcardByID = useCallback(async (deckId) => {
+    try {
+        // Check if MSAL is initialized
+        if (inProgress !== "none") {
+            return;
+        }
 
+        decksFetchedRef.current = true;
+
+        const token = await getToken();
+        const response = await axios.get(`http://localhost:8000/decks/${deckId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        setSavedSpecificDeck(response.data);
+        console.log(response.data);
+        return response.data;
+    } catch (error) {
+        console.error(`Error fetching saved flashcard deck ${deckId}:`, error);
+        setError(`Failed to load your saved flashcard deck ${deckId}. Please try again later.`);
+        return [];
+    }
+}, [getToken, inProgress]);
 
 
     return {
@@ -210,5 +236,6 @@ export const useDeckData = () => {
         deleteDeck,
         decksFetchedRef,
         generateFlashcards,
+        getFlashcardByID,
     };
 }

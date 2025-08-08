@@ -1,13 +1,47 @@
 import React, { useState } from 'react';
-import { RotateCw, ArrowLeft, FileDown, Volume2, Pencil } from 'lucide-react';
+import { RotateCw, ArrowLeft, FileDown, Volume2, Pencil, Shuffle } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
+import { useDeckData } from './hooks';
+import { useParams } from "react-router-dom";
 
 const FlashcardStudyPage = () => {
     const [index, setIndex] = useState(0);
     const [flipped, setFlipped] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [flashcards, setFlashcards] = useState(useLocation().state?.flashcards || []);
+    const { deckId } = useParams();
+    const { saveDeck, deleteDeck, getFlashcardByID } = useDeckData();
+
+    React.useEffect(() => {
+        if (flashcards.length > 0 && flashcards[0].originalIndex === undefined) {
+            setFlashcards(flashcards.map((card, i) => ({
+                ...card,
+                originalIndex: i
+            })));
+        }
+    }, [useLocation().state?.flashcards]); // empty array means run only once when component mounts
+    
+    
+    const difficultyWeights = {
+        hard: 3,   // appears 3x more likely
+        medium: 2, // 2x
+        easy: 1    // normal
+    };
+
+    // Smart shuffle
+    const smartShuffle = () => {
+        const shuffled = [...flashcards].sort((a, b) => {
+            const weightA = difficultyWeights[a.difficulty || 'medium'] || 1;
+            const weightB = difficultyWeights[b.difficulty || 'medium'] || 1;
+            return (Math.random() * (1 / weightA)) - (Math.random() * (1 / weightB));
+        });
+
+        setFlashcards(shuffled);
+        setIndex(flashcards[0].originalIndex); 
+        setFlipped(false);
+    };
+
 
     const handleNext = () => {
         setIndex((prevIndex) => (prevIndex + 1) % flashcards.length);
@@ -23,6 +57,26 @@ const FlashcardStudyPage = () => {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'en-US';
         synth.speak(utterance);
+    };
+
+    // This Helper Function reverses the editing status while saves deck
+    const handleEditStatusChange = async () => {
+        // if (isEditing) {
+        //     await deleteDeck(deckId);
+        //     await saveDeck(getTitleOfDeck(), flashcards);
+        // }
+        setIsEditing((prev) => !prev)
+    }
+
+    const getTitleOfDeck = async () => {
+        try {
+            const deck = await getFlashcardByID(deckId); // Await the asynchronous call
+            console.log(deck); // Debug the structure of the deck object
+            return deck.data.title; // Access the title from the resolved data
+        } catch (error) {
+            console.error("Error fetching deck title:", error);
+            return "Unknown Deck"
+        }
     };
 
     const exportToPDF = () => {
@@ -123,7 +177,7 @@ const FlashcardStudyPage = () => {
                         Export to PDF
                     </button>
                     <button
-                        onClick={() => setIsEditing((prev) => !prev)}
+                        onClick={handleEditStatusChange}
                         className="inline-flex items-center gap-2 text-sm text-gray-600 hover:underline"
                     >
                         <Pencil className="w-4 h-4" />
@@ -159,6 +213,13 @@ const FlashcardStudyPage = () => {
                         >
                             <RotateCw className="w-4 h-4" />
                             Next Card
+                        </button>
+                        <button
+                            onClick={smartShuffle}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                        >
+                            <Shuffle className="w-4 h-4" />
+                            Smart Shuffle
                         </button>
                         <p className="text-sm text-gray-500">
                             Card {index + 1} of {flashcards.length}

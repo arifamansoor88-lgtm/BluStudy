@@ -55,7 +55,7 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
                         onClick={() => onDeckSelect(deck)}
                     >
                         <Link
-                            to="/tools/flashcards/FlashcardStudyPage"
+                            to={`/tools/flashcards/FlashcardStudyPage/${deck.id}`}
                             state={{ flashcards: cards }}
                         >
                             <button
