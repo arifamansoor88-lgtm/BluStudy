@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import { formatTime } from "./utils";
 import QuizQuestion from "./QuizQuestion";
 import QuizSummary from "./QuizSummary";
+import PerformanceSummary from "./PerformanceSummary";
 
 /**
  * Component for displaying the quiz in different states
@@ -480,12 +481,12 @@ const QuizDisplay = ({
 
   // Completed
   if (status === "completed") {
-    // For quiz mode, always show the summary directly
+    // For quiz mode, always show the performance summary directly
     if (quizMode === "quiz") {
       const score = calculateScore(quiz.questions, userAnswers);
       
       return (
-        <QuizSummary
+        <PerformanceSummary
           quiz={quiz}
           userAnswers={userAnswers}
           timer={timer}
@@ -556,7 +557,7 @@ const QuizDisplay = ({
       const score = calculateScore(quiz.questions, userAnswers);
 
       return (
-        <QuizSummary
+        <PerformanceSummary
           quiz={quiz}
           userAnswers={userAnswers}
           timer={timer}
