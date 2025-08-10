@@ -12,7 +12,7 @@ import msal
 from jose import jwt
 from database import client, container  
 from pdf_utils import extract_text_from_pdf
-from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text
+from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, analyze_quiz_performance
 from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument 
 from pydantic import BaseModel
 
@@ -858,6 +858,44 @@ async def summarize_file(
         raise HTTPException(status_code=500, detail=str(e))
 
     return {"summary": summary}
+
+# Quiz Performance Analysis Models
+class QuizPerformanceRequest(BaseModel):
+    questions: List[Dict[str, Any]]
+    userAnswers: List[Any]
+    quizMetadata: Optional[Dict[str, Any]] = {}
+
+class QuizPerformanceResponse(BaseModel):
+    topics: List[Dict[str, Any]]
+    weakTopics: List[Dict[str, Any]]
+    strongTopics: List[Dict[str, Any]]
+    recommendations: List[str]
+    overallAnalysis: Dict[str, Any]
+
+@app.post("/analyze-quiz-performance", response_model=QuizPerformanceResponse)
+async def analyze_quiz_performance_endpoint(
+    request: QuizPerformanceRequest, 
+    user_claims: dict = Depends(validate_token)
+):
+    try:
+        print(f"Analyzing quiz performance for user: {user_claims['sub']}")
+        
+        # Analyze quiz performance using AI
+        analysis_result = await analyze_quiz_performance(
+            request.questions, 
+            request.userAnswers, 
+            request.quizMetadata
+        )
+        
+        return analysis_result
+        
+    except Exception as e:
+        print(f"Error in analyze-quiz-performance endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error analyzing quiz performance: {str(e)}"
+        )
+
 # For development purposes
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
