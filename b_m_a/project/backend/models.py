@@ -91,12 +91,29 @@ class UpdateStudyPlanResponse(BaseModel):
 class Summary(BaseModel):
     summary: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-class VoiceNoteResponse(BaseModel):
-    id: str
-    title: str
+
+class VoiceNoteBase(BaseModel):
+    title: Optional[str] = None
     text: str
-    folder: str
-    duration: int
-    visibility: str
+    folder: Optional[str] = "General"
+    duration: Optional[int] = None
+    visibility: Optional[str] = "Private"
     timestamp: str
-    audio_url: str
+    audio_url: Optional[str] = None
+    tags: Optional[List[str]] = []
+    settings: Optional[Dict[str, Any]] = {}
+
+class VoiceNoteResponse(VoiceNoteBase):
+    id: str
+    user_id: str
+
+class VoiceNoteUpdate(BaseModel):
+    title: Optional[str] = None
+    text: Optional[str] = None
+    folder: Optional[str] = None
+    duration: Optional[int] = None
+    visibility: Optional[str] = None
+    timestamp: Optional[str] = None
+    audio_url: Optional[str] = None
+    tags: Optional[List[str]] = None
+    settings: Optional[Dict[str, Any]] = None
