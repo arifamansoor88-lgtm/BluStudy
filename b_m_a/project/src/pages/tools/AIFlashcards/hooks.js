@@ -8,148 +8,170 @@ import { protectedResources } from "../../../authConfig";
  * @returns {Object} - Methods and state for quiz data management
  */
 export const useDeckData = () => {
-  const { instance, accounts, inProgress } = useMsal();
-  const decksFetchedRef = useRef(false);
-  const [savedDecks, setSavedDecks] = useState([]);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [error, setError] = useState("");
+    const { instance, accounts, inProgress } = useMsal();
+    const decksFetchedRef = useRef(false);
+    const [savedDecks, setSavedDecks] = useState([]);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
+    const [error, setError] = useState("");
 
-  // Get auth token silently
-  const getToken = useCallback(async () => {
-    // Check if MSAL is ready
-    if (inProgress !== "none") {
-      throw new Error(
-        "Authentication service is initializing. Please try again later."
-      );
-    }
+    // Get auth token silently
+    const getToken = useCallback(async () => {
+        // Check if MSAL is ready
+        if (inProgress !== "none") {
+            throw new Error(
+                "Authentication service is initializing. Please try again later."
+            );
+        }
 
-    // Get active account
-    let account = instance.getActiveAccount();
-    if (!account && accounts.length > 0) {
-      instance.setActiveAccount(accounts[0]);
-      account = accounts[0];
-    }
+        // Get active account
+        let account = instance.getActiveAccount();
+        if (!account && accounts.length > 0) {
+            instance.setActiveAccount(accounts[0]);
+            account = accounts[0];
+        }
 
-    if (!account) {
-      throw new Error("No active account found. Please sign in first.");
-    }
+        if (!account) {
+            throw new Error("No active account found. Please sign in first.");
+        }
 
-    // Get token
-    const tokenResponse = await instance.acquireTokenSilent({
-      scopes: protectedResources.todoListApi.scopes,
-      account: account,
-    });
+        // Get token
+        const tokenResponse = await instance.acquireTokenSilent({
+            scopes: protectedResources.todoListApi.scopes,
+            account: account,
+        });
 
-    return tokenResponse.accessToken;
-  }, [instance, accounts, inProgress]);
+        return tokenResponse.accessToken;
+    }, [instance, accounts, inProgress]);
 
-  // Fetch saved decks
-  const fetchSavedDecks = useCallback(async () => {
-    try {
-      // Check if MSAL is initialized
-      if (inProgress !== "none") {
-        return;
-      }
+    // Fetch saved decks
+    const fetchSavedDecks = useCallback(async () => {
+        try {
+            // Check if MSAL is initialized
+            if (inProgress !== "none") {
+                return;
+            }
 
-      decksFetchedRef.current = true;
+            decksFetchedRef.current = true;
 
-      const token = await getToken();
-      const response = await axios.get("http://localhost:8000/decks", {
-        headers: {
-          Authorization: `Bearer ${token}`,
+            const token = await getToken();
+            const response = await axios.get("http://localhost:8000/decks", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            setSavedDecks(response.data);
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching saved flashcard decks:", error);
+            setError("Failed to load your saved flashcard decks. Please try again later.");
+            return [];
+        }
+    }, [getToken, inProgress]);
+
+    // Save a deck
+    const saveDeck = useCallback(
+        async (
+            deckName,
+            cards
+        ) => {
+            try {
+                setIsSaving(true);
+                setSaveSuccess(false);
+
+                const token = await getToken();
+
+                // Prepare deck data
+                const deckData = {
+                    contentType: "flashcard",
+                    data: {
+                        title: deckName,
+                        cards: cards,
+                    },
+                };
+
+                // Save to API
+                const response = await axios.post(
+                    "http://localhost:8000/save-flashcard",
+                    deckData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+
+                setSaveSuccess(true);
+                decksFetchedRef.current = false;
+                await fetchSavedDecks();
+                return response.data;
+            } catch (error) {
+                console.error("Error saving deck:", error);
+                setError(
+                    "Failed to save deck: " +
+                    (error.response?.data?.message || error.message)
+                );
+                return null;
+            } finally {
+                setIsSaving(false);
+            }
         },
-      });
+        [getToken, fetchSavedDecks]
+    );
 
-      setSavedDecks(response.data);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching saved flashcard decks:", error);
-      setError("Failed to load your saved flashcard decks. Please try again later.");
-      return [];
-    }
-  }, [getToken, inProgress]);
+    // Delete a deck
+    const deleteDeck = useCallback(
+        async (deckId) => {
+            try {
+                setIsSaving(true);
+                setSaveSuccess(false);
 
-  // Save a deck
-  const saveDeck = useCallback(
-    async (
-      generatedQuiz,
-      userAnswers,
-      quizStatus,
-      timer,
-      selectedFile,
-      numQuestions,
-      selectedTopics,
-      customTopics,
-      questionFormats
-    ) => {
-      if (!generatedQuiz) return;
 
-      try {
-        setIsSaving(true);
-        setSaveSuccess(false);
+                const token = await getToken();
+                // Call API
+                const response = await axios.delete(
+                    `http://localhost:8000/delete-deck/${deckId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
 
-        const token = await getToken();
 
-        // Prepare deck data
-        const deckData = {
-          contentType: "flashcard",
-          data: {
-            title: generatedQuiz.quiz_title,
-            questions: generatedQuiz.questions,
-            userAnswers: userAnswers,
-            score:
-              quizStatus === "completed"
-                ? calculateQuizScore(generatedQuiz.questions, userAnswers)
-                : null,
-            timeTaken: timer,
-            resourceName: selectedFile ? selectedFile.name : "Unknown resource",
-            options: {
-              numQuestions,
-              selectedTopics,
-              customTopics,
-              questionFormats,
-            },
-          },
-        };
+                setSaveSuccess(true);
+                decksFetchedRef.current = false;
+                await fetchSavedDecks();
+                return response.data;
+            } catch (error) {
+                console.error("Error saving deck:", error);
+                setError(
+                    "Failed to delete deck: " +
+                    (error.response?.data?.message || error.message)
+                );
+                alert("Failed to delete deck!");
+                return null;
+            } finally {
+                setIsSaving(false);
+            }
+        },
+        [getToken, fetchSavedDecks]
+    );
 
-        // Save to API
-        const response = await axios.post(
-          "http://localhost:8000/save-flashcard",
-          deckData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
 
-        setSaveSuccess(true);
-        decksFetchedRef.current = false;
-        await fetchSavedDecks();
-        return response.data;
-      } catch (error) {
-        console.error("Error saving quiz:", error);
-        setError(
-          "Failed to save quiz: " +
-            (error.response?.data?.message || error.message)
-        );
-        return null;
-      } finally {
-        setIsSaving(false);
-      }
-    },
-    [getToken, fetchSavedDecks]
-  );
 
-  return {
-    savedDecks,
-    isSaving,
-    saveSuccess,
-    error,
-    fetchSavedDecks,
-    saveDeck,
-    decksFetchedRef,
-  };
+
+    return {
+        savedDecks,
+        isSaving,
+        saveSuccess,
+        error,
+        fetchSavedDecks,
+        saveDeck,
+        deleteDeck,
+        decksFetchedRef,
+    };
 }
