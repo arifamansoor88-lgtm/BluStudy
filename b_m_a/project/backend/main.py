@@ -13,7 +13,7 @@ from jose import jwt
 from database import client, container  
 from pdf_utils import extract_text_from_pdf
 from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text
-from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse
+from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument 
 from pydantic import BaseModel
 
 # Load the environment variables
@@ -757,3 +757,74 @@ async def summarize_file(
 # For development purposes
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+# Save flashcard endpoint - protected 
+@app.post("/save-flashcard", response_model=SaveFlashcardResponse)
+async def save_flashcard(flashcard: FlashcardDocument, user_claims: dict = Depends(validate_token)):
+    try:
+        # Prepare document for Cosmos DB
+        document = {
+            "id": str(uuid.uuid4()),
+            "userId": user_claims["sub"],  
+            "contentType": flashcard.contentType,
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": flashcard.data.dict()  
+        }
+        
+        # Save to Cosmos DB
+        container.create_item(body=document)
+        return {"id": document["id"], "message": "Flashcards saved successfully"}
+    except Exception as e:
+        print(f"Error saving flashcards: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to save flashcards: {str(e)}"
+        )
+    
+# Get all flashcard decks for a user - protected
+@app.get("/decks")
+async def get_decks(user_claims: dict = Depends(validate_token)):
+    try:
+        # Query parameters for Cosmos DB
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'flashcard' ORDER BY c.createdAt DESC"
+        parameters = [{"name": "@userId", "value": user_claims["sub"]}]
+        
+        # Query Cosmos DB
+        items = list(container.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=True
+        ))
+        return items
+    except Exception as e:
+        print(f"Error fetching decks: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to fetch decks: {str(e)}"
+        )
+
+# Get a specific deck by ID - protected
+@app.get("/decks/{deck_id}")
+async def get_decks(deck_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the deck from Cosmos DB (using partition key)
+        quiz = container.read_item(
+            item=deck_id, 
+            partition_key=user_claims["sub"]
+        )
+        
+        # Verify the deck belongs to the user
+        if quiz["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Access denied"
+            )
+            
+        return quiz
+    except Exception as e:
+        print(f"Error fetching deck: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Deck not found"
+        )
+

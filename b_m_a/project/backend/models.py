@@ -2,6 +2,21 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
 
+class Flashcard(BaseModel):
+    question: str
+    answer: str
+
+class FlashcardDeck(BaseModel):
+    title: str
+    cards: List[Flashcard]
+
+class FlashcardDocument(BaseModel):
+    contentType: str
+    data: FlashcardDeck
+
+class SaveFlashcardResponse(BaseModel):
+    id: str
+    message: str
 
 class QuizOptions(BaseModel):
     numQuestions: int
