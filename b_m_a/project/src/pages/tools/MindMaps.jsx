@@ -9,9 +9,20 @@ import ReactFlow, {
   Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Network as Network2, Plus, RotateCcw, Trash2, Download, Circle, Square } from 'lucide-react';
+import { Network as Network2, Plus, RotateCcw, Trash2, Download, Circle, Square, ArrowRight, FolderOpen } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
+
+// Custom CSS to override React Flow's selection border for groups
+const groupStyles = `
+  .react-flow__node-group.selected,
+  .react-flow__node-group {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: rgba(240, 240, 240, 0) !important;
+  }
+`;
 
 // Color configuration
 const COLOR_PALETTE = {
@@ -32,18 +43,21 @@ const COLOR_OPTIONS = [
   { name: 'gray', color: '#6B7280' },
 ];
 
-// Custom node component with Tailwind classes
+// Custom node component
 const CustomNode = ({ data, selected }) => {
   const colorConfig = COLOR_PALETTE[data.color] || COLOR_PALETTE.blue;
   const isCircle = data.shape === 'circle';
+  const isArrowMode = data.isArrowMode;
 
   return (
     <div
       className={`
-        relative px-4 py-3 min-w-[120px] text-center font-medium shadow-md
+        relative px-4 py-3 min-w-[120px] text-center font-medium shadow-md cursor-pointer
         ${colorConfig.bg} ${colorConfig.text} ${colorConfig.border}
         ${isCircle ? 'rounded-full aspect-square flex items-center justify-center' : 'rounded-lg'}
         ${selected ? 'ring-4 ring-offset-2 ring-blue-400' : 'border-2'}
+        ${isArrowMode ? 'ring-4 ring-offset-2 ring-green-400' : ''}
+        hover:shadow-lg transition-all duration-200
       `}
     >
       {/* Delete button - only show when selected */}
@@ -52,9 +66,7 @@ const CustomNode = ({ data, selected }) => {
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
-            if (data.onDelete) {
-              data.onDelete(data.id);
-            }
+            data.onDelete?.(data.id);
           }}
           className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center cursor-pointer text-xs z-10 hover:bg-red-600 transition-colors"
           title="Delete node"
@@ -63,43 +75,128 @@ const CustomNode = ({ data, selected }) => {
         </button>
       )}
 
+      {/* Arrow mode indicator */}
+      {isArrowMode && (
+        <div className="absolute -top-3 -left-3 w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold z-20">
+          <ArrowRight size={12} />
+        </div>
+      )}
+
       {/* Connection handles */}
       <Handle
         type="target"
         position={Position.Top}
         className="w-3 h-3 border-2 border-white"
-        style={{ backgroundColor: COLOR_PALETTE[data.color]?.hex || COLOR_PALETTE.blue.hex }}
+        style={{ backgroundColor: colorConfig.hex }}
       />
       
-      <div className="text-sm">{data.label}</div>
+      <div className="text-sm relative z-10">{data.label}</div>
       
       <Handle
         type="source"
         position={Position.Bottom}
         className="w-3 h-3 border-2 border-white"
-        style={{ backgroundColor: COLOR_PALETTE[data.color]?.hex || COLOR_PALETTE.blue.hex }}
+        style={{ backgroundColor: colorConfig.hex }}
       />
       
       <Handle
         type="source"
         position={Position.Left}
         className="w-3 h-3 border-2 border-white"
-        style={{ backgroundColor: COLOR_PALETTE[data.color]?.hex || COLOR_PALETTE.blue.hex }}
+        style={{ backgroundColor: colorConfig.hex }}
       />
       
       <Handle
         type="source"
         position={Position.Right}
         className="w-3 h-3 border-2 border-white"
-        style={{ backgroundColor: COLOR_PALETTE[data.color]?.hex || COLOR_PALETTE.blue.hex }}
+        style={{ backgroundColor: colorConfig.hex }}
       />
     </div>
   );
 };
 
-// Define nodeTypes outside the component to fix React Flow warning
+// Group container component
+const GroupContainer = ({ data }) => {
+  const colorConfig = COLOR_PALETTE[data.color] || COLOR_PALETTE.blue;
+  const [isEditing, setIsEditing] = useState(false);
+  const [groupName, setGroupName] = useState(data.label || 'Group');
+  
+  const handleNameEdit = () => {
+    data.onNameChange?.(groupName);
+    setIsEditing(false);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleNameEdit();
+    } else if (e.key === 'Escape') {
+      setGroupName(data.label || 'Group');
+      setIsEditing(false);
+    }
+  };
+  
+  return (
+    <div
+      className={`
+        relative border-2 border-dashed rounded-lg p-4 pointer-events-none
+        ${colorConfig.border} bg-opacity-5 ${colorConfig.bg.replace('bg-', 'bg-')}
+        transition-all duration-200
+      `}
+      style={{
+        width: data.width || 300,
+        height: data.height || 200,
+      }}
+    >
+      {/* Group label - editable */}
+      <div 
+        className="absolute -top-3 left-4 px-2 bg-white text-sm font-medium text-gray-700 border border-gray-300 rounded pointer-events-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {isEditing ? (
+          <input
+            type="text"
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
+            onBlur={handleNameEdit}
+            onKeyDown={handleKeyPress}
+            className="w-20 text-sm border-none outline-none bg-transparent"
+            autoFocus
+          />
+        ) : (
+          <span 
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditing(true);
+            }}
+            className="cursor-pointer hover:text-blue-600"
+            title="Click to edit group name"
+          >
+            {groupName}
+          </span>
+        )}
+      </div>
+      
+      {/* Delete button for individual group */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          data.onDelete?.(data.id);
+        }}
+        className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center cursor-pointer text-xs z-10 hover:bg-red-600 transition-colors pointer-events-auto"
+        title="Delete this group"
+      >
+        <Trash2 size={10} />
+      </button>
+    </div>
+  );
+};
+
+// Define nodeTypes outside the component
 const nodeTypes = {
   custom: CustomNode,
+  group: GroupContainer,
 };
 
 // Control panel section component
@@ -190,16 +287,60 @@ const MindMaps = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [newNodeText, setNewNodeText] = useState('');
   const [selectedNodeColor, setSelectedNodeColor] = useState('blue');
-  const [selectedEdgeColor, setSelectedEdgeColor] = useState('blue');
   const [selectedNodeShape, setSelectedNodeShape] = useState('square');
   const [nextId, setNextId] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
+  const [arrowMode, setArrowMode] = useState(false);
+  const [firstSelectedNode, setFirstSelectedNode] = useState(null);
+  const [groupMode, setGroupMode] = useState(false);
+  const [selectedNodesForGroup, setSelectedNodesForGroup] = useState([]);
+  const [groupNodeMap, setGroupNodeMap] = useState(new Map());
   const reactFlowRef = useRef(null);
+
+  // Inject custom CSS
+  useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = groupStyles;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
 
   // Delete node function
   const deleteNode = useCallback((nodeId) => {
-    setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+    setNodes((nds) => {
+      const filteredNodes = nds.filter((node) => node.id !== nodeId);
+      
+      // If deleting a group, remove from group mappings
+      const deletedNode = nds.find(n => n.id === nodeId);
+      if (deletedNode?.type === 'group') {
+        setGroupNodeMap(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(nodeId);
+          return newMap;
+        });
+      }
+      
+      return filteredNodes;
+    });
+    
     setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+    
+    // Clean up group mappings when regular nodes are deleted
+    setGroupNodeMap(prev => {
+      const newMap = new Map(prev);
+      newMap.forEach((nodeIds, groupId) => {
+        const updatedNodeIds = nodeIds.filter(id => id !== nodeId);
+        if (updatedNodeIds.length === 0) {
+          newMap.delete(groupId);
+        } else {
+          newMap.set(groupId, updatedNodeIds);
+        }
+      });
+      return newMap;
+    });
   }, [setNodes, setEdges]);
 
   // Delete edge function
@@ -223,27 +364,92 @@ const MindMaps = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [nodes, edges, deleteNode, deleteEdge]);
 
+  // Connection handling
   const onConnect = useCallback(
     (params) => {
+      if (params.source === params.target) return;
+
+      const connectionExists = edges.some(
+        edge => edge.source === params.source && edge.target === params.target
+      );
+
+      if (connectionExists) return;
+
       setEdges((eds) =>
         addEdge(
           {
             ...params,
-            style: { 
-              stroke: COLOR_PALETTE[selectedEdgeColor]?.hex || COLOR_PALETTE.blue.hex, 
-              strokeWidth: 3,
-              strokeDasharray: '5,5',
-            },
+            style: { stroke: '#6B7280', strokeWidth: 2 },
             type: 'smoothstep',
           },
           eds
         )
       );
     },
-    [setEdges, selectedEdgeColor]
+    [setEdges, edges]
   );
 
-  const addNode = () => {
+  // Create group from selected nodes
+  const createGroup = useCallback(() => {
+    if (selectedNodesForGroup.length < 2) {
+      alert('Please select at least 2 nodes to create a group.');
+      return;
+    }
+
+    // Calculate group bounds more precisely
+    const minX = Math.min(...selectedNodesForGroup.map(n => n.position.x));
+    const maxX = Math.max(...selectedNodesForGroup.map(n => n.position.x));
+    const minY = Math.min(...selectedNodesForGroup.map(n => n.position.y));
+    const maxY = Math.max(...selectedNodesForGroup.map(n => n.position.y));
+
+    // Add more padding around nodes to prevent edges from going over border
+    const padding = 40;
+    const groupWidth = maxX - minX + 200; // 120px node width + 80px padding
+    const groupHeight = maxY - minY + 160; // 60px node height + 100px padding
+    const groupX = minX - padding;
+    const groupY = minY - padding;
+
+    const groupId = `group-${nextId}`;
+
+    const groupNode = {
+      id: groupId,
+      type: 'group',
+      position: { x: groupX, y: groupY },
+      draggable: false,
+      selectable: false,
+      data: {
+        label: `Group ${nextId}`,
+        color: selectedNodeColor,
+        width: groupWidth,
+        height: groupHeight,
+        onDelete: deleteNode,
+        onNameChange: (newName) => {
+          setNodes((nds) => 
+            nds.map(n => 
+              n.id === groupId 
+                ? { ...n, data: { ...n.data, label: newName } }
+                : n
+            )
+          );
+        },
+        id: groupId,
+      },
+    };
+
+    setNodes((nds) => [...nds, groupNode]);
+    setGroupNodeMap(prev => {
+      const newMap = new Map(prev);
+      newMap.set(groupId, selectedNodesForGroup.map(n => n.id));
+      return newMap;
+    });
+    
+    setNextId(nextId + 1);
+    setSelectedNodesForGroup([]);
+    setGroupMode(false);
+  }, [selectedNodesForGroup, nextId, selectedNodeColor, deleteNode, setNodes]);
+
+  // Add new node
+  const addNode = useCallback(() => {
     if (!newNodeText.trim()) return;
 
     const newNode = {
@@ -256,15 +462,17 @@ const MindMaps = () => {
         shape: selectedNodeShape,
         onDelete: deleteNode,
         id: `node-${nextId}`,
+        isArrowMode: false,
       },
     };
 
     setNodes((nds) => [...nds, newNode]);
     setNewNodeText('');
     setNextId(nextId + 1);
-  };
+  }, [newNodeText, nextId, selectedNodeColor, selectedNodeShape, deleteNode, setNodes]);
 
-  const autoArrange = () => {
+  // Layout functions
+  const autoArrange = useCallback(() => {
     if (nodes.length === 0) return;
 
     const centerX = 400;
@@ -280,9 +488,9 @@ const MindMaps = () => {
     });
 
     setNodes(arrangedNodes);
-  };
+  }, [nodes, setNodes]);
 
-  const hierarchicalArrange = () => {
+  const hierarchicalArrange = useCallback(() => {
     if (nodes.length === 0) return;
 
     const rootNode = nodes[0];
@@ -301,14 +509,62 @@ const MindMaps = () => {
     });
 
     setNodes(arrangedNodes);
-  };
+  }, [nodes, setNodes]);
 
-  const clearAll = () => {
+  // Update group positions when nodes move
+  const updateGroupPositions = useCallback(() => {
+    setNodes((nds) => {
+      const updatedNodes = [...nds];
+      
+      groupNodeMap.forEach((nodeIds, groupId) => {
+        const groupNode = updatedNodes.find(n => n.id === groupId);
+        if (!groupNode) return;
+        
+        const groupNodes = updatedNodes.filter(n => nodeIds.includes(n.id));
+        if (groupNodes.length === 0) return;
+        
+        // Calculate new group bounds
+        const minX = Math.min(...groupNodes.map(n => n.position.x));
+        const maxX = Math.max(...groupNodes.map(n => n.position.x));
+        const minY = Math.min(...groupNodes.map(n => n.position.y));
+        const maxY = Math.max(...groupNodes.map(n => n.position.y));
+        
+        const padding = 40;
+        const groupWidth = maxX - minX + 200;
+        const groupHeight = maxY - minY + 160;
+        const groupX = minX - padding;
+        const groupY = minY - padding;
+        
+        // Update group position and size
+        const groupIndex = updatedNodes.findIndex(n => n.id === groupId);
+        if (groupIndex !== -1) {
+          updatedNodes[groupIndex] = {
+            ...updatedNodes[groupIndex],
+            position: { x: groupX, y: groupY },
+            data: {
+              ...updatedNodes[groupIndex].data,
+              width: groupWidth,
+              height: groupHeight,
+            },
+          };
+        }
+      });
+      
+      return updatedNodes;
+    });
+  }, [groupNodeMap, setNodes]);
+
+  // Clear all
+  const clearAll = useCallback(() => {
     setNodes([]);
     setEdges([]);
-  };
+    setFirstSelectedNode(null);
+    setSelectedNodesForGroup([]);
+    setGroupNodeMap(new Map());
+  }, [setNodes, setEdges]);
 
-  const exportAsImage = async () => {
+  // Export functions
+  const exportAsImage = useCallback(async () => {
     if (!reactFlowRef.current || nodes.length === 0) {
       alert('Please add some nodes to your mindmap before exporting.');
       return;
@@ -340,9 +596,9 @@ const MindMaps = () => {
     } finally {
       setIsExporting(false);
     }
-  };
+  }, [nodes]);
 
-  const exportAsPDF = async () => {
+  const exportAsPDF = useCallback(async () => {
     if (!reactFlowRef.current || nodes.length === 0) {
       alert('Please add some nodes to your mindmap before exporting.');
       return;
@@ -381,7 +637,69 @@ const MindMaps = () => {
     } finally {
       setIsExporting(false);
     }
-  };
+  }, [nodes]);
+
+  // Node click handling
+  const onNodeClick = useCallback((event, node) => {
+    if (node.type === 'group') {
+      event.stopPropagation();
+      return;
+    }
+
+    if (arrowMode) {
+      event.stopPropagation();
+      
+      if (!firstSelectedNode) {
+        setFirstSelectedNode(node);
+        setNodes((nds) => 
+          nds.map(n => ({
+            ...n,
+            data: { ...n.data, isArrowMode: n.id === node.id }
+          }))
+        );
+      } else if (firstSelectedNode.id !== node.id) {
+        const newEdge = {
+          id: `arrow-${firstSelectedNode.id}-${node.id}`,
+          source: firstSelectedNode.id,
+          target: node.id,
+          style: { 
+            stroke: '#EF4444',
+            strokeWidth: 3,
+            markerEnd: {
+              type: 'arrowclosed',
+              width: 20,
+              height: 20,
+              color: '#EF4444',
+            },
+          },
+          type: 'smoothstep',
+        };
+
+        setEdges((eds) => [...eds, newEdge]);
+        setFirstSelectedNode(null);
+        setNodes((nds) => 
+          nds.map(n => ({
+            ...n,
+            data: { ...n.data, isArrowMode: false }
+          }))
+        );
+      }
+    } else if (groupMode) {
+      event.stopPropagation();
+      setSelectedNodesForGroup(prev => {
+        const isSelected = prev.find(n => n.id === node.id);
+        return isSelected 
+          ? prev.filter(n => n.id !== node.id)
+          : [...prev, node];
+      });
+    }
+  }, [arrowMode, firstSelectedNode, groupMode, setEdges, setNodes]);
+
+  // Update group positions when nodes change
+  const handleNodesChange = useCallback((changes) => {
+    onNodesChange(changes);
+    setTimeout(updateGroupPositions, 0);
+  }, [onNodesChange, updateGroupPositions]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -431,13 +749,95 @@ const MindMaps = () => {
             </div>
           </ControlSection>
 
-          {/* Edge Color */}
-          <ControlSection title="Edge Color">
-            <ColorPicker
-              colors={COLOR_OPTIONS}
-              selectedColor={selectedEdgeColor}
-              onColorChange={setSelectedEdgeColor}
-            />
+          {/* Group Controls */}
+          {groupMode && (
+            <ControlSection title="Group Actions">
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-gray-600">
+                  Selected: {selectedNodesForGroup.length} nodes
+                </p>
+                <button
+                  onClick={createGroup}
+                  disabled={selectedNodesForGroup.length < 2}
+                  className={`
+                    px-3 py-2 rounded-md text-sm flex items-center gap-1 transition-colors
+                    ${selectedNodesForGroup.length >= 2 
+                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  <FolderOpen className="h-4 w-4" />
+                  Create Group
+                </button>
+              </div>
+            </ControlSection>
+          )}
+
+          {/* Arrow Mode */}
+          <ControlSection title="Arrow Mode">
+            <button
+              onClick={() => {
+                const newMode = !arrowMode;
+                setArrowMode(newMode);
+                if (!newMode) {
+                  setFirstSelectedNode(null);
+                  setNodes((nds) => 
+                    nds.map(n => ({
+                      ...n,
+                      data: { ...n.data, isArrowMode: false }
+                    }))
+                  );
+                }
+                if (newMode && groupMode) {
+                  setGroupMode(false);
+                  setSelectedNodesForGroup([]);
+                }
+              }}
+              className={`
+                px-3 py-2 rounded-md text-sm flex items-center gap-1 transition-colors
+                ${arrowMode 
+                  ? 'bg-red-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }
+              `}
+            >
+              <ArrowRight className="h-4 w-4" />
+              {arrowMode ? 'ON' : 'OFF'}
+            </button>
+          </ControlSection>
+
+          {/* Group Mode */}
+          <ControlSection title="Group Mode">
+            <button
+              onClick={() => {
+                const newMode = !groupMode;
+                setGroupMode(newMode);
+                if (!newMode) {
+                  setSelectedNodesForGroup([]);
+                }
+                if (newMode && arrowMode) {
+                  setArrowMode(false);
+                  setFirstSelectedNode(null);
+                  setNodes((nds) => 
+                    nds.map(n => ({
+                      ...n,
+                      data: { ...n.data, isArrowMode: false }
+                    }))
+                  );
+                }
+              }}
+              className={`
+                px-3 py-2 rounded-md text-sm flex items-center gap-1 transition-colors
+                ${groupMode 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }
+              `}
+            >
+              <FolderOpen className="h-4 w-4" />
+              {groupMode ? 'ON' : 'OFF'}
+            </button>
           </ControlSection>
 
           {/* Layout Actions */}
@@ -483,14 +883,29 @@ const MindMaps = () => {
 
           {/* Delete Actions */}
           <ControlSection title="Delete">
-            <button
-              onClick={clearAll}
-              className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm flex items-center gap-1"
-              title="Clear all nodes and edges"
-            >
-              <Trash2 className="h-4 w-4" />
-              Clear All
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={clearAll}
+                className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm flex items-center gap-1"
+                title="Clear all nodes and edges"
+              >
+                <Trash2 className="h-4 w-4" />
+                Clear All
+              </button>
+              {groupNodeMap.size > 0 && (
+                <button
+                  onClick={() => {
+                    setNodes((nds) => nds.filter(n => n.type !== 'group'));
+                    setGroupNodeMap(new Map());
+                  }}
+                  className="px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors text-sm flex items-center gap-1"
+                  title="Delete all groups"
+                >
+                  <FolderOpen className="h-4 w-4" />
+                  Delete Groups
+                </button>
+              )}
+            </div>
           </ControlSection>
         </div>
       </div>
@@ -501,9 +916,10 @@ const MindMaps = () => {
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChange}
+            onNodesChange={handleNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
             fitView
           >
@@ -512,7 +928,6 @@ const MindMaps = () => {
           </ReactFlow>
         </div>
       </div>
-
     </div>
   );
 };
