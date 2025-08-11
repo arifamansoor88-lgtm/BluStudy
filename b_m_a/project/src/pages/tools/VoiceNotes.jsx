@@ -1,9 +1,22 @@
+// VoiceNotes.jsx — patched so "Save Note" immediately shows in Saved Notes
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { Mic, Save, Trash2, Download, Share2, AudioWaveform as Waveform } from 'lucide-react';
 
 const API_URL = "http://localhost:8000"; // ✅ Change this when deploying
+
+// ✅ Stable user id so backend partitioning is consistent
+const USER_ID_KEY = "voice_notes_user_id";
+const getUserId = () => {
+  let id = localStorage.getItem(USER_ID_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(USER_ID_KEY, id);
+  }
+  return id;
+};
+axios.defaults.headers.common['X-User-Id'] = getUserId();
 
 const VoiceNotes = () => {
   const [notes, setNotes] = useState([]);
@@ -29,16 +42,19 @@ const VoiceNotes = () => {
   const { transcript, resetTranscript } = useSpeechRecognition();
 
   // ✅ Fetch all notes on load
-  useEffect(() => {
-    axios.get(`${API_URL}/voice-notes`)
-      .then(res => {
-        console.log("✅ Voice notes fetched:", res.data);
-        setNotes(res.data); // ✅ Use res.data directly
+  const fetchNotes = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/voice-notes`);
+      setNotes(res.data || []);
+      const uniqueFolders = [...new Set((res.data || []).map(n => n.folder).filter(Boolean))];
+      setFolders(prev => Array.from(new Set([...prev, ...uniqueFolders])));
+    } catch (err) {
+      console.error("Error fetching notes:", err);
+    }
+  };
 
-        const uniqueFolders = [...new Set(res.data.map(n => n.folder))];
-        setFolders(prev => Array.from(new Set([...prev, ...uniqueFolders])));
-      })
-      .catch(err => console.error("Error fetching notes:", err));
+  useEffect(() => {
+    fetchNotes();
   }, []);
 
   // ✅ Draw waveform for live recording
@@ -49,8 +65,8 @@ const VoiceNotes = () => {
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
-    canvas.style.width = `${rect.width}px`;
-    canvas.style.height = `${rect.height}px`;
+    canvas.style.width = '${rect.width}px';
+    canvas.style.height = '${rect.height}px';
     const ctx = canvas.getContext('2d');
     if (ctx) ctx.scale(dpr, dpr);
   }, []);
@@ -106,15 +122,12 @@ const VoiceNotes = () => {
       if (e.data.size > 0) localChunks.push(e.data);
     };
 
+    // ❌ Avoid auto-save on stop — user will click "Save Note"
     mediaRecorderRef.current.onstop = () => {
       const blob = new Blob(localChunks, { type: 'audio/webm' });
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
       setChunks(localChunks);
-
-      setTimeout(() => {
-        saveNoteToBackend(blob);
-      }, 100);
     };
 
     audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
@@ -143,27 +156,35 @@ const VoiceNotes = () => {
 
   const toggleRecording = () => (isRecording ? stopRecording() : startRecording());
 
-  // ✅ Save note to backend
-  const saveNoteToBackend = async (blob) => {
-    if (!blob || !transcript.trim() || !noteTitle.trim()) return;
+  // ✅ Save note to backend (no transcript requirement)
+  const saveNoteToBackend = async () => {
+    const blob = new Blob(chunks, { type: 'audio/webm' });
+    if (!blob || !noteTitle.trim()) return; // only title required
 
     const formData = new FormData();
-    formData.append('audio', blob, `note_${Date.now()}.webm`); // ✅ Match backend field name
+    formData.append('audio', blob, `note_${Date.now()}.webm`);
     formData.append('title', noteTitle.trim());
-    formData.append('text', transcript);
-    formData.append('folder', selectedFolder);
-    formData.append('duration', recordingDuration);
+    formData.append('text', transcript || ''); // allow empty transcript
+    formData.append('folder', selectedFolder || 'General');
+    formData.append('duration', recordingDuration || 0);
     formData.append('visibility', privacySettings['temp'] || 'Private');
 
     try {
       const res = await axios.post(`${API_URL}/voice-notes`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-
-      console.log("✅ Saved note:", res.data);
-
       const newNote = res.data;
+
+      // ✅ Immediately show in UI
       setNotes(prev => [newNote, ...prev]);
+
+      // ✅ Ensure folder appears in list
+      if (newNote.folder && !folders.includes(newNote.folder)) {
+        setFolders(prev => [...prev, newNote.folder]);
+      }
+
+      // Optional: re-fetch from backend to stay consistent
+      // await fetchNotes();
 
       setShowSaveAnimation(true);
       setTimeout(() => {
@@ -172,13 +193,13 @@ const VoiceNotes = () => {
         setChunks([]);
         setNoteTitle('');
         setShowSaveAnimation(false);
-      }, 500);
+      }, 400);
     } catch (err) {
       console.error("Error saving voice note:", err);
+      alert("Failed to save note. Check server logs.");
     }
   };
 
-  // ✅ Delete note from backend
   const deleteNote = async (id) => {
     try {
       await axios.delete(`${API_URL}/voice-notes/${id}`);
@@ -219,7 +240,7 @@ const VoiceNotes = () => {
     }
   };
 
-  const formatDuration = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+  const formatDuration = (s) => `${Math.floor((s || 0) / 60)}:${((s || 0) % 60).toString().padStart(2, '0')}`;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -251,10 +272,9 @@ const VoiceNotes = () => {
             if (e.key === 'Enter' && e.target.value.trim()) {
               const name = e.target.value.trim();
               if (!folders.includes(name)) {
-                const updated = [...folders, name];
-                setFolders(updated);
-                setSelectedFolder(name);
+                setFolders(prev => [...prev, name]);
               }
+              setSelectedFolder(name);
               e.target.value = '';
             }
           }}
@@ -313,11 +333,11 @@ const VoiceNotes = () => {
                 <option>Public</option>
               </select>
               <button
-                onClick={() => saveNoteToBackend(new Blob(chunks, { type: 'audio/webm' }))}
-                disabled={!noteTitle.trim() || !transcript.trim()}
+                onClick={saveNoteToBackend}
+                disabled={!noteTitle.trim() || !chunks.length}
                 className={`flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition ${
                   showSaveAnimation ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
-                } ${(!noteTitle.trim() || !transcript.trim()) && 'opacity-50 cursor-not-allowed'}`}
+                } ${(!noteTitle.trim() || !chunks.length) && 'opacity-50 cursor-not-allowed'}`}
               >
                 <Save className="h-4 w-4" /> Save Note
               </button>
@@ -363,8 +383,8 @@ const VoiceNotes = () => {
           const folderNotes = notes.filter(
             (note) =>
               note.folder === folder &&
-              (note.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-               note.text?.toLowerCase().includes(searchQuery.toLowerCase()))
+              ((note.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+               (note.text || '').toLowerCase().includes(searchQuery.toLowerCase()))
           );
 
           if (folderNotes.length === 0) return null;
@@ -378,7 +398,7 @@ const VoiceNotes = () => {
                   className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow mb-4 flex flex-col md:flex-row md:items-start md:justify-between"
                 >
                   <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-1">{note.title}</h4>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-1">{note.title || 'Untitled'}</h4>
                     <div className="flex gap-2 mb-2 text-sm text-gray-500">
                       <span>{note.timestamp}</span>
                       <span className="text-gray-400">
