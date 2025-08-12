@@ -7,7 +7,6 @@ import FlashcardDeckList from './FlashcardDeckList';
 import FlashcardStudyPage from './FlashcardStudy';
 import { Link, useNavigate } from "react-router-dom";
 
-
 const AIFlashcards = () => {
     const [cards, setCards] = useState([]);
     const [decks, setDecks] = useState([]);
@@ -15,6 +14,7 @@ const AIFlashcards = () => {
     const [newAnswer, setNewAnswer] = useState('');
     const [difficulty, setDifficulty] = useState(null);
     const [selectedDeckID, setSelectedDeckID] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const addCard = () => {
         if (newQuestion && newAnswer && difficulty) {
@@ -28,22 +28,29 @@ const AIFlashcards = () => {
         setCards(cards.filter((_, i) => i !== index));
     };
 
-  
-
     const handleDeckSelect = (deck) => {
         console.log("Selected deck:", deck);
         setSelectedDeckID(deck);
     };
-
 
     const saveCard = () => {
         let deckName = prompt("Choose a name for this deck");
         saveDeck(deckName, cards);
     }
 
-    const handleFileUpload = (e) => {
+    const handleFileUpload = async (e) => {
         const file = e.target.files[0];
-        console.log(generateFlashcards(file, 10));
+        if (file) {
+            setIsProcessing(true);
+            try {
+                await generateFlashcards(file, 10);
+                window.location.reload();
+            } catch (error) {
+                console.error("Error processing PDF:", error);
+            } finally {
+                setIsProcessing(false);
+            }
+        }
     }
 
     const {
@@ -68,6 +75,17 @@ const AIFlashcards = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Processing Modal */}
+            {isProcessing && (
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-xl flex flex-col items-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mb-4"></div>
+                        <p className="text-lg font-medium text-gray-900">Processing PDF...</p>
+                        <p className="text-sm text-gray-600">This may take a few moments</p>
+                    </div>
+                </div>
+            )}
+
             <div className="flex items-center gap-4 mb-8">
                 <Brain className="h-8 w-8 text-blue-600" />
                 <h1 className="text-2xl font-bold text-gray-900">AI Flashcards</h1>
@@ -127,26 +145,26 @@ const AIFlashcards = () => {
                         <button
                             onClick={saveCard}
                             className={`flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg
-                    transition-all duration-300 hover:bg-blue-700`}>
+                    transition-all duration-300 hover:bg-blue-700`}
+                        >
                             <Save className="h-4 w-4" />
                             Save Deck
                         </button>
                         <Link
                             to={"./FlashcardStudyPage"}
                             state={{ flashcards: cards }}
-                          > 
-                        <button
-                            onClick={saveCard}
-                            className={`flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg
-                    transition-all duration-300 hover:bg-blue-700`}>
-                            Test Deck
-                            <MoveRight className="h-4 w-4" />
-                        </button>
+                        > 
+                            <button
+                                className={`flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg
+                    transition-all duration-300 hover:bg-blue-700`}
+                            >
+                                Test Deck
+                                <MoveRight className="h-4 w-4" />
+                            </button>
                         </Link>
                     </div>
                 </div>
             </div>
-
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                 {cards.map((card, index) => (
