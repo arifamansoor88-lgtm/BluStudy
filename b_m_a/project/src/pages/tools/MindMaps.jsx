@@ -59,6 +59,7 @@ const CustomNode = ({ data, selected }) => {
         ${isArrowMode ? 'ring-4 ring-offset-2 ring-green-400' : ''}
         hover:shadow-lg transition-all duration-200
       `}
+      style={{ zIndex: 10 }} // Higher z-index to ensure nodes are selectable above groups
     >
       {/* Delete button - only show when selected */}
       {selected && (
@@ -128,38 +129,58 @@ const GroupContainer = ({ data }) => {
   };
 
   const handleKeyPress = (e) => {
+    // Prevent keyboard shortcuts from affecting selected nodes
+    e.stopPropagation();
+    
     if (e.key === 'Enter') {
+      e.preventDefault();
       handleNameEdit();
     } else if (e.key === 'Escape') {
+      e.preventDefault();
       setGroupName(data.label || 'Group');
       setIsEditing(false);
     }
+  };
+
+  const handleInputFocus = (e) => {
+    // Prevent any keyboard shortcuts when input is focused
+    e.stopPropagation();
+  };
+
+  const handleInputBlur = (e) => {
+    e.stopPropagation();
+    handleNameEdit();
   };
   
   return (
     <div
       className={`
-        relative border-2 border-dashed rounded-lg p-4 pointer-events-none
+        relative border-2 border-dashed rounded-lg p-4
         ${colorConfig.border} bg-opacity-5 ${colorConfig.bg.replace('bg-', 'bg-')}
         transition-all duration-200
       `}
       style={{
         width: data.width || 300,
         height: data.height || 200,
+        zIndex: -1, // Negative z-index to ensure it's behind everything
+        pointerEvents: 'none', // Completely transparent to pointer events
+        position: 'absolute', // Ensure it doesn't affect layout
       }}
     >
       {/* Group label - editable */}
       <div 
         className="absolute -top-3 left-4 px-2 bg-white text-sm font-medium text-gray-700 border border-gray-300 rounded pointer-events-auto"
         onClick={(e) => e.stopPropagation()}
+        style={{ zIndex: 15 }} // Higher z-index for the label
       >
         {isEditing ? (
           <input
             type="text"
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
-            onBlur={handleNameEdit}
+            onBlur={handleInputBlur}
             onKeyDown={handleKeyPress}
+            onFocus={handleInputFocus}
             className="w-20 text-sm border-none outline-none bg-transparent"
             autoFocus
           />
@@ -186,6 +207,7 @@ const GroupContainer = ({ data }) => {
         }}
         className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center cursor-pointer text-xs z-10 hover:bg-red-600 transition-colors pointer-events-auto"
         title="Delete this group"
+        style={{ zIndex: 15 }} // Higher z-index for the delete button
       >
         <Trash2 size={10} />
       </button>
@@ -436,7 +458,12 @@ const MindMaps = () => {
       },
     };
 
-    setNodes((nds) => [...nds, groupNode]);
+    // Deselect all nodes when creating group to prevent selection issues
+    setNodes((nds) => {
+      const deselectedNodes = nds.map(n => ({ ...n, selected: false }));
+      return [...deselectedNodes, groupNode];
+    });
+    
     setGroupNodeMap(prev => {
       const newMap = new Map(prev);
       newMap.set(groupId, selectedNodesForGroup.map(n => n.id));
@@ -641,6 +668,8 @@ const MindMaps = () => {
 
   // Node click handling
   const onNodeClick = useCallback((event, node) => {
+    console.log('Node clicked:', node.id, 'Type:', node.type, 'Selected:', node.selected);
+    
     if (node.type === 'group') {
       event.stopPropagation();
       return;
