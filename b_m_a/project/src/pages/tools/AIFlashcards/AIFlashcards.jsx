@@ -15,6 +15,7 @@ const AIFlashcards = () => {
     const [difficulty, setDifficulty] = useState(null);
     const [selectedDeckID, setSelectedDeckID] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const navigate = useNavigate();
 
     const addCard = () => {
         if (newQuestion && newAnswer && difficulty) {
@@ -36,6 +37,14 @@ const AIFlashcards = () => {
     const saveCard = () => {
         let deckName = prompt("Choose a name for this deck");
         saveDeck(deckName, cards);
+    }
+
+    const saveCardTestDeck = async () => {
+        let deckName = prompt("Choose a name for this deck");
+        let id = await saveDeck(deckName, cards);
+        navigate(`./FlashcardStudyPage/tools/flashcards/FlashcardStudyPage/${id}`, {
+            state: { flashcards: cards }
+        });
     }
 
     const handleFileUpload = async (e) => {
@@ -150,18 +159,6 @@ const AIFlashcards = () => {
                             <Save className="h-4 w-4" />
                             Save Deck
                         </button>
-                        <Link
-                            to={"./FlashcardStudyPage"}
-                            state={{ flashcards: cards }}
-                        > 
-                            <button
-                                className={`flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg
-                    transition-all duration-300 hover:bg-blue-700`}
-                            >
-                                Test Deck
-                                <MoveRight className="h-4 w-4" />
-                            </button>
-                        </Link>
                     </div>
                 </div>
             </div>
