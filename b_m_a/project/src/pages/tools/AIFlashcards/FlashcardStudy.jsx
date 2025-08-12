@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { RotateCw, ArrowLeft, FileDown, Volume2, Pencil, Shuffle } from 'lucide-react';
-import { useLocation, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { RotateCw, ArrowLeft, FileDown, Volume2, Pencil, Shuffle, Plus } from 'lucide-react';
+import { useLocation, Link, useParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import { useDeckData } from './hooks';
-import { useParams } from "react-router-dom";
+import FlashcardDifficultySelector from './FlashcardDifficultySelector';
 
 const FlashcardStudyPage = () => {
     const [index, setIndex] = useState(0);
@@ -11,25 +11,41 @@ const FlashcardStudyPage = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [flashcards, setFlashcards] = useState(useLocation().state?.flashcards || []);
     const { deckId } = useParams();
+    const [loading, setLoading] = useState(false);
     const { saveDeck, deleteDeck, getFlashcardByID } = useDeckData();
+    const [newQuestion, setNewQuestion] = useState('');
+    const [newAnswer, setNewAnswer] = useState('');
+    const [newDifficulty, setNewDifficulty] = useState(null);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (flashcards.length > 0 && flashcards[0].originalIndex === undefined) {
             setFlashcards(flashcards.map((card, i) => ({
                 ...card,
                 originalIndex: i
             })));
         }
-    }, [useLocation().state?.flashcards]); // empty array means run only once when component mounts
-    
-    
+    }, [useLocation().state?.flashcards]);
+
+    useEffect(() => {
+        if (flashcards.length === 0 && deckId) {
+            setLoading(true);
+            getFlashcardByID(deckId)
+                .then(deck => {
+                    setFlashcards(deck.data.flashcards || []);
+                })
+                .catch(err => {
+                    console.error("Error loading deck", err);
+                })
+                .finally(() => setLoading(false));
+        }
+    }, [deckId, getFlashcardByID]);
+
     const difficultyWeights = {
-        hard: 3,   // appears 3x more likely
-        medium: 2, // 2x
-        easy: 1    // normal
+        hard: 3,
+        medium: 2,
+        easy: 1
     };
 
-    // Smart shuffle
     const smartShuffle = () => {
         const shuffled = [...flashcards].sort((a, b) => {
             const weightA = difficultyWeights[a.difficulty || 'medium'] || 1;
@@ -38,10 +54,9 @@ const FlashcardStudyPage = () => {
         });
 
         setFlashcards(shuffled);
-        setIndex(flashcards[0].originalIndex); 
+        setIndex(shuffled[0]?.originalIndex || 0);
         setFlipped(false);
     };
-
 
     const handleNext = () => {
         setIndex((prevIndex) => (prevIndex + 1) % flashcards.length);
@@ -59,23 +74,50 @@ const FlashcardStudyPage = () => {
         synth.speak(utterance);
     };
 
-    // This Helper Function reverses the editing status while saves deck
     const handleEditStatusChange = async () => {
-        // if (isEditing) {
-        //     await deleteDeck(deckId);
-        //     await saveDeck(getTitleOfDeck(), flashcards);
-        // }
-        setIsEditing((prev) => !prev)
-    }
+        if (isEditing && (newQuestion || newAnswer || newDifficulty)) {
+            if (window.confirm('You have unsaved changes in the new card form. Save them before closing?')) {
+                await handleAddCard();
+            }
+        }
+        setIsEditing((prev) => !prev);
+        setNewQuestion('');
+        setNewAnswer('');
+        setNewDifficulty(null);
+    };
 
     const getTitleOfDeck = async () => {
         try {
-            const deck = await getFlashcardByID(deckId); // Await the asynchronous call
-            console.log(deck); // Debug the structure of the deck object
-            return deck.data.title; // Access the title from the resolved data
+            const deck = await getFlashcardByID(deckId);
+            return deck.data.title || 'Untitled Deck';
         } catch (error) {
-            console.error("Error fetching deck title:", error);
-            return "Unknown Deck"
+            console.error('Error fetching deck title:', error);
+            return 'Untitled Deck';
+        }
+    };
+
+    const handleAddCard = async () => {
+        if (newQuestion && newAnswer && newDifficulty) {
+            const newCard = {
+                question: newQuestion,
+                answer: newAnswer,
+                difficulty: newDifficulty,
+                important: false,
+                originalIndex: flashcards.length
+            };
+            const updatedFlashcards = [...flashcards, newCard];
+            setFlashcards(updatedFlashcards);
+            setNewQuestion('');
+            setNewAnswer('');
+            setNewDifficulty(null);
+
+            try {
+                const deckTitle = await getTitleOfDeck();
+                await deleteDeck(deckId); // Delete old deck
+                await saveDeck(deckTitle, updatedFlashcards); // Save updated deck
+            } catch (error) {
+                console.error('Error saving new card to deck:', error);
+            }
         }
     };
 
@@ -94,7 +136,6 @@ const FlashcardStudyPage = () => {
         const centerY = (pageHeight - cardHeight) / 2;
 
         flashcards.forEach((card, i) => {
-            // Question side
             doc.setFillColor(255, 255, 255);
             doc.setDrawColor(200);
             doc.setLineWidth(1);
@@ -111,7 +152,6 @@ const FlashcardStudyPage = () => {
             });
             doc.addPage();
 
-            // Answer side
             doc.setFillColor(255, 255, 255);
             doc.setDrawColor(200);
             doc.setLineWidth(1);
@@ -140,6 +180,14 @@ const FlashcardStudyPage = () => {
         updated[i][field] = value;
         setFlashcards(updated);
     };
+
+    if (loading) {
+        return (
+            <div className="max-w-3xl mx-auto py-16 px-4 text-center">
+                <p className="text-gray-600 text-lg">Loading flashcards...</p>
+            </div>
+        );
+    }
 
     if (flashcards.length === 0) {
         return (
@@ -193,7 +241,6 @@ const FlashcardStudyPage = () => {
                         onClick={handleFlip}
                     >
                         {flipped ? currentCard.answer : currentCard.question}
-
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -238,13 +285,59 @@ const FlashcardStudyPage = () => {
                                 placeholder="Edit question"
                             />
                             <input
-                                className="w-full px-3 py-2 border rounded-md text-sm"
+                                className="w-full mb-2 px-3 py-2 border rounded-md text-sm"
                                 value={card.answer}
                                 onChange={(e) => handleCardEdit(i, 'answer', e.target.value)}
                                 placeholder="Edit answer"
                             />
+                            <select
+                                className="w-full px-3 py-2 border rounded-md text-sm"
+                                value={card.difficulty || 'medium'}
+                                onChange={(e) => handleCardEdit(i, 'difficulty', e.target.value)}
+                            >
+                                <option value="easy">Easy</option>
+                                <option value="medium">Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
                         </div>
                     ))}
+                    <div className="bg-white p-4 rounded-lg shadow">
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">Add New Flashcard</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Question</label>
+                                <input
+                                    type="text"
+                                    value={newQuestion}
+                                    onChange={(e) => setNewQuestion(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    placeholder="Enter your question"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Answer</label>
+                                <input
+                                    type="text"
+                                    value={newAnswer}
+                                    onChange={(e) => setNewAnswer(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    placeholder="Enter the answer"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                                <FlashcardDifficultySelector onSelect={setNewDifficulty} />
+                            </div>
+                            <button
+                                onClick={handleAddCard}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                disabled={!newQuestion || !newAnswer || !newDifficulty}
+                            >
+                                <Plus className="h-4 w-4" />
+                                Add Card
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
