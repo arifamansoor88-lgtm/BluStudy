@@ -107,7 +107,8 @@ export const useDeckData = () => {
                 setSaveSuccess(true);
                 decksFetchedRef.current = false;
                 await fetchSavedDecks();
-                return response.data;
+                console.log(response.data.id);
+                return response.data.id;
             } catch (error) {
                 console.error("Error saving deck:", error);
                 setError(
@@ -163,68 +164,116 @@ export const useDeckData = () => {
     );
 
     // Generate a new deck
-  const generateFlashcards = useCallback(
-    async (
-      selectedFile,
-      numCards,
-    ) => {
-      try {
-        const token = await getToken();
+    const generateFlashcards = useCallback(
+        async (
+            selectedFile,
+            numCards,
+        ) => {
+            try {
+                const token = await getToken();
 
-        // Create a FormData object to send the file
-        const formData = new FormData();
-        formData.append("file", selectedFile);
-        formData.append("num_flashcards", numCards.toString()); // Convert to string
+                // Create a FormData object to send the file
+                const formData = new FormData();
+                formData.append("file", selectedFile);
+                formData.append("num_flashcards", numCards.toString()); // Convert to string
 
 
-        // Use a direct URL string to avoid URL construction issues
-        const apiUrl = "http://localhost:8000/generate-flashcard";
+                // Use a direct URL string to avoid URL construction issues
+                const apiUrl = "http://localhost:8000/generate-flashcard";
 
-        // Send the file to the backend API
-        const response = await axios.post(apiUrl, formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        return response.data;
-      } catch (err) {
-        console.error("Error generating quiz:", err);
-        throw new Error(
-          err.response?.data?.detail || err.message || "Failed to generate quiz"
-        );
-      }
-    },
-    [getToken]
-  );
+                // Send the file to the backend API
+                const response = await axios.post(apiUrl, formData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "multipart/form-data",
+                    },
+                });
+                return response.data;
+            } catch (err) {
+                console.error("Error generating quiz:", err);
+                throw new Error(
+                    err.response?.data?.detail || err.message || "Failed to generate quiz"
+                );
+            }
+        },
+        [getToken]
+    );
 
-  // Get Flashcard by ID
-  const getFlashcardByID = useCallback(async (deckId) => {
-    try {
-        // Check if MSAL is initialized
-        if (inProgress !== "none") {
-            return;
+    // Get Flashcard by ID
+    const getFlashcardByID = useCallback(async (deckId) => {
+        try {
+            // Check if MSAL is initialized
+            if (inProgress !== "none") {
+                return;
+            }
+
+            decksFetchedRef.current = true;
+
+            const token = await getToken();
+            const response = await axios.get(`http://localhost:8000/decks/${deckId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            setSavedSpecificDeck(response.data);
+            console.log(response.data);
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching saved flashcard deck ${deckId}:`, error);
+            setError(`Failed to load your saved flashcard deck ${deckId}. Please try again later.`);
+            return [];
         }
+    }, [getToken, inProgress]);
 
-        decksFetchedRef.current = true;
 
-        const token = await getToken();
-        const response = await axios.get(`http://localhost:8000/decks/${deckId}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+    // Update a deck
+    const updateDeck = useCallback(
+        async (deckName, deckId, updatedDeck) => {
+            try {
+                setIsSaving(true);
+                setSaveSuccess(false);
 
-        setSavedSpecificDeck(response.data);
-        console.log(response.data);
-        return response.data;
-    } catch (error) {
-        console.error(`Error fetching saved flashcard deck ${deckId}:`, error);
-        setError(`Failed to load your saved flashcard deck ${deckId}. Please try again later.`);
-        return [];
-    }
-}, [getToken, inProgress]);
+                const token = await getToken();
 
+                // Prepare the updated deck data
+                const deckData = {
+                    contentType: "flashcard",
+                    data: {
+                        title: deckName,
+                        cards: updatedDeck,
+                    },
+                };
+
+                // Send the updated deck to the server
+                const response = await axios.put(
+                    `http://localhost:8000/decks/${deckId}`,
+                    deckData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+
+                setSaveSuccess(true);
+                decksFetchedRef.current = false;
+                await fetchSavedDecks(); // Refresh the saved decks
+                return response.data;
+            } catch (error) {
+                console.error("Error updating deck:", error);
+                setError(
+                    "Failed to update deck: " +
+                    (error.response?.data?.message || error.message)
+                );
+                return null;
+            } finally {
+                setIsSaving(false);
+            }
+        },
+        [getToken, fetchSavedDecks]
+    );
 
     return {
         savedDecks,
@@ -237,5 +286,6 @@ export const useDeckData = () => {
         decksFetchedRef,
         generateFlashcards,
         getFlashcardByID,
+        updateDeck,
     };
 }

@@ -62,7 +62,7 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
                             </button>
                         <Link
                             to={`/tools/flashcards/FlashcardStudyPage/${deck.id}`}
-                            state={{ flashcards: cards }}
+                            state={{ flashcards: cards, title: deck.data.title || "Untitled Deck"}}
                         >
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
                                 {deck.data.title || "Untitled Deck"}

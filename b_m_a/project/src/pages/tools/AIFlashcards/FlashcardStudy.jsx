@@ -11,8 +11,9 @@ const FlashcardStudyPage = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [flashcards, setFlashcards] = useState(useLocation().state?.flashcards || []);
     const { deckId } = useParams();
+    const [deckTitle, setDeckTitle] = useState(useLocation().state?.title || []);
     const [loading, setLoading] = useState(false);
-    const { saveDeck, deleteDeck, getFlashcardByID } = useDeckData();
+    const { saveDeck, deleteDeck, getFlashcardByID, updateDeck } = useDeckData();
     const [newQuestion, setNewQuestion] = useState('');
     const [newAnswer, setNewAnswer] = useState('');
     const [newDifficulty, setNewDifficulty] = useState(null);
@@ -80,22 +81,15 @@ const FlashcardStudyPage = () => {
                 await handleAddCard();
             }
         }
+        if (isEditing) {
+            await updateDeck(deckTitle, deckId, flashcards);
+        }
+        console.log(deckTitle);
         setIsEditing((prev) => !prev);
         setNewQuestion('');
         setNewAnswer('');
         setNewDifficulty(null);
     };
-
-    const getTitleOfDeck = async () => {
-        try {
-            const deck = await getFlashcardByID(deckId);
-            return deck.data.title || 'Untitled Deck';
-        } catch (error) {
-            console.error('Error fetching deck title:', error);
-            return 'Untitled Deck';
-        }
-    };
-
     const handleAddCard = async () => {
         if (newQuestion && newAnswer && newDifficulty) {
             const newCard = {
@@ -112,7 +106,6 @@ const FlashcardStudyPage = () => {
             setNewDifficulty(null);
 
             try {
-                const deckTitle = await getTitleOfDeck();
                 await deleteDeck(deckId); // Delete old deck
                 await saveDeck(deckTitle, updatedFlashcards); // Save updated deck
             } catch (error) {

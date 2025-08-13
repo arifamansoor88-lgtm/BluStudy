@@ -1074,3 +1074,22 @@ async def generate_flashcard(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate quiz: {str(e)}"
         )
+
+# Deck Update Endpoint - Protected      
+@app.put("/decks/{deck_id}")
+async def update_deck(deck_id: str, updated_deck: FlashcardDocument, user_claims: dict = Depends(validate_token)):
+    try:
+        # Fetch the existing deck
+        deck = container.read_item(item=deck_id, partition_key=user_claims["sub"])
+
+        # Verify ownership
+        if deck["userId"] != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Update the deck
+        container.replace_item(item=deck_id, body={**deck, **updated_deck.dict()})
+
+        return {"message": "Deck updated successfully"}
+    except Exception as e:
+        print(f"Error updating deck: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update deck")
