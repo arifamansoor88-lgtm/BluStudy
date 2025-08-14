@@ -17,6 +17,7 @@ class Flashcard(BaseModel):
 class FlashcardDeck(BaseModel):
     title: str
     cards: List[Flashcard]
+    resourceName: Optional[str] = None
 
 class FlashcardDocument(BaseModel):
     contentType: str

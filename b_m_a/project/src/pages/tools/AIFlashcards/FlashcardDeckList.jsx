@@ -54,16 +54,16 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
                         className="relative group bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md hover:shadow-lg cursor-pointer transition-shadow duration-200 ease-in-out"
                         onClick={() => onDeckSelect(deck)}
                     >
-                        <Link
-                            to="/tools/flashcards/FlashcardStudyPage"
-                            state={{ flashcards: cards }}
-                        >
-                            <button
+                        <button
                                 onClick={(e) => handleDeleteDeck(deck.id, e)}
                                 className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                                 <X className="h-4 w-4" />
                             </button>
+                        <Link
+                            to={`/tools/flashcards/FlashcardStudyPage/${deck.id}`}
+                            state={{ flashcards: cards, title: deck.data.title || "Untitled Deck"}}
+                        >
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
                                 {deck.data.title || "Untitled Deck"}
                             </h3>
