@@ -17,6 +17,7 @@ from openai_client import generate_quiz, generate_answer_explanation, evaluate_s
 from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument 
 from pydantic import BaseModel
 
+
 # Load the environment variables
 load_dotenv()
 
@@ -860,6 +861,7 @@ async def summarize_file(
 
     return {"summary": summary}
 
+
 # Quiz Performance Analysis Models
 class QuizPerformanceRequest(BaseModel):
     questions: List[Dict[str, Any]]
@@ -971,6 +973,141 @@ async def get_decks(deck_id: str, user_claims: dict = Depends(validate_token)):
             detail="Deck not found"
         )
 
+
+
+# Models for the stats & recents endpoints
+class UserStats(BaseModel):
+    streak: int
+    hours: int
+
+class RecentItem(BaseModel):
+    id: str
+    name: str
+    date: str
+
+# GET /api/user/{userId}/stats
+@app.get("/api/user/{userId}/stats", response_model=UserStats)
+async def get_user_stats(
+    userId: str,
+    user_claims: dict = Depends(validate_token),
+):
+    if user_claims["sub"] != userId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    # TODO: fetch real stats from Cosmos DB
+    return {"streak": 7, "hours": 12}
+
+
+# GET /api/user/{userId}/recents
+@app.get("/api/user/{userId}/recents", response_model=List[RecentItem])
+async def get_user_recents(
+    userId: str,
+    user_claims: dict = Depends(validate_token),
+):
+    if user_claims["sub"] != userId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    query = """
+      SELECT TOP 3
+        c.id,
+        c.data.title AS name,
+        SUBSTRING(c.createdAt, 0, 10) AS date
+      FROM c
+      WHERE c.userId = @userId
+      ORDER BY c.createdAt DESC
+    """
+    parameters = [{"name": "@userId", "value": userId}]
+    items = list(container.query_items(
+        query=query,
+        parameters=parameters,
+        enable_cross_partition_query=True,
+    ))
+    return items
+
+# ─── Models for the profile endpoints ─────────────────────
+class UserProfile(BaseModel):
+    id: str
+    name: str
+    email: str
+    photo: Optional[str] = None
+    grade: Optional[str] = None
+    school: Optional[str] = None
+
+# ─── GET /api/user/{userId}/profile ───────────────────────
+@app.get(
+    "/api/user/{userId}/profile", 
+    response_model=UserProfile
+)
+async def get_user_profile(
+    userId: str,
+    user_claims: dict = Depends(validate_token)
+):
+    if user_claims["sub"] != userId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        # read the profile doc from CosmosDB
+        doc = container.read_item(item=userId, partition_key=userId)
+        return UserProfile(
+            id=doc["id"],
+            name=doc["data"].get("name", ""),
+            email=doc["data"].get("email", ""),
+            photo=doc["data"].get("photo"),
+            grade=doc["data"].get("grade"),
+            school=doc["data"].get("school"),
+        )
+    except Exception:
+        # if no profile exists yet, return defaults
+        return UserProfile(
+            id=userId,
+            name="",
+            email="",
+            photo=None,
+            grade=None,
+            school=None,
+        )
+
+# ─── PATCH /api/user/{userId}/profile ─────────────────────
+@app.patch(
+    "/api/user/{userId}/profile", 
+    response_model=UserProfile
+)
+async def update_user_profile(
+    userId: str,
+    payload: Dict[str, Any],
+    user_claims: dict = Depends(validate_token)
+):
+    if user_claims["sub"] != userId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    # read or initialize
+    try:
+        doc = container.read_item(item=userId, partition_key=userId)
+    except:
+        doc = {"id": userId, "userId": userId, "data": {}}
+
+    # merge updates
+    for field, val in payload.items():
+        doc["data"][field] = val
+
+    # upsert back into Cosmos
+    container.upsert_item(body=doc)
+
+    return UserProfile(
+        id=doc["id"],
+        name=doc["data"].get("name",""),
+        email=doc["data"].get("email",""),
+        photo=doc["data"].get("photo"),
+        grade=doc["data"].get("grade"),
+        school=doc["data"].get("school"),
+    )
+
+
+
+# For development only
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+=======
 # Delete flashcard deck endpoint - protected
 @app.delete("/delete-deck/{deck_id}", response_model=dict)
 async def delete_deck(deck_id: str, user_claims: dict = Depends(validate_token)):
@@ -1093,3 +1230,4 @@ async def update_deck(deck_id: str, updated_deck: FlashcardDocument, user_claims
     except Exception as e:
         print(f"Error updating deck: {e}")
         raise HTTPException(status_code=500, detail="Failed to update deck")
+
