@@ -25,6 +25,33 @@ const AIFlashcards = () => {
         }
     };
 
+    const handleJSONUpload = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            try {
+                const text = await file.text();
+                const jsonData = JSON.parse(text);
+
+                // JSON can be either a single deck object or an array of decks
+                const decksToImport = Array.isArray(jsonData) ? jsonData : [jsonData];
+
+                decksToImport.forEach(deckObj => {
+                    if (deckObj.title && Array.isArray(deckObj.cards)) {
+                        // Save to existing system
+                        saveDeck(deckObj.title, deckObj.cards);
+                    } else {
+                        console.error("Invalid JSON format:", deckObj);
+                    }
+                });
+
+                alert("JSON flashcards uploaded successfully!");
+            } catch (err) {
+                console.error("Error reading JSON:", err);
+                alert("Invalid JSON file. Please check the format.");
+            }
+        }
+    };
+
     const removeCard = (index) => {
         setCards(cards.filter((_, i) => i !== index));
     };
@@ -159,6 +186,21 @@ const AIFlashcards = () => {
                             <Save className="h-4 w-4" />
                             Save Deck
                         </button>
+                        {/* Upload JSON */}
+                        <label
+                            htmlFor="json-upload"
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Upload JSON
+                        </label>
+                        <input
+                            id="json-upload"
+                            type="file"
+                            accept="application/json"
+                            className="hidden"
+                            onChange={handleJSONUpload}
+                        />
                     </div>
                 </div>
             </div>
@@ -255,6 +297,8 @@ const AIFlashcards = () => {
                         )}
                     </div>
                 ))}
+            </div>
+            <div className="flex gap-4">
             </div>
 
             <div className="space-y-4">
