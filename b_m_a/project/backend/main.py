@@ -1043,7 +1043,7 @@ async def generate_flashcard(
         flashcard_json = repair_json(flashcard_json)
         flashcard_data = json.loads(flashcard_json)
         
-        # Automatically save the quiz
+        # Automatically save the flashcard
         flashcard_document = {
             "id": str(uuid.uuid4()),
             "userId": user_claims["sub"],
