@@ -46,6 +46,14 @@ export const protectedResources = {
       "https://bluemarbleacademy.onmicrosoft.com/bluemarbleapi/user_impersonation"
     ]
   }
+  todoListApi: {
+    endpoint: "http://127.0.0.1:8000",
+    scopes: ["https://bluemarbleacademy.onmicrosoft.com/tasks-api/tasks.read"],
+  },
+  quizApi: {
+    endpoint: "http://127.0.0.1:8000",
+    scopes: ["https://bluemarbleacademy.onmicrosoft.com/tasks-api/tasks.read"],
+  },
 };
 
 // Scopes requested at login

@@ -77,6 +77,7 @@ const Navbar = () => {
               {isAuthenticated && (
               <NavLink to="/profile">Profile</NavLink>
             )}
+              <NavLink to="/public_library">Public Library</NavLink>
             </div>
           </div>
 

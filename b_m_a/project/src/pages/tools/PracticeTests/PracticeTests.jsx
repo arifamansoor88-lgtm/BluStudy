@@ -28,8 +28,10 @@ const PracticeTests = () => {
   const [quizMode, setQuizMode] = useState("quiz"); // "quiz" or "review"
   const [showAnswerFeedback, setShowAnswerFeedback] = useState(false);
   const [showAttemptHistory, setShowAttemptHistory] = useState(false);
-  const [aiExplanation, setAiExplanation] = useState("");
+  const [aiExplanation, setAiExplanation] = useState(""); // Keep for backward compatibility
+  const [aiExplanations, setAiExplanations] = useState({}); // New: question-specific explanations
   const [loadingExplanation, setLoadingExplanation] = useState(false);
+  const [checkedAnswers, setCheckedAnswers] = useState({}); // New: track which answers have been checked
 
   // Quiz wizard state
   const [currentStep, setCurrentStep] = useState(1);
@@ -163,6 +165,11 @@ const PracticeTests = () => {
       return;
     }
 
+    if (!selectedFile) {
+      setError("Please select a PDF file");
+      return;
+    }
+
     setError("");
     setUploading(true);
 
@@ -172,6 +179,16 @@ const PracticeTests = () => {
     setCurrentStep(3);
 
     try {
+      console.log("=== Starting Quiz Generation ===");
+      console.log("File:", selectedFile);
+      console.log("File name:", selectedFile.name);
+      console.log("File size:", selectedFile.size);
+      console.log("File type:", selectedFile.type);
+      console.log("Number of questions:", numQuestions);
+      console.log("Selected topics:", selectedTopics);
+      console.log("Custom topics:", customTopics);
+      console.log("Question formats:", questionFormats);
+      
       // Generate quiz using the hook
       const quizData = await generateQuiz(
         selectedFile,
@@ -180,6 +197,12 @@ const PracticeTests = () => {
         customTopics,
         questionFormats
       );
+
+      console.log("=== Quiz Generation Successful ===");
+      console.log("Quiz data received:", quizData);
+      console.log("Quiz ID:", quizData.id);
+      console.log("Quiz title:", quizData.quiz_title);
+      console.log("Number of questions:", quizData.questions?.length);
 
       // Set the generated quiz data from the response
       setGeneratedQuiz(quizData);
@@ -191,8 +214,23 @@ const PracticeTests = () => {
 
       setCurrentQuizQuestion(0);
       resetTimer();
+      
+      // Refresh the saved quizzes list since a new quiz was created
+      quizzesFetchedRef.current = false;
+      await fetchSavedQuizzes();
+      
     } catch (err) {
-      console.error("Error generating quiz:", err);
+      console.error("=== Quiz Generation Failed ===");
+      console.error("Error object:", err);
+      console.error("Error message:", err.message);
+      console.error("Error stack:", err.stack);
+      
+      if (err.response) {
+        console.error("Response status:", err.response.status);
+        console.error("Response data:", err.response.data);
+        console.error("Response headers:", err.response.headers);
+      }
+      
       setError(err.message || "Failed to generate quiz");
       // Make sure we return to the wizard UI with an appropriate error
       setQuizStatus("idle");
@@ -225,15 +263,33 @@ const PracticeTests = () => {
       newAnswers[questionIndex] = answerValue;
       setUserAnswers(newAnswers);
 
+      // Clear AI evaluation for this question when the answer changes
+      if (aiEvaluatedAnswers[questionIndex]) {
+        const newEvaluations = { ...aiEvaluatedAnswers };
+        delete newEvaluations[questionIndex];
+        setAiEvaluatedAnswers(newEvaluations);
+      }
+
+      // Clear checked status and explanation for this question when answer changes
+      if (checkedAnswers[questionIndex]) {
+        const newCheckedAnswers = { ...checkedAnswers };
+        delete newCheckedAnswers[questionIndex];
+        setCheckedAnswers(newCheckedAnswers);
+      }
+      
+      if (aiExplanations[questionIndex]) {
+        const newExplanations = { ...aiExplanations };
+        delete newExplanations[questionIndex];
+        setAiExplanations(newExplanations);
+      }
+
+      // Only show feedback immediately in review mode
       if (quizMode === "review") {
         setShowAnswerFeedback(false);
-
-        // Clear AI evaluation for this question when the answer changes
-        if (aiEvaluatedAnswers[questionIndex]) {
-          const newEvaluations = { ...aiEvaluatedAnswers };
-          delete newEvaluations[questionIndex];
-          setAiEvaluatedAnswers(newEvaluations);
-        }
+        // Auto-check answer after a short delay to provide instant feedback
+        setTimeout(() => {
+          checkAnswerForQuestion(questionIndex);
+        }, 500);
       }
     }
   };
@@ -275,49 +331,73 @@ const PracticeTests = () => {
     }
   };
 
-  const checkAnswer = async () => {
-    // Get the current question and answer
-    const currentQuestion = generatedQuiz.questions[currentQuizQuestion];
-    const userAnswer = userAnswers[currentQuizQuestion];
+  const checkAnswerForQuestion = async (questionIndex) => {
+    // Get the question and answer
+    const question = generatedQuiz.questions[questionIndex];
+    const userAnswer = userAnswers[questionIndex];
+
+    if (!userAnswer || userAnswer === null || userAnswer === undefined) {
+      return; // Don't check if no answer provided
+    }
 
     // For short answer and fill-in-blank questions, evaluate with AI
     let answerIsCorrect;
 
-    if (shouldUseAIEvaluation(currentQuestion.type)) {
+    if (shouldUseAIEvaluation(question.type)) {
       // Start the AI evaluation and show loading state
       setLoadingExplanation(true);
-      answerIsCorrect = await evaluateAnswerWithAI(currentQuizQuestion);
+      answerIsCorrect = await evaluateAnswerWithAI(questionIndex);
     } else {
       // For other question types, use the standard evaluation
-      answerIsCorrect = isAnswerCorrect(currentQuestion, userAnswer);
+      answerIsCorrect = isAnswerCorrect(question, userAnswer);
     }
 
-    // In review mode, get AI explanation
+    // Get AI explanation and show feedback only in review mode
     if (quizMode === "review") {
       if (!loadingExplanation) setLoadingExplanation(true);
 
       try {
         // Get explanation from the API
         const explanation = await getAnswerExplanation(
-          currentQuestion,
+          question,
           userAnswer,
           answerIsCorrect
         );
 
-        // Set the explanation
+        // Set the explanation for this specific question
+        setAiExplanations(prev => ({
+          ...prev,
+          [questionIndex]: explanation
+        }));
+        
+        // Also set the current explanation for backward compatibility
         setAiExplanation(explanation);
       } catch (error) {
         console.error("Error getting explanation:", error);
-        setAiExplanation(
-          "Failed to generate an explanation. Please try again."
-        );
+        const errorMessage = "Failed to generate an explanation. Please try again.";
+        setAiExplanations(prev => ({
+          ...prev,
+          [questionIndex]: errorMessage
+        }));
+        setAiExplanation(errorMessage);
       } finally {
         setLoadingExplanation(false);
       }
-    }
 
-    // Show the feedback
-    setShowAnswerFeedback(true);
+      // Mark this answer as checked
+      setCheckedAnswers(prev => ({
+        ...prev,
+        [questionIndex]: true
+      }));
+
+      // Show the feedback
+      setShowAnswerFeedback(true);
+    }
+  };
+
+  const checkAnswer = async () => {
+    // Use the new function for the current question
+    await checkAnswerForQuestion(currentQuizQuestion);
   };
 
   // For the final summary and score calculation, we need to evaluate all answers
@@ -370,12 +450,37 @@ const PracticeTests = () => {
   };
 
   const nextQuizQuestion = () => {
+    // In review mode, check if the current question has been answered and checked
+    if (quizMode === "review") {
+      const currentAnswer = userAnswers[currentQuizQuestion];
+      const isCurrentAnswerChecked = checkedAnswers[currentQuizQuestion];
+      
+      // If no answer provided or answer not checked, don't allow moving forward
+      if (!currentAnswer || currentAnswer === null || currentAnswer === undefined) {
+        alert("Please provide an answer before moving to the next question.");
+        return;
+      }
+      
+      if (!isCurrentAnswerChecked) {
+        alert("Please check your answer before moving to the next question.");
+        return;
+      }
+    }
+
     // Only update if actually moving to a new question
     if (currentQuizQuestion < generatedQuiz.questions.length - 1) {
       setCurrentQuizQuestion((prev) => prev + 1);
 
       if (quizMode === "review") {
         setShowAnswerFeedback(false);
+        // Set the explanation for the new question if it exists
+        const newQuestionIndex = currentQuizQuestion + 1;
+        const newQuestionExplanation = aiExplanations[newQuestionIndex];
+        if (newQuestionExplanation) {
+          setAiExplanation(newQuestionExplanation);
+        } else {
+          setAiExplanation("");
+        }
       }
     } else {
       // If this is the last question, evaluate all answers before completing
@@ -399,6 +504,13 @@ const PracticeTests = () => {
 
       if (quizMode === "review") {
         setShowAnswerFeedback(false);
+        // Set the explanation for the new question if it exists
+        const newQuestionExplanation = aiExplanations[index];
+        if (newQuestionExplanation) {
+          setAiExplanation(newQuestionExplanation);
+        } else {
+          setAiExplanation("");
+        }
       }
     }
   };
@@ -556,9 +668,11 @@ const PracticeTests = () => {
               onReturnToTests={goBack}
               onToggleHistory={toggleAttemptHistory}
               aiExplanation={aiExplanation}
+              aiExplanations={aiExplanations}
               loadingExplanation={loadingExplanation}
               evaluatingAnswer={evaluatingAnswer}
               aiEvaluatedAnswers={aiEvaluatedAnswers}
+              checkedAnswers={checkedAnswers}
               getAnswerCorrectness={(questionIndex) => {
                 const question = generatedQuiz.questions[questionIndex];
                 const userAnswer = userAnswers[questionIndex];

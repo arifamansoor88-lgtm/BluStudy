@@ -60,8 +60,13 @@ export const useQuizData = () => {
 
   // Get auth token silently
   const getToken = useCallback(async () => {
+    console.log("=== Authentication Debug ===");
+    console.log("MSAL inProgress:", inProgress);
+    console.log("Accounts available:", accounts.length);
+    
     // Check if MSAL is ready
     if (inProgress !== "none") {
+      console.log("MSAL is still initializing...");
       throw new Error(
         "Authentication service is initializing. Please try again later."
       );
@@ -69,22 +74,35 @@ export const useQuizData = () => {
 
     // Get active account
     let account = instance.getActiveAccount();
+    console.log("Active account:", account ? "Found" : "Not found");
+    
     if (!account && accounts.length > 0) {
+      console.log("Setting first account as active...");
       instance.setActiveAccount(accounts[0]);
       account = accounts[0];
+      console.log("Account set as active:", account?.username);
     }
 
     if (!account) {
+      console.log("No account found - user needs to sign in");
       throw new Error("No active account found. Please sign in first.");
     }
 
-    // Get token
-    const tokenResponse = await instance.acquireTokenSilent({
-      scopes: protectedResources.todoListApi.scopes,
-      account: account,
-    });
+    console.log("Getting token for account:", account.username);
 
-    return tokenResponse.accessToken;
+    // Get token
+    try {
+      const tokenResponse = await instance.acquireTokenSilent({
+        scopes: protectedResources.todoListApi.scopes,
+        account: account,
+      });
+      
+      console.log("Token acquired successfully");
+      return tokenResponse.accessToken;
+    } catch (error) {
+      console.error("Token acquisition failed:", error);
+      throw error;
+    }
   }, [instance, accounts, inProgress]);
 
   // Fetch saved quizzes
@@ -98,7 +116,7 @@ export const useQuizData = () => {
       quizzesFetchedRef.current = true;
 
       const token = await getToken();
-      const response = await axios.get("http://localhost:8000/quizzes", {
+      const response = await axios.get("http://127.0.0.1:8000/quizzes", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -123,7 +141,7 @@ export const useQuizData = () => {
       try {
         const token = await getToken();
         const response = await axios.get(
-          `http://localhost:8000/quizzes/${quizId}/with-history`,
+          `http://127.0.0.1:8000/quizzes/${quizId}/with-history`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -161,7 +179,19 @@ export const useQuizData = () => {
       questionFormats
     ) => {
       try {
+        console.log("=== generateQuiz Hook Called ===");
+        console.log("Generating quiz with:", {
+          file: selectedFile?.name,
+          fileSize: selectedFile?.size,
+          fileType: selectedFile?.type,
+          numQuestions,
+          selectedTopics,
+          customTopics,
+          questionFormats
+        });
+
         const token = await getToken();
+        console.log("Token acquired successfully");
 
         // Create a FormData object to send the file
         const formData = new FormData();
@@ -209,7 +239,13 @@ export const useQuizData = () => {
         );
 
         // Use a direct URL string to avoid URL construction issues
-        const apiUrl = "http://localhost:8000/generate-quiz";
+        const apiUrl = "http://127.0.0.1:8000/generate-quiz";
+
+        console.log("Sending request to:", apiUrl);
+        console.log("FormData contents:");
+        for (let [key, value] of formData.entries()) {
+          console.log(`  ${key}:`, value);
+        }
 
         // Send the file to the backend API
         const response = await axios.post(apiUrl, formData, {
@@ -219,9 +255,30 @@ export const useQuizData = () => {
           },
         });
 
+        console.log("=== API Response Received ===");
+        console.log("Response status:", response.status);
+        console.log("Response data:", response.data);
+
+        // The backend now automatically saves the quiz and returns it with an ID
+        // We don't need to call saveQuiz separately
         return response.data;
       } catch (err) {
+        console.error("=== generateQuiz Hook Error ===");
         console.error("Error generating quiz:", err);
+        console.error("Error response:", err.response?.data);
+        console.error("Error status:", err.response?.status);
+        console.error("Error headers:", err.response?.headers);
+        
+        // Log the full error details
+        if (err.response) {
+          console.error("Full error response:", {
+            status: err.response.status,
+            statusText: err.response.statusText,
+            data: err.response.data,
+            headers: err.response.headers
+          });
+        }
+        
         throw new Error(
           err.response?.data?.detail || err.message || "Failed to generate quiz"
         );
@@ -275,7 +332,7 @@ export const useQuizData = () => {
 
         // Save to API
         const response = await axios.post(
-          "http://localhost:8000/save-quiz",
+          "http://127.0.0.1:8000/save-quiz",
           quizData,
           {
             headers: {
@@ -325,7 +382,7 @@ export const useQuizData = () => {
 
         // Save attempt
         const response = await axios.post(
-          "http://localhost:8000/save-quiz-attempt",
+          "http://127.0.0.1:8000/save-quiz-attempt",
           attemptData,
           {
             headers: {

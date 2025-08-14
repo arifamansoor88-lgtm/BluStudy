@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import { formatTime } from "./utils";
 import QuizQuestion from "./QuizQuestion";
 import QuizSummary from "./QuizSummary";
+import PerformanceSummary from "./PerformanceSummary";
 
 /**
  * Component for displaying the quiz in different states
@@ -31,11 +32,21 @@ const QuizDisplay = ({
   onReturnToTests,
   onToggleHistory,
   aiExplanation,
+  aiExplanations,
   loadingExplanation,
   evaluatingAnswer,
   aiEvaluatedAnswers,
+  checkedAnswers,
   getAnswerCorrectness,
 }) => {
+  // Helper function to get the current question's explanation
+  const getCurrentQuestionExplanation = () => {
+    if (aiExplanations && aiExplanations[currentQuestionIndex]) {
+      return aiExplanations[currentQuestionIndex];
+    }
+    return aiExplanation; // Fallback to the legacy aiExplanation
+  };
+
   // No quiz data available
   if (!quiz && status !== "loading") {
     return (
@@ -153,6 +164,49 @@ const QuizDisplay = ({
     );
   };
 
+  // Helper function to check if current question is answered
+  const isCurrentQuestionAnswered = () => {
+    const currentAnswer = userAnswers[currentQuestionIndex];
+    
+    // For null/undefined/empty string answers
+    if (currentAnswer === null || currentAnswer === undefined || currentAnswer === "") {
+      return false;
+    }
+    
+    // For multi-select questions, check if at least one option is selected
+    if (Array.isArray(currentAnswer)) {
+      return currentAnswer.length > 0;
+    }
+    
+    // For drag and drop questions, check if at least one mapping is filled
+    if (typeof currentAnswer === 'object' && currentAnswer !== null) {
+      return Object.values(currentAnswer).some(value => 
+        value !== null && value !== undefined && value !== ""
+      );
+    }
+    
+    // For other question types (multiple choice, short answer, etc.)
+    return true;
+  };
+
+  // Helper function to check if all questions are answered
+  const areAllQuestionsAnswered = () => {
+    return userAnswers.every(answer => {
+      if (answer === null || answer === undefined || answer === "") {
+        return false;
+      }
+      if (Array.isArray(answer)) {
+        return answer.length > 0;
+      }
+      if (typeof answer === 'object' && answer !== null) {
+        return Object.values(answer).some(value => 
+          value !== null && value !== undefined && value !== ""
+        );
+      }
+      return true;
+    });
+  };
+
   // In progress
   if (status === "in-progress") {
     const currentQuestion = quiz.questions[currentQuestionIndex];
@@ -165,27 +219,74 @@ const QuizDisplay = ({
             <Clock className="h-5 w-5 mr-2" />
             <span className="font-medium">{formatTime(timer)}</span>
           </div>
-          <div className="text-gray-700">
-            Question {currentQuestionIndex + 1} of {quiz.questions.length}
+          <div className="flex items-center gap-4 text-gray-700">
+            <div className="text-sm">
+              {userAnswers.filter(answer => {
+                if (answer === null || answer === undefined || answer === "") return false;
+                if (Array.isArray(answer)) return answer.length > 0;
+                if (typeof answer === 'object' && answer !== null) {
+                  return Object.values(answer).some(value => 
+                    value !== null && value !== undefined && value !== ""
+                  );
+                }
+                return true;
+              }).length} of {quiz.questions.length} answered
+            </div>
+            <div>
+              Question {currentQuestionIndex + 1} of {quiz.questions.length}
+            </div>
           </div>
         </div>
 
         {/* Quiz Mini-map */}
         <div className="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-700">Question Progress</h3>
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-gray-200 rounded-full"></div>
+                <span>Unanswered</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span>Answered</span>
+              </div>
+            </div>
+          </div>
           <div className="flex flex-wrap gap-2">
             {quiz.questions.map((_, i) => {
+              // Helper function to check if a specific question is answered
+              const isQuestionAnswered = () => {
+                const answer = userAnswers[i];
+                if (answer === null || answer === undefined || answer === "") {
+                  return false;
+                }
+                if (Array.isArray(answer)) {
+                  return answer.length > 0;
+                }
+                if (typeof answer === 'object' && answer !== null) {
+                  return Object.values(answer).some(value => 
+                    value !== null && value !== undefined && value !== ""
+                  );
+                }
+                return true;
+              };
+
               // Determine the button's background color based on answer status
               let bgColor = "bg-gray-200"; // Unanswered
+              let textColor = "text-gray-600";
 
-              if (userAnswers[i] !== null) {
+              if (isQuestionAnswered()) {
                 if (status === "completed" || showSummary) {
                   // Use getAnswerCorrectness if available
                   const isCorrect = getAnswerCorrectness
                     ? getAnswerCorrectness(i)
                     : isAnswerCorrectInline(quiz.questions[i], userAnswers[i]);
                   bgColor = isCorrect ? "bg-green-500" : "bg-red-500"; // Correct/Incorrect
+                  textColor = "text-white";
                 } else {
                   bgColor = "bg-blue-500"; // Answered but not yet evaluated
+                  textColor = "text-white";
                 }
               }
 
@@ -195,7 +296,8 @@ const QuizDisplay = ({
                   onClick={() => onGoToQuestion(i)}
                   className={`${bgColor} ${
                     i === currentQuestionIndex ? "ring-2 ring-gray-800" : ""
-                  } text-white w-8 h-8 flex items-center justify-center rounded-full font-medium`}
+                  } ${textColor} w-8 h-8 flex items-center justify-center rounded-full font-medium hover:opacity-80 transition-opacity`}
+                  title={`Question ${i + 1}${isQuestionAnswered() ? ' - Answered' : ' - Unanswered'}`}
                 >
                   {i + 1}
                 </button>
@@ -206,6 +308,24 @@ const QuizDisplay = ({
 
         {/* Current Question */}
         <div className="bg-white p-6 rounded-lg shadow-sm">
+          {/* Warning message when trying to finish with unanswered questions */}
+          {currentQuestionIndex === quiz.questions.length - 1 && !areAllQuestionsAnswered() && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-800">
+                    Please answer all questions before finishing the quiz. You can navigate between questions using the progress map above.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <QuizQuestion
             question={currentQuestion}
             index={currentQuestionIndex}
@@ -213,7 +333,7 @@ const QuizDisplay = ({
             onAnswerChange={onAnswerChange}
           />
 
-          {/* Show feedback in review mode when the user checks their answer */}
+          {/* Show feedback only in review mode */}
           {quizMode === "review" && showAnswerFeedback && (
             <div
               className={`mt-4 p-4 rounded-lg ${
@@ -234,7 +354,7 @@ const QuizDisplay = ({
                     <X className="h-4 w-4 text-red-500" />
                   )}
                 </div>
-                <div className="ml-3">
+                <div className="ml-3 flex-1">
                   <h3
                     className={`text-sm font-medium ${
                       isCurrentAnswerCorrect()
@@ -244,11 +364,19 @@ const QuizDisplay = ({
                   >
                     {isCurrentAnswerCorrect() ? "Correct!" : "Incorrect"}
                   </h3>
+                  
+                  {/* Correct Answer Section */}
                   <div className="mt-2 text-sm">
                     {isCurrentAnswerCorrect()
                       ? "Well done! You got this right."
-                      : "The correct answer is: " +
-                        formatCorrectAnswer(currentQuestion)}
+                      : (
+                        <div>
+                          <p className="font-medium text-red-800 mb-1">Correct Answer:</p>
+                          <p className="bg-white p-2 rounded border border-red-200 text-red-700">
+                            {formatCorrectAnswer(currentQuestion)}
+                          </p>
+                        </div>
+                      )}
                   </div>
 
                   {/* Show AI explanation when available */}
@@ -265,16 +393,31 @@ const QuizDisplay = ({
 
                   {!loadingExplanation &&
                     !evaluatingAnswer &&
-                    aiExplanation && (
+                    getCurrentQuestionExplanation() && (
                       <div className="mt-3 bg-white p-3 rounded border border-gray-200">
                         <h4 className="text-sm font-medium text-gray-800 mb-1">
                           AI Explanation:
                         </h4>
                         <div className="text-sm text-gray-700 markdown-content">
-                          <ReactMarkdown>{aiExplanation}</ReactMarkdown>
+                          <ReactMarkdown>{getCurrentQuestionExplanation()}</ReactMarkdown>
                         </div>
                       </div>
                     )}
+
+                  {/* Topics to Review Section - Extract from AI explanation */}
+                  {!isCurrentAnswerCorrect() && getCurrentQuestionExplanation() && (
+                    <div className="mt-3 bg-blue-50 p-3 rounded border border-blue-200">
+                      <h4 className="text-sm font-medium text-blue-800 mb-1">
+                        📚 Topics to Review:
+                      </h4>
+                      <div className="text-sm text-blue-700">
+                        {extractTopicsFromExplanation(getCurrentQuestionExplanation())}
+                        <p className="mt-2 text-xs text-blue-600">
+                          💡 Tip: Use the AI Flashcards tool to create study materials for these topics
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -297,7 +440,8 @@ const QuizDisplay = ({
               {/* Check My Answer button (only in review mode and when an answer is selected and not yet evaluated) */}
               {quizMode === "review" &&
                 !showAnswerFeedback &&
-                userAnswers[currentQuestionIndex] !== null && (
+                userAnswers[currentQuestionIndex] !== null &&
+                !checkedAnswers[currentQuestionIndex] && (
                   <button
                     onClick={onCheckAnswer}
                     className="px-4 py-2 border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50"
@@ -316,7 +460,12 @@ const QuizDisplay = ({
 
               <button
                 onClick={onNextQuestion}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-2"
+                disabled={currentQuestionIndex === quiz.questions.length - 1 && !areAllQuestionsAnswered()}
+                className={`px-4 py-2 flex items-center gap-2 rounded-md ${
+                  currentQuestionIndex === quiz.questions.length - 1 && !areAllQuestionsAnswered()
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-red-600 text-white hover:bg-red-700"
+                }`}
               >
                 {currentQuestionIndex === quiz.questions.length - 1
                   ? "Finish Quiz"
@@ -332,6 +481,29 @@ const QuizDisplay = ({
 
   // Completed
   if (status === "completed") {
+    // For quiz mode, always show the performance summary directly
+    if (quizMode === "quiz") {
+      const score = calculateScore(quiz.questions, userAnswers);
+      
+      return (
+        <PerformanceSummary
+          quiz={quiz}
+          userAnswers={userAnswers}
+          timer={timer}
+          score={score}
+          quizMode={quizMode}
+          onReviewQuestions={onGoToQuestion}
+          onReturnToTests={onReturnToTests}
+          isSaving={isSaving}
+          saveSuccess={saveSuccess}
+          quizAttempts={quizAttempts}
+          showAttemptHistory={showAttemptHistory}
+          onToggleHistory={onToggleHistory}
+        />
+      );
+    }
+    
+    // For review mode, show the question review first
     if (!showSummary) {
       const currentQuestion = quiz.questions[currentQuestionIndex];
 
@@ -385,11 +557,12 @@ const QuizDisplay = ({
       const score = calculateScore(quiz.questions, userAnswers);
 
       return (
-        <QuizSummary
+        <PerformanceSummary
           quiz={quiz}
           userAnswers={userAnswers}
           timer={timer}
           score={score}
+          quizMode={quizMode}
           onReviewQuestions={onGoToQuestion}
           onReturnToTests={onReturnToTests}
           isSaving={isSaving}
@@ -478,6 +651,50 @@ function calculateScore(questions, userAnswers) {
   });
 
   return Math.round((correct / questions.length) * 100);
+}
+
+// Extract topics to review from AI explanation
+function extractTopicsFromExplanation(explanation) {
+  if (!explanation) {
+    return (
+      <ul className="list-disc list-inside space-y-1">
+        <li>Key concepts related to this question</li>
+        <li>Common misconceptions in this area</li>
+        <li>Related foundational knowledge</li>
+      </ul>
+    );
+  }
+
+  // Look for the "📚 Topics to Review:" section
+  const topicsMatch = explanation.match(/📚 Topics to Review:\s*\n((?:- .*\n?)*)/);
+  
+  if (topicsMatch && topicsMatch[1]) {
+    const topicsText = topicsMatch[1];
+    const topics = topicsText
+      .split('\n')
+      .filter(line => line.trim().startsWith('- '))
+      .map(line => line.trim().substring(2))
+      .filter(topic => topic.length > 0);
+
+    if (topics.length > 0) {
+      return (
+        <ul className="list-disc list-inside space-y-1">
+          {topics.map((topic, index) => (
+            <li key={index}>{topic}</li>
+          ))}
+        </ul>
+      );
+    }
+  }
+
+  // Fallback to default topics if no specific topics found
+  return (
+    <ul className="list-disc list-inside space-y-1">
+      <li>Key concepts related to this question</li>
+      <li>Common misconceptions in this area</li>
+      <li>Related foundational knowledge</li>
+    </ul>
+  );
 }
 
 export default QuizDisplay;

@@ -6,13 +6,14 @@ from datetime import datetime, timedelta
 from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form, Query, HTTPException, Body
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from json_repair import repair_json
 from dotenv import load_dotenv
 from typing import List, Dict, Any, Optional, Union
 import msal
 from jose import jwt
 from database import client, container  
 from pdf_utils import extract_text_from_pdf
-from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text
+from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
 from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument 
 from pydantic import BaseModel
 
@@ -92,6 +93,9 @@ async def create_quiz(
     user_claims: dict = Depends(validate_token)
 ):
     try:
+        print(f"Generating quiz for user: {user_claims['sub']}")
+        print(f"File: {file.filename}, Questions: {num_questions}")
+        
         # Save the uploaded file temporarily
         file_path = f"./temp_{file.filename}"
         with open(file_path, "wb") as f:
@@ -99,11 +103,12 @@ async def create_quiz(
         
         # Extract text from the PDF
         text = extract_text_from_pdf(file_path)
+        print(f"Extracted text length: {len(text)} characters")
         
         # Parse question formats from string to dict
         try:
             formats_dict = json.loads(question_formats)
-        except:
+        except json.JSONDecodeError:
             formats_dict = {
                 "multiple_choice": True,
                 "multi_select": True,
@@ -122,6 +127,9 @@ async def create_quiz(
         if not selected_formats:
             selected_formats = ["multiple_choice"]
             
+        print(f"Selected formats: {selected_formats}")
+        print(f"Focus topics: {focus_topics}")
+            
         # Generate quiz using Azure OpenAI with customization options
         quiz_json = generate_quiz(
             text=text,
@@ -134,17 +142,29 @@ async def create_quiz(
         if os.path.exists(file_path):
             os.remove(file_path)
         
-        quiz_data = json.loads(quiz_json)
+        # Parse the generated quiz JSON
+        try:
+            quiz_data = json.loads(quiz_json)
+        except json.JSONDecodeError as e:
+            print(f"Error parsing quiz JSON: {e}")
+            print(f"Raw quiz JSON: {quiz_json}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to parse generated quiz data"
+            )
         
-        # Automatically save the quiz
+        # Generate a unique ID for the quiz
+        quiz_id = str(uuid.uuid4())
+        
+        # Prepare quiz document for database
         quiz_document = {
-            "id": str(uuid.uuid4()),
+            "id": quiz_id,
             "userId": user_claims["sub"],
             "contentType": "quiz",
             "createdAt": datetime.utcnow().isoformat(),
             "data": {
-                "title": quiz_data["quiz_title"],
-                "questions": quiz_data["questions"],
+                "title": quiz_data.get("quiz_title", "Generated Quiz"),
+                "questions": quiz_data.get("questions", []),
                 "userAnswers": None,
                 "score": None,
                 "timeTaken": 0,
@@ -160,13 +180,34 @@ async def create_quiz(
         }
         
         # Save to Cosmos DB
-        container.create_item(body=quiz_document)
+        try:
+            container.create_item(body=quiz_document)
+            print(f"Quiz saved to database with ID: {quiz_id}")
+        except Exception as db_error:
+            print(f"Database error: {db_error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to save quiz to database: {str(db_error)}"
+            )
         
         # Return the quiz data with the ID
-        quiz_data["id"] = quiz_document["id"]
-        return quiz_data
+        response_data = {
+            "id": quiz_id,
+            "quiz_title": quiz_data.get("quiz_title", "Generated Quiz"),
+            "questions": quiz_data.get("questions", [])
+        }
+        
+        print(f"Quiz generation successful. ID: {quiz_id}, Questions: {len(response_data['questions'])}")
+        return response_data
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         print(f"Error generating quiz: {str(e)}")
+        # Clean up temporary file if it exists
+        if 'file_path' in locals() and os.path.exists(file_path):
+            os.remove(file_path)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate quiz: {str(e)}"
@@ -176,6 +217,8 @@ async def create_quiz(
 @app.post("/save-quiz", response_model=SavedQuizResponse)
 async def save_quiz(quiz: QuizDocument, user_claims: dict = Depends(validate_token)):
     try:
+        print(f"Saving quiz for user: {user_claims['sub']}")
+        
         # Prepare document for Cosmos DB
         document = {
             "id": str(uuid.uuid4()),
@@ -186,8 +229,19 @@ async def save_quiz(quiz: QuizDocument, user_claims: dict = Depends(validate_tok
         }
         
         # Save to Cosmos DB
-        container.create_item(body=document)
-        return {"id": document["id"], "message": "Quiz saved successfully"}
+        try:
+            container.create_item(body=document)
+            print(f"Quiz saved successfully with ID: {document['id']}")
+            return {"id": document["id"], "message": "Quiz saved successfully"}
+        except Exception as db_error:
+            print(f"Database error saving quiz: {db_error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                detail=f"Failed to save quiz to database: {str(db_error)}"
+            )
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         print(f"Error saving quiz: {str(e)}")
         raise HTTPException(
@@ -266,17 +320,30 @@ async def save_quiz_attempt(attempt: SaveQuizAttemptRequest, user_claims: dict =
 @app.get("/quizzes")
 async def get_quizzes(user_claims: dict = Depends(validate_token)):
     try:
+        print(f"Fetching quizzes for user: {user_claims['sub']}")
+        
         # Query parameters for Cosmos DB
         query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'quiz' ORDER BY c.createdAt DESC"
         parameters = [{"name": "@userId", "value": user_claims["sub"]}]
         
         # Query Cosmos DB
-        items = list(container.query_items(
-            query=query,
-            parameters=parameters,
-            enable_cross_partition_query=True
-        ))
-        return items
+        try:
+            items = list(container.query_items(
+                query=query,
+                parameters=parameters,
+                enable_cross_partition_query=True
+            ))
+            print(f"Found {len(items)} quizzes for user")
+            return items
+        except Exception as db_error:
+            print(f"Database error fetching quizzes: {db_error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                detail=f"Failed to fetch quizzes from database: {str(db_error)}"
+            )
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         print(f"Error fetching quizzes: {str(e)}")
         raise HTTPException(
@@ -337,7 +404,45 @@ async def get_quiz_with_history(quiz_id: str, user_claims: dict = Depends(valida
 # Health check endpoint - public
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    try:
+        # Test database connection
+        try:
+            # Try to query the database
+            query = "SELECT VALUE COUNT(1) FROM c"
+            result = list(container.query_items(
+                query=query,
+                enable_cross_partition_query=True
+            ))
+            db_status = "connected"
+            db_count = result[0] if result else 0
+        except Exception as db_error:
+            db_status = f"error: {str(db_error)}"
+            db_count = 0
+        
+        # Test environment variables
+        env_status = {
+            "cosmos_db_url": "SET" if os.getenv("COSMOS_DB_URL") else "NOT SET",
+            "cosmos_db_key": "SET" if os.getenv("COSMOS_DB_KEY") else "NOT SET",
+            "openai_endpoint": "SET" if os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_ENDPOINT") else "NOT SET",
+            "openai_api_key": "SET" if os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_API_KEY") else "NOT SET",
+            "openai_deployment": "SET" if os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_DEPLOYMENT_NAME") else "NOT SET"
+        }
+        
+        return {
+            "status": "healthy",
+            "database": {
+                "status": db_status,
+                "document_count": db_count
+            },
+            "environment": env_status,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
 
 # Explanation request model
 class ExplanationRequest(BaseModel):
@@ -756,6 +861,48 @@ async def summarize_file(
 
     return {"summary": summary}
 
+
+# Quiz Performance Analysis Models
+class QuizPerformanceRequest(BaseModel):
+    questions: List[Dict[str, Any]]
+    userAnswers: List[Any]
+    quizMetadata: Optional[Dict[str, Any]] = {}
+
+class QuizPerformanceResponse(BaseModel):
+    topics: List[Dict[str, Any]]
+    weakTopics: List[Dict[str, Any]]
+    strongTopics: List[Dict[str, Any]]
+    recommendations: List[str]
+    overallAnalysis: Dict[str, Any]
+
+@app.post("/analyze-quiz-performance", response_model=QuizPerformanceResponse)
+async def analyze_quiz_performance_endpoint(
+    request: QuizPerformanceRequest, 
+    user_claims: dict = Depends(validate_token)
+):
+    try:
+        print(f"Analyzing quiz performance for user: {user_claims['sub']}")
+        
+        # Analyze quiz performance using AI
+        analysis_result = await analyze_quiz_performance(
+            request.questions, 
+            request.userAnswers, 
+            request.quizMetadata
+        )
+        
+        return analysis_result
+        
+    except Exception as e:
+        print(f"Error in analyze-quiz-performance endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error analyzing quiz performance: {str(e)}"
+        )
+
+# For development purposes
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
 # Save flashcard endpoint - protected 
 @app.post("/save-flashcard", response_model=SaveFlashcardResponse)
 async def save_flashcard(flashcard: FlashcardDocument, user_claims: dict = Depends(validate_token)):
@@ -806,19 +953,19 @@ async def get_decks(user_claims: dict = Depends(validate_token)):
 async def get_decks(deck_id: str, user_claims: dict = Depends(validate_token)):
     try:
         # Get the deck from Cosmos DB (using partition key)
-        quiz = container.read_item(
+        deck = container.read_item(
             item=deck_id, 
             partition_key=user_claims["sub"]
         )
         
         # Verify the deck belongs to the user
-        if quiz["userId"] != user_claims["sub"]:
+        if deck["userId"] != user_claims["sub"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, 
                 detail="Access denied"
             )
             
-        return quiz
+        return deck
     except Exception as e:
         print(f"Error fetching deck: {str(e)}")
         raise HTTPException(
@@ -960,3 +1107,127 @@ async def update_user_profile(
 # For development only
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+=======
+# Delete flashcard deck endpoint - protected
+@app.delete("/delete-deck/{deck_id}", response_model=dict)
+async def delete_deck(deck_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the deck from Cosmos DB
+        deck = container.read_item(
+            item=deck_id,
+            partition_key=user_claims["sub"]
+        )
+
+        # Verify the deck belongs to the user
+        if deck["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+
+        # Delete the deck from Cosmos DB
+        container.delete_item(
+            item=deck_id,
+            partition_key=user_claims["sub"]
+        )
+
+        return {"message": "Flashcard deck deleted successfully"}
+
+    except Exception as e:
+        print(f"Error deleting deck: {str(e)}")
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Deck not found"
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete deck: {str(e)}"
+        )
+
+# PDF upload and flashcard generation endpoint - protected
+@app.post("/generate-flashcard")
+async def generate_flashcard(
+    file: UploadFile = File(...), 
+    num_cards: int = Form(10),
+    user_claims: dict = Depends(validate_token)
+):
+    try:
+        # Save the uploaded file temporarily
+        file_path = f"./temp_{file.filename}"
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+        
+        # Extract text from the PDF
+        text = extract_text_from_pdf(file_path)
+        
+        # Validate inputs
+        if num_cards < 10:
+            num_cards = 10
+        elif num_cards > 40:
+            num_cards = 40
+            
+        # Generate quiz using Azure OpenAI with customization options
+        flashcard_json = openai_generate_flashcard(
+            text=text,
+            num_flashcards = 10,
+        )
+        
+        # Clean up the temporary file
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        print(flashcard_json)
+        flashcard_json = repair_json(flashcard_json)
+        flashcard_data = json.loads(flashcard_json)
+        
+        # Automatically save the quiz
+        flashcard_document = {
+            "id": str(uuid.uuid4()),
+            "userId": user_claims["sub"],
+            "contentType": "flashcard",
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": {
+                "title": flashcard_data["title"],
+                "cards": flashcard_data["cards"],
+                "resourceName": file.filename,
+            }
+        }
+        
+        # Save to Cosmos DB
+        container.create_item(body=flashcard_document)
+        
+        # Return the quiz data with the ID
+        flashcard_data["id"] = flashcard_document["id"]
+        return flashcard_data
+    except json.JSONDecodeError as e:
+        print(f"Failed to parse JSON: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to parse JSON: {str(e)}"
+        )
+    except Exception as e:
+        print(f"Error generating quiz: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate quiz: {str(e)}"
+        )
+
+# Deck Update Endpoint - Protected      
+@app.put("/decks/{deck_id}")
+async def update_deck(deck_id: str, updated_deck: FlashcardDocument, user_claims: dict = Depends(validate_token)):
+    try:
+        # Fetch the existing deck
+        deck = container.read_item(item=deck_id, partition_key=user_claims["sub"])
+
+        # Verify ownership
+        if deck["userId"] != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Update the deck
+        container.replace_item(item=deck_id, body={**deck, **updated_deck.dict()})
+
+        return {"message": "Deck updated successfully"}
+    except Exception as e:
+        print(f"Error updating deck: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update deck")
+

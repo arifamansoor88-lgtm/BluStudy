@@ -375,3 +375,35 @@ export const generateSummary = async (payload) => {
     throw error;
   }
 };
+
+/**
+ * Analyze quiz performance and extract topics using AI
+ * @param {Array} questions - Array of quiz questions
+ * @param {Array} userAnswers - Array of user answers
+ * @param {Object} quizMetadata - Additional quiz metadata
+ * @returns {Promise<Object>} - AI-analyzed performance data with topics
+ */
+export const analyzeQuizPerformance = async (questions, userAnswers, quizMetadata = {}) => {
+  const endpoint = "http://localhost:8000/analyze-quiz-performance";
+
+  const requestBody = {
+    questions,
+    userAnswers,
+    quizMetadata
+  };
+
+  const options = {
+    method: "POST",
+    body: JSON.stringify(requestBody),
+  };
+
+  try {
+    const response = await callProtectedApi(endpoint, options);
+    return response; // Expected format: { topics: [...], weakTopics: [...], strongTopics: [...], recommendations: [...] }
+  } catch (error) {
+    console.error("Error analyzing quiz performance:", error);
+    throw error;
+  }
+};
+
+
