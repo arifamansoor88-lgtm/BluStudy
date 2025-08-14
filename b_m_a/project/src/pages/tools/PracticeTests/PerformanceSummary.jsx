@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { TrendingUp, TrendingDown, Target, BookOpen, AlertTriangle, CheckCircle, XCircle, Download } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { exportResultsAsPDF, exportElementAsPDF } from "./pdfExport";
+import { exportResultsAsPDF } from "./pdfExport";
 
 /**
  * Component for displaying comprehensive performance summary
@@ -116,28 +116,7 @@ const PerformanceSummary = ({
     }
   };
 
-  const handleExportElementPDF = async () => {
-    setExportingPDF(true);
-    setExportSuccess(false);
-    try {
-      console.log('Starting element-based PDF export...');
-      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-      const filename = `${quiz.quiz_title || 'PracticeTest'}_Results_${timestamp}.pdf`;
-      await exportElementAsPDF(summaryRef, filename);
-      setExportSuccess(true);
-      console.log('Element-based PDF exported successfully');
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setExportSuccess(false);
-      }, 3000);
-    } catch (error) {
-      console.error('Error exporting element PDF:', error);
-      alert('Failed to export PDF. Please try again.');
-    } finally {
-      setExportingPDF(false);
-    }
-  };
+
 
   if (!quiz) {
     console.log("No quiz data available");
@@ -309,7 +288,7 @@ const PerformanceSummary = ({
                </button>
              </div>
 
-             {/* PDF Export Buttons */}
+             {/* PDF Export Button */}
              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
                <button
                  onClick={handleExportPDF}
@@ -318,14 +297,6 @@ const PerformanceSummary = ({
                >
                  <Download className="h-4 w-4 mr-2" />
                  {exportingPDF ? "Generating PDF..." : "Export as PDF"}
-               </button>
-               <button
-                 onClick={handleExportElementPDF}
-                 disabled={exportingPDF}
-                 className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-purple-400 flex items-center justify-center"
-               >
-                 <Download className="h-4 w-4 mr-2" />
-                 {exportingPDF ? "Generating PDF..." : "Export Visual PDF"}
                </button>
              </div>
 
@@ -426,7 +397,10 @@ const TopicBreakdown = ({ analysis, quiz }) => {
            validIndices: topic.questionIndices.filter(i => i >= 0 && i < quiz.questions.length),
            questionNumbers: topic.questionIndices
              .filter(i => i >= 0 && i < quiz.questions.length)
-             .map(i => i + 1)
+             .map(i => i + 1),
+           totalQuestions: quiz.questions.length,
+           missingQuestions: Array.from({length: quiz.questions.length}, (_, i) => i + 1)
+             .filter(qNum => !topic.questionIndices.includes(qNum - 1))
          });
          return (
          <div key={index} className="border border-gray-200 rounded-lg p-4">
@@ -458,13 +432,12 @@ const TopicBreakdown = ({ analysis, quiz }) => {
             </span>
           </div>
           
-                     <div className="flex items-center gap-4 text-xs text-gray-600">
+                                <div className="flex items-center gap-4 text-xs text-gray-600">
              <span>Questions: {topic.questionIndices
                .filter(i => i >= 0 && i < quiz.questions.length)
                .map(i => i + 1)
                .join(', ')}</span>
-             <span>Difficulty: {topic.difficulty}</span>
-                      </div>
+           </div>
          </div>
        );
        })}
@@ -723,7 +696,6 @@ const AttemptHistory = ({
               <th className="text-left py-2">Mode</th>
               <th className="text-left py-2">Score</th>
               <th className="text-left py-2">Time</th>
-              <th className="text-left py-2">Analysis</th>
             </tr>
           </thead>
           <tbody>
@@ -736,26 +708,6 @@ const AttemptHistory = ({
                 <td className="py-2 capitalize">{attempt.mode}</td>
                 <td className="py-2">{attempt.score}%</td>
                 <td className="py-2">{formatTime(attempt.timeTaken)}</td>
-                <td className="py-2">
-                  <button
-                    onClick={() => onAnalyzeAttempt(attempt)}
-                    disabled={loadingAttemptAnalysis && selectedAttemptId === attempt.attemptId}
-                    className={`px-3 py-1 text-sm rounded ${
-                      loadingAttemptAnalysis && selectedAttemptId === attempt.attemptId
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-blue-600 text-white hover:bg-blue-700"
-                    }`}
-                  >
-                    {loadingAttemptAnalysis && selectedAttemptId === attempt.attemptId ? (
-                      <span className="flex items-center">
-                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent mr-1"></div>
-                        Analyzing...
-                      </span>
-                    ) : (
-                      "View Analysis"
-                    )}
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>
@@ -875,7 +827,6 @@ const performBasicAnalysis = async (quiz, userAnswers) => {
     // Import the enhanced utility functions
     const { 
       extractTopicsFromQuestions, 
-      analyzeTopicPerformance, 
       generateRecommendations 
     } = await import('./utils');
     
@@ -883,27 +834,27 @@ const performBasicAnalysis = async (quiz, userAnswers) => {
     
     console.log("Extracting topics from questions...");
     console.log("Quiz questions:", quiz.questions.map(q => ({ question: q.question, type: q.type })));
-    // Extract topics from questions and analyze performance
-    const topics = extractTopicsFromQuestions(quiz.questions);
+    // Extract topics from questions and analyze performance using AI
+    const topics = await extractTopicsFromQuestions(quiz.questions, userAnswers, {
+      title: quiz.quiz_title,
+      totalQuestions: quiz.questions.length,
+      timestamp: new Date().toISOString()
+    });
     console.log("Topics extracted:", topics);
     
-    console.log("Analyzing topic performance...");
-    const topicPerformance = analyzeTopicPerformance(quiz.questions, userAnswers, topics);
-    console.log("Topic performance analyzed:", topicPerformance);
-    
     console.log("Generating recommendations...");
-    const recommendations = generateRecommendations(topicPerformance);
+    const recommendations = generateRecommendations(topics);
     console.log("Recommendations generated:", recommendations);
     
-    const weakTopics = topicPerformance.filter(t => t.accuracy < 70);
-    const strongTopics = topicPerformance.filter(t => t.accuracy >= 80);
+    const weakTopics = topics.filter(t => t.accuracy < 70);
+    const strongTopics = topics.filter(t => t.accuracy >= 80);
     
     console.log("Filtered weakTopics:", weakTopics);
     console.log("Filtered strongTopics:", strongTopics);
     
     // Ensure we have the proper structure
     const result = {
-      topics: topicPerformance,
+      topics: topics,
       weakTopics: weakTopics || [],
       strongTopics: strongTopics || [],
       recommendations: recommendations || []
@@ -932,8 +883,8 @@ const performBasicAnalysis = async (quiz, userAnswers) => {
 const performTopicAnalysis = async (quiz, userAnswers) => {
   try {
     console.log("Attempting AI-powered analysis...");
-    // Try to use AI-powered analysis first
-    const { analyzeQuizPerformance } = await import('../../../api/apiService');
+    // Use our updated extractTopicsFromQuestions function that has AI-powered topic extraction
+    const { extractTopicsFromQuestions, generateRecommendations } = await import('./utils');
     
     const quizMetadata = {
       title: quiz.quiz_title,
@@ -941,43 +892,40 @@ const performTopicAnalysis = async (quiz, userAnswers) => {
       timestamp: new Date().toISOString()
     };
     
-    console.log("Calling AI analysis with metadata:", quizMetadata);
+    console.log("Calling AI-powered topic extraction with metadata:", quizMetadata);
     console.log("Quiz structure check:", {
       totalQuestions: quiz.questions.length,
       questionIndices: quiz.questions.map((_, i) => i),
       questionNumbers: quiz.questions.map((_, i) => i + 1)
     });
-    const aiAnalysis = await analyzeQuizPerformance(quiz.questions, userAnswers, quizMetadata);
-    console.log("AI analysis successful:", aiAnalysis);
-    console.log("AI analysis structure:", {
-      hasTopics: !!aiAnalysis.topics,
-      hasWeakTopics: !!aiAnalysis.weakTopics,
-      hasStrongTopics: !!aiAnalysis.strongTopics,
-      hasRecommendations: !!aiAnalysis.recommendations,
-      weakTopicsCount: aiAnalysis.weakTopics?.length || 0,
-      strongTopicsCount: aiAnalysis.strongTopics?.length || 0
+    
+    // Use our updated extractTopicsFromQuestions function
+    const topics = await extractTopicsFromQuestions(quiz.questions, userAnswers, quizMetadata);
+    console.log("AI-powered topics extracted:", topics);
+    
+    // Generate recommendations
+    const recommendations = generateRecommendations(topics);
+    console.log("Recommendations generated:", recommendations);
+    
+    // Filter weak and strong topics
+    const weakTopics = topics.filter(t => t.accuracy < 70);
+    const strongTopics = topics.filter(t => t.accuracy >= 80);
+    
+    console.log("Filtered topics:", {
+      weakTopicsCount: weakTopics.length,
+      strongTopicsCount: strongTopics.length,
+      totalTopicsCount: topics.length
     });
     
-    // Ensure weakTopics and strongTopics are properly populated
-    if (aiAnalysis.topics && (!aiAnalysis.weakTopics || !aiAnalysis.strongTopics)) {
-      console.log("Fixing AI analysis structure - deriving weakTopics and strongTopics from topics");
-      aiAnalysis.weakTopics = aiAnalysis.topics.filter(t => t.accuracy < 70);
-      aiAnalysis.strongTopics = aiAnalysis.topics.filter(t => t.accuracy >= 80);
-      console.log("Fixed AI analysis:", {
-        weakTopicsCount: aiAnalysis.weakTopics.length,
-        strongTopicsCount: aiAnalysis.strongTopics.length
-      });
-    }
-    
     // Ensure all required properties exist
-    if (!aiAnalysis.weakTopics) aiAnalysis.weakTopics = [];
-    if (!aiAnalysis.strongTopics) aiAnalysis.strongTopics = [];
-    if (!aiAnalysis.recommendations) aiAnalysis.recommendations = [];
+    if (!weakTopics) weakTopics = [];
+    if (!strongTopics) strongTopics = [];
+    if (!recommendations) recommendations = [];
     
     // Validate question indices in topics
-    if (aiAnalysis.topics) {
+    if (topics) {
       const maxValidIndex = quiz.questions.length - 1;
-      aiAnalysis.topics.forEach(topic => {
+      topics.forEach(topic => {
         if (topic.questionIndices) {
           // Filter out invalid indices
           const validIndices = topic.questionIndices.filter(index => 
@@ -996,17 +944,21 @@ const performTopicAnalysis = async (quiz, userAnswers) => {
       });
     }
     
+    const result = {
+      topics: topics,
+      weakTopics: weakTopics,
+      strongTopics: strongTopics,
+      recommendations: recommendations
+    };
+    
     console.log("Final AI analysis structure:", {
-      topicsCount: aiAnalysis.topics?.length || 0,
-      weakTopicsCount: aiAnalysis.weakTopics?.length || 0,
-      strongTopicsCount: aiAnalysis.strongTopics?.length || 0,
-      recommendationsCount: aiAnalysis.recommendations?.length || 0,
-      weakTopicsType: typeof aiAnalysis.weakTopics,
-      strongTopicsType: typeof aiAnalysis.strongTopics,
-      recommendationsType: typeof aiAnalysis.recommendations
+      topicsCount: result.topics?.length || 0,
+      weakTopicsCount: result.weakTopics?.length || 0,
+      strongTopicsCount: result.strongTopics?.length || 0,
+      recommendationsCount: result.recommendations?.length || 0
     });
     
-    return aiAnalysis;
+    return result;
   } catch (error) {
     console.error("AI analysis failed, falling back to basic analysis:", error);
     // Fallback to basic analysis if AI analysis fails
