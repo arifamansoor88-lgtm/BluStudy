@@ -1,0 +1,125 @@
+{
+    "title": "Ontario Grade 9 Math – How Can We Represent It?",
+    "cards": [
+      {
+        "question": "What are the natural numbers (ℕ)?",
+        "answer": "The set of positive counting numbers: {1, 2, 3, …}",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What are whole numbers?",
+        "answer": "Natural numbers including zero: {0, 1, 2, 3, …}",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Define integers (ℤ).",
+        "answer": "All whole numbers and their negatives: {..., –2, –1, 0, 1, 2, …}",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What symbol is used to represent the set of rational numbers?",
+        "answer": "ℚ (rational numbers: a/b where a and b are integers and b ≠ 0)",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "How would you express 'six more than a number n' using an algebraic expression?",
+        "answer": "n + 6",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "Write an expression for 'three times a number x, decreased by 5.'",
+        "answer": "3x – 5",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "Simplify the expression 2(n + 4).",
+        "answer": "2n + 8",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Convert the mixed number 3 1/2 into an improper fraction.",
+        "answer": "7/2",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Convert the improper fraction 9/4 into a mixed number.",
+        "answer": "2 1/4",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Explain how 1/2, 2/4, and 4/8 are equivalent fractions.",
+        "answer": "They all represent the same value (one half) using different numerator-denominator pairs.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "How would you represent one-quarter (1/4) another way?",
+        "answer": "As equivalent fractions: 2/8, 3/12, 25/100, etc.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What does the denominator represent in a fraction?",
+        "answer": "The total number of equal parts a whole is divided into.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What does the numerator represent in a fraction?",
+        "answer": "How many parts of the whole are being considered.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Give an algebraic expression: 'the product of 8 and a number y, plus 2.'",
+        "answer": "8y + 2",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "Express 'a number decreased by 4' using x.",
+        "answer": "x – 4",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "How can fraction equivalence be visualized or represented concretely?",
+        "answer": "Using pie diagrams, number lines, or models showing equal parts.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the importance of algebraic expressions in math?",
+        "answer": "They allow us to represent relationships and generalize patterns using symbols.",
+        "difficulty": "hard",
+        "important": true
+      },
+      {
+        "question": "Name a real-world situation that could be represented by the algebraic expression 5n.",
+        "answer": "If each notebook costs $5, then 5n represents the total cost for n notebooks.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "Why is it useful to understand different representations (sets, fractions, expressions)?",
+        "answer": "They deepen understanding, allow flexibility in problem solving, and connect ideas.",
+        "difficulty": "hard",
+        "important": true
+      },
+      {
+        "question": "What is an example of a subset of the whole numbers?",
+        "answer": "Natural numbers (ℕ) are a subset of whole numbers.",
+        "difficulty": "medium",
+        "important": false
+      }
+    ]
+  }

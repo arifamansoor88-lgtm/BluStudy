@@ -64,6 +64,29 @@ const FlashcardStudyPage = () => {
         setFlipped(false);
     };
 
+    const exportToJSON = () => {
+        const deckData = {
+            title: deckTitle,
+            cards: flashcards.map(({ question, answer, difficulty, important }) => ({
+                question,
+                answer,
+                difficulty,
+                important
+            }))
+        };
+
+        const blob = new Blob([JSON.stringify(deckData, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${deckTitle || "flashcards"}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     const handleFlip = () => setFlipped((prev) => !prev);
 
     const speakCard = () => {
@@ -224,6 +247,15 @@ const FlashcardStudyPage = () => {
                         <Pencil className="w-4 h-4" />
                         {isEditing ? 'Close Editor' : 'Edit Cards'}
                     </button>
+                    
+                    <button
+                        onClick={exportToJSON}
+                        className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                    >
+                        <FileDown className="w-4 h-4" />
+                        Export to JSON
+                    </button>
+
                 </div>
             </div>
 

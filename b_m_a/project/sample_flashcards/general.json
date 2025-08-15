@@ -1,0 +1,126 @@
+{
+    "title": "Ontario Curriculum Basics",
+    "cards": [
+      {
+        "question": "What is the chemical symbol for water?",
+        "answer": "H₂O",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Which planet is known as the Red Planet?",
+        "answer": "Mars",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is Newton’s Third Law of Motion?",
+        "answer": "For every action, there is an equal and opposite reaction.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the process by which plants make their own food?",
+        "answer": "Photosynthesis",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Name the three states of matter taught in Grade 9 Science.",
+        "answer": "Solid, Liquid, Gas",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What year did Canada become a confederation?",
+        "answer": "1867",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Who was the first Prime Minister of Canada?",
+        "answer": "Sir John A. Macdonald",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What was the significance of Vimy Ridge in World War I for Canada?",
+        "answer": "It was a major victory that fostered national pride and identity.",
+        "difficulty": "hard",
+        "important": true
+      },
+      {
+        "question": "Which ancient civilization built the pyramids?",
+        "answer": "The Egyptians",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What are the five Great Lakes?",
+        "answer": "Superior, Michigan, Huron, Erie, Ontario",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is Canada’s capital city?",
+        "answer": "Ottawa",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "Define 'ecosystem.'",
+        "answer": "A community of organisms interacting with each other and their environment.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What are the four main types of sentences in English grammar?",
+        "answer": "Declarative, Interrogative, Imperative, Exclamatory",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a metaphor?",
+        "answer": "A comparison between two unlike things without using 'like' or 'as'.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the theme of a story?",
+        "answer": "The central idea, message, or underlying meaning.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "In persuasive writing, what are ethos, pathos, and logos?",
+        "answer": "Ethos: credibility, Pathos: emotion, Logos: logic",
+        "difficulty": "hard",
+        "important": true
+      },
+      {
+        "question": "What is the formula for speed?",
+        "answer": "Speed = Distance ÷ Time",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is biodiversity?",
+        "answer": "The variety of life in an ecosystem.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the difference between renewable and non-renewable resources?",
+        "answer": "Renewable resources replenish naturally; non-renewable resources are finite.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the Pythagorean Theorem?",
+        "answer": "In a right triangle, a² + b² = c²",
+        "difficulty": "medium",
+        "important": true
+      }
+    ]
+  }
+  
