@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form, Query, HTTPException, Body
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from json_repair import repair_json
 from dotenv import load_dotenv
 from typing import List, Dict, Any, Optional, Union
 import msal
@@ -15,6 +16,7 @@ from pdf_utils import extract_text_from_pdf
 from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, analyze_quiz_performance
 from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument, SaveTestProgressRequest, SaveTestProgressResponse, SaveAnswerRequest, SaveAnswerResponse 
 from pydantic import BaseModel
+
 
 # Load the environment variables
 load_dotenv()
@@ -1043,6 +1045,7 @@ async def summarize_file(
 
     return {"summary": summary}
 
+
 # Quiz Performance Analysis Models
 class QuizPerformanceRequest(BaseModel):
     questions: List[Dict[str, Any]]
@@ -1134,23 +1137,281 @@ async def get_decks(user_claims: dict = Depends(validate_token)):
 async def get_decks(deck_id: str, user_claims: dict = Depends(validate_token)):
     try:
         # Get the deck from Cosmos DB (using partition key)
-        quiz = container.read_item(
+        deck = container.read_item(
             item=deck_id, 
             partition_key=user_claims["sub"]
         )
         
         # Verify the deck belongs to the user
-        if quiz["userId"] != user_claims["sub"]:
+        if deck["userId"] != user_claims["sub"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, 
                 detail="Access denied"
             )
             
-        return quiz
+        return deck
     except Exception as e:
         print(f"Error fetching deck: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail="Deck not found"
         )
+
+
+
+# Models for the stats & recents endpoints
+class UserStats(BaseModel):
+    streak: int
+    hours: int
+
+class RecentItem(BaseModel):
+    id: str
+    name: str
+    date: str
+
+# GET /api/user/{userId}/stats
+@app.get("/api/user/{userId}/stats", response_model=UserStats)
+async def get_user_stats(
+    userId: str,
+    user_claims: dict = Depends(validate_token),
+):
+    if user_claims["sub"] != userId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    # TODO: fetch real stats from Cosmos DB
+    return {"streak": 7, "hours": 12}
+
+
+# GET /api/user/{userId}/recents
+@app.get("/api/user/{userId}/recents", response_model=List[RecentItem])
+async def get_user_recents(
+    userId: str,
+    user_claims: dict = Depends(validate_token),
+):
+    if user_claims["sub"] != userId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    query = """
+      SELECT TOP 3
+        c.id,
+        c.data.title AS name,
+        SUBSTRING(c.createdAt, 0, 10) AS date
+      FROM c
+      WHERE c.userId = @userId
+      ORDER BY c.createdAt DESC
+    """
+    parameters = [{"name": "@userId", "value": userId}]
+    items = list(container.query_items(
+        query=query,
+        parameters=parameters,
+        enable_cross_partition_query=True,
+    ))
+    return items
+
+# ─── Models for the profile endpoints ─────────────────────
+class UserProfile(BaseModel):
+    id: str
+    name: str
+    email: str
+    photo: Optional[str] = None
+    grade: Optional[str] = None
+    school: Optional[str] = None
+
+# ─── GET /api/user/{userId}/profile ───────────────────────
+@app.get(
+    "/api/user/{userId}/profile", 
+    response_model=UserProfile
+)
+async def get_user_profile(
+    userId: str,
+    user_claims: dict = Depends(validate_token)
+):
+    if user_claims["sub"] != userId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        # read the profile doc from CosmosDB
+        doc = container.read_item(item=userId, partition_key=userId)
+        return UserProfile(
+            id=doc["id"],
+            name=doc["data"].get("name", ""),
+            email=doc["data"].get("email", ""),
+            photo=doc["data"].get("photo"),
+            grade=doc["data"].get("grade"),
+            school=doc["data"].get("school"),
+        )
+    except Exception:
+        # if no profile exists yet, return defaults
+        return UserProfile(
+            id=userId,
+            name="",
+            email="",
+            photo=None,
+            grade=None,
+            school=None,
+        )
+
+# ─── PATCH /api/user/{userId}/profile ─────────────────────
+@app.patch(
+    "/api/user/{userId}/profile", 
+    response_model=UserProfile
+)
+async def update_user_profile(
+    userId: str,
+    payload: Dict[str, Any],
+    user_claims: dict = Depends(validate_token)
+):
+    if user_claims["sub"] != userId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    # read or initialize
+    try:
+        doc = container.read_item(item=userId, partition_key=userId)
+    except:
+        doc = {"id": userId, "userId": userId, "data": {}}
+
+    # merge updates
+    for field, val in payload.items():
+        doc["data"][field] = val
+
+    # upsert back into Cosmos
+    container.upsert_item(body=doc)
+
+    return UserProfile(
+        id=doc["id"],
+        name=doc["data"].get("name",""),
+        email=doc["data"].get("email",""),
+        photo=doc["data"].get("photo"),
+        grade=doc["data"].get("grade"),
+        school=doc["data"].get("school"),
+    )
+
+
+
+# For development only
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+=======
+# Delete flashcard deck endpoint - protected
+@app.delete("/delete-deck/{deck_id}", response_model=dict)
+async def delete_deck(deck_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the deck from Cosmos DB
+        deck = container.read_item(
+            item=deck_id,
+            partition_key=user_claims["sub"]
+        )
+
+        # Verify the deck belongs to the user
+        if deck["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+
+        # Delete the deck from Cosmos DB
+        container.delete_item(
+            item=deck_id,
+            partition_key=user_claims["sub"]
+        )
+
+        return {"message": "Flashcard deck deleted successfully"}
+
+    except Exception as e:
+        print(f"Error deleting deck: {str(e)}")
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Deck not found"
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete deck: {str(e)}"
+        )
+
+# PDF upload and flashcard generation endpoint - protected
+@app.post("/generate-flashcard")
+async def generate_flashcard(
+    file: UploadFile = File(...), 
+    num_cards: int = Form(10),
+    user_claims: dict = Depends(validate_token)
+):
+    try:
+        # Save the uploaded file temporarily
+        file_path = f"./temp_{file.filename}"
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+        
+        # Extract text from the PDF
+        text = extract_text_from_pdf(file_path)
+        
+        # Validate inputs
+        if num_cards < 10:
+            num_cards = 10
+        elif num_cards > 40:
+            num_cards = 40
+            
+        # Generate quiz using Azure OpenAI with customization options
+        flashcard_json = openai_generate_flashcard(
+            text=text,
+            num_flashcards = 10,
+        )
+        
+        # Clean up the temporary file
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        print(flashcard_json)
+        flashcard_json = repair_json(flashcard_json)
+        flashcard_data = json.loads(flashcard_json)
+        
+        # Automatically save the flashcard
+        flashcard_document = {
+            "id": str(uuid.uuid4()),
+            "userId": user_claims["sub"],
+            "contentType": "flashcard",
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": {
+                "title": flashcard_data["title"],
+                "cards": flashcard_data["cards"],
+                "resourceName": file.filename,
+            }
+        }
+        
+        # Save to Cosmos DB
+        container.create_item(body=flashcard_document)
+        
+        # Return the quiz data with the ID
+        flashcard_data["id"] = flashcard_document["id"]
+        return flashcard_data
+    except json.JSONDecodeError as e:
+        print(f"Failed to parse JSON: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to parse JSON: {str(e)}"
+        )
+    except Exception as e:
+        print(f"Error generating quiz: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate quiz: {str(e)}"
+        )
+
+# Deck Update Endpoint - Protected      
+@app.put("/decks/{deck_id}")
+async def update_deck(deck_id: str, updated_deck: FlashcardDocument, user_claims: dict = Depends(validate_token)):
+    try:
+        # Fetch the existing deck
+        deck = container.read_item(item=deck_id, partition_key=user_claims["sub"])
+
+        # Verify ownership
+        if deck["userId"] != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Update the deck
+        container.replace_item(item=deck_id, body={**deck, **updated_deck.dict()})
+
+        return {"message": "Deck updated successfully"}
+    except Exception as e:
+        print(f"Error updating deck: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update deck")
 
