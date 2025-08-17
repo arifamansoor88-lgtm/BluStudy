@@ -75,6 +75,7 @@ const Navbar = () => {
               <NavLink to="/dashboard">Dashboard</NavLink>
               <NavLink to="/tools">Study Tools</NavLink>
               <NavLink to="/public_library">Public Library</NavLink>
+              {isAuthenticated && <NavLink to="/profile">Profile</NavLink>}
             </div>
           </div>
 
@@ -128,6 +129,10 @@ const Navbar = () => {
             <div className="px-2 pt-2 pb-3 space-y-1">
               <MobileNavLink to="/dashboard">Dashboard</MobileNavLink>
               <MobileNavLink to="/tools">Study Tools</MobileNavLink>
+              {isAuthenticated && (
+              <MobileNavLink to="/profile">Profile</MobileNavLink>
+              )}
+
               {isAuthenticated ? (
                 <button
                   onClick={handleSignOut}

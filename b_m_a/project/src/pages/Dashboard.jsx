@@ -1,352 +1,297 @@
-import React, { useState, useEffect } from "react";
+// src/pages/Dashboard.jsx
+import React, { useState, useEffect, useMemo } from "react";
 import { useMsal } from "@azure/msal-react";
-import { getTasks } from "../api/apiService";
-import { useNavigate } from "react-router-dom";
-import {
-  Clock,
-  Trophy,
-  Star,
-  Target,
-  BookOpen,
-  Calendar,
-  User,
-} from "lucide-react";
-import { motion } from "framer-motion";
+import { Trophy, Clock, Folder, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useUserStats } from "../hooks/useUserStats";
+import { useUserRecents } from "../hooks/useUserRecents";
 
-const Dashboard = () => {
-  const { instance, accounts } = useMsal();
-  const navigate = useNavigate();
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [userData, setUserData] = useState(null);
+// ———— Derive user from MSAL ————
+function useUserData(instance, accounts, navigate) {
+  const [user, setUser] = useState(null);
 
-  // Redirect to sign in if not authenticated
   useEffect(() => {
-    // If no accounts, redirect to sign in
     if (accounts.length === 0) {
       navigate("/signin");
       return;
     }
-
-    // Set active account if not already set
-    if (!instance.getActiveAccount() && accounts.length > 0) {
+    if (!instance.getActiveAccount()) {
       instance.setActiveAccount(accounts[0]);
     }
+    const acct = instance.getActiveAccount() || accounts[0];
+    const claims = acct.idTokenClaims || {};
 
-    // Get user data from active account
-    const account = instance.getActiveAccount() || accounts[0];
-
-    // Debug account information
-    console.log("Dashboard - Account details:", account);
-
-    // Extract name from multiple possible locations
     const name =
-      account?.name ||
-      account?.idTokenClaims?.name ||
-      account?.idTokenClaims?.given_name ||
-      account?.idTokenClaims?.identity?.displayName ||
-      account?.idTokenClaims?.identity?.firstName ||
-      (account?.idTokenClaims?.emails && account?.idTokenClaims?.emails[0]) ||
-      account?.username?.split("@")[0] ||
+      claims.name ??
+      claims.given_name ??
+      acct.name ??
+      (acct.username?.split("@")[0]) ??
       "User";
 
-    // Extract email from multiple possible locations
     const email =
-      account?.username ||
-      (account?.idTokenClaims?.emails && account?.idTokenClaims?.emails[0]) ||
-      account?.idTokenClaims?.email ||
-      "Not available";
+      claims.email ??
+      claims.preferred_username ??
+      (Array.isArray(claims.emails) ? claims.emails[0] : undefined) ??
+      acct.username ??
+      "";
 
-    setUserData({
-      name: name,
-      email: email,
-      id: account.localAccountId,
-    });
+    setUser({ id: acct.localAccountId, name, email });
   }, [instance, accounts, navigate]);
 
-  // Fetch tasks when component mounts and we have user data
-  useEffect(() => {
-    if (!userData) return;
+  return user;
+}
 
-    const fetchTasks = async () => {
-      try {
-        setLoading(true);
-        const taskData = await getTasks();
-        setTasks(taskData);
-        setError(null);
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
-        setError("Failed to load tasks");
-      } finally {
-        setLoading(false);
-      }
-    };
+export default function Dashboard() {
+  const { instance, accounts } = useMsal();
+  const navigate = useNavigate();
 
-    fetchTasks();
-  }, [userData]);
+  const user = useUserData(instance, accounts, navigate);
 
-  // Display loading state if still loading
-  if (loading && !userData) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
+  // Real data from API (via hooks)
+  const stats = useUserStats(user?.id);          // -> { streak, hours }
+  const recents = useUserRecents(user?.id);      // -> [{id,name,date,contentType}, ...]
 
-  // Get user information
-  const userName = userData?.name || "User";
-  const firstName = userName.split(" ")[0];
-  const email = userData?.email || "Not available";
-
-  const teachers = [
-    {
-      name: "Dr. Sarah Wilson",
-      subject: "Mathematics",
-      image:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
-    },
-    {
-      name: "Prof. Michael Chen",
-      subject: "Physics",
-      image:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
-    },
-  ];
-
-  const schedule = [
-    {
-      subject: "Mathematics",
-      time: "09:00 - 10:30 AM",
-      teacher: "Dr. Sarah Wilson",
-    },
-    {
-      subject: "Physics",
-      time: "11:00 - 12:30 PM",
-      teacher: "Prof. Michael Chen",
-    },
-    {
-      subject: "Study Group",
-      time: "02:00 - 03:30 PM",
-      teacher: "Peer Learning",
-    },
-  ];
-
-  const goals = [
-    { title: "Complete Calculus Module", progress: 75 },
-    { title: "Physics Lab Report", progress: 40 },
-    { title: "Weekly Quiz Prep", progress: 90 },
-  ];
+  if (!user) return null; // or a spinner
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* User greeting */}
-      <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Welcome back, {firstName}!
-        </h1>
-        <p className="text-gray-600">
-          You're signed in as <span className="font-medium">{email}</span>
-        </p>
-      </div>
-
-      {/* Error message */}
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-          <p className="text-red-700">{error}</p>
-        </div>
-      )}
-
-      {/* Tasks section */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Greeting */}
       <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Tasks</h2>
-
-        {loading ? (
-          <p className="text-gray-500">Loading tasks...</p>
-        ) : tasks.length > 0 ? (
-          <ul className="divide-y divide-gray-200">
-            {tasks.map((task, index) => (
-              <li key={index} className="py-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    readOnly
-                    className="h-4 w-4 text-blue-600 rounded border-gray-300"
-                  />
-                  <span className="ml-3 text-gray-900">{task.title}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-gray-500">No tasks available.</p>
-        )}
+        <h1 className="text-2xl font-bold text-gray-900">
+          Welcome back, {user.name.split(" ")[0]}!
+        </h1>
+        <p className="text-gray-600">{user.email}</p>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8"
-      >
-        {/* Teachers Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white rounded-xl shadow-sm p-6"
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <User className="h-5 w-5 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Your Teachers
-            </h2>
-          </div>
-          <div className="space-y-4">
-            {teachers.map((teacher, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <img
-                  src={teacher.image}
-                  alt={teacher.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div>
-                  <h3 className="font-medium text-gray-900">{teacher.name}</h3>
-                  <p className="text-sm text-gray-500">{teacher.subject}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
+      {/* Stats + Recents + Workspace + Calendar */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <StatCard
+          icon={Trophy}
+          label="Current Streak"
+          value={Number.isFinite(stats?.streak) ? `${stats.streak} days` : "—"}
+        />
+        <StatCard
+          icon={Clock}
+          label="Hours Studied"
+          value={Number.isFinite(stats?.hours) ? `${stats.hours} hr` : "—"}
+        />
+        <RecentsList items={recents} />
 
-        {/* Schedule Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-xl shadow-sm p-6"
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <Calendar className="h-5 w-5 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Today's Schedule
-            </h2>
-          </div>
-          <div className="space-y-4">
-            {schedule.map((item, index) => (
-              <div key={index} className="p-4 rounded-lg bg-gray-50">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium text-gray-900">{item.subject}</h3>
-                  <span className="text-sm text-primary-600">{item.time}</span>
-                </div>
-                <p className="text-sm text-gray-500">{item.teacher}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
+        {/* Workspace (left two columns on desktop) */}
+        <div className="lg:col-span-2">
+          <WorkspaceGrid />
+        </div>
 
-        {/* Goals Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-xl shadow-sm p-6"
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <Target className="h-5 w-5 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Learning Goals
-            </h2>
-          </div>
-          <div className="space-y-6">
-            {goals.map((goal, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-medium text-gray-900">
-                    {goal.title}
-                  </h3>
-                  <span className="text-sm text-gray-500">
-                    {goal.progress}%
-                  </span>
-                </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${goal.progress}%` }}
-                    transition={{ duration: 1, delay: 0.5 }}
-                    className="h-full bg-primary-600 rounded-full"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Achievements Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="lg:col-span-3 bg-white rounded-xl shadow-sm p-6"
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <Trophy className="h-5 w-5 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Recent Achievements
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <AchievementCard
-              icon={Trophy}
-              title="7 Day Streak"
-              description="Consistent learning pays off!"
-              color="text-blue-600"
-              bgColor="bg-blue-100"
-            />
-            <AchievementCard
-              icon={Star}
-              title="Top Student"
-              description="Ranked #1 in Physics"
-              color="text-yellow-600"
-              bgColor="bg-yellow-100"
-            />
-            <AchievementCard
-              icon={BookOpen}
-              title="Quick Learner"
-              description="Completed 5 modules this week"
-              color="text-green-600"
-              bgColor="bg-green-100"
-            />
-          </div>
-        </motion.div>
-      </motion.div>
+        {/* Calendar (right column under Recents on desktop) */}
+        <CalendarCard />
+      </div>
     </div>
   );
-};
+}
 
-const AchievementCard = ({
-  icon: Icon,
-  title,
-  description,
-  color,
-  bgColor,
-}) => (
-  <motion.div
-    whileHover={{ scale: 1.02 }}
-    className="p-4 rounded-lg bg-gray-50 flex items-start gap-4"
-  >
-    <div className={`${bgColor} p-3 rounded-lg`}>
-      <Icon className={`h-6 w-6 ${color}`} />
+// ———— Presentational ————
+function StatCard({ icon: Icon, label, value }) {
+  return (
+    <div className="bg-white rounded-lg shadow p-6 flex flex-col">
+      <div className="flex items-center gap-2">
+        <Icon className="h-5 w-5 text-gray-400" />
+        <span className="text-sm font-medium text-gray-700">{label}</span>
+      </div>
+      <span className="mt-4 text-2xl font-semibold text-gray-900">{value}</span>
     </div>
-    <div>
-      <h3 className="font-medium text-gray-900">{title}</h3>
-      <p className="text-sm text-gray-500">{description}</p>
-    </div>
-  </motion.div>
-);
+  );
+}
 
-export default Dashboard;
+function RecentsList({ items }) {
+  const list = Array.isArray(items) ? items : [];
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">Recents</h2>
+      <ul className="space-y-3">
+        {list.map((it) => (
+          <li key={it.id} className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Folder className="h-5 w-5 text-gray-400" />
+              {/* If your workspace routes by contentType, change to `/workspace/${it.contentType}/${it.id}` */}
+              <Link to={`/workspace/${it.id}`} className="text-gray-900 hover:underline">
+                {it.name}
+              </Link>
+            </div>
+            <span className="text-sm text-gray-500">{it.date}</span>
+          </li>
+        ))}
+        {list.length === 0 && (
+          <li className="text-sm text-gray-500">No recent items.</li>
+        )}
+      </ul>
+    </div>
+  );
+}
+
+function WorkspaceGrid({ folders = [] }) {
+  const list = Array.isArray(folders) ? folders : [];
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-semibold text-gray-900">My Workspace</h2>
+        <Link to="/workspace" className="text-primary-600 text-sm font-medium">
+          View All
+        </Link>
+      </div>
+
+      {list.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4">
+          {list.map((name, i) => (
+            <Link
+              key={i}
+              to={`/workspace/folder/${encodeURIComponent(name)}`}
+              className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+            >
+              <Folder className="h-5 w-5 text-gray-400" />
+              <span className="text-gray-900">{name}</span>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="text-sm text-gray-500">
+          No folders to show yet. Use <span className="font-medium">View All</span> to manage your workspace.
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** —— Clean, dependency-free calendar card —— */
+function CalendarCard() {
+  const [cursor, setCursor] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+
+  const today = useMemo(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }, []);
+
+  const monthName = cursor.toLocaleString(undefined, { month: "long" });
+  const year = cursor.getFullYear();
+
+  const { weeks } = useMemo(() => {
+    const firstDayIdx = cursor.getDay(); // 0=Sun..6=Sat for day 1
+    const daysInMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+    const prevMonthDays = new Date(cursor.getFullYear(), cursor.getMonth(), 0).getDate();
+
+    // Build 6 weeks x 7 days = 42 cells
+    const cells = [];
+    // Leading days from prev month
+    for (let i = 0; i < firstDayIdx; i++) {
+      const day = prevMonthDays - firstDayIdx + 1 + i;
+      const date = new Date(cursor.getFullYear(), cursor.getMonth() - 1, day);
+      cells.push({ date, inMonth: false });
+    }
+    // Current month days
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(cursor.getFullYear(), cursor.getMonth(), d);
+      cells.push({ date, inMonth: true });
+    }
+    // Trailing days from next month
+    while (cells.length % 7 !== 0) {
+      const nextDay = cells.length - (firstDayIdx + daysInMonth) + 1;
+      const date = new Date(cursor.getFullYear(), cursor.getMonth() + 1, nextDay);
+      cells.push({ date, inMonth: false });
+    }
+    // Ensure 6 rows for stable height
+    while (cells.length < 42) {
+      const last = cells[cells.length - 1].date;
+      const date = new Date(last);
+      date.setDate(date.getDate() + 1);
+      cells.push({ date, inMonth: false });
+    }
+
+    // Chunk into weeks
+    const weeks = [];
+    for (let i = 0; i < cells.length; i += 7) {
+      weeks.push(cells.slice(i, i + 7));
+    }
+    return { weeks };
+  }, [cursor]);
+
+  const isSameDay = (a, b) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  const goPrev = () =>
+    setCursor((c) => new Date(c.getFullYear(), c.getMonth() - 1, 1));
+  const goNext = () =>
+    setCursor((c) => new Date(c.getFullYear(), c.getMonth() + 1, 1));
+  const goToday = () => {
+    const d = new Date();
+    setCursor(new Date(d.getFullYear(), d.getMonth(), 1));
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-indigo-100 rounded-lg">
+            <CalendarDays className="h-5 w-5 text-indigo-600" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {monthName} {year}
+          </h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={goPrev}
+            className="p-2 rounded-md hover:bg-gray-100 transition"
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="h-5 w-5 text-gray-600" />
+          </button>
+          <button
+            onClick={goToday}
+            className="px-3 py-1 rounded-md text-sm border hover:bg-gray-50 transition"
+          >
+            Today
+          </button>
+          <button
+            onClick={goNext}
+            className="p-2 rounded-md hover:bg-gray-100 transition"
+            aria-label="Next month"
+          >
+            <ChevronRight className="h-5 w-5 text-gray-600" />
+          </button>
+        </div>
+      </div>
+
+      {/* Weekday headers */}
+      <div className="grid grid-cols-7 text-center text-xs font-semibold text-gray-500 mb-2">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+          <div key={d} className="py-1">{d}</div>
+        ))}
+      </div>
+
+      {/* Days grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {weeks.map((week, wi) =>
+          week.map(({ date, inMonth }, di) => {
+            const key = `${wi}-${date.toISOString().split("T")[0]}`;
+            const isTodayCell = isSameDay(date, today);
+            const base = "aspect-square flex items-center justify-center rounded-md text-sm";
+            const muted = inMonth ? "text-gray-900" : "text-gray-300";
+            const todayRing = isTodayCell ? "ring-1 ring-indigo-500 font-semibold" : "";
+            const hover = "hover:bg-gray-100";
+            return (
+              <div key={key} className={`${base} ${muted} ${todayRing} ${hover}`}>
+                {date.getDate()}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}

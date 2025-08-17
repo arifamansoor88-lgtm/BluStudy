@@ -14,6 +14,7 @@ import StudyPlans from "./pages/tools/studyPlans/StudyPlans";
 import Summarizer from "./pages/tools/Summarizer";
 import PublicLibrary from "./pages/publicLibrary";
 import FlashcardStudyPage from './pages/tools/AIFlashcards/FlashcardStudy';
+import Profile from "./pages/Profile.jsx";
 
 function App() {
   return (
@@ -34,7 +35,7 @@ function App() {
           <Route path="/tools/summarizer" element={<Summarizer />} />
           <Route path="/tools/flashcards/FlashcardStudyPage" element={<FlashcardStudyPage  />} />
           <Route path="/public_Library" element={<PublicLibrary />} />
-          {/* Add more routes as needed */}
+          <Route path="/profile" element={<Profile />} />   
         </Routes>
       </div>
     </Router>

@@ -15,6 +15,9 @@ from pdf_utils import extract_text_from_pdf
 from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, analyze_quiz_performance
 from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument 
 from pydantic import BaseModel
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
+import time
+
 
 # Load the environment variables
 load_dotenv()
@@ -75,6 +78,42 @@ async def validate_token(token: str = Depends(oauth2_scheme)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Authentication failed: {str(e)}"
         )
+
+# ---------------------------
+# Dev token endpoint (Swagger helper)
+# ---------------------------
+@app.post("/token")
+async def dev_issue_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    DEV ONLY: Issues a dummy JWT so Swagger `/docs` can call protected endpoints.
+    Username becomes the `sub` (prefixed) so your Cosmos partition key is stable.
+    Password is ignored.
+    """
+    username = (form_data.username or "devuser").strip().lower()
+
+    # Deterministic user id/partition key
+    sub = f"dev-{username}"
+
+    now = int(time.time())
+    payload = {
+        "sub": sub,
+        "name": username.split("@")[0] if "@" in username else username,
+        "preferred_username": username,
+        "emails": [username] if "@" in username else [],
+        "iat": now,
+        "exp": now + 3600,  # 1 hour
+    }
+
+    # Same dummy key you reference in validate_token
+    token = jwt.encode(
+        payload,
+        key="development_key_not_for_production",
+        algorithm="HS256",
+    )
+
+    return {"access_token": token, "token_type": "bearer"}
+
+
 
 # Root endpoint - public
 @app.get("/")
@@ -896,9 +935,7 @@ async def analyze_quiz_performance_endpoint(
             detail=f"Error analyzing quiz performance: {str(e)}"
         )
 
-# For development purposes
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 # Save flashcard endpoint - protected 
 @app.post("/save-flashcard", response_model=SaveFlashcardResponse)
@@ -947,7 +984,7 @@ async def get_decks(user_claims: dict = Depends(validate_token)):
 
 # Get a specific deck by ID - protected
 @app.get("/decks/{deck_id}")
-async def get_decks(deck_id: str, user_claims: dict = Depends(validate_token)):
+async def get_deck(deck_id: str, user_claims: dict = Depends(validate_token)):
     try:
         # Get the deck from Cosmos DB (using partition key)
         deck = container.read_item(
@@ -1006,3 +1043,212 @@ async def delete_deck(deck_id: str, user_claims: dict = Depends(validate_token))
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete deck: {str(e)}"
         )
+
+
+# ---------------------------
+# Helpers + Profile models
+# ---------------------------
+
+def _safe_iso_date(s: Optional[str]) -> Optional[str]:
+    if not s:
+        return None
+    return s.split("T")[0]
+
+class ProfileData(BaseModel):
+    photo: Optional[str] = None
+    name: Optional[str] = None
+    email: Optional[str] = None
+    grade: Optional[str] = None
+    school: Optional[str] = None
+
+class ProfileResponse(BaseModel):
+    id: str
+    userId: str
+    data: ProfileData
+
+def _default_name_from_claims(claims: dict) -> str:
+    return (
+        claims.get("name")
+        or claims.get("given_name")
+        or (claims.get("preferred_username") or "").split("@")[0]
+        or "User"
+    )
+
+def _default_email_from_claims(claims: dict) -> str:
+    emails = claims.get("emails")
+    if isinstance(emails, list) and emails:
+        return emails[0]
+    return claims.get("email") or claims.get("preferred_username") or ""
+
+
+# ---------------------------
+# Profile (GET/PUT)
+# ---------------------------
+@app.get("/profile", response_model=ProfileResponse)
+async def get_profile(user_claims: dict = Depends(validate_token)):
+    uid = user_claims["sub"]
+    doc_id = f"profile-{uid}"
+    try:
+        doc = container.read_item(item=doc_id, partition_key=uid)
+    except CosmosResourceNotFoundError:
+        # Seed a profile the first time
+        seeded = {
+            "id": doc_id,
+            "userId": uid,
+            "contentType": "profile",
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": {
+                "photo": None,
+                "name": _default_name_from_claims(user_claims),
+                "email": _default_email_from_claims(user_claims),
+                "grade": "",
+                "school": "",
+            },
+        }
+        container.create_item(body=seeded)
+        doc = seeded
+
+    return {"id": doc["id"], "userId": doc["userId"], "data": doc.get("data", {})}
+
+@app.put("/profile", response_model=ProfileResponse)
+async def update_profile(payload: ProfileData, user_claims: dict = Depends(validate_token)):
+    uid = user_claims["sub"]
+    doc_id = f"profile-{uid}"
+    try:
+        doc = container.read_item(item=doc_id, partition_key=uid)
+    except CosmosResourceNotFoundError:
+        doc = {
+            "id": doc_id,
+            "userId": uid,
+            "contentType": "profile",
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": {
+                "photo": None,
+                "name": _default_name_from_claims(user_claims),
+                "email": _default_email_from_claims(user_claims),
+                "grade": "",
+                "school": "",
+            },
+        }
+
+    data = doc.get("data") or {}
+    updates = payload.model_dump(exclude_unset=True)
+    for k, v in updates.items():
+        if v is not None:
+            data[k] = v
+    doc["data"] = data
+    container.upsert_item(doc)
+
+    return {"id": doc["id"], "userId": doc["userId"], "data": doc.get("data", {})}
+
+
+# ---------------------------
+# Dashboard: /stats + /recents
+# ---------------------------
+@app.get("/stats")
+async def get_stats(user_claims: dict = Depends(validate_token)) -> Dict[str, Any]:
+    """Hours studied (sum of quiz attempt timeTaken seconds -> hours) and current streak."""
+    uid = user_claims["sub"]
+
+    query = """
+    SELECT c.id, c.contentType, c.createdAt, c.data
+    FROM c
+    WHERE c.userId = @uid
+    """
+    items = list(
+        container.query_items(
+            query=query,
+            parameters=[{"name": "@uid", "value": uid}],
+            enable_cross_partition_query=True,
+        )
+    )
+
+    total_seconds = 0
+    day_keys = set()
+
+    for it in items:
+        created = _safe_iso_date(it.get("createdAt"))
+        if created:
+            day_keys.add(created)
+
+        data = it.get("data") or {}
+        ctype = it.get("contentType")
+
+        if ctype == "quiz":
+            for att in data.get("attempts") or []:
+                # hours
+                try:
+                    total_seconds += int(att.get("timeTaken") or 0)
+                except (ValueError, TypeError):
+                    pass
+                # streak
+                ts = _safe_iso_date(att.get("timestamp"))
+                if ts:
+                    day_keys.add(ts)
+
+        if ctype == "study_plan":
+            upd = _safe_iso_date(data.get("updatedAt"))
+            if upd:
+                day_keys.add(upd)
+
+    hours = round(total_seconds / 3600.0, 1)
+
+    today = datetime.utcnow().date()
+    days = {datetime.fromisoformat(d).date() for d in day_keys if d}
+    streak = 0
+    cur = today
+    while cur in days:
+        streak += 1
+        cur = cur - timedelta(days=1)
+
+    last_active = max(day_keys) if day_keys else None
+    return {"streak": streak, "hours": hours, "lastActive": last_active}
+
+@app.get("/recents")
+async def get_recents(limit: int = 8, user_claims: dict = Depends(validate_token)) -> Dict[str, List[Dict[str, Any]]]:
+    """Recent workspace items across content types, newest first."""
+    uid = user_claims["sub"]
+    query = """
+    SELECT c.id, c.contentType, c.createdAt, c.data
+    FROM c
+    WHERE c.userId = @uid
+    ORDER BY c.createdAt DESC
+    """
+    items = list(
+        container.query_items(
+            query=query,
+            parameters=[{"name": "@uid", "value": uid}],
+            enable_cross_partition_query=True,
+        )
+    )
+
+    recents: List[Dict[str, Any]] = []
+    for it in items:
+        data = it.get("data") or {}
+        name = (
+            data.get("title")
+            or data.get("name")
+            or data.get("resourceName")
+            or f"{(it.get('contentType') or 'item').replace('_',' ').title()} {it['id'][:6]}"
+        )
+        when = data.get("updatedAt") or it.get("createdAt") or ""
+        recents.append(
+            {
+                "id": it["id"],
+                "name": name,
+                "date": _safe_iso_date(when) or _safe_iso_date(it.get("createdAt")) or "",
+                "contentType": it.get("contentType"),
+            }
+        )
+
+    return {"items": recents[:limit]}
+
+# Optional /api/* aliases so frontend can call /api/profile|stats|recents
+app.add_api_route("/api/profile", get_profile, methods=["GET"])
+app.add_api_route("/api/profile", update_profile, methods=["PUT"])
+app.add_api_route("/api/stats", get_stats, methods=["GET"])
+app.add_api_route("/api/recents", get_recents, methods=["GET"])
+
+# For development purposes
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
