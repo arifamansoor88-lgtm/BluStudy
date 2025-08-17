@@ -13,7 +13,7 @@ from jose import jwt
 from database import client, container  
 from pdf_utils import extract_text_from_pdf
 from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, analyze_quiz_performance
-from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument 
+from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument, SaveTestProgressRequest, SaveTestProgressResponse, SaveAnswerRequest, SaveAnswerResponse 
 from pydantic import BaseModel
 
 # Load the environment variables
@@ -394,6 +394,190 @@ async def get_quiz_with_history(quiz_id: str, user_claims: dict = Depends(valida
         return quiz
     except Exception as e:
         print(f"Error fetching quiz with history: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Quiz not found"
+        )
+
+# Save test progress endpoint - protected
+@app.post("/save-test-progress", response_model=SaveTestProgressResponse)
+async def save_test_progress(progress: SaveTestProgressRequest, user_claims: dict = Depends(validate_token)):
+    try:
+        print(f"Saving test progress for user: {user_claims['sub']}")
+        
+        # First, retrieve the original quiz
+        quiz_id = progress.quizId
+        
+        try:
+            # Get the quiz from Cosmos DB
+            quiz = container.read_item(
+                item=quiz_id, 
+                partition_key=user_claims["sub"]
+            )
+            
+            # Verify the quiz belongs to the user
+            if quiz["userId"] != user_claims["sub"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, 
+                    detail="Access denied"
+                )
+                
+        except Exception as e:
+            print(f"Error retrieving quiz: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="Quiz not found"
+            )
+        
+        # Update or create test progress
+        current_time = datetime.utcnow().isoformat()
+        
+        if "testProgress" not in quiz["data"]:
+            quiz["data"]["testProgress"] = {}
+            
+        quiz["data"]["testProgress"] = {
+            "currentQuestion": progress.currentQuestion,
+            "userAnswers": progress.userAnswers,
+            "timeElapsed": progress.timeElapsed,
+            "lastSaved": current_time,
+            "isCompleted": progress.isCompleted
+        }
+        
+        # No longer marking as draft - simplified to just track completion status
+        
+        # Update the quiz in Cosmos DB
+        container.replace_item(
+            item=quiz_id,
+            body=quiz
+        )
+        
+        print(f"Test progress saved successfully for quiz: {quiz_id}")
+        
+        return {
+            "quizId": quiz_id,
+            "message": "Test progress saved successfully",
+            "lastSaved": current_time
+        }
+        
+    except HTTPException as http_e:
+        # Re-raise HTTP exceptions
+        raise http_e
+    except Exception as e:
+        print(f"Error saving test progress: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to save test progress: {str(e)}"
+        )
+
+# Save individual answer endpoint - protected
+@app.post("/save-answer", response_model=SaveAnswerResponse)
+async def save_answer(answer: SaveAnswerRequest, user_claims: dict = Depends(validate_token)):
+    try:
+        print(f"Saving answer for user: {user_claims['sub']}")
+        
+        # First, retrieve the original quiz
+        quiz_id = answer.quizId
+        
+        try:
+            # Get the quiz from Cosmos DB
+            quiz = container.read_item(
+                item=quiz_id, 
+                partition_key=user_claims["sub"]
+            )
+            
+            # Verify the quiz belongs to the user
+            if quiz["userId"] != user_claims["sub"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, 
+                    detail="Access denied"
+                )
+                
+        except Exception as e:
+            print(f"Error retrieving quiz: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="Quiz not found"
+            )
+        
+        # Initialize savedAnswers array if it doesn't exist
+        if "savedAnswers" not in quiz["data"]:
+            quiz["data"]["savedAnswers"] = []
+        
+        # Create new saved answer
+        current_time = datetime.utcnow().isoformat()
+        answer_id = str(uuid.uuid4())
+        
+        new_saved_answer = {
+            "answerId": answer_id,
+            "questionIndex": answer.questionIndex,
+            "userAnswer": answer.userAnswer,
+            "isCorrect": answer.isCorrect,
+            "explanation": answer.explanation,
+            "timestamp": current_time,
+            "timeSpent": answer.timeSpent
+        }
+        
+        # Check if we already have a saved answer for this question
+        existing_answer_index = None
+        for i, saved_answer in enumerate(quiz["data"]["savedAnswers"]):
+            if saved_answer["questionIndex"] == answer.questionIndex:
+                existing_answer_index = i
+                break
+        
+        if existing_answer_index is not None:
+            # Update existing answer
+            quiz["data"]["savedAnswers"][existing_answer_index] = new_saved_answer
+        else:
+            # Add new answer
+            quiz["data"]["savedAnswers"].append(new_saved_answer)
+        
+        # Update the quiz in Cosmos DB
+        container.replace_item(
+            item=quiz_id,
+            body=quiz
+        )
+        
+        print(f"Answer saved successfully for quiz: {quiz_id}, question: {answer.questionIndex}")
+        
+        return {
+            "quizId": quiz_id,
+            "answerId": answer_id,
+            "message": "Answer saved successfully"
+        }
+        
+    except HTTPException as http_e:
+        # Re-raise HTTP exceptions
+        raise http_e
+    except Exception as e:
+        print(f"Error saving answer: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to save answer: {str(e)}"
+        )
+
+# Get saved answers for a quiz - protected
+@app.get("/quizzes/{quiz_id}/saved-answers")
+async def get_saved_answers(quiz_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the quiz from Cosmos DB
+        quiz = container.read_item(
+            item=quiz_id, 
+            partition_key=user_claims["sub"]
+        )
+        
+        # Verify the quiz belongs to the user
+        if quiz["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Access denied"
+            )
+        
+        # Return saved answers if they exist
+        saved_answers = quiz.get("data", {}).get("savedAnswers", [])
+        return {"savedAnswers": saved_answers}
+        
+    except Exception as e:
+        print(f"Error fetching saved answers: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail="Quiz not found"

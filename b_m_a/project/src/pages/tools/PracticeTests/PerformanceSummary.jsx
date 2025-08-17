@@ -672,7 +672,7 @@ const AttemptHistory = ({
         onClick={() => onToggle(true)}
         className="mt-8 text-blue-600 hover:text-blue-800 flex items-center"
       >
-        <span className="mr-1">View {attempts.length} Past Attempts</span>
+        <span className="mr-1">Review Questions & Answers from {attempts.length} Past Attempts</span>
       </button>
     );
   }

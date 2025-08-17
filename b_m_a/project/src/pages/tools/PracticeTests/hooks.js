@@ -411,6 +411,125 @@ export const useQuizData = () => {
     [getToken, fetchQuizWithHistory, fetchSavedQuizzes]
   );
 
+  // Save test progress for later continuation
+  const saveTestProgress = useCallback(
+    async (quizId, currentQuestion, userAnswers, timeElapsed, isCompleted = false) => {
+      if (!quizId) return;
+
+      try {
+        setIsSaving(true);
+        setSaveSuccess(false);
+
+        const token = await getToken();
+
+        // Prepare progress data
+        const progressData = {
+          quizId: quizId,
+          currentQuestion: currentQuestion,
+          userAnswers: userAnswers,
+          timeElapsed: timeElapsed,
+          isCompleted: isCompleted,
+        };
+
+        // Save progress
+        const response = await axios.post(
+          "http://127.0.0.1:8000/save-test-progress",
+          progressData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        setSaveSuccess(true);
+        quizzesFetchedRef.current = false;
+        await fetchSavedQuizzes();
+        return response.data;
+      } catch (error) {
+        console.error("Error saving test progress:", error);
+        setError(
+          "Failed to save test progress: " +
+            (error.response?.data?.message || error.message)
+        );
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [getToken, fetchSavedQuizzes]
+  );
+
+  // Save individual answer with explanation
+  const saveAnswer = useCallback(
+    async (quizId, questionIndex, userAnswer, isCorrect, explanation = null, timeSpent = null) => {
+      if (!quizId) return;
+
+      try {
+        const token = await getToken();
+
+        // Prepare answer data
+        const answerData = {
+          quizId: quizId,
+          questionIndex: questionIndex,
+          userAnswer: userAnswer,
+          isCorrect: isCorrect,
+          explanation: explanation,
+          timeSpent: timeSpent,
+        };
+
+        // Save answer
+        const response = await axios.post(
+          "http://127.0.0.1:8000/save-answer",
+          answerData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        return response.data;
+      } catch (error) {
+        console.error("Error saving answer:", error);
+        setError(
+          "Failed to save answer: " +
+            (error.response?.data?.message || error.message)
+        );
+        return null;
+      }
+    },
+    [getToken]
+  );
+
+  // Fetch saved answers for a quiz
+  const fetchSavedAnswers = useCallback(
+    async (quizId) => {
+      if (!quizId) return [];
+
+      try {
+        const token = await getToken();
+
+        const response = await axios.get(
+          `http://127.0.0.1:8000/quizzes/${quizId}/saved-answers`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        return response.data.savedAnswers || [];
+      } catch (error) {
+        console.error("Error fetching saved answers:", error);
+        return [];
+      }
+    },
+    [getToken]
+  );
+
   return {
     savedQuizzes,
     isSaving,
@@ -424,6 +543,9 @@ export const useQuizData = () => {
     generateQuiz,
     saveQuiz,
     saveQuizAttempt,
+    saveTestProgress,
+    saveAnswer,
+    fetchSavedAnswers,
   };
 };
 
