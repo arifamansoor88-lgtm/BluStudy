@@ -3,9 +3,9 @@ import { useMsal } from "@azure/msal-react";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-export function useUserRecents(/* userId not needed */) {
+export function useUserStats(/* userId not needed */) {
   const { instance, accounts } = useMsal();
-  const [items, setItems] = useState([]);
+  const [stats, setStats] = useState({ streak: 0, hours: 0 });
 
   const getToken = useCallback(async () => {
     const acct = instance.getActiveAccount() || accounts[0];
@@ -18,20 +18,19 @@ export function useUserRecents(/* userId not needed */) {
     (async () => {
       try {
         const token = await getToken();
-        const res = await fetch(`${API}/api/recents?limit=8`, {
+        const res = await fetch(`${API}/api/stats`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        const list = Array.isArray(json?.items) ? json.items : [];
-        if (!abort) setItems(list);
+        if (!abort) setStats({ streak: json.streak ?? 0, hours: json.hours ?? 0 });
       } catch (e) {
-        console.warn("useUserRecents failed:", e);
-        if (!abort) setItems([]);
+        console.warn("useUserStats failed:", e);
+        if (!abort) setStats({ streak: 0, hours: 0 });
       }
     })();
     return () => { abort = true; };
   }, [getToken]);
 
-  return useMemo(() => (Array.isArray(items) ? items : []), [items]);
+  return useMemo(() => stats, [stats]);
 }

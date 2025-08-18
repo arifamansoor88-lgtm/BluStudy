@@ -78,6 +78,7 @@ const Navbar = () => {
               <NavLink to="/profile">Profile</NavLink>
             )}
               <NavLink to="/public_library">Public Library</NavLink>
+              {isAuthenticated && <NavLink to="/profile">Profile</NavLink>}
             </div>
           </div>
 
@@ -129,29 +130,27 @@ const Navbar = () => {
             className="sm:hidden bg-white border-t border-gray-200"
           >
             <div className="px-2 pt-2 pb-3 space-y-1">
-            <MobileNavLink to="/dashboard">Dashboard</MobileNavLink>
-            <MobileNavLink to="/tools">Study Tools</MobileNavLink>
+              <MobileNavLink to="/dashboard">Dashboard</MobileNavLink>
+              <MobileNavLink to="/tools">Study Tools</MobileNavLink>
+              {isAuthenticated && (
+              <MobileNavLink to="/profile">Profile</MobileNavLink>
+              )}
 
-            {isAuthenticated && (
-              <MobileNavLink to="/profile">
-                Profile
-              </MobileNavLink>
-            )}
+              {isAuthenticated ? (
+                <button
+                  onClick={handleSignOut}
+                  className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-primary-600 hover:bg-gray-50 transition-colors"
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <>
+                  <MobileNavLink to="/signin">Sign In</MobileNavLink>
+                  <MobileNavLink to="/signup">Sign Up</MobileNavLink>
+                </>
+              )}
+            </div>
 
-            {isAuthenticated ? (
-              <button
-                onClick={handleSignOut}
-                className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-primary-600 hover:bg-gray-50 transition-colors"
-              >
-                Sign Out
-              </button>
-            ) : (
-              <>
-                <MobileNavLink to="/signin">Sign In</MobileNavLink>
-                <MobileNavLink to="/signup">Sign Up</MobileNavLink>
-              </>
-            )}
-          </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,41 +1,26 @@
-import React from 'react';
+import React from "react";
+const cn = (...a) => a.filter(Boolean).join(" ");
 
-export function Card({ className = '', children, ...props }) {
-  return (
-    <div className={`bg-white rounded-lg shadow ${className}`} {...props}>
-      {children}
-    </div>
-  );
-}
+export const Card = ({ className, ...props }) => (
+  <div
+    className={cn("rounded-lg border border-gray-200 bg-white", className)}
+    {...props}
+  />
+);
 
-export function CardHeader({ className = '', children, ...props }) {
-  return (
-    <div className={`border-b px-4 py-3 ${className}`} {...props}>
-      {children}
-    </div>
-  );
-}
+export const CardHeader = ({ className, ...props }) => (
+  <div className={cn("px-6 pt-6 pb-4", className)} {...props} />
+);
 
-export function CardTitle({ className = '', children, ...props }) {
-  return (
-    <h3 className={`text-xl font-semibold ${className}`} {...props}>
-      {children}
-    </h3>
-  );
-}
+export const CardTitle = ({ className, ...props }) => (
+  <h3 className={cn("text-lg font-semibold text-gray-900", className)} {...props} />
+);
 
-export function CardContent({ className = '', children, ...props }) {
-  return (
-    <div className={`p-4 ${className}`} {...props}>
-      {children}
-    </div>
-  );
-}
+export const CardContent = ({ className, ...props }) => (
+  <div className={cn("px-6 pb-6", className)} {...props} />
+);
 
-export function CardFooter({ className = '', children, ...props }) {
-  return (
-    <div className={`border-t px-4 py-3 ${className}`} {...props}>
-      {children}
-    </div>
-  );
-}
+export const CardFooter = ({ className, ...props }) => (
+  <div className={cn("px-6 pb-6 pt-0", className)} {...props} />
+);
+

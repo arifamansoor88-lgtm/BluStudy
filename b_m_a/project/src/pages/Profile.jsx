@@ -1,70 +1,96 @@
 // src/pages/Profile.jsx
-"use client";
-
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useMsal } from "@azure/msal-react";
 import { b2cPolicies } from "../authConfig";
 import { useNavigate } from "react-router-dom";
-import {
-  User,
-  Camera,
-  Key,
-  Pencil,
-  Check,
-  X,
-  GraduationCap,
-} from "lucide-react";
+import { User, Camera, Key, Pencil, Check, X, GraduationCap } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { useUserProfile } from "../hooks/useUserProfile";
+
+// ---------- helpers to extract identity ----------
+function pickEmail(acct, claims) {
+  return (
+    claims?.email ||
+    claims?.preferred_username ||
+    (Array.isArray(claims?.emails) ? claims.emails[0] : undefined) ||
+    acct?.username ||
+    ""
+  );
+}
+function pickName(acct, claims, fallbackEmail) {
+  const givenFamily = [claims?.given_name, claims?.family_name].filter(Boolean).join(" ").trim();
+  return (
+    claims?.name ||
+    (givenFamily || undefined) ||
+    acct?.name ||
+    (fallbackEmail ? fallbackEmail.split("@")[0] : undefined) ||
+    (acct?.username ? acct.username.split("@")[0] : undefined) ||
+    "User"
+  );
+}
 
 export default function Profile() {
   const { instance, accounts } = useMsal();
   const navigate = useNavigate();
-  const account = instance.getActiveAccount() || accounts[0] || {};
-  const userId = account.localAccountId;
+
+  // ensure an active account or send to sign-in
+  useEffect(() => {
+    if (!accounts?.length) {
+      navigate("/signin");
+      return;
+    }
+    if (!instance.getActiveAccount() && accounts?.length) {
+      instance.setActiveAccount(accounts[0]);
+    }
+  }, [instance, accounts, navigate]);
+
+  const account = useMemo(
+    () => instance.getActiveAccount() || accounts?.[0] || {},
+    [instance, accounts]
+  );
+  const claims = account?.idTokenClaims || {};
+
+  // stable AAD/B2C identifiers
+  const userId = account?.localAccountId || claims?.oid || claims?.sub;
+
+  // defaults from token
+  const defaultEmail = useMemo(() => pickEmail(account, claims), [account, claims]);
+  const defaultName = useMemo(
+    () => pickName(account, claims, defaultEmail),
+    [account, claims, defaultEmail]
+  );
 
   const { profile, updateField, loading, error } = useUserProfile(userId);
 
-  const defaultName =
-    (account.idTokenClaims && account.idTokenClaims.name) ||
-    (account.username && account.username.split("@")[0]) ||
-    "User";
-  const defaultEmail =
-    account.username || (account.idTokenClaims && account.idTokenClaims.preferred_username) || "";
-
   const [photo, setPhoto] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(defaultName);
+  const [email, setEmail] = useState(defaultEmail);
+
   const [grade, setGrade] = useState("");
   const [school, setSchool] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [editingEmail, setEditingEmail] = useState(false);
   const [editingSchool, setEditingSchool] = useState(false);
 
-  // Seed state once profile loads
+  // seed local state once the profile is loaded
   useEffect(() => {
-    if (!loading && profile) {
-      setPhoto(profile.photo || "");
-      setName(profile.name || defaultName);
-      setEmail(profile.email || defaultEmail);
-      setGrade(profile.grade || "");
-      setSchool(profile.school || "");
+    if (!loading) {
+      setPhoto(profile?.photo || "");
+      setName(profile?.name || defaultName);
+      setEmail(profile?.email || defaultEmail);
+      setGrade(profile?.grade || "");
+      setSchool(profile?.school || "");
     }
   }, [loading, profile, defaultName, defaultEmail]);
 
-  // Handlers
-  const saveName = () => {
-    updateField("name", name);
+  // handlers
+  const saveName = async () => {
+    await updateField("name", name);
+
     setEditingName(false);
   };
   const cancelName = () => {
@@ -72,8 +98,9 @@ export default function Profile() {
     setEditingName(false);
   };
 
-  const saveEmail = () => {
-    updateField("email", email);
+  const saveEmail = async () => {
+    await updateField("email", email);
+
     setEditingEmail(false);
   };
   const cancelEmail = () => {
@@ -81,9 +108,10 @@ export default function Profile() {
     setEditingEmail(false);
   };
 
-  const saveSchool = () => {
-    updateField("grade", grade);
-    updateField("school", school);
+  const saveSchool = async () => {
+    // update both fields; your hook sends separate PUTs — fine for now
+    await updateField("grade", grade);
+    await updateField("school", school);
     setEditingSchool(false);
   };
   const cancelSchool = () => {
@@ -92,71 +120,66 @@ export default function Profile() {
     setEditingSchool(false);
   };
 
-  // Photo upload handler (untyped for JSX)
   const changePhoto = (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const file = files[0];
+    const file = e.target?.files?.[0];
+    if (!file) return;
     const reader = new FileReader();
-
-    reader.onload = () => {
+    reader.onload = async () => {
       const result = reader.result;
-      if (typeof result !== "string") {
-        console.error("Expected FileReader result to be a string");
-        return;
-      }
+      if (typeof result !== "string") return;
       setPhoto(result);
       try {
-        updateField("photo", result);
+        await updateField("photo", result);
       } catch (err) {
-        console.error("Failed to update photo field:", err);
+        console.error("Failed to update photo:", err);
       }
     };
-
-    reader.onerror = (err) => {
-      console.error("Error reading file:", err);
-    };
-
+    reader.onerror = (err) => console.error("Error reading file:", err);
     reader.readAsDataURL(file);
   };
 
-  // Trigger B2C password reset
   const resetPassword = async () => {
     try {
-      await instance.loginPopup({
+      await instance.loginRedirect({
         authority: b2cPolicies.authorities.passwordReset.authority,
-        scopes: ["openid", "profile"],
+        scopes: ["openid", "offline_access", "profile"],
+        loginHint: defaultEmail || undefined,
+        prompt: "login",
       });
-      alert("Reset complete");
-    } catch {
+    } catch (e) {
+      const msg = e?.errorMessage || e?.message || "";
+      if (msg.includes("AADB2C90118") || e?.errorCode === "AADB2C90118") {
+        return instance.loginRedirect({
+          authority: b2cPolicies.authorities.passwordReset.authority,
+          scopes: ["openid", "offline_access", "profile"],
+          loginHint: defaultEmail || undefined,
+          prompt: "login",
+        });
+      }
+      console.error("Password reset failed:", e);
+
       alert("Could not start password reset");
     }
   };
 
-  if (loading) {
-    return <div className="p-8 text-center">Loading profile…</div>;
-  }
-  if (error) {
-    console.warn("Profile load error:", error);
-  }
+  if (!accounts?.length) return null; // brief guard during redirect
+  if (loading) return <div className="p-8 text-center">Loading profile…</div>;
+
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 space-y-8">
-        {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-4xl font-bold text-gray-900">
-            Profile Settings
-          </h1>
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="text-gray-600 hover:text-gray-900"
-          >
+          <h1 className="text-4xl font-bold text-gray-900">Profile Settings</h1>
+          <Button variant="ghost" onClick={() => navigate(-1)} className="text-gray-600 hover:text-gray-900">
             ← Back
           </Button>
         </div>
+        {error && (
+          <div className="p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800">
+            There was a problem loading your profile. You can still edit fields below; changes will resync.
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Personal Info */}
@@ -173,11 +196,7 @@ export default function Profile() {
               <div className="flex flex-col items-center gap-4">
                 <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
                   {photo ? (
-                    <AvatarImage
-                      src={photo}
-                      alt="Avatar"
-                      className="object-cover"
-                    />
+                    <AvatarImage src={photo} alt="Avatar" className="object-cover" />
                   ) : (
                     <AvatarFallback className="bg-gradient-to-br from-blue-100 to-purple-100">
                       <User className="h-16 w-16 text-gray-400" />
@@ -185,30 +204,19 @@ export default function Profile() {
                   )}
                 </Avatar>
                 <Label htmlFor="photo-upload" className="cursor-pointer">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 hover:bg-blue-50 bg-transparent"
-                  >
+                  <Button variant="outline" size="sm" className="gap-2 hover:bg-blue-50 bg-transparent">
                     <Camera className="h-4 w-4" />
                     Change Photo
                   </Button>
-                  <input
-                    id="photo-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={changePhoto}
-                    className="hidden"
-                  />
+                  <input id="photo-upload" type="file" accept="image/*" onChange={changePhoto} className="hidden" />
                 </Label>
               </div>
 
               {/* Username */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold text-gray-700">
-                    Username
-                  </Label>
+                  <Label className="text-sm font-semibold text-gray-700">Username</Label>
+
                   {!editingName && (
                     <Button
                       variant="ghost"
@@ -222,41 +230,24 @@ export default function Profile() {
                 </div>
                 {editingName ? (
                   <div className="flex items-center gap-2">
-                    <Input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={saveName}
-                      className="h-8 w-8 p-0 hover:bg-green-50"
-                    >
+                    <Input value={name} onChange={(e) => setName(e.target.value)} className="flex-1" />
+                    <Button variant="ghost" size="sm" onClick={saveName} className="h-8 w-8 p-0 hover:bg-green-50">
                       <Check className="h-4 w-4 text-green-600" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={cancelName}
-                      className="h-8 w-8 p-0 hover:bg-red-50"
-                    >
+                    <Button variant="ghost" size="sm" onClick={cancelName} className="h-8 w-8 p-0 hover:bg-red-50">
+
                       <X className="h-4 w-4 text-red-600" />
                     </Button>
                   </div>
                 ) : (
-                  <p className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">
-                    {name}
-                  </p>
+                  <p className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{name}</p>
                 )}
               </div>
 
               {/* Email */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold text-gray-700">
-                    Email
-                  </Label>
+                  <Label className="text-sm font-semibold text-gray-700">Email</Label>
                   {!editingEmail && (
                     <Button
                       variant="ghost"
@@ -270,33 +261,16 @@ export default function Profile() {
                 </div>
                 {editingEmail ? (
                   <div className="flex items-center gap-2">
-                    <Input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={saveEmail}
-                      className="h-8 w-8 p-0 hover:bg-green-50"
-                    >
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="flex-1" />
+                    <Button variant="ghost" size="sm" onClick={saveEmail} className="h-8 w-8 p-0 hover:bg-green-50">
                       <Check className="h-4 w-4 text-green-600" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={cancelEmail}
-                      className="h-8 w-8 p-0 hover:bg-red-50"
-                    >
+                    <Button variant="ghost" size="sm" onClick={cancelEmail} className="h-8 w-8 p-0 hover:bg-red-50">
                       <X className="h-4 w-4 text-red-600" />
                     </Button>
                   </div>
                 ) : (
-                  <p className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">
-                    {email}
-                  </p>
+                  <p className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{email || "—"}</p>
                 )}
               </div>
             </CardContent>
@@ -312,12 +286,7 @@ export default function Profile() {
                 School & Grade
               </CardTitle>
               {!editingSchool && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditingSchool(true)}
-                  className="h-8 w-8 p-0 hover:bg-gray-100"
-                >
+                <Button variant="ghost" size="sm" onClick={() => setEditingSchool(true)} className="h-8 w-8 p-0 hover:bg-gray-100">
                   <Pencil className="h-4 w-4 text-gray-500" />
                 </Button>
               )}
@@ -337,9 +306,8 @@ export default function Profile() {
                       className="h-12"
                     />
                   ) : (
-                    <p className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">
-                      {grade || "—"}
-                    </p>
+                    <p className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{grade || "—"}</p>
+
                   )}
                 </div>
                 <div className="space-y-2">
@@ -355,19 +323,14 @@ export default function Profile() {
                       className="h-12"
                     />
                   ) : (
-                    <p className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">
-                      {school || "—"}
-                    </p>
+                    <p className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{school || "—"}</p>
                   )}
                 </div>
               </div>
             </CardContent>
             {editingSchool && (
               <CardFooter className="pt-6 flex space-x-2">
-                <Button
-                  onClick={saveSchool}
-                  className="bg-green-600 hover:bg-green-700 px-6"
-                >
+                <Button onClick={saveSchool} className="bg-green-600 hover:bg-green-700 px-6">
                   <Check className="h-4 w-4 mr-1" />
                   Save
                 </Button>
@@ -393,15 +356,10 @@ export default function Profile() {
               <div className="flex items-center justify-between p-6 bg-red-50 rounded-lg border border-red-200">
                 <div>
                   <h3 className="font-semibold text-gray-900">Password Reset</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Reset your password to maintain account security
-                  </p>
+                  <p className="text-sm text-gray-600 mt-1">Reset your password to maintain account security</p>
                 </div>
-                <Button
-                  onClick={resetPassword}
-                  variant="destructive"
-                  className="gap-2 px-6"
-                >
+                <Button onClick={resetPassword} variant="destructive" className="gap-2 px-6">
+
                   <Key className="h-4 w-4" />
                   Reset Password
                 </Button>
