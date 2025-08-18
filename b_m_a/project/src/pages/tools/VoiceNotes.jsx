@@ -1,12 +1,11 @@
-// VoiceNotes.jsx — patched so "Save Note" immediately shows in Saved Notes
+// VoiceNotes.jsx — tags instead of folders
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-import { Mic, Save, Trash2, Download, Share2, AudioWaveform as Waveform } from 'lucide-react';
+import { Mic, Save, Trash2, Download, Share2, Tag as TagIcon, AudioWaveform as Waveform } from 'lucide-react';
 
-const API_URL = "http://localhost:8000"; // ✅ Change this when deploying
+const API_URL = "http://localhost:8000";
 
-// ✅ Stable user id so backend partitioning is consistent
 const USER_ID_KEY = "voice_notes_user_id";
 const getUserId = () => {
   let id = localStorage.getItem(USER_ID_KEY);
@@ -20,8 +19,8 @@ axios.defaults.headers.common['X-User-Id'] = getUserId();
 
 const VoiceNotes = () => {
   const [notes, setNotes] = useState([]);
-  const [folders, setFolders] = useState(['General']);
-  const [selectedFolder, setSelectedFolder] = useState('General');
+  const [allTags, setAllTags] = useState([]);
+  const [selectedTagFilter, setSelectedTagFilter] = useState('');
   const [noteTitle, setNoteTitle] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -30,6 +29,8 @@ const VoiceNotes = () => {
   const [showSaveAnimation, setShowSaveAnimation] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [privacySettings, setPrivacySettings] = useState({});
+  const [tagInput, setTagInput] = useState('');
+  const [pendingTags, setPendingTags] = useState([]); // tags for the note being created
 
   const mediaRecorderRef = useRef(null);
   const timerRef = useRef(null);
@@ -41,23 +42,24 @@ const VoiceNotes = () => {
 
   const { transcript, resetTranscript } = useSpeechRecognition();
 
-  // ✅ Fetch all notes on load
   const fetchNotes = async () => {
     try {
-      const res = await axios.get(`${API_URL}/voice-notes`);
-      setNotes(res.data || []);
-      const uniqueFolders = [...new Set((res.data || []).map(n => n.folder).filter(Boolean))];
-      setFolders(prev => Array.from(new Set([...prev, ...uniqueFolders])));
+      const params = new URLSearchParams();
+      if (selectedTagFilter) params.append('tag', selectedTagFilter);
+      const res = await axios.get(`${API_URL}/voice-notes?${params.toString()}`);
+      const items = res.data || [];
+      setNotes(items);
+      const tags = new Set();
+      items.forEach(n => (n.tags || []).forEach(t => tags.add(t)));
+      setAllTags(Array.from(tags));
     } catch (err) {
       console.error("Error fetching notes:", err);
     }
   };
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
+  useEffect(() => { fetchNotes(); }, [selectedTagFilter]);
 
-  // ✅ Draw waveform for live recording
+  // canvas sizing
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -65,8 +67,8 @@ const VoiceNotes = () => {
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
-    canvas.style.width = '${rect.width}px';
-    canvas.style.height = '${rect.height}px';
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
     const ctx = canvas.getContext('2d');
     if (ctx) ctx.scale(dpr, dpr);
   }, []);
@@ -75,7 +77,6 @@ const VoiceNotes = () => {
     const canvas = canvasRef.current;
     const analyser = analyserRef.current;
     if (!canvas || !analyser) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -90,23 +91,19 @@ const VoiceNotes = () => {
       ctx.lineWidth = 2;
       ctx.strokeStyle = '#7c3aed';
       ctx.beginPath();
-
       const width = canvas.width;
       const height = canvas.height;
       const sliceWidth = width / bufferLength;
       let x = 0;
-
       for (let i = 0; i < bufferLength; i++) {
         const v = dataArray[i] / 128.0;
         const y = (v * height) / 2;
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         x += sliceWidth;
       }
-
       ctx.lineTo(width, height / 2);
       ctx.stroke();
     };
-
     draw();
   };
 
@@ -118,11 +115,7 @@ const VoiceNotes = () => {
     mediaRecorderRef.current = new MediaRecorder(stream);
     const localChunks = [];
 
-    mediaRecorderRef.current.ondataavailable = (e) => {
-      if (e.data.size > 0) localChunks.push(e.data);
-    };
-
-    // ❌ Avoid auto-save on stop — user will click "Save Note"
+    mediaRecorderRef.current.ondataavailable = (e) => { if (e.data.size > 0) localChunks.push(e.data); };
     mediaRecorderRef.current.onstop = () => {
       const blob = new Blob(localChunks, { type: 'audio/webm' });
       const url = URL.createObjectURL(blob);
@@ -132,7 +125,6 @@ const VoiceNotes = () => {
 
     audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
     await audioContextRef.current.resume();
-
     analyserRef.current = audioContextRef.current.createAnalyser();
     sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
     sourceRef.current.connect(analyserRef.current);
@@ -147,7 +139,7 @@ const VoiceNotes = () => {
   const stopRecording = () => {
     SpeechRecognition.stopListening();
     mediaRecorderRef.current?.stop();
-    mediaRecorderRef.current?.stream.getTracks().forEach((track) => track.stop());
+    mediaRecorderRef.current?.stream.getTracks().forEach((t) => t.stop());
     clearInterval(timerRef.current);
     cancelAnimationFrame(animationRef.current);
     audioContextRef.current?.close();
@@ -156,35 +148,37 @@ const VoiceNotes = () => {
 
   const toggleRecording = () => (isRecording ? stopRecording() : startRecording());
 
-  // ✅ Save note to backend (no transcript requirement)
+  const addPendingTag = () => {
+    const t = tagInput.trim();
+    if (!t) return;
+    if (!pendingTags.map(x => x.toLowerCase()).includes(t.toLowerCase())) {
+      setPendingTags(prev => [...prev, t]);
+    }
+    setTagInput('');
+  };
+  const removePendingTag = (t) => setPendingTags(prev => prev.filter(x => x !== t));
+
   const saveNoteToBackend = async () => {
     const blob = new Blob(chunks, { type: 'audio/webm' });
-    if (!blob || !noteTitle.trim()) return; // only title required
+    if (!blob || !noteTitle.trim()) return;
 
     const formData = new FormData();
     formData.append('audio', blob, `note_${Date.now()}.webm`);
     formData.append('title', noteTitle.trim());
-    formData.append('text', transcript || ''); // allow empty transcript
-    formData.append('folder', selectedFolder || 'General');
+    formData.append('text', transcript || '');
     formData.append('duration', recordingDuration || 0);
     formData.append('visibility', privacySettings['temp'] || 'Private');
+    formData.append('tags', pendingTags.join(', '));
 
     try {
-      const res = await axios.post(`${API_URL}/voice-notes`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const res = await axios.post(`${API_URL}/voice-notes`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       const newNote = res.data;
-
-      // ✅ Immediately show in UI
       setNotes(prev => [newNote, ...prev]);
 
-      // ✅ Ensure folder appears in list
-      if (newNote.folder && !folders.includes(newNote.folder)) {
-        setFolders(prev => [...prev, newNote.folder]);
-      }
-
-      // Optional: re-fetch from backend to stay consistent
-      // await fetchNotes();
+      // refresh tag universe
+      const tags = new Set(allTags);
+      (newNote.tags || []).forEach(t => tags.add(t));
+      setAllTags(Array.from(tags));
 
       setShowSaveAnimation(true);
       setTimeout(() => {
@@ -192,6 +186,7 @@ const VoiceNotes = () => {
         setAudioUrl(null);
         setChunks([]);
         setNoteTitle('');
+        setPendingTags([]);
         setShowSaveAnimation(false);
       }, 400);
     } catch (err) {
@@ -221,11 +216,7 @@ const VoiceNotes = () => {
   const handleShare = async (note) => {
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: note.title || 'Voice Note',
-          text: note.text,
-          url: note.audio_url,
-        });
+        await navigator.share({ title: note.title || 'Voice Note', text: note.text, url: note.audio_url });
       } catch (err) {
         alert('Share canceled or failed: ' + err.message);
       }
@@ -242,6 +233,13 @@ const VoiceNotes = () => {
 
   const formatDuration = (s) => `${Math.floor((s || 0) / 60)}:${((s || 0) % 60).toString().padStart(2, '0')}`;
 
+  const filtered = notes.filter((n) => {
+    const q = (searchQuery || '').toLowerCase();
+    const matchesQ = (n.title || '').toLowerCase().includes(q) || (n.text || '').toLowerCase().includes(q);
+    const matchesTag = !selectedTagFilter || (n.tags || []).map(x => x.toLowerCase()).includes(selectedTagFilter.toLowerCase());
+    return matchesQ && matchesTag;
+  });
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center gap-4 mb-8">
@@ -251,37 +249,31 @@ const VoiceNotes = () => {
         <h1 className="text-3xl font-bold text-gray-900">Voice Notes</h1>
       </div>
 
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Select Folder</label>
-        <select
-          className="p-2 border border-gray-300 rounded w-full"
-          value={selectedFolder}
-          onChange={(e) => setSelectedFolder(e.target.value)}
-        >
-          {folders.map((folder) => (
-            <option key={folder} value={folder}>{folder}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
         <input
           type="text"
-          placeholder="Create new folder"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && e.target.value.trim()) {
-              const name = e.target.value.trim();
-              if (!folders.includes(name)) {
-                setFolders(prev => [...prev, name]);
-              }
-              setSelectedFolder(name);
-              e.target.value = '';
-            }
-          }}
+          placeholder="Search notes..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="p-2 border border-gray-300 rounded w-full"
         />
+        <select
+          className="p-2 border border-gray-300 rounded w-full"
+          value={selectedTagFilter}
+          onChange={(e) => setSelectedTagFilter(e.target.value)}
+        >
+          <option value="">All tags</option>
+          {allTags.map((t) => (<option key={t} value={t}>{t}</option>))}
+        </select>
+        <button
+          onClick={() => fetchNotes()}
+          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+        >
+          Refresh
+        </button>
       </div>
 
+      {/* Title */}
       <div className="mb-4">
         <input
           type="text"
@@ -292,28 +284,42 @@ const VoiceNotes = () => {
         />
       </div>
 
+      {/* Tag input */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Add a tag (press Enter)"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') addPendingTag(); }}
+            className="p-2 border border-gray-300 rounded w-full"
+          />
+          <button onClick={addPendingTag} className="px-4 py-2 bg-gray-200 rounded">Add</button>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {pendingTags.map((t) => (
+            <span key={t} className="inline-flex items-center gap-1 px-2 py-1 text-sm bg-purple-100 text-purple-700 rounded-full">
+              <TagIcon size={14} /> {t}
+              <button onClick={() => removePendingTag(t)} className="ml-1 text-purple-700 hover:text-purple-900">×</button>
+            </span>
+          ))}
+        </div>
+      </div>
+
       <div className="bg-white p-8 rounded-xl shadow-lg mb-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={toggleRecording}
-              className={`p-4 rounded-full transition ${
-                isRecording
-                  ? 'bg-red-100 text-red-600 animate-pulse'
-                  : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
-              }`}
+              onClick={() => (isRecording ? stopRecording() : startRecording())}
+              className={`p-4 rounded-full transition ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'}`}
             >
               <Mic className="h-6 w-6" />
             </button>
             <div>
-              <p className="text-sm text-gray-700">
-                {isRecording ? 'Recording...' : 'Ready to record'}
-              </p>
-              {isRecording && (
-                <p className="text-xs text-red-600">
-                  {formatDuration(recordingDuration)}
-                </p>
-              )}
+              <p className="text-sm text-gray-700">{isRecording ? 'Recording...' : 'Ready to record'}</p>
+              {isRecording && <p className="text-xs text-red-600">{formatDuration(recordingDuration)}</p>}
             </div>
           </div>
 
@@ -322,12 +328,7 @@ const VoiceNotes = () => {
               <select
                 className="mr-4 p-2 rounded border border-gray-300"
                 value={privacySettings['temp'] || 'Private'}
-                onChange={(e) =>
-                  setPrivacySettings((prev) => ({
-                    ...prev,
-                    temp: e.target.value,
-                  }))
-                }
+                onChange={(e) => setPrivacySettings((prev) => ({ ...prev, temp: e.target.value }))}
               >
                 <option>Private</option>
                 <option>Public</option>
@@ -335,9 +336,7 @@ const VoiceNotes = () => {
               <button
                 onClick={saveNoteToBackend}
                 disabled={!noteTitle.trim() || !chunks.length}
-                className={`flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition ${
-                  showSaveAnimation ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
-                } ${(!noteTitle.trim() || !chunks.length) && 'opacity-50 cursor-not-allowed'}`}
+                className={`flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition ${showSaveAnimation ? 'scale-95 opacity-0' : 'scale-100 opacity-100'} ${(!noteTitle.trim() || !chunks.length) && 'opacity-50 cursor-not-allowed'}`}
               >
                 <Save className="h-4 w-4" /> Save Note
               </button>
@@ -356,103 +355,63 @@ const VoiceNotes = () => {
         {audioUrl && !isRecording && (
           <div className="mt-6 flex items-center gap-4">
             <audio controls src={audioUrl} className="flex-1" />
-            <a
-              href={audioUrl}
-              download={`voice_note_${Date.now()}.webm`}
-              className="flex items-center gap-2 text-purple-600 hover:text-purple-700"
-            >
+            <a href={audioUrl} download={`voice_note_${Date.now()}.webm`} className="flex items-center gap-2 text-purple-600 hover:text-purple-700">
               <Download className="h-4 w-4" /> Download
             </a>
           </div>
         )}
       </div>
 
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search notes..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="p-2 border border-gray-300 rounded w-full"
-        />
-      </div>
-
       <h2 className="text-xl font-semibold text-gray-900 mb-6">Saved Notes</h2>
-      {Array.isArray(notes) && notes.length > 0 ? (
-        folders.map((folder) => {
-          const folderNotes = notes.filter(
-            (note) =>
-              note.folder === folder &&
-              ((note.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-               (note.text || '').toLowerCase().includes(searchQuery.toLowerCase()))
-          );
-
-          if (folderNotes.length === 0) return null;
-
-          return (
-            <div key={folder} className="mb-8">
-              <h3 className="text-lg font-semibold text-purple-700 mb-4">{folder}</h3>
-              {folderNotes.map((note) => (
-                <div
-                  key={note.id}
-                  className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow mb-4 flex flex-col md:flex-row md:items-start md:justify-between"
-                >
-                  <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-1">{note.title || 'Untitled'}</h4>
-                    <div className="flex gap-2 mb-2 text-sm text-gray-500">
-                      <span>{note.timestamp}</span>
-                      <span className="text-gray-400">
-                        ({formatDuration(note.duration)})
-                      </span>
-                      <span className="ml-4 font-medium text-gray-600">
-                        Privacy: {note.visibility || 'Private'}
-                      </span>
-                    </div>
-                    <p className="text-gray-900 mb-4">{note.text}</p>
-                    {note.audio_url && (
-                      <audio controls src={note.audio_url} className="w-full" />
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-4 mt-4 md:mt-0">
-                    <select
-                      value={note.visibility || 'Private'}
-                      onChange={(e) => handlePrivacyChange(note.id, e.target.value)}
-                      className="p-2 border border-gray-300 rounded"
-                    >
-                      <option>Private</option>
-                      <option>Public</option>
-                    </select>
-
-                    <button
-                      onClick={() => handleShare(note)}
-                      className="text-purple-600 hover:text-purple-800"
-                    >
-                      <Share2 className="h-6 w-6" />
-                    </button>
-
-                    <a
-                      href={note.audio_url}
-                      download={`voice_note_${note.id}.webm`}
-                      className="text-purple-600 hover:text-purple-800"
-                    >
-                      <Download className="h-6 w-6" />
-                    </a>
-
-                    <button
-                      onClick={() => deleteNote(note.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <Trash2 className="h-6 w-6" />
-                    </button>
-                  </div>
+      {Array.isArray(filtered) && filtered.length > 0 ? (
+        filtered.map((note) => (
+          <div key={note.id} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow mb-4 flex flex-col md:flex-row md:items-start md:justify-between">
+            <div className="flex-1">
+              <h4 className="text-lg font-semibold text-gray-900 mb-1">{note.title || 'Untitled'}</h4>
+              <div className="flex flex-wrap items-center gap-2 mb-2 text-sm text-gray-500">
+                <span>{note.timestamp}</span>
+                <span className="text-gray-400">({formatDuration(note.duration)})</span>
+                <span className="ml-4 font-medium text-gray-600">Privacy: {note.visibility || 'Private'}</span>
+                <div className="flex flex-wrap gap-2 ml-4">
+                  {(note.tags || []).map((t) => (
+                    <span key={t} className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">
+                      <TagIcon size={12} /> {t}
+                    </span>
+                  ))}
                 </div>
-              ))}
+              </div>
+              <p className="text-gray-900 mb-4 whitespace-pre-wrap">{note.text}</p>
+              {note.audio_url && (<audio controls src={note.audio_url} className="w-full" />)}
             </div>
-          );
-        })
+
+            <div className="flex items-center gap-4 mt-4 md:mt-0">
+              <select
+                value={note.visibility || 'Private'}
+                onChange={(e) => handlePrivacyChange(note.id, e.target.value)}
+                className="p-2 border border-gray-300 rounded"
+              >
+                <option>Private</option>
+                <option>Public</option>
+              </select>
+
+              <button onClick={() => handleShare(note)} className="text-purple-600 hover:text-purple-800">
+                <Share2 className="h-6 w-6" />
+              </button>
+
+              {note.audio_url && (
+                <a href={note.audio_url} download={`voice_note_${note.id}.webm`} className="text-purple-600 hover:text-purple-800">
+                  <Download className="h-6 w-6" />
+                </a>
+              )}
+
+              <button onClick={() => deleteNote(note.id)} className="text-red-600 hover:text-red-800">
+                <Trash2 className="h-6 w-6" />
+              </button>
+            </div>
+          </div>
+        ))
       ) : (
-        <p className="text-gray-500">No voice notes available.</p>
+        <p className="text-gray-500">No voice notes found.</p>
       )}
     </div>
   );
