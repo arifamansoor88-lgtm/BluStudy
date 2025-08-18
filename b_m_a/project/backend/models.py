@@ -25,59 +25,78 @@ class FlashcardDocument(BaseModel):
 
 class SaveFlashcardResponse(BaseModel):
     id: str
-    message: str
+    userId: str
+    contentType: str = "voice_note"
+    title: Optional[str] = None
+    text: str = ""
+    tags: List[str] = Field(default_factory=list)
+    duration: Optional[int] = None
+    visibility: str = "Private"  # "Private" | "Public"
+    timestamp: str
+    audio_url: Optional[str] = None
+    settings: Dict[str, Any] = Field(default_factory=dict)
+
+
+# =========================
+# Quiz models
+# =========================
 
 class QuizOptions(BaseModel):
     numQuestions: int
-    selectedTopics: List[str]
-    customTopics: str
-    questionFormats: Dict[str, bool]
-
-class QuizAttempt(BaseModel):
-    attemptId: str
-    timestamp: str
-    score: float
-    timeTaken: int
-    userAnswers: List[Any]
-    mode: str  
+    selectedTopics: List[str] = Field(default_factory=list)
+    customTopics: Optional[str] = None
+    questionFormats: Dict[str, Any] = Field(default_factory=dict)
 
 class QuizData(BaseModel):
     title: str
-    questions: List[Dict[str, Any]]
-    userAnswers: Optional[List[Any]] = None
+    questions: Any  # keep flexible; AI output varies
+    userAnswers: Optional[Any] = None
     score: Optional[float] = None
-    timeTaken: Optional[int] = None
-    resourceName: str
+    timeTaken: int = 0
+    resourceName: Optional[str] = None
     options: QuizOptions
-    attempts: Optional[List[QuizAttempt]] = []
-    originalQuizId: Optional[str] = None  
-    
+    attempts: List[Dict[str, Any]] = Field(default_factory=list)
+
 class QuizDocument(BaseModel):
-    contentType: str
+    contentType: str = "quiz"
     data: QuizData
 
 class SavedQuizResponse(BaseModel):
     id: str
     message: str
 
+class QuizAttempt(BaseModel):
+    attemptId: str
+    timestamp: str
+    score: Optional[float] = None
+    timeTaken: int
+    userAnswers: Any
+    mode: Optional[str] = None
+
 class SaveQuizAttemptRequest(BaseModel):
     quizId: str
-    score: float
+    score: Optional[float] = None
     timeTaken: int
-    userAnswers: List[Any]
-    mode: str
+    userAnswers: Any
+    mode: Optional[str] = None
 
 class SaveQuizAttemptResponse(BaseModel):
     quizId: str
     attemptId: str
     message: str
 
+
+# =========================
+# Study plan models
+# =========================
+
 class StudyPlanData(BaseModel):
     title: str
-    description: str
-    content: Dict[str, Any]
-    tags: List[str] = []
-    pdfs: List[str] = []
+    description: str = ""
+    content: Any  # AI-generated structure; keep flexible
+    tags: List[str] = Field(default_factory=list)
+    pdfs: List[str] = Field(default_factory=list)
+    duration_info: Optional[Dict[str, Any]] = None
     updatedAt: Optional[str] = None
 
 class StudyPlanDocument(BaseModel):
@@ -90,39 +109,9 @@ class SaveStudyPlanResponse(BaseModel):
 
 class UpdateStudyPlanRequest(BaseModel):
     planId: str
-    quizIds: List[str] = []
+    quizIds: List[str] = Field(default_factory=list)
 
 class UpdateStudyPlanResponse(BaseModel):
     id: str
     message: str
-    updatedPlan: Dict[str, Any]
-
-class Summary(BaseModel):
-    summary: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-
-class VoiceNoteBase(BaseModel):
-    title: Optional[str] = None
-    text: str
-    folder: Optional[str] = "General"
-    duration: Optional[int] = None
-    visibility: Optional[str] = "Private"
-    timestamp: str
-    audio_url: Optional[str] = None
-    tags: Optional[List[str]] = []
-    settings: Optional[Dict[str, Any]] = {}
-
-class VoiceNoteResponse(VoiceNoteBase):
-    id: str
-    user_id: str
-
-class VoiceNoteUpdate(BaseModel):
-    title: Optional[str] = None
-    text: Optional[str] = None
-    folder: Optional[str] = None
-    duration: Optional[int] = None
-    visibility: Optional[str] = None
-    timestamp: Optional[str] = None
-    audio_url: Optional[str] = None
-    tags: Optional[List[str]] = None
-    settings: Optional[Dict[str, Any]] = None
+    updatedPlan: Any

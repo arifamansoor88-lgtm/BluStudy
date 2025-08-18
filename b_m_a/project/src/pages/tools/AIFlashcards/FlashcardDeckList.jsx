@@ -1,7 +1,6 @@
 import React from "react";
-import { X, Calendar } from 'lucide-react';
-import { useDeckData } from "./hooks";
-import { Link } from 'react-router-dom';
+import { useDeckData } from './hooks';
+import { X } from 'lucide-react';
 
 const CardStackIcon = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}>
@@ -9,20 +8,31 @@ const CardStackIcon = (props) => (
     </svg>
 );
 
+const StarIcon = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}>
+        <path fillRule="evenodd" d="M10.868 2.884c.321-.662 1.215-.662 1.536 0l1.681 3.462a1 1 0 00.951.692h3.632c.712 0 1.008.972.474 1.455l-2.938 2.14a1 1 0 00-.364 1.118l1.11 3.865c.213.74-.585 1.36-1.226.978l-2.939-2.14a1 1 0 00-1.175 0l-2.939 2.14c-.64.382-1.439-.238-1.226-.978l1.11-3.865a1 1 0 00-.364-1.118L2.074 8.493c-.534-.483-.238-1.455.474-1.455h3.632a1 1 0 00.951-.692l1.681-3.462z" clipRule="evenodd" />
+    </svg>
+);
+
 const FlashcardDeckList = ({ decks, onDeckSelect }) => {
     const { deleteDeck } = useDeckData();
+    const [localDecks, setLocalDecks] = useState([]);
 
     const handleDeleteDeck = async (deckId, e) => {
-        e.stopPropagation();
+        e.stopPropagation(); // Prevent triggering onDeckSelect
         if (window.confirm("Are you sure you want to delete this deck?")) {
             try {
                 await deleteDeck(deckId);
+                setLocalDecks(prev => prev.filter(deck => deck.id !== deckId)); // Remove locally
             } catch (err) {
                 console.error('Failed to delete deck:', err);
             }
-            window.location.reload()
         }
     };
+
+    useEffect(() => {
+        setLocalDecks(decks);
+    }, [decks]); // Sync localDecks whenever parent updates decks
 
     if (!decks || decks.length === 0) {
         return (
@@ -40,7 +50,7 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
         <div className="space-y-4">
             {decks.map((deck) => {
                 const cards = deck.data.cards || [];
-                const lastEdited = deck.createdAt || null;
+
                 return (
                     <div
                         key={deck.id}
@@ -53,42 +63,15 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
                         >
                             <X className="h-4 w-4" />
                         </button>
-                        <Link
-                            to={`/tools/flashcards/FlashcardStudyPage/${deck.id}`}
-                            state={{ flashcards: cards, title: deck.data.title || "Untitled Deck"}}
-                        >
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                                {deck.data.title || "Untitled Deck"}
-                            </h3>
-                        </Link>
-
-                        {/* Folder dropdown (UI only, no state saving yet) */}
-                        <div className="mt-3">
-                            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                Folder:
-                            </label>
-                            <select
-                                defaultValue={deck.data.folder || ""}
-                                className="border rounded-md px-2 py-1 text-sm bg-white dark:bg-gray-700 dark:text-white"
-                            >
-                                <option value="">None</option>
-                                <option value="School">Chemistry</option>
-                                <option value="Work">English</option>
-                                <option value="Personal">History</option>
-                            </select>
-                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                            {deck.data.title || "Untitled Deck"}
+                        </h3>
 
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-600 dark:text-gray-400">
                             <div className="flex items-center" title={`${cards.length} total cards`}>
                                 <CardStackIcon className="h-5 w-5 mr-1.5" />
                                 <span>{cards.length}</span>
                             </div>
-                            {lastEdited && (
-                                <div className="flex items-center" title={`Last edited: ${new Date(lastEdited).toLocaleString()}`}>
-                                    <Calendar className="h-4 w-4 mr-1.5" />
-                                    <span>Created At: {new Date(lastEdited).toLocaleDateString()}</span>
-                                </div>
-                            )}
                         </div>
                     </div>
                 );
