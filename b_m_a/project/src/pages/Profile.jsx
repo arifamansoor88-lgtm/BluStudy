@@ -69,6 +69,7 @@ export default function Profile() {
   const [photo, setPhoto] = useState("");
   const [name, setName] = useState(defaultName);
   const [email, setEmail] = useState(defaultEmail);
+
   const [grade, setGrade] = useState("");
   const [school, setSchool] = useState("");
   const [editingName, setEditingName] = useState(false);
@@ -89,6 +90,7 @@ export default function Profile() {
   // handlers
   const saveName = async () => {
     await updateField("name", name);
+
     setEditingName(false);
   };
   const cancelName = () => {
@@ -98,6 +100,7 @@ export default function Profile() {
 
   const saveEmail = async () => {
     await updateField("email", email);
+
     setEditingEmail(false);
   };
   const cancelEmail = () => {
@@ -154,12 +157,14 @@ export default function Profile() {
         });
       }
       console.error("Password reset failed:", e);
+
       alert("Could not start password reset");
     }
   };
 
   if (!accounts?.length) return null; // brief guard during redirect
   if (loading) return <div className="p-8 text-center">Loading profile…</div>;
+
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -170,7 +175,6 @@ export default function Profile() {
             ← Back
           </Button>
         </div>
-
         {error && (
           <div className="p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800">
             There was a problem loading your profile. You can still edit fields below; changes will resync.
@@ -212,6 +216,7 @@ export default function Profile() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-semibold text-gray-700">Username</Label>
+
                   {!editingName && (
                     <Button
                       variant="ghost"
@@ -230,6 +235,7 @@ export default function Profile() {
                       <Check className="h-4 w-4 text-green-600" />
                     </Button>
                     <Button variant="ghost" size="sm" onClick={cancelName} className="h-8 w-8 p-0 hover:bg-red-50">
+
                       <X className="h-4 w-4 text-red-600" />
                     </Button>
                   </div>
@@ -301,6 +307,7 @@ export default function Profile() {
                     />
                   ) : (
                     <p className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{grade || "—"}</p>
+
                   )}
                 </div>
                 <div className="space-y-2">
@@ -352,6 +359,7 @@ export default function Profile() {
                   <p className="text-sm text-gray-600 mt-1">Reset your password to maintain account security</p>
                 </div>
                 <Button onClick={resetPassword} variant="destructive" className="gap-2 px-6">
+
                   <Key className="h-4 w-4" />
                   Reset Password
                 </Button>

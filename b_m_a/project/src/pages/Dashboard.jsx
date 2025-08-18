@@ -7,6 +7,7 @@ import { useUserStats } from "../hooks/useUserStats";
 import { useUserRecents } from "../hooks/useUserRecents";
 
 // ———— Derive user from MSAL ————
+// User ID and email 
 function useUserData(instance, accounts, navigate) {
   const [user, setUser] = useState(null);
 
@@ -20,7 +21,6 @@ function useUserData(instance, accounts, navigate) {
     }
     const acct = instance.getActiveAccount() || accounts[0];
     const claims = acct.idTokenClaims || {};
-
     const name =
       claims.name ??
       claims.given_name ??

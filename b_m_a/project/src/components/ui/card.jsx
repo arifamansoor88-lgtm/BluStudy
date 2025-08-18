@@ -23,3 +23,4 @@ export const CardContent = ({ className, ...props }) => (
 export const CardFooter = ({ className, ...props }) => (
   <div className={cn("px-6 pb-6 pt-0", className)} {...props} />
 );
+

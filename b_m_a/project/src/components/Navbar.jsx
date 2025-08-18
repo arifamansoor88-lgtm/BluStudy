@@ -74,6 +74,9 @@ const Navbar = () => {
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               <NavLink to="/dashboard">Dashboard</NavLink>
               <NavLink to="/tools">Study Tools</NavLink>
+              {isAuthenticated && (
+              <NavLink to="/profile">Profile</NavLink>
+            )}
               <NavLink to="/public_library">Public Library</NavLink>
               {isAuthenticated && <NavLink to="/profile">Profile</NavLink>}
             </div>
@@ -147,6 +150,7 @@ const Navbar = () => {
                 </>
               )}
             </div>
+
           </motion.div>
         )}
       </AnimatePresence>

@@ -22,8 +22,13 @@ const SignIn = () => {
 
       // Simple login with popup
       const result = await instance.loginPopup({
-        scopes: protectedResources.todoListApi.scopes,
-      });
+  scopes: [
+    "openid",
+    "profile",
+    "email",
+    ...protectedResources.todoListApi.scopes
+  ],
+});
 
       console.log("Login successful", result);
 
