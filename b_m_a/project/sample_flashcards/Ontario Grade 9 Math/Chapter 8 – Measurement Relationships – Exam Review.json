@@ -1,0 +1,65 @@
+{
+  "title": "Chapter 8 – Measurement Relationships – Exam Review",
+  "cards": [
+    {
+      "question": "What theorem is used to calculate the length of the hypotenuse in a right triangle?",
+      "answer": "Pythagorean Theorem",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How do you calculate the perimeter of a right triangle?",
+      "answer": "Add the lengths of all sides.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What formula is used to calculate the area of a triangle?",
+      "answer": "Area = 0.5 × base × height",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the length of a LED TV screen measuring 127 cm by 107 cm?",
+      "answer": "166 cm",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "How much fencing is needed to surround a triangular section of land measuring 86 m?",
+      "answer": "86 meters",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "What is the formula for calculating the volume of a rectangular prism?",
+      "answer": "Volume = length × width × height",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the surface area of a cone with a radius of 6.4 cm and slant height of 11.4 cm?",
+      "answer": "31 m²",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "What is the volume of a sphere with a diameter of 7.5 cm?",
+      "answer": "221 cm³",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "What is the minimum amount of material needed to make a box for four tennis balls stacked in a rectangular prism?",
+      "answer": "760.5 cm²",
+      "difficulty": "hard",
+      "important": false
+    },
+    {
+      "question": "How much water can a cone-shaped cup with a radius of 6.4 cm and slant height of 11.4 cm hold?",
+      "answer": "403.2 cm³",
+      "difficulty": "medium",
+      "important": false
+    }
+  ]
+}

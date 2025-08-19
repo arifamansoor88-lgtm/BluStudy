@@ -1,0 +1,65 @@
+{
+  "title": "Chapter 3 – Polynomials Exam Review",
+  "cards": [
+    {
+      "question": "What is the simplified expression for 5 × 5 × 5?",
+      "answer": "5³",
+      "difficulty": "Easy",
+      "important": true
+    },
+    {
+      "question": "What is the expanded form of 7⁴?",
+      "answer": "7 × 7 × 7 × 7",
+      "difficulty": "Easy",
+      "important": false
+    },
+    {
+      "question": "What is the result of (-3)³?",
+      "answer": "-27",
+      "difficulty": "Medium",
+      "important": true
+    },
+    {
+      "question": "What is the degree of the polynomial 3a² + 2a³ + b?",
+      "answer": "3",
+      "difficulty": "Medium",
+      "important": true
+    },
+    {
+      "question": "Classify the polynomial 7xy²z − 15x².",
+      "answer": "Binomial",
+      "difficulty": "Medium",
+      "important": false
+    },
+    {
+      "question": "What is the simplified expression for 82 × 83?",
+      "answer": "8⁵",
+      "difficulty": "Medium",
+      "important": true
+    },
+    {
+      "question": "Simplify the expression -2x + 7y − 5x − 9y.",
+      "answer": "-7x − 2y",
+      "difficulty": "Medium",
+      "important": false
+    },
+    {
+      "question": "Expand and simplify 5(x + 3).",
+      "answer": "5x + 15",
+      "difficulty": "Easy",
+      "important": false
+    },
+    {
+      "question": "What is the total payment formula for the authors if n books are sold?",
+      "answer": "5000 + 7n",
+      "difficulty": "Medium",
+      "important": true
+    },
+    {
+      "question": "What is the total payment to the authors if 1000 books are sold?",
+      "answer": "$12,000",
+      "difficulty": "Easy",
+      "important": true
+    }
+  ]
+}
