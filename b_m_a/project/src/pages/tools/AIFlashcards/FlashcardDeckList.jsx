@@ -1,5 +1,5 @@
 import React from "react";
-import { X } from 'lucide-react';
+import { X, Calendar } from 'lucide-react';
 import { useDeckData } from "./hooks";
 import { Link } from 'react-router-dom';
 
@@ -40,7 +40,7 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
         <div className="space-y-4">
             {decks.map((deck) => {
                 const cards = deck.data.cards || [];
-
+                const lastEdited = deck.createdAt || null;
                 return (
                     <div
                         key={deck.id}
@@ -83,6 +83,12 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
                                 <CardStackIcon className="h-5 w-5 mr-1.5" />
                                 <span>{cards.length}</span>
                             </div>
+                            {lastEdited && (
+                                <div className="flex items-center" title={`Last edited: ${new Date(lastEdited).toLocaleString()}`}>
+                                    <Calendar className="h-4 w-4 mr-1.5" />
+                                    <span>Created At: {new Date(lastEdited).toLocaleDateString()}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 );

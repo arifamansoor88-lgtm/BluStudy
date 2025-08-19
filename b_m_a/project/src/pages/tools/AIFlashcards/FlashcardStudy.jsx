@@ -18,6 +18,7 @@ const FlashcardStudyPage = () => {
     const [newAnswer, setNewAnswer] = useState('');
     const [newDifficulty, setNewDifficulty] = useState(null);
 
+    // Update flashcards when file changes
     useEffect(() => {
         if (flashcards.length > 0 && flashcards[0].originalIndex === undefined) {
             setFlashcards(flashcards.map((card, i) => ({
@@ -27,6 +28,7 @@ const FlashcardStudyPage = () => {
         }
     }, [useLocation().state?.flashcards]);
 
+    // Load flashcards from backend
     useEffect(() => {
         if (flashcards.length === 0 && deckId) {
             setLoading(true);
@@ -40,6 +42,20 @@ const FlashcardStudyPage = () => {
                 .finally(() => setLoading(false));
         }
     }, [deckId, getFlashcardByID]);
+
+    // This autosaves when leaving the page.
+    useEffect(() => {
+        return () => {
+          (async () => {
+            try {
+              await updateDeck(deckTitle, deckId, flashcards);
+              console.log("Saved deck on unmount");
+            } catch (err) {
+              console.error("Save on unmount failed", err);
+            }
+          })();
+        };
+      }, [deckTitle, deckId, flashcards, updateDeck]);
 
     const difficultyWeights = {
         hard: 3,
@@ -113,6 +129,7 @@ const FlashcardStudyPage = () => {
         setNewAnswer('');
         setNewDifficulty(null);
     };
+
     const handleAddCard = async () => {
         if (newQuestion && newAnswer && newDifficulty) {
             const newCard = {
@@ -247,7 +264,7 @@ const FlashcardStudyPage = () => {
                         <Pencil className="w-4 h-4" />
                         {isEditing ? 'Close Editor' : 'Edit Cards'}
                     </button>
-                    
+
                     <button
                         onClick={exportToJSON}
                         className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
