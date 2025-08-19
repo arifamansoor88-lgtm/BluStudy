@@ -26,6 +26,41 @@ class SaveFlashcardResponse(BaseModel):
     id: str
     message: str
 
+# Mindmap Models
+class MindmapNode(BaseModel):
+    id: str
+    type: str = "custom"
+    position: Dict[str, float]  # {x: float, y: float}
+    data: Dict[str, Any]  # label, color, shape, etc.
+
+class MindmapEdge(BaseModel):
+    id: str
+    source: str
+    target: str
+    style: Optional[Dict[str, Any]] = None
+    type: Optional[str] = "smoothstep"
+
+class MindmapGroup(BaseModel):
+    id: str
+    type: str = "group"
+    position: Dict[str, float]
+    data: Dict[str, Any]  # label, color, width, height, contained nodes
+
+class MindmapData(BaseModel):
+    title: str
+    nodes: List[MindmapNode]
+    edges: List[MindmapEdge]
+    groups: Optional[List[MindmapGroup]] = []
+    metadata: Optional[Dict[str, Any]] = {}
+
+class MindmapDocument(BaseModel):
+    contentType: str = "mindmap"
+    data: MindmapData
+
+class SaveMindmapResponse(BaseModel):
+    id: str
+    message: str
+
 class QuizOptions(BaseModel):
     numQuestions: int
     selectedTopics: List[str]

@@ -13,7 +13,7 @@ from jose import jwt
 from database import client, container  
 from pdf_utils import extract_text_from_pdf
 from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, analyze_quiz_performance
-from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument 
+from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument, MindmapDocument, SaveMindmapResponse
 from pydantic import BaseModel
 
 # Load the environment variables
@@ -896,10 +896,6 @@ async def analyze_quiz_performance_endpoint(
             detail=f"Error analyzing quiz performance: {str(e)}"
         )
 
-# For development purposes
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
 # Save flashcard endpoint - protected 
 @app.post("/save-flashcard", response_model=SaveFlashcardResponse)
 async def save_flashcard(flashcard: FlashcardDocument, user_claims: dict = Depends(validate_token)):
@@ -1006,3 +1002,197 @@ async def delete_deck(deck_id: str, user_claims: dict = Depends(validate_token))
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete deck: {str(e)}"
         )
+
+# Mindmap API Endpoints
+
+# Save mindmap endpoint - protected
+@app.post("/save-mindmap", response_model=SaveMindmapResponse)
+async def save_mindmap(mindmap: MindmapDocument, user_claims: dict = Depends(validate_token)):
+    try:
+        print(f"Saving mindmap for user: {user_claims['sub']}")
+        
+        # Prepare document for Cosmos DB
+        document = {
+            "id": str(uuid.uuid4()),
+            "userId": user_claims["sub"],
+            "contentType": mindmap.contentType,
+            "createdAt": datetime.utcnow().isoformat(),
+            "updatedAt": datetime.utcnow().isoformat(),
+            "data": mindmap.data.dict()
+        }
+        
+        # Save to Cosmos DB
+        try:
+            container.create_item(body=document)
+            print(f"Mindmap saved successfully with ID: {document['id']}")
+            return {"id": document["id"], "message": "Mindmap saved successfully"}
+        except Exception as db_error:
+            print(f"Database error saving mindmap: {db_error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to save mindmap to database: {str(db_error)}"
+            )
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        print(f"Error saving mindmap: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save mindmap: {str(e)}"
+        )
+
+# Update mindmap endpoint - protected
+@app.put("/update-mindmap/{mindmap_id}", response_model=SaveMindmapResponse)
+async def update_mindmap(mindmap_id: str, mindmap: MindmapDocument, user_claims: dict = Depends(validate_token)):
+    try:
+        print(f"Updating mindmap {mindmap_id} for user: {user_claims['sub']}")
+        
+        # First, retrieve the existing mindmap
+        try:
+            existing_mindmap = container.read_item(
+                item=mindmap_id,
+                partition_key=user_claims["sub"]
+            )
+            
+            # Verify the mindmap belongs to the user
+            if existing_mindmap["userId"] != user_claims["sub"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied"
+                )
+        except Exception as e:
+            print(f"Error retrieving mindmap: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Mindmap not found"
+            )
+        
+        # Update the mindmap document
+        existing_mindmap["data"] = mindmap.data.dict()
+        existing_mindmap["updatedAt"] = datetime.utcnow().isoformat()
+        
+        # Save to Cosmos DB
+        try:
+            container.replace_item(
+                item=mindmap_id,
+                body=existing_mindmap
+            )
+            print(f"Mindmap updated successfully with ID: {mindmap_id}")
+            return {"id": mindmap_id, "message": "Mindmap updated successfully"}
+        except Exception as db_error:
+            print(f"Database error updating mindmap: {db_error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to update mindmap in database: {str(db_error)}"
+            )
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        print(f"Error updating mindmap: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update mindmap: {str(e)}"
+        )
+
+# Get all mindmaps for a user - protected
+@app.get("/mindmaps")
+async def get_mindmaps(user_claims: dict = Depends(validate_token)):
+    try:
+        print(f"Fetching mindmaps for user: {user_claims['sub']}")
+        
+        # Query parameters for Cosmos DB
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'mindmap' ORDER BY c.updatedAt DESC"
+        parameters = [{"name": "@userId", "value": user_claims["sub"]}]
+        
+        # Query Cosmos DB
+        try:
+            items = list(container.query_items(
+                query=query,
+                parameters=parameters,
+                enable_cross_partition_query=True
+            ))
+            print(f"Found {len(items)} mindmaps for user")
+            return items
+        except Exception as db_error:
+            print(f"Database error fetching mindmaps: {db_error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to fetch mindmaps from database: {str(db_error)}"
+            )
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        print(f"Error fetching mindmaps: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch mindmaps: {str(e)}"
+        )
+
+# Get a specific mindmap by ID - protected
+@app.get("/mindmaps/{mindmap_id}")
+async def get_mindmap(mindmap_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the mindmap from Cosmos DB (using partition key)
+        mindmap = container.read_item(
+            item=mindmap_id,
+            partition_key=user_claims["sub"]
+        )
+        
+        # Verify the mindmap belongs to the user
+        if mindmap["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+            
+        return mindmap
+    except Exception as e:
+        print(f"Error fetching mindmap: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Mindmap not found"
+        )
+
+# Delete mindmap endpoint - protected
+@app.delete("/delete-mindmap/{mindmap_id}", response_model=dict)
+async def delete_mindmap(mindmap_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the mindmap from Cosmos DB
+        mindmap = container.read_item(
+            item=mindmap_id,
+            partition_key=user_claims["sub"]
+        )
+
+        # Verify the mindmap belongs to the user
+        if mindmap["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+
+        # Delete the mindmap from Cosmos DB
+        container.delete_item(
+            item=mindmap_id,
+            partition_key=user_claims["sub"]
+        )
+
+        return {"message": "Mindmap deleted successfully"}
+
+    except Exception as e:
+        print(f"Error deleting mindmap: {str(e)}")
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Mindmap not found"
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete mindmap: {str(e)}"
+        )
+
+# For development purposes
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
