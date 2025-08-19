@@ -1,17 +1,33 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import ReactFlow, {
-  addEdge,
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import ReactFlow, { 
+  addEdge, 
+  Controls, 
+  Background, 
+  Handle, 
+  Position,
   useNodesState,
   useEdgesState,
-  Controls,
-  Background,
-  Handle,
-  Position,
+  useReactFlow
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Network as Network2, Plus, RotateCcw, Trash2, Download, Circle, Square, ArrowRight, FolderOpen } from 'lucide-react';
+import { 
+  Plus, 
+  Palette, 
+  Square, 
+  Circle, 
+  ArrowRight, 
+  Trash2, 
+  Download, 
+  Upload,
+  Save,
+  FolderOpen,
+  X,
+  Network,
+  RotateCcw
+} from 'lucide-react';
 import { toPng } from 'html-to-image';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
+import { saveMindmap, getMindmaps, getMindmap, updateMindmap, deleteMindmap } from '../../api/apiService';
 
 // Custom CSS to override React Flow's selection border for groups
 const groupStyles = `
@@ -287,6 +303,8 @@ const ExportButton = ({ onClick, disabled, children, variant = "green", classNam
   const variantClasses = {
     green: "bg-green-600 hover:bg-green-700",
     orange: "bg-orange-600 hover:bg-orange-700",
+    blue: "bg-blue-600 hover:bg-blue-700",
+    purple: "bg-purple-600 hover:bg-purple-700",
     disabled: "bg-gray-400 cursor-not-allowed"
   };
   
@@ -317,6 +335,19 @@ const MindMaps = () => {
   const [groupMode, setGroupMode] = useState(false);
   const [selectedNodesForGroup, setSelectedNodesForGroup] = useState([]);
   const [groupNodeMap, setGroupNodeMap] = useState(new Map());
+  
+  // Mindmap save/load state
+  const [savedMindmaps, setSavedMindmaps] = useState([]);
+  const [currentMindmapId, setCurrentMindmapId] = useState(null);
+  const [mindmapTitle, setMindmapTitle] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showLoadDialog, setShowLoadDialog] = useState(false);
+  const [renderKey, setRenderKey] = useState(0);
+  
   const reactFlowRef = useRef(null);
 
   // Inject custom CSS
@@ -588,6 +619,7 @@ const MindMaps = () => {
     setFirstSelectedNode(null);
     setSelectedNodesForGroup([]);
     setGroupNodeMap(new Map());
+    setRenderKey(prev => prev + 1); // Force re-render
   }, [setNodes, setEdges]);
 
   // Export functions
@@ -688,7 +720,7 @@ const MindMaps = () => {
         );
       } else if (firstSelectedNode.id !== node.id) {
         const newEdge = {
-          id: `arrow-${firstSelectedNode.id}-${node.id}`,
+          id: `arrow-${firstSelectedNode.id}-${node.id}-${Date.now()}`,
           source: firstSelectedNode.id,
           target: node.id,
           style: { 
@@ -730,11 +762,228 @@ const MindMaps = () => {
     setTimeout(updateGroupPositions, 0);
   }, [onNodesChange, updateGroupPositions]);
 
+  // Mindmap Save/Load Functions
+  const fetchSavedMindmaps = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      console.log('Fetching saved mindmaps...');
+      
+      // Add a small delay to ensure MSAL is ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const mindmaps = await getMindmaps();
+      console.log('Fetched mindmaps:', mindmaps);
+      setSavedMindmaps(mindmaps);
+    } catch (err) {
+      console.error('Error fetching mindmaps:', err);
+      if (err.message && err.message.includes('uninitialized_public_client_application')) {
+        console.log('MSAL not ready, will retry in 2 seconds...');
+        // Retry after a delay
+        setTimeout(() => {
+          fetchSavedMindmaps();
+        }, 2000);
+        return;
+      }
+      setError('Failed to load saved mindmaps. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const saveCurrentMindmap = useCallback(async () => {
+    if (!mindmapTitle.trim()) {
+      setError('Please enter a title for your mindmap');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setError('');
+      
+      // Prepare mindmap data
+      const mindmapData = {
+        title: mindmapTitle,
+        nodes: nodes.map(node => ({
+          id: node.id,
+          type: node.type,
+          position: node.position,
+          data: node.data
+        })),
+        edges: edges.map(edge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          style: edge.style,
+          type: edge.type
+        })),
+        groups: nodes.filter(node => node.type === 'group').map(node => ({
+          id: node.id,
+          type: node.type,
+          position: node.position,
+          data: node.data
+        })),
+        metadata: {
+          groupNodeMap: Array.from(groupNodeMap.entries()),
+          createdAt: new Date().toISOString()
+        }
+      };
+
+      let response;
+      if (currentMindmapId) {
+        // Update existing mindmap
+        response = await updateMindmap(currentMindmapId, mindmapData);
+      } else {
+        // Save new mindmap
+        response = await saveMindmap(mindmapData);
+        setCurrentMindmapId(response.id);
+      }
+
+      setSaveSuccess(true);
+      setShowSaveDialog(false);
+      setMindmapTitle('');
+      
+      // Refresh saved mindmaps list
+      await fetchSavedMindmaps();
+      
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      console.error('Error saving mindmap:', err);
+      setError('Failed to save mindmap');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [mindmapTitle, nodes, edges, groupNodeMap, currentMindmapId, fetchSavedMindmaps]);
+
+  const loadMindmap = useCallback(async (mindmapId) => {
+    try {
+      setIsLoading(true);
+      setError('');
+      
+      const mindmap = await getMindmap(mindmapId);
+      const data = mindmap.data;
+      
+      // Load nodes with proper delete functionality
+      const nodesWithDelete = data.nodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          onDelete: deleteNode // Attach the delete function
+        }
+      }));
+      setNodes(nodesWithDelete);
+      
+      // Load edges
+      setEdges(data.edges);
+      
+      // Load groups
+      if (data.groups) {
+        setGroupNodeMap(new Map(data.metadata?.groupNodeMap || []));
+      }
+      
+      // Set current mindmap info
+      setCurrentMindmapId(mindmapId);
+      setMindmapTitle(data.title);
+      
+      setShowLoadDialog(false);
+    } catch (err) {
+      console.error('Error loading mindmap:', err);
+      setError('Failed to load mindmap');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setNodes, setEdges, deleteNode]);
+
+  const deleteSavedMindmap = useCallback(async (mindmapId) => {
+    try {
+      await deleteMindmap(mindmapId);
+      await fetchSavedMindmaps();
+      
+      // If we deleted the currently loaded mindmap, clear the current state
+      if (mindmapId === currentMindmapId) {
+        setCurrentMindmapId(null);
+        setMindmapTitle('');
+      }
+    } catch (err) {
+      console.error('Error deleting mindmap:', err);
+      setError('Failed to delete mindmap');
+    }
+  }, [currentMindmapId, fetchSavedMindmaps]);
+
+  const clearCurrentMindmap = useCallback(() => {
+    console.log('Clearing mindmap...');
+    console.log('Current nodes:', nodes.length);
+    console.log('Current edges:', edges.length);
+    
+    // Clear all nodes and edges
+    setNodes([]);
+    setEdges([]);
+    
+    // Clear group mappings
+    setGroupNodeMap(new Map());
+    
+    // Clear current mindmap state
+    setCurrentMindmapId(null);
+    setMindmapTitle('');
+    
+    // Reset next ID
+    setNextId(1);
+    
+    // Clear any selection states
+    setFirstSelectedNode(null);
+    setSelectedNodesForGroup([]);
+    setGroupMode(false);
+    setArrowMode(false);
+    
+    // Force React Flow to completely re-render
+    setRenderKey(prev => prev + 1);
+    
+    // Force React Flow to re-render by using setTimeout
+    setTimeout(() => {
+      console.log('Forcing re-render...');
+      setNodes([]);
+      setEdges([]);
+    }, 0);
+  }, [setNodes, setEdges, nodes.length, edges.length]);
+
+  // Load saved mindmaps on component mount
+  useEffect(() => {
+    // Only fetch mindmaps if MSAL is initialized
+    const checkAndFetchMindmaps = async () => {
+      try {
+        // Wait a bit for MSAL to initialize
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await fetchSavedMindmaps();
+      } catch (error) {
+        console.log('MSAL not ready yet, will retry later');
+        // Retry after a longer delay
+        setTimeout(checkAndFetchMindmaps, 2000);
+      }
+    };
+    
+    // Only try to fetch if we're authenticated
+    const checkAuthAndFetch = () => {
+      // Check if we have an active account (simple check)
+      const hasActiveAccount = document.cookie.includes('msal') || 
+                              localStorage.getItem('msal') || 
+                              sessionStorage.getItem('msal');
+      
+      if (hasActiveAccount) {
+        checkAndFetchMindmaps();
+      } else {
+        // Wait longer and try again
+        setTimeout(checkAuthAndFetch, 3000);
+      }
+    };
+    
+    checkAuthAndFetch();
+  }, [fetchSavedMindmaps]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <Network2 className="h-8 w-8 text-green-600" />
+        <Network className="h-8 w-8 text-green-600" />
         <h1 className="text-2xl font-bold text-gray-900">Mind Maps</h1>
       </div>
 
@@ -896,14 +1145,14 @@ const MindMaps = () => {
               <ExportButton
                 onClick={exportAsImage}
                 disabled={isExporting}
-                variant="green"
+                variant="blue"
               >
                 {isExporting ? 'Exporting...' : 'Image'}
               </ExportButton>
               <ExportButton
                 onClick={exportAsPDF}
                 disabled={isExporting}
-                variant="orange"
+                variant="purple"
               >
                 PDF
               </ExportButton>
@@ -936,6 +1185,31 @@ const MindMaps = () => {
               )}
             </div>
           </ControlSection>
+
+          {/* Save/Load Actions */}
+          <ControlSection title="Save/Load">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowSaveDialog(true)}
+                className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm flex items-center gap-1"
+                title="Save current mindmap"
+              >
+                <Save className="h-4 w-4" />
+                Save
+              </button>
+              <button
+                onClick={() => {
+                  setShowLoadDialog(true);
+                  fetchSavedMindmaps(); // Fetch mindmaps when dialog is opened
+                }}
+                className="px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-sm flex items-center gap-1"
+                title="Load saved mindmap"
+              >
+                <Upload className="h-4 w-4" />
+                Load
+              </button>
+            </div>
+          </ControlSection>
         </div>
       </div>
 
@@ -943,6 +1217,7 @@ const MindMaps = () => {
       <div className="bg-white rounded-lg shadow-sm h-[600px]">
         <div ref={reactFlowRef} className="w-full h-full">
           <ReactFlow
+            key={`mindmap-${renderKey}`}
             nodes={nodes}
             edges={edges}
             onNodesChange={handleNodesChange}
@@ -957,6 +1232,109 @@ const MindMaps = () => {
           </ReactFlow>
         </div>
       </div>
+
+      {/* Save Dialog Modal */}
+      {showSaveDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Save Mindmap</h3>
+            <input
+              type="text"
+              value={mindmapTitle}
+              onChange={(e) => setMindmapTitle(e.target.value)}
+              placeholder="Enter mindmap title"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+            {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+            {saveSuccess && <p className="text-green-600 text-sm mb-4">Mindmap saved successfully!</p>}
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  setShowSaveDialog(false);
+                  setError('');
+                  setMindmapTitle('');
+                }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveCurrentMindmap}
+                disabled={isSaving || !mindmapTitle.trim()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Load Dialog Modal */}
+      {showLoadDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md max-h-96 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Load Mindmap</h3>
+              <button
+                onClick={fetchSavedMindmaps}
+                className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+                title="Refresh mindmap list"
+              >
+                ↻
+              </button>
+            </div>
+            {isLoading ? (
+              <p className="text-gray-600">Loading...</p>
+            ) : savedMindmaps.length === 0 ? (
+              <p className="text-gray-600">No saved mindmaps found.</p>
+            ) : (
+              <div className="space-y-2">
+                {savedMindmaps.map((mindmap) => (
+                  <div
+                    key={mindmap.id}
+                    className="flex items-center justify-between p-3 border border-gray-200 rounded-md hover:bg-gray-50"
+                  >
+                    <div className="flex-1">
+                      <h4 className="font-medium">{mindmap.data.title}</h4>
+                      <p className="text-sm text-gray-500">
+                        {new Date(mindmap.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => loadMindmap(mindmap.id)}
+                        className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                      >
+                        Load
+                      </button>
+                      <button
+                        onClick={() => deleteSavedMindmap(mindmap.id)}
+                        className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {error && <p className="text-red-600 text-sm mt-4">{error}</p>}
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => {
+                  setShowLoadDialog(false);
+                  setError('');
+                }}
+                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
