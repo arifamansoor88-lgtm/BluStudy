@@ -406,6 +406,7 @@ export const analyzeQuizPerformance = async (questions, userAnswers, quizMetadat
   }
 };
 
+
 // Mindmap API Functions
 
 /**
@@ -516,3 +517,4 @@ export const deleteMindmap = async (mindmapId) => {
     throw error;
   }
 };
+

@@ -6,15 +6,20 @@ from datetime import datetime, timedelta
 from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form, Query, HTTPException, Body
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from json_repair import repair_json
 from dotenv import load_dotenv
 from typing import List, Dict, Any, Optional, Union
 import msal
 from jose import jwt
 from database import client, container  
 from pdf_utils import extract_text_from_pdf
-from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, analyze_quiz_performance
-from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument, MindmapDocument, SaveMindmapResponse
+from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, analyze_quiz_performance, generate_flashcard
+from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument, SaveTestProgressRequest, SaveTestProgressResponse, SaveAnswerRequest, SaveAnswerResponse, MindmapDocument, SaveMindmapResponse 
 from pydantic import BaseModel
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
+import time
+
+
 
 # Load the environment variables
 load_dotenv()
@@ -75,6 +80,42 @@ async def validate_token(token: str = Depends(oauth2_scheme)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Authentication failed: {str(e)}"
         )
+
+# ---------------------------
+# Dev token endpoint (Swagger helper)
+# ---------------------------
+@app.post("/token")
+async def dev_issue_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    DEV ONLY: Issues a dummy JWT so Swagger `/docs` can call protected endpoints.
+    Username becomes the `sub` (prefixed) so your Cosmos partition key is stable.
+    Password is ignored.
+    """
+    username = (form_data.username or "devuser").strip().lower()
+
+    # Deterministic user id/partition key
+    sub = f"dev-{username}"
+
+    now = int(time.time())
+    payload = {
+        "sub": sub,
+        "name": username.split("@")[0] if "@" in username else username,
+        "preferred_username": username,
+        "emails": [username] if "@" in username else [],
+        "iat": now,
+        "exp": now + 3600,  # 1 hour
+    }
+
+    # Same dummy key you reference in validate_token
+    token = jwt.encode(
+        payload,
+        key="development_key_not_for_production",
+        algorithm="HS256",
+    )
+
+    return {"access_token": token, "token_type": "bearer"}
+
+
 
 # Root endpoint - public
 @app.get("/")
@@ -394,6 +435,190 @@ async def get_quiz_with_history(quiz_id: str, user_claims: dict = Depends(valida
         return quiz
     except Exception as e:
         print(f"Error fetching quiz with history: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Quiz not found"
+        )
+
+# Save test progress endpoint - protected
+@app.post("/save-test-progress", response_model=SaveTestProgressResponse)
+async def save_test_progress(progress: SaveTestProgressRequest, user_claims: dict = Depends(validate_token)):
+    try:
+        print(f"Saving test progress for user: {user_claims['sub']}")
+        
+        # First, retrieve the original quiz
+        quiz_id = progress.quizId
+        
+        try:
+            # Get the quiz from Cosmos DB
+            quiz = container.read_item(
+                item=quiz_id, 
+                partition_key=user_claims["sub"]
+            )
+            
+            # Verify the quiz belongs to the user
+            if quiz["userId"] != user_claims["sub"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, 
+                    detail="Access denied"
+                )
+                
+        except Exception as e:
+            print(f"Error retrieving quiz: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="Quiz not found"
+            )
+        
+        # Update or create test progress
+        current_time = datetime.utcnow().isoformat()
+        
+        if "testProgress" not in quiz["data"]:
+            quiz["data"]["testProgress"] = {}
+            
+        quiz["data"]["testProgress"] = {
+            "currentQuestion": progress.currentQuestion,
+            "userAnswers": progress.userAnswers,
+            "timeElapsed": progress.timeElapsed,
+            "lastSaved": current_time,
+            "isCompleted": progress.isCompleted
+        }
+        
+        # No longer marking as draft - simplified to just track completion status
+        
+        # Update the quiz in Cosmos DB
+        container.replace_item(
+            item=quiz_id,
+            body=quiz
+        )
+        
+        print(f"Test progress saved successfully for quiz: {quiz_id}")
+        
+        return {
+            "quizId": quiz_id,
+            "message": "Test progress saved successfully",
+            "lastSaved": current_time
+        }
+        
+    except HTTPException as http_e:
+        # Re-raise HTTP exceptions
+        raise http_e
+    except Exception as e:
+        print(f"Error saving test progress: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to save test progress: {str(e)}"
+        )
+
+# Save individual answer endpoint - protected
+@app.post("/save-answer", response_model=SaveAnswerResponse)
+async def save_answer(answer: SaveAnswerRequest, user_claims: dict = Depends(validate_token)):
+    try:
+        print(f"Saving answer for user: {user_claims['sub']}")
+        
+        # First, retrieve the original quiz
+        quiz_id = answer.quizId
+        
+        try:
+            # Get the quiz from Cosmos DB
+            quiz = container.read_item(
+                item=quiz_id, 
+                partition_key=user_claims["sub"]
+            )
+            
+            # Verify the quiz belongs to the user
+            if quiz["userId"] != user_claims["sub"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, 
+                    detail="Access denied"
+                )
+                
+        except Exception as e:
+            print(f"Error retrieving quiz: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="Quiz not found"
+            )
+        
+        # Initialize savedAnswers array if it doesn't exist
+        if "savedAnswers" not in quiz["data"]:
+            quiz["data"]["savedAnswers"] = []
+        
+        # Create new saved answer
+        current_time = datetime.utcnow().isoformat()
+        answer_id = str(uuid.uuid4())
+        
+        new_saved_answer = {
+            "answerId": answer_id,
+            "questionIndex": answer.questionIndex,
+            "userAnswer": answer.userAnswer,
+            "isCorrect": answer.isCorrect,
+            "explanation": answer.explanation,
+            "timestamp": current_time,
+            "timeSpent": answer.timeSpent
+        }
+        
+        # Check if we already have a saved answer for this question
+        existing_answer_index = None
+        for i, saved_answer in enumerate(quiz["data"]["savedAnswers"]):
+            if saved_answer["questionIndex"] == answer.questionIndex:
+                existing_answer_index = i
+                break
+        
+        if existing_answer_index is not None:
+            # Update existing answer
+            quiz["data"]["savedAnswers"][existing_answer_index] = new_saved_answer
+        else:
+            # Add new answer
+            quiz["data"]["savedAnswers"].append(new_saved_answer)
+        
+        # Update the quiz in Cosmos DB
+        container.replace_item(
+            item=quiz_id,
+            body=quiz
+        )
+        
+        print(f"Answer saved successfully for quiz: {quiz_id}, question: {answer.questionIndex}")
+        
+        return {
+            "quizId": quiz_id,
+            "answerId": answer_id,
+            "message": "Answer saved successfully"
+        }
+        
+    except HTTPException as http_e:
+        # Re-raise HTTP exceptions
+        raise http_e
+    except Exception as e:
+        print(f"Error saving answer: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to save answer: {str(e)}"
+        )
+
+# Get saved answers for a quiz - protected
+@app.get("/quizzes/{quiz_id}/saved-answers")
+async def get_saved_answers(quiz_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the quiz from Cosmos DB
+        quiz = container.read_item(
+            item=quiz_id, 
+            partition_key=user_claims["sub"]
+        )
+        
+        # Verify the quiz belongs to the user
+        if quiz["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Access denied"
+            )
+        
+        # Return saved answers if they exist
+        saved_answers = quiz.get("data", {}).get("savedAnswers", [])
+        return {"savedAnswers": saved_answers}
+        
+    except Exception as e:
+        print(f"Error fetching saved answers: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail="Quiz not found"
@@ -859,6 +1084,7 @@ async def summarize_file(
 
     return {"summary": summary}
 
+
 # Quiz Performance Analysis Models
 class QuizPerformanceRequest(BaseModel):
     questions: List[Dict[str, Any]]
@@ -895,6 +1121,10 @@ async def analyze_quiz_performance_endpoint(
             status_code=500, 
             detail=f"Error analyzing quiz performance: {str(e)}"
         )
+
+# For development purposes
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 # Save flashcard endpoint - protected 
 @app.post("/save-flashcard", response_model=SaveFlashcardResponse)
@@ -943,7 +1173,7 @@ async def get_decks(user_claims: dict = Depends(validate_token)):
 
 # Get a specific deck by ID - protected
 @app.get("/decks/{deck_id}")
-async def get_decks(deck_id: str, user_claims: dict = Depends(validate_token)):
+async def get_deck(deck_id: str, user_claims: dict = Depends(validate_token)):
     try:
         # Get the deck from Cosmos DB (using partition key)
         deck = container.read_item(
@@ -965,6 +1195,137 @@ async def get_decks(deck_id: str, user_claims: dict = Depends(validate_token)):
             status_code=status.HTTP_404_NOT_FOUND, 
             detail="Deck not found"
         )
+
+
+
+# Models for the stats & recents endpoints
+class UserStats(BaseModel):
+    streak: int
+    hours: int
+
+class RecentItem(BaseModel):
+    id: str
+    name: str
+    date: str
+
+# GET /api/user/{userId}/stats
+@app.get("/api/user/{userId}/stats", response_model=UserStats)
+async def get_user_stats(
+    userId: str,
+    user_claims: dict = Depends(validate_token),
+):
+    if user_claims["sub"] != userId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    # TODO: fetch real stats from Cosmos DB
+    return {"streak": 7, "hours": 12}
+
+
+# GET /api/user/{userId}/recents
+@app.get("/api/user/{userId}/recents", response_model=List[RecentItem])
+async def get_user_recents(
+    userId: str,
+    user_claims: dict = Depends(validate_token),
+):
+    if user_claims["sub"] != userId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    query = """
+      SELECT TOP 3
+        c.id,
+        c.data.title AS name,
+        SUBSTRING(c.createdAt, 0, 10) AS date
+      FROM c
+      WHERE c.userId = @userId
+      ORDER BY c.createdAt DESC
+    """
+    parameters = [{"name": "@userId", "value": userId}]
+    items = list(container.query_items(
+        query=query,
+        parameters=parameters,
+        enable_cross_partition_query=True,
+    ))
+    return items
+
+# ─── Models for the profile endpoints ─────────────────────
+class UserProfile(BaseModel):
+    id: str
+    name: str
+    email: str
+    photo: Optional[str] = None
+    grade: Optional[str] = None
+    school: Optional[str] = None
+
+# ─── GET /api/user/{userId}/profile ───────────────────────
+@app.get(
+    "/api/user/{userId}/profile", 
+    response_model=UserProfile
+)
+async def get_user_profile(
+    userId: str,
+    user_claims: dict = Depends(validate_token)
+):
+    if user_claims["sub"] != userId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        # read the profile doc from CosmosDB
+        doc = container.read_item(item=userId, partition_key=userId)
+        return UserProfile(
+            id=doc["id"],
+            name=doc["data"].get("name", ""),
+            email=doc["data"].get("email", ""),
+            photo=doc["data"].get("photo"),
+            grade=doc["data"].get("grade"),
+            school=doc["data"].get("school"),
+        )
+    except Exception:
+        # if no profile exists yet, return defaults
+        return UserProfile(
+            id=userId,
+            name="",
+            email="",
+            photo=None,
+            grade=None,
+            school=None,
+        )
+
+# ─── PATCH /api/user/{userId}/profile ─────────────────────
+@app.patch(
+    "/api/user/{userId}/profile", 
+    response_model=UserProfile
+)
+async def update_user_profile(
+    userId: str,
+    payload: Dict[str, Any],
+    user_claims: dict = Depends(validate_token)
+):
+    if user_claims["sub"] != userId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    # read or initialize
+    try:
+        doc = container.read_item(item=userId, partition_key=userId)
+    except:
+        doc = {"id": userId, "userId": userId, "data": {}}
+
+    # merge updates
+    for field, val in payload.items():
+        doc["data"][field] = val
+
+    # upsert back into Cosmos
+    container.upsert_item(body=doc)
+
+    return UserProfile(
+        id=doc["id"],
+        name=doc["data"].get("name",""),
+        email=doc["data"].get("email",""),
+        photo=doc["data"].get("photo"),
+        grade=doc["data"].get("grade"),
+        school=doc["data"].get("school"),
+    )
+
+
 
 # Delete flashcard deck endpoint - protected
 @app.delete("/delete-deck/{deck_id}", response_model=dict)
@@ -1195,4 +1556,4 @@ async def delete_mindmap(mindmap_id: str, user_claims: dict = Depends(validate_t
 
 # For development purposes
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
