@@ -1,9 +1,24 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Star, Trash2, Pencil } from "lucide-react";
+import { Star, Trash2, Pencil, FolderKanban, List } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const ConfirmModal = ({ open, title, subtitle, confirmLabel = "Delete", onClose, onConfirm }) => {
+/**
+ * Props:
+ * - view: "grid" | "list"
+ * - folders: Array<{ id, name, items, color, starred, createdAt?, updatedAt? }>
+ * - onToggleStar: (id) => Promise|void
+ * - onRename: (id, newName) => Promise|void
+ * - onDelete: (id) => Promise|void
+ */
+const ConfirmModal = ({
+  open,
+  title,
+  subtitle,
+  confirmLabel = "Delete",
+  onClose,
+  onConfirm,
+}) => {
   if (!open) return null;
   return (
     <AnimatePresence>
@@ -39,40 +54,34 @@ const ConfirmModal = ({ open, title, subtitle, confirmLabel = "Delete", onClose,
   );
 };
 
-const FolderManager = ({ view, folders, onToggleStar, onRename, onDelete }) => {
+export default function FolderManager({
+  view,
+  folders,
+  onToggleStar,
+  onRename,
+  onDelete,
+}) {
   const navigate = useNavigate();
   const [pendingDelete, setPendingDelete] = useState(null);
 
-  const renameFolder = (e, id, currentName) => {
-    e.stopPropagation();
-    const newName = prompt("Enter new folder name:", currentName);
-    if (newName && newName.trim()) {
-      onRename(id, newName.trim());
-    }
-  };
-
-  const askDelete = (e, folder) => {
-    e.stopPropagation();
-    setPendingDelete(folder);
-  };
-
-  const confirmDelete = () => {
-    if (pendingDelete) {
-      onDelete(pendingDelete.id);
-      setPendingDelete(null);
+  const handleRename = async (folder) => {
+    const newName = prompt("Enter new folder name:", folder.name);
+    if (newName && newName.trim() && newName.trim() !== folder.name) {
+      await onRename(folder.id, newName.trim());
     }
   };
 
   const sorted = [
-    ...folders.filter(f => f.starred),
-    ...folders.filter(f => !f.starred),
+    ...folders.filter((f) => f.starred),
+    ...folders.filter((f) => !f.starred),
   ];
 
+  // LIST VIEW
   if (view === "list") {
     return (
       <>
         <ul className="space-y-3">
-          {sorted.map(folder => (
+          {sorted.map((folder) => (
             <motion.li
               key={folder.id}
               initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
@@ -83,20 +92,32 @@ const FolderManager = ({ view, folders, onToggleStar, onRename, onDelete }) => {
                 <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${folder.color}`} />
                 <div>
                   <div className="font-semibold text-slate-800">{folder.name}</div>
-                  <div className="text-sm text-slate-500">{folder.items} items</div>
+                  <div className="text-sm text-slate-500">{folder.items ?? 0} items</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <button onClick={(e) => { e.stopPropagation(); onToggleStar(folder.id); }} title="Star / Unstar">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleStar(folder.id); }}
+                  title={folder.starred ? "Unstar" : "Star"}
+                >
                   <Star
                     className={`w-5 h-5 ${folder.starred ? "text-yellow-500" : "text-slate-400"}`}
                     fill={folder.starred ? "currentColor" : "none"}
                   />
                 </button>
-                <button onClick={(e) => renameFolder(e, folder.id, folder.name)} title="Rename">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleRename(folder); }}
+                  title="Rename"
+                >
                   <Pencil className="w-5 h-5 text-blue-500 hover:text-blue-700" />
                 </button>
-                <button onClick={(e) => askDelete(e, folder)} title="Delete">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPendingDelete(folder);
+                  }}
+                  title="Delete"
+                >
                   <Trash2 className="w-5 h-5 text-red-400 hover:text-red-600" />
                 </button>
               </div>
@@ -113,7 +134,11 @@ const FolderManager = ({ view, folders, onToggleStar, onRename, onDelete }) => {
               : ""
           }
           onClose={() => setPendingDelete(null)}
-          onConfirm={confirmDelete}
+          onConfirm={async () => {
+            if (!pendingDelete) return;
+            await onDelete(pendingDelete.id);
+            setPendingDelete(null);
+          }}
         />
       </>
     );
@@ -122,11 +147,11 @@ const FolderManager = ({ view, folders, onToggleStar, onRename, onDelete }) => {
   // GRID VIEW
   return (
     <>
-      {folders.some(f => f.starred) && (
+      {folders.some((f) => f.starred) && (
         <div className="mb-10">
           <h2 className="text-xl font-semibold text-slate-700 mb-4">⭐ Starred</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {folders.filter(f => f.starred).map(folder => (
+            {folders.filter((f) => f.starred).map((folder) => (
               <motion.div
                 key={folder.id}
                 onClick={() => navigate(`/workspace/folder/${folder.id}`)}
@@ -134,18 +159,30 @@ const FolderManager = ({ view, folders, onToggleStar, onRename, onDelete }) => {
                 className={`rounded-3xl p-5 bg-gradient-to-br ${folder.color} cursor-pointer shadow-md border border-white/40 relative`}
               >
                 <div className="text-lg font-bold text-slate-800 mb-1">{folder.name}</div>
-                <div className="text-sm text-slate-600">{folder.items} items</div>
+                <div className="text-sm text-slate-600">{folder.items ?? 0} items</div>
                 <div className="absolute top-3 right-3 flex gap-2">
-                  <button onClick={(e) => { e.stopPropagation(); onToggleStar(folder.id); }} title="Star / Unstar">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleStar(folder.id); }}
+                    title={folder.starred ? "Unstar" : "Star"}
+                  >
                     <Star
                       className={`w-5 h-5 ${folder.starred ? "text-yellow-500" : "text-slate-400"}`}
                       fill={folder.starred ? "currentColor" : "none"}
                     />
                   </button>
-                  <button onClick={(e) => renameFolder(e, folder.id, folder.name)} title="Rename">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleRename(folder); }}
+                    title="Rename"
+                  >
                     <Pencil className="w-4 h-4 text-blue-500 hover:text-blue-700" />
                   </button>
-                  <button onClick={(e) => askDelete(e, folder)} title="Delete">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPendingDelete(folder);
+                    }}
+                    title="Delete"
+                  >
                     <Trash2 className="w-4 h-4 text-red-400 hover:text-red-600" />
                   </button>
                 </div>
@@ -158,7 +195,7 @@ const FolderManager = ({ view, folders, onToggleStar, onRename, onDelete }) => {
       <div>
         <h2 className="text-xl font-semibold text-slate-700 mb-4">📁 All Folders</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {folders.filter(f => !f.starred).map(folder => (
+          {folders.filter((f) => !f.starred).map((folder) => (
             <motion.div
               key={folder.id}
               onClick={() => navigate(`/workspace/folder/${folder.id}`)}
@@ -166,18 +203,30 @@ const FolderManager = ({ view, folders, onToggleStar, onRename, onDelete }) => {
               className={`rounded-3xl p-5 bg-gradient-to-br ${folder.color} cursor-pointer shadow-md border border-white/40 relative`}
             >
               <div className="text-lg font-bold text-slate-800 mb-1">{folder.name}</div>
-              <div className="text-sm text-slate-600">{folder.items} items</div>
+              <div className="text-sm text-slate-600">{folder.items ?? 0} items</div>
               <div className="absolute top-3 right-3 flex gap-2">
-                <button onClick={(e) => { e.stopPropagation(); onToggleStar(folder.id); }} title="Star / Unstar">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleStar(folder.id); }}
+                  title={folder.starred ? "Unstar" : "Star"}
+                >
                   <Star
                     className={`w-5 h-5 ${folder.starred ? "text-yellow-500" : "text-slate-400"}`}
                     fill={folder.starred ? "currentColor" : "none"}
                   />
                 </button>
-                <button onClick={(e) => renameFolder(e, folder.id, folder.name)} title="Rename">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleRename(folder); }}
+                  title="Rename"
+                >
                   <Pencil className="w-4 h-4 text-blue-500 hover:text-blue-700" />
                 </button>
-                <button onClick={(e) => askDelete(e, folder)} title="Delete">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPendingDelete(folder);
+                  }}
+                  title="Delete"
+                >
                   <Trash2 className="w-4 h-4 text-red-400 hover:text-red-600" />
                 </button>
               </div>
@@ -195,10 +244,12 @@ const FolderManager = ({ view, folders, onToggleStar, onRename, onDelete }) => {
             : ""
         }
         onClose={() => setPendingDelete(null)}
-        onConfirm={confirmDelete}
+        onConfirm={async () => {
+          if (!pendingDelete) return;
+          await onDelete(pendingDelete.id);
+          setPendingDelete(null);
+        }}
       />
     </>
   );
-};
-
-export default FolderManager;
+}

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { generateSummary } from '../../api/apiService';
 
-
+// reusable save-to-folder button
 import SaveToFolderButton from '../../components/SaveToFolderButton';
 
 const Summarizer = () => {
