@@ -1,0 +1,16 @@
+[
+  {
+    "id": "66e59f9b-da55-4dbe-a116-cbd8d8fdc47a",
+    "user_id": "64a4ae74-2977-41f2-92c5-3511386aa7dd",
+    "title": "Math Notes",
+    "text": "yeah",
+    "folder": "General",
+    "duration": 4,
+    "visibility": "Private",
+    "timestamp": "2025-08-17T22:08:50.278712",
+    "audio_url": "http://localhost:8000/static/audio/66e59f9b-da55-4dbe-a116-cbd8d8fdc47a.webm",
+    "tags": [],
+    "settings": {},
+    "contentType": "voice_note"
+  }
+]

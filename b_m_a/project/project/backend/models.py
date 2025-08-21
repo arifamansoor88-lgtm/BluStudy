@@ -71,3 +71,13 @@ class UpdateStudyPlanResponse(BaseModel):
     id: str
     message: str
     updatedPlan: Dict[str, Any]
+
+class VoiceNoteResponse(BaseModel):
+    id: str
+    title: str
+    text: str
+    folder: str
+    duration: int
+    visibility: str
+    timestamp: str
+    audio_url: str

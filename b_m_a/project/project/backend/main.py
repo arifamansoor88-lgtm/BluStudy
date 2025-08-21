@@ -10,17 +10,90 @@ from dotenv import load_dotenv
 from typing import List, Dict, Any, Optional, Union
 import msal
 from jose import jwt
-from database import client, container  
+from database import client, container
 from pdf_utils import extract_text_from_pdf
 from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text
-from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse
+from models import (
+    VoiceNoteResponse, QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse,
+    QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest,
+    UpdateStudyPlanResponse
+)
+
 from pydantic import BaseModel
+import shutil
+from fastapi.responses import FileResponse
 
 # Load the environment variables
 load_dotenv()
 
 # Create FastAPI app instance
 app = FastAPI(title="Blue Marble Academy API")
+
+@app.get("/voice-notes-debug")
+async def voice_notes_debug():
+    print("VOICE NOTES DEBUG")
+    return ("status": "ok")
+
+class VoiceNoteResponse(BaseModel):
+    id: str
+    title: str
+    text: str
+    folder: str
+    duration: int
+    visibility: str
+    timestamp: str
+    audio_url: str
+
+AUDIO_FOLDER = "audio_files"
+os.makedirs(AUDIO_FOLDER, exist_ok=True)
+voice_notes: List[dict] = []
+
+print(">>> DEFINING VOICE NOTES ROUTE <<<")
+
+@app.get("/voice-notes", response_model=List[VoiceNoteResponse])
+async def get_voice_notes():
+    print(">>> ROUTE CALLED <<<")
+    return voice_notes
+
+@app.post("/voice-notes", response_model=VoiceNoteResponse)
+async def create_voice_note(
+    title: str = Form(...),
+    text: str = Form(...),
+    folder: str = Form(...),
+    duration: int = Form(...),
+    visibility: str = Form(...),
+    audio: UploadFile = File(...)
+):
+    try:
+        note_id = str(uuid.uuid4())
+        filename = f"{note_id}.webm"
+        file_path = os.path.join(AUDIO_FOLDER, filename)
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(audio.file, buffer)
+
+        note = {
+            "id": note_id,
+            "title": title,
+            "text": text,
+            "folder": folder,
+            "duration": duration,
+            "visibility": visibility,
+            "timestamp": datetime.utcnow().isoformat(),
+            "audio_url": f"/audio/{filename}"
+        }
+
+        voice_notes.append(note)
+        return note
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving voice note: {e}")
+
+@app.get("/audio/{filename}")
+async def get_audio(filename: str):
+    file_path = os.path.join(AUDIO_FOLDER, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Audio file not found")
+    return FileResponse(file_path, media_type="audio/webm")
 
 # Add CORS middleware to allow the frontend React app to call the API
 app.add_middleware(
@@ -193,7 +266,6 @@ async def save_quiz(quiz: QuizDocument, user_claims: dict = Depends(validate_tok
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Failed to save quiz: {str(e)}"
         )
-
 # Save quiz attempt endpoint - protected
 @app.post("/save-quiz-attempt", response_model=SaveQuizAttemptResponse)
 async def save_quiz_attempt(attempt: SaveQuizAttemptRequest, user_claims: dict = Depends(validate_token)):
@@ -754,6 +826,8 @@ async def summarize_file(
         raise HTTPException(status_code=500, detail=str(e))
 
     return {"summary": summary}
+
+
 # For development purposes
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
