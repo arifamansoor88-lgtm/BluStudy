@@ -1,0 +1,125 @@
+{
+  "title": "Unit 4 - Quantities in Chemical Reactions (Stoichiometry & Mole Concept)",
+  "cards": [
+    {
+      "question": "What is the definition of a mole in chemistry?",
+      "answer": "A mole is 6.022 × 10^23 particles (Avogadro’s number) of a substance.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is Avogadro’s number?",
+      "answer": "6.022 × 10^23 particles/mol",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the formula for molar mass?",
+      "answer": "Molar mass = mass of one mole of a substance, expressed in g/mol",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How do you convert from grams to moles?",
+      "answer": "Moles = mass (g) ÷ molar mass (g/mol)",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How do you convert from moles to grams?",
+      "answer": "Mass (g) = moles × molar mass (g/mol)",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How many moles are in 18 g of H2O?",
+      "answer": "1 mole (molar mass of H2O = 18 g/mol)",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is a balanced chemical equation used for in stoichiometry?",
+      "answer": "It provides the mole ratios needed to calculate amounts of reactants and products.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the limiting reagent in a chemical reaction?",
+      "answer": "The reactant that is completely consumed first, limiting the amount of product formed.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the excess reagent in a chemical reaction?",
+      "answer": "The reactant that remains after the limiting reagent is used up.",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "How do you calculate percent yield?",
+      "answer": "Percent yield = (actual yield ÷ theoretical yield) × 100%",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is theoretical yield?",
+      "answer": "The maximum amount of product expected based on stoichiometric calculations.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is actual yield?",
+      "answer": "The amount of product actually obtained from a chemical reaction.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the molar volume of a gas at STP?",
+      "answer": "22.4 L/mol",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How many moles are in 44.8 L of O2 at STP?",
+      "answer": "2 moles (44.8 ÷ 22.4)",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What steps are required to solve a stoichiometry problem?",
+      "answer": "1. Write a balanced equation, 2. Convert given quantities to moles, 3. Use mole ratios, 4. Convert to desired units.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "If 2H2 + O2 → 2H2O, how many moles of water are produced from 3 moles of O2?",
+      "answer": "6 moles of H2O",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is percent error formula in chemical experiments?",
+      "answer": "|(experimental – theoretical) ÷ theoretical| × 100%",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "What is the empirical formula?",
+      "answer": "The simplest whole-number ratio of atoms in a compound.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the molecular formula?",
+      "answer": "The actual number of atoms of each element in a molecule.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "How do you determine molecular formula from empirical formula?",
+      "answer": "Divide the compound’s molar mass by the empirical formula mass and multiply the subscripts by that ratio.",
+      "difficulty": "hard",
+      "important": true
+    }
+  ]
+}

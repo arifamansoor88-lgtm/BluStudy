@@ -1,0 +1,125 @@
+{
+  "title": "Unit 8 - Review, Integration & Culminating Assessment",
+  "cards": [
+    {
+      "question": "What is the purpose of reviewing past units in chemistry?",
+      "answer": "To reinforce understanding, identify weaknesses, and integrate knowledge across topics.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How are the mole concept and stoichiometry connected?",
+      "answer": "Stoichiometry uses the mole concept to relate amounts of reactants and products in chemical reactions.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "How does bonding theory explain periodic trends?",
+      "answer": "Bonding is influenced by electronegativity and atomic radius, which change across the periodic table.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What is the importance of balancing chemical equations?",
+      "answer": "It ensures the law of conservation of mass is followed.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What type of chemical bond is strongest: ionic, polar covalent, or nonpolar covalent?",
+      "answer": "Ionic bonds (but polar covalent bonds are also strong depending on electronegativity difference).",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "How does gas law knowledge apply to real-world technology?",
+      "answer": "It explains processes in airbags, scuba diving, and pressurized containers.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is an example of chemistry impacting environmental policy?",
+      "answer": "The Montreal Protocol banning CFCs to protect the ozone layer.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What lab safety practice is most important during a final assessment?",
+      "answer": "Wearing goggles and handling chemicals responsibly.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is interpolation in data analysis?",
+      "answer": "Estimating values within a set of known data points.",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "What is extrapolation in data analysis?",
+      "answer": "Estimating values beyond the range of known data points.",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "Why is dimensional analysis a useful tool for review?",
+      "answer": "It ensures units cancel properly and verifies correct calculations.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How do acids and bases fit into solution chemistry?",
+      "answer": "They are electrolytes that dissociate in water, affecting pH and conductivity.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the difference between empirical and molecular formulas?",
+      "answer": "Empirical formula shows the simplest ratio of atoms, molecular shows the actual number of atoms.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "How can solubility principles help in environmental chemistry?",
+      "answer": "They explain how pollutants dissolve in water and affect ecosystems.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What is the role of catalysts in chemical reactions?",
+      "answer": "They lower activation energy and speed up reactions without being consumed.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "Why is percent yield important in industry?",
+      "answer": "It measures efficiency and cost-effectiveness of chemical processes.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "How do greenhouse gases relate to stoichiometry?",
+      "answer": "Stoichiometry helps calculate CO2 production from combustion reactions.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What is the connection between ionic bonding and solution conductivity?",
+      "answer": "Ionic compounds dissociate into ions in water, allowing solutions to conduct electricity.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the best strategy for tackling long multi-step chemistry problems?",
+      "answer": "Break them into smaller steps: write knowns, convert to moles, apply ratios, and convert to final units.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "Why is integration across all units important for chemistry assessments?",
+      "answer": "Because real-world chemical problems involve multiple concepts working together.",
+      "difficulty": "medium",
+      "important": true
+    }
+  ]
+}

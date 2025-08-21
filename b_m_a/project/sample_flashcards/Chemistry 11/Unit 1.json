@@ -1,0 +1,126 @@
+{
+    "title": "Unit 1 - Scientific Investigation & Foundation",
+    "cards": [
+      {
+        "question": "What are the SI base units for length, mass, time, and amount of substance?",
+        "answer": "Meter (m), kilogram (kg), second (s), mole (mol)",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What is the difference between precision and accuracy in measurements?",
+        "answer": "Precision is how close repeated measurements are to each other; accuracy is how close a measurement is to the true value.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is a qualitative observation?",
+        "answer": "An observation that describes qualities or characteristics without using numbers (e.g., color, odor).",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a quantitative observation?",
+        "answer": "An observation based on numerical measurements (e.g., mass = 25 g).",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Why are significant figures important in scientific measurements?",
+        "answer": "They indicate the precision of a measurement and prevent false accuracy.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "How many significant figures are in 0.004520?",
+        "answer": "4 significant figures",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Convert 3.5 × 10^4 into standard form.",
+        "answer": "35,000",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What does the term 'controlled variable' mean in an experiment?",
+        "answer": "A variable kept constant to ensure a fair test.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What is the independent variable in an experiment?",
+        "answer": "The variable that is deliberately changed.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What is the dependent variable in an experiment?",
+        "answer": "The variable that is measured and affected by the independent variable.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What type of error occurs when measurements are consistently too high or too low?",
+        "answer": "Systematic error",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What type of error occurs due to small, uncontrollable fluctuations in measurement?",
+        "answer": "Random error",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What safety equipment should always be worn during chemistry labs?",
+        "answer": "Safety goggles, lab coat, and closed-toe shoes",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What is the purpose of a fume hood?",
+        "answer": "To safely ventilate harmful vapors and gases during experiments.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What does MSDS stand for, and why is it important?",
+        "answer": "Material Safety Data Sheet; provides safety and handling information for chemicals.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the difference between a hypothesis and a theory?",
+        "answer": "A hypothesis is a testable prediction; a theory is a well-substantiated explanation supported by evidence.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Why are control groups important in scientific investigations?",
+        "answer": "They provide a baseline for comparison to determine the effect of the independent variable.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is dimensional analysis used for in chemistry?",
+        "answer": "To convert between units using conversion factors.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Express 0.00056 in scientific notation with 2 significant figures.",
+        "answer": "5.6 × 10^-4",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Why is repeatability important in scientific investigations?",
+        "answer": "It ensures that results are reliable and not due to chance.",
+        "difficulty": "medium",
+        "important": true
+      }
+    ]
+  }
+  
