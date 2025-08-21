@@ -32,7 +32,7 @@ app = FastAPI(title="Blue Marble Academy API")
 @app.get("/voice-notes-debug")
 async def voice_notes_debug():
     print("VOICE NOTES DEBUG")
-    return ("status": "ok")
+    return {"status": "ok"}
 
 class VoiceNoteResponse(BaseModel):
     id: str
