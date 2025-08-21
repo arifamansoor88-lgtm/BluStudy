@@ -23,7 +23,7 @@ class FlashcardDocument(BaseModel):
     contentType: str
     data: FlashcardDeck
 
-class SaveFlashcardResponse(BaseModel):
+class VoiceNoteResponse(BaseModel):
     id: str
     userId: str
     contentType: str = "voice_note"
