@@ -1,0 +1,65 @@
+{
+  "title": "Chapter 4 – Equations – Exam Review",
+  "cards": [
+    {
+      "question": "What is the solution to the equation 𝑥 + 4 = 7?",
+      "answer": "𝑥 = 3",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How many packages of DVDs did a customer buy if they spent $120 and each package costs $15?",
+      "answer": "8 packages",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the formula for the sum of the angles in a triangle?",
+      "answer": "𝑎 + 𝑏 + 𝑐 = 180",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the solution to the equation 5 + 3𝑥 + 4𝑥 = 19?",
+      "answer": "𝑥 = 2",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "What is the equivalent of 30 degrees Celsius in Fahrenheit using the formula 𝐹 = (9/5)𝐶 + 32?",
+      "answer": "86°F",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the base of a triangle with height 8 cm and area 72 cm²?",
+      "answer": "18 cm",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "Rearrange the formula 𝐶 = 𝜋𝑑 to isolate 𝑑.",
+      "answer": "𝑑 = 𝐶/𝜋",
+      "difficulty": "easy",
+      "important": false
+    },
+    {
+      "question": "If Natasha has 250 more pop-can tabs than Krysten, and together they collected 880 tabs, how many tabs did Krysten collect?",
+      "answer": "315 tabs",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What are the three consecutive integers whose sum is 120?",
+      "answer": "39, 40, 41",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "Write an algebraic expression for 'quadruple a number.'",
+      "answer": "4𝑥",
+      "difficulty": "easy",
+      "important": false
+    }
+  ]
+}

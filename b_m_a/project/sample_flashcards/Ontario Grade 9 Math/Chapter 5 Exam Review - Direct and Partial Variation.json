@@ -1,0 +1,65 @@
+{
+  "title": "Chapter 5 Exam Review - Direct and Partial Variation",
+  "cards": [
+    {
+      "question": "What is the constant of variation for a car traveling 270 km in 3 hours?",
+      "answer": "90 km/h",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What equation relates the cost of building a patio with width w if 4 meters costs $300?",
+      "answer": "C = 75w",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What does the constant of variation represent in the cost of potatoes per kilogram?",
+      "answer": "Cost per kg of potatoes",
+      "difficulty": "easy",
+      "important": false
+    },
+    {
+      "question": "What is the slope of stairs with a vertical rise of 20 cm and a horizontal run of 27.5 cm?",
+      "answer": "0.73",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the equation for the cost of renting a canoe at $8 per hour?",
+      "answer": "y = 8x",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the rate of change for a heron traveling 400 km in 10 hours?",
+      "answer": "40 km/h",
+      "difficulty": "easy",
+      "important": false
+    },
+    {
+      "question": "What is the fixed cost and variable cost of a fundraiser with $200 hall rental and $3 per person?",
+      "answer": "Fixed cost = $200, Variable cost = $3/person",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the slope of a ladder leaning against a wall, reaching 10 m high and 1.25 m away from the base?",
+      "answer": "8",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the equation for the cost of renting a bicycle at $20 plus $2 per hour?",
+      "answer": "y = 2x + 20",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the average price increase per year for milk rising from $1.25 to $1.35 over two years?",
+      "answer": "$0.05 per year",
+      "difficulty": "easy",
+      "important": false
+    }
+  ]
+}

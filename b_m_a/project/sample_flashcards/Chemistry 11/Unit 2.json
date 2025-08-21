@@ -1,0 +1,126 @@
+{
+    "title": "Unit 2 - Structure of Matter, Periodic Trends & Bonding",
+    "cards": [
+      {
+        "question": "What are the three main subatomic particles of an atom and their charges?",
+        "answer": "Proton (+1), neutron (0), electron (–1)",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Where are protons and neutrons located in an atom?",
+        "answer": "In the nucleus",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Where are electrons located in an atom?",
+        "answer": "In electron shells or energy levels surrounding the nucleus",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What does the atomic number of an element represent?",
+        "answer": "The number of protons in the nucleus of the atom",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What does the mass number of an element represent?",
+        "answer": "The total number of protons and neutrons",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What are isotopes?",
+        "answer": "Atoms of the same element with the same number of protons but different numbers of neutrons",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is an ion?",
+        "answer": "An atom or molecule that has gained or lost electrons, giving it a net charge",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "How does atomic radius change across a period in the periodic table?",
+        "answer": "It decreases across a period due to increased nuclear charge pulling electrons closer",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "How does atomic radius change down a group in the periodic table?",
+        "answer": "It increases down a group due to added electron shells",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "How does ionization energy change across a period?",
+        "answer": "It increases across a period because electrons are held more tightly by the nucleus",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "How does ionization energy change down a group?",
+        "answer": "It decreases down a group because outer electrons are farther from the nucleus",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is electronegativity?",
+        "answer": "The ability of an atom to attract electrons in a chemical bond",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Which element has the highest electronegativity?",
+        "answer": "Fluorine",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What type of bond forms between two nonmetals?",
+        "answer": "Covalent bond",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What type of bond forms between a metal and a nonmetal?",
+        "answer": "Ionic bond",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What is a polar covalent bond?",
+        "answer": "A covalent bond where electrons are unequally shared due to a difference in electronegativity",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the octet rule?",
+        "answer": "Atoms tend to gain, lose, or share electrons to achieve a stable configuration of 8 valence electrons",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the difference between a cation and an anion?",
+        "answer": "Cation is a positively charged ion (lost electrons), anion is a negatively charged ion (gained electrons)",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What shape does a molecule of CH4 (methane) have according to VSEPR theory?",
+        "answer": "Tetrahedral",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Why do metals conduct electricity?",
+        "answer": "Because metallic bonding involves delocalized electrons that move freely through the structure",
+        "difficulty": "medium",
+        "important": true
+      }
+    ]
+  }
+  

@@ -1,0 +1,125 @@
+{
+  "title": "Unit 5 - Solutions, Solubility & Aquatic Chemistry",
+  "cards": [
+    {
+      "question": "What is a solution in chemistry?",
+      "answer": "A homogeneous mixture of two or more substances.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the solvent in a solution?",
+      "answer": "The substance present in the greatest amount, usually the one that dissolves the solute.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the solute in a solution?",
+      "answer": "The substance that is dissolved in the solvent.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is molarity (M)?",
+      "answer": "Molarity = moles of solute ÷ liters of solution",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "How many moles of solute are in 2.0 L of 0.5 M NaCl?",
+      "answer": "1.0 mol",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is solubility?",
+      "answer": "The maximum amount of solute that can dissolve in a given amount of solvent at a given temperature.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What factors affect solubility?",
+      "answer": "Temperature, pressure (for gases), and the nature of solute and solvent.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "According to 'like dissolves like,' what kinds of solutes dissolve best in water?",
+      "answer": "Polar solutes and ionic compounds",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is a saturated solution?",
+      "answer": "A solution that contains the maximum amount of solute at a given temperature.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is an unsaturated solution?",
+      "answer": "A solution that contains less solute than it could hold at that temperature.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is a supersaturated solution?",
+      "answer": "A solution that contains more solute than normally possible at that temperature; unstable.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is dilution?",
+      "answer": "The process of reducing the concentration of a solution by adding more solvent.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the formula for dilution calculations?",
+      "answer": "M1V1 = M2V2",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "How much water must be added to 200 mL of 3.0 M HCl to make it 1.0 M?",
+      "answer": "400 mL of water (final volume 600 mL)",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What is an electrolyte?",
+      "answer": "A substance that dissolves in water to produce a solution that conducts electricity.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "Give an example of a strong electrolyte.",
+      "answer": "NaCl (sodium chloride)",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "Give an example of a nonelectrolyte.",
+      "answer": "Sugar (C6H12O6)",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "Why is water called the 'universal solvent'?",
+      "answer": "Because it dissolves many polar and ionic substances due to its polarity.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What environmental issue is related to water solubility of gases?",
+      "answer": "Low oxygen solubility in warm water can harm aquatic life.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What is Henry’s Law regarding gas solubility?",
+      "answer": "The solubility of a gas in a liquid is directly proportional to the pressure of the gas above the liquid.",
+      "difficulty": "hard",
+      "important": true
+    }
+  ]
+}

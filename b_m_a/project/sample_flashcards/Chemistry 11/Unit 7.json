@@ -1,0 +1,125 @@
+{
+  "title": "Unit 7 - Environmental & Societal Context of Chemistry",
+  "cards": [
+    {
+      "question": "What is green chemistry?",
+      "answer": "An approach to designing products and processes that minimize environmental impact and reduce waste.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is sustainability in chemistry?",
+      "answer": "Using resources in ways that meet present needs without compromising future generations’ ability to meet theirs.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is an example of a renewable resource?",
+      "answer": "Solar energy, wind energy, or biomass.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is an example of a non-renewable resource?",
+      "answer": "Fossil fuels such as coal, oil, and natural gas.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How does acid rain form?",
+      "answer": "Sulfur dioxide and nitrogen oxides react with water in the atmosphere to form acids.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What are the harmful effects of acid rain?",
+      "answer": "Damage to aquatic ecosystems, soil, forests, and buildings.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What are persistent organic pollutants (POPs)?",
+      "answer": "Toxic chemicals that resist degradation and accumulate in the environment.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What does bioaccumulation mean?",
+      "answer": "The gradual buildup of chemicals in living organisms over time.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What does biomagnification mean?",
+      "answer": "The increase in concentration of toxic substances at higher levels of the food chain.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "Why are CFCs harmful to the environment?",
+      "answer": "They destroy ozone in the stratosphere, leading to ozone layer depletion.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What international agreement helped reduce CFC emissions?",
+      "answer": "The Montreal Protocol",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is life cycle analysis (LCA) in chemistry?",
+      "answer": "Assessing the environmental impact of a product from raw material extraction to disposal.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "Give an example of how chemistry improves human health.",
+      "answer": "Development of pharmaceuticals and vaccines.",
+      "difficulty": "easy",
+      "important": false
+    },
+    {
+      "question": "Give an example of how chemistry has negative health impacts.",
+      "answer": "Air pollutants like particulate matter causing respiratory diseases.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is carbon capture technology?",
+      "answer": "A method to trap CO2 emissions and prevent them from entering the atmosphere.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "How do catalytic converters reduce pollution?",
+      "answer": "They convert harmful gases like CO and NOx into less harmful CO2 and N2.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is an example of a sustainable alternative to petroleum-based plastics?",
+      "answer": "Biodegradable plastics made from cornstarch or polylactic acid (PLA).",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What role does chemistry play in renewable energy?",
+      "answer": "Development of batteries, solar cells, hydrogen fuel cells, and biofuels.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "Why is clean water chemistry a societal issue?",
+      "answer": "Access to safe drinking water is essential for health, and chemistry provides purification methods.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the main difference between environmental chemistry and industrial chemistry?",
+      "answer": "Environmental chemistry studies chemical processes in nature, while industrial chemistry focuses on large-scale production.",
+      "difficulty": "medium",
+      "important": false
+    }
+  ]
+}

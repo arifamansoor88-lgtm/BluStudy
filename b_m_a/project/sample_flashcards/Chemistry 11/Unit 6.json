@@ -1,0 +1,125 @@
+{
+  "title": "Unit 6 - Gases & Atmospheric Chemistry",
+  "cards": [
+    {
+      "question": "What are the four main variables used to describe a gas?",
+      "answer": "Pressure (P), volume (V), temperature (T), and amount (n, in moles)",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is Boyle’s Law?",
+      "answer": "At constant temperature, the pressure of a gas is inversely proportional to its volume (P1V1 = P2V2).",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is Charles’s Law?",
+      "answer": "At constant pressure, the volume of a gas is directly proportional to its absolute temperature (V1/T1 = V2/T2).",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is Gay-Lussac’s Law?",
+      "answer": "At constant volume, the pressure of a gas is directly proportional to its absolute temperature (P1/T1 = P2/T2).",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "What is Avogadro’s Law?",
+      "answer": "At the same temperature and pressure, equal volumes of gases contain equal numbers of molecules.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the Ideal Gas Law?",
+      "answer": "PV = nRT",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the value of the universal gas constant R?",
+      "answer": "8.31 J/(mol·K) or 0.0821 L·atm/(mol·K)",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "At STP (0°C and 1 atm), what is the molar volume of a gas?",
+      "answer": "22.4 L/mol",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What are the standard temperature and pressure (STP) conditions?",
+      "answer": "0°C (273 K) and 1 atm pressure",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How does Dalton’s Law of Partial Pressures define total pressure?",
+      "answer": "The total pressure of a gas mixture is the sum of the partial pressures of each component gas.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What does Graham’s Law of Diffusion/Effusion state?",
+      "answer": "The rate of diffusion of a gas is inversely proportional to the square root of its molar mass.",
+      "difficulty": "hard",
+      "important": false
+    },
+    {
+      "question": "Why do real gases deviate from ideal behavior?",
+      "answer": "Because gas particles have volume and experience intermolecular forces, especially at high pressures and low temperatures.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What are greenhouse gases?",
+      "answer": "Gases like CO2, CH4, and H2O vapor that trap heat in Earth’s atmosphere.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How does ozone (O3) protect life on Earth?",
+      "answer": "It absorbs harmful UV radiation in the stratosphere.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What human-made chemicals damaged the ozone layer?",
+      "answer": "Chlorofluorocarbons (CFCs)",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is atmospheric pressure?",
+      "answer": "The pressure exerted by the weight of the atmosphere, measured with a barometer.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What unit is commonly used to measure pressure in chemistry?",
+      "answer": "Atmospheres (atm), kilopascals (kPa), or millimeters of mercury (mmHg).",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the approximate composition of Earth’s atmosphere?",
+      "answer": "78% nitrogen, 21% oxygen, ~1% other gases (argon, CO2, etc.)",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How does increasing CO2 concentration affect climate?",
+      "answer": "It enhances the greenhouse effect, leading to global warming.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the difference between weather and climate?",
+      "answer": "Weather is short-term atmospheric conditions; climate is the long-term average pattern.",
+      "difficulty": "easy",
+      "important": false
+    }
+  ]
+}

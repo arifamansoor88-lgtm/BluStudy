@@ -1,0 +1,65 @@
+{
+  "title": "Laboratory Guidelines and Formal Report Writing",
+  "cards": [
+    {
+      "question": "What is the required format for writing a formal laboratory report?",
+      "answer": "University Standard.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What should the title of a lab report include?",
+      "answer": "A descriptive title in your own words.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What are the three sentences required in an abstract?",
+      "answer": "Purpose, general method, and results.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "How should the procedure section of a lab report be written?",
+      "answer": "In numbered steps, past tense, and passive voice.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the purpose of the conclusion section in a lab report?",
+      "answer": "To summarize findings and answer the problem statement.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What are examples of instrumental limitations as a source of error?",
+      "answer": "Uncertainties in measuring instruments like balances or rulers.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What are the four types of experimental errors mentioned?",
+      "answer": "Instrumental limitations, experimental design flaws, observing the system, and external influences.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What is NOT considered a valid source of experimental error?",
+      "answer": "Human error, such as failing to prepare equipment properly.",
+      "difficulty": "easy",
+      "important": false
+    },
+    {
+      "question": "What is the correct way to record quantitative data in a lab report?",
+      "answer": "In table form with a descriptive title.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "Why should APA referencing be included in a lab report?",
+      "answer": "To properly cite any referenced material.",
+      "difficulty": "easy",
+      "important": false
+    }
+  ]
+}

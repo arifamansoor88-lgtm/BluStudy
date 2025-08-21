@@ -1,0 +1,185 @@
+{
+    "title": "Grade 9 Math Final Exam Flashcards",
+    "cards": [
+      {
+        "question": "What is 87! equal to?",
+        "answer": "1",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Simplify: a^11 × a^3 as a single power.",
+        "answer": "a^14",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Simplify: (3x^2)^2",
+        "answer": "9x^4",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Simplify: 7^3 × 7 ÷ 7^5",
+        "answer": "7^-1",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Which fraction is equal to 1 1/2?",
+        "answer": "3/2",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "Which pair of terms are not like terms: 4a and 7a, 2mn and mn^2, 3p^2q and –p^2q, or –x and 3x?",
+        "answer": "2mn and mn^2",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What type of polynomial is –2b^4d + bd^3 + b^6?",
+        "answer": "Trinomial",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What is the degree of –2b^4d + bd^3 + b^6?",
+        "answer": "6",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Solve for x: x – 2 = –4",
+        "answer": "x = –2",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Rearrange the area of a triangle formula A = 1/2 bh to isolate h.",
+        "answer": "h = 2A / b",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Expand and simplify: x(x – 2) – 4(x + 1)",
+        "answer": "x^2 – 6x – 4",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Does y = 6x represent a direct or partial variation?",
+        "answer": "Direct Variation",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Does y = 6x + 9 represent a direct or partial variation?",
+        "answer": "Partial Variation",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Estimating values beyond the known data of a relation is called?",
+        "answer": "Extrapolation",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What is the constant of variation if Super Hot Fire earns $250 for winning 5 battles?",
+        "answer": "50",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Find slope and y-intercept of y = –3x + 4.",
+        "answer": "Slope = –3, y-intercept = 4",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the slope of the line through A(2, –6) and B(7, 8)?",
+        "answer": "m = 14/5",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Which pair of lines are parallel: y = 2x + 4 and y = 3x + 4, y = 5x – 2 and y = 5x + 7, y = 1/2x + 4 and y = –2x + 9, or y = 3x – 7 and y = –3x + 7?",
+        "answer": "y = 5x – 2 and y = 5x + 7",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the slope of a line perpendicular to y = (2/3)x + 5?",
+        "answer": "–3/2",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the slope of a vertical line?",
+        "answer": "Undefined",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Determine if the relation with table (0,3), (1,7), (2,11), (3,15) is linear. What is the slope?",
+        "answer": "Yes, linear. Slope = 4",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the equation of the line through A(–5, 8) and B(–2, 2)?",
+        "answer": "y = –2x – 2",
+        "difficulty": "hard",
+        "important": true
+      },
+      {
+        "question": "What is the equation of a line with slope 2 through (4, –3)?",
+        "answer": "y = 2x – 11",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Find the x- and y-intercepts of 4x + 5y = 20.",
+        "answer": "x-intercept = 5, y-intercept = 4",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "In statistics, surveying only the tallest students in a class is what type of sampling?",
+        "answer": "Non-random sampling",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "In statistics, drawing names from a hat is what type of sampling?",
+        "answer": "Simple random sampling",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "If a basketball player’s data shows shots decrease with distance, is the relationship linear or non-linear?",
+        "answer": "Non-linear",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the formula for the volume of a cylinder?",
+        "answer": "V = πr^2h",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What is the formula for the surface area of a sphere?",
+        "answer": "SA = 4πr^2",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "If angles g and h are complementary, with g = 3x + 6 and h = 2x – 11, what are their measures?",
+        "answer": "∠g = 63°, ∠h = 27°",
+        "difficulty": "hard",
+        "important": true
+      }
+    ]
+  }

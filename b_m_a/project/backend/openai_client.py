@@ -40,6 +40,70 @@ def summarize_text(text: str) -> str:
     except Exception as e:
         print(f"Error while calling Azure OpenAI for summarization: {str(e)}")
         raise Exception(f"Azure OpenAI summarization request failed: {str(e)}")
+    
+
+# ---------------------------
+# Flashcard Client & Function
+# ---------------------------
+flashcard_client = AzureOpenAI(
+    azure_endpoint=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_ENDPOINT"),
+    api_key=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_API_KEY"),
+    api_version="2024-05-01-preview"
+)
+FLASHCARD_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_DEPLOYMENT_NAME")
+
+def generate_flashcard(text: str,
+                       num_flashcards: int = 10) -> str:
+    """
+   Generates Flashcards based on inputted text
+    
+    Args:
+        text (str): The text to summarize.
+        num_flashcards: The number of flashcarrds to generate
+        
+    Returns:
+        str: JSON Flashcards
+    """
+    try:
+        response = flashcard_client.chat.completions.create(
+            model=SUMMARIZER_DEPLOYMENT_NAME,
+            messages=[
+                {"role": "system", "content": "You are a helpful AI that creates concise flashcards from educational content."},
+                {"role": "user", "content": f""""
+                    You are a flashcard generator for study purposes. Given the following educational text, extract {num_flashcards} key concepts or facts and convert them into flashcards. Each flashcard should consist of a concise question and a short, clear answer. Do not include explanations or extra formatting.
+
+                    ---
+
+                    # Output Format (as JSON array):
+                    {{
+                        "title": "...",
+                        "cards": [
+                            {{
+                                "question": "...",
+                                "answer": "...",
+                                "difficulty": "...",
+                                "important": false
+                            }}
+                        ]
+                    }}
+
+                    Only return valid JSON. Do not explain or include any extra text.
+
+                    Make sure the questions are varied and focus on important points from the content.
+
+                    ---
+
+                    Text:
+                    {text}
+                """}
+            ],
+            max_tokens=600,
+            temperature=0.5
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"Error while calling Azure OpenAI for flashcard generatiohn: {str(e)}")
+        raise Exception(f"Azure OpenAI generation request failed: {str(e)}")
 
 
 # ---------------------------
@@ -194,7 +258,7 @@ def generate_answer_explanation(
         is_correct (bool): Whether the user's answer is correct.
     
     Returns:
-        str: The AI-generated explanation.
+        str: The AI-generated explanation with topics to review.
     """
     question_type = question.get("type", "unknown")
     question_text = question.get("question", "")
@@ -233,18 +297,34 @@ def generate_answer_explanation(
     else:
         user_answer_formatted = f"Your answer: {user_answer}"
     
-    system_prompt = f"""You are an educational AI tutor providing explanations for quiz answers.
+    system_prompt = f"""You are an educational AI tutor providing comprehensive explanations for quiz answers.
 Provide a clear, helpful explanation for why the user's answer to a quiz question is {("correct" if is_correct else "incorrect")}.
 
-Be educational, supportive, and concise in your explanation. If the answer is incorrect, point out what the user may have misunderstood.
-Focus on explaining the underlying concept and why the correct answer is right.
+Your response should include:
+1. **Explanation**: Why the answer is correct or incorrect
+2. **Key Concepts**: Important terms and concepts related to this question
+3. **Topics to Review**: Specific areas the student should focus on for improvement
 
 FORMAT YOUR RESPONSE USING MARKDOWN:
 - Use **bold** for important concepts or terms
-- Use bullet points or numbered lists where appropriate
-- Organize your explanation with clear structure
+- Use bullet points for lists
+- Include a "📚 Topics to Review" section with specific, actionable items
+- Be educational, supportive, and concise
 
-Aim for 3-5 sentences that are helpful for learning but not overly verbose.
+Structure your response as:
+**Explanation:**
+[Your explanation here]
+
+**Key Concepts:**
+- [Concept 1]
+- [Concept 2]
+
+**📚 Topics to Review:**
+- [Specific topic 1]
+- [Specific topic 2]
+- [Specific topic 3]
+
+Aim for 4-6 sentences in the explanation section.
 """
 
     user_message = f"""
@@ -254,8 +334,8 @@ Question Type: {question_type}
 {correct_answer_info}
 Is Correct: {is_correct}
 
-Please explain why this answer is {("correct" if is_correct else "incorrect")}.
-Use markdown formatting in your explanation for better readability.
+Please provide a comprehensive explanation with topics to review.
+Use markdown formatting in your response.
 """
 
     response = quiz_client.chat.completions.create(
@@ -513,3 +593,210 @@ Create a targeted plan that addresses specific weaknesses while building on the 
         response_format={"type": "json_object"}
     )
     return response.choices[0].message.content
+
+async def analyze_quiz_performance(
+    questions: List[Dict[str, Any]], 
+    user_answers: List[Any], 
+    quiz_metadata: Dict[str, Any] = {}
+) -> Dict[str, Any]:
+    """
+    Analyze quiz performance and extract topics using Azure OpenAI GPT model.
+    
+    Args:
+        questions (List[Dict[str, Any]]): List of quiz questions with their content and answers.
+        user_answers (List[Any]): List of user answers corresponding to each question.
+        quiz_metadata (Dict[str, Any]): Additional metadata about the quiz.
+        
+    Returns:
+        Dict[str, Any]: Analysis results including topics, performance breakdown, and recommendations.
+    """
+    try:
+        # Prepare the quiz data for analysis
+        quiz_data = []
+        for i, (question, user_answer) in enumerate(zip(questions, user_answers)):
+            # Determine if the answer is correct
+            is_correct = False
+            if question.get("type") == "multiple_choice":
+                is_correct = user_answer == question.get("correct_answer")
+            elif question.get("type") == "multi_select":
+                is_correct = set(user_answer or []) == set(question.get("correct_answers", []))
+            elif question.get("type") == "drag_and_drop":
+                is_correct = user_answer == question.get("correct_mapping")
+            elif question.get("type") in ["short_answer", "fill_in_blank"]:
+                correct_answer = question.get("correct_answer")
+                acceptable_answers = question.get("acceptable_answers", [])
+                is_correct = user_answer == correct_answer or user_answer in acceptable_answers
+            
+            quiz_data.append({
+                "question_number": i + 1,
+                "question_text": question.get("question", ""),
+                "question_type": question.get("type", ""),
+                "user_answer": user_answer,
+                "correct_answer": question.get("correct_answer") or question.get("correct_answers") or question.get("correct_mapping"),
+                "is_correct": is_correct
+            })
+        
+        system_prompt = """You are an AI educational analyst that provides comprehensive performance analysis for quiz results. Your goal is to help students understand their strengths and weaknesses and provide actionable recommendations for improvement.
+
+# Analysis Requirements:
+1. **Topic Extraction**: Identify the main topics and subtopics covered in the quiz questions
+2. **Performance Analysis**: Analyze performance by topic, question type, and difficulty level
+3. **Strengths and Weaknesses**: Identify areas of strength and areas needing improvement
+4. **Recommendations**: Provide specific, actionable study recommendations
+
+# Output Format:
+Return a JSON object with the following structure:
+
+{
+  "topics": [
+    {
+      "name": "Topic name",
+      "questionIndices": [1, 3, 5],
+      "correctCount": 2,
+      "totalCount": 3,
+      "accuracy": 67,
+      "difficulty": "intermediate",
+      "category": "subject_area",
+      "keywords": ["keyword1", "keyword2"],
+      "reason": "Explanation of performance",
+      "suggestions": ["suggestion1", "suggestion2"]
+    }
+  ],
+  "weakTopics": [
+    // Topics with accuracy < 70%
+  ],
+  "strongTopics": [
+    // Topics with accuracy >= 80%
+  ],
+  "recommendations": [
+    "Specific study recommendation 1",
+    "Specific study recommendation 2"
+  ],
+  "overallAnalysis": {
+    "totalQuestions": 10,
+    "correctAnswers": 7,
+    "overallAccuracy": 70,
+    "performanceLevel": "Fair",
+    "keyInsights": ["insight1", "insight2"],
+    "studyPriorities": ["priority1", "priority2"]
+  }
+}
+
+# Guidelines:
+- Extract meaningful topics from question content (e.g., "Algebra Fundamentals", "Chemical Reactions", "Historical Events")
+- Provide specific, actionable recommendations
+- Consider question difficulty and type in your analysis
+- Focus on helping the student improve their weakest areas
+- Suggest connections to other study tools (flashcards, practice tests, etc.)"""
+
+        user_prompt = f"""Quiz Metadata:
+{quiz_metadata}
+
+Quiz Performance Data:
+{quiz_data}
+
+Please provide a comprehensive analysis of this quiz performance, including topic extraction, performance breakdown, and specific recommendations for improvement."""
+
+        response = quiz_client.chat.completions.create(
+            model=QUIZ_DEPLOYMENT_NAME,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            max_tokens=3000,
+            temperature=0.3,
+            response_format={"type": "json_object"}
+        )
+        
+        # Parse the JSON response
+        import json
+        analysis_result = json.loads(response.choices[0].message.content.strip())
+        
+        return analysis_result
+        
+    except Exception as e:
+        print(f"Error while calling Azure OpenAI for quiz performance analysis: {str(e)}")
+        # Return a fallback analysis if AI analysis fails
+        return create_fallback_analysis(questions, user_answers, quiz_metadata)
+
+def create_fallback_analysis(
+    questions: List[Dict[str, Any]], 
+    user_answers: List[Any], 
+    quiz_metadata: Dict[str, Any] = {}
+) -> Dict[str, Any]:
+    """
+    Create a basic fallback analysis when AI analysis fails.
+    
+    Args:
+        questions (List[Dict[str, Any]]): List of quiz questions.
+        user_answers (List[Any]): List of user answers.
+        quiz_metadata (Dict[str, Any]): Quiz metadata.
+        
+    Returns:
+        Dict[str, Any]: Basic analysis results.
+    """
+    # Calculate basic statistics
+    total_questions = len(questions)
+    correct_answers = 0
+    
+    for i, (question, user_answer) in enumerate(zip(questions, user_answers)):
+        if question.get("type") == "multiple_choice":
+            if user_answer == question.get("correct_answer"):
+                correct_answers += 1
+        elif question.get("type") == "multi_select":
+            if set(user_answer or []) == set(question.get("correct_answers", [])):
+                correct_answers += 1
+        elif question.get("type") == "drag_and_drop":
+            if user_answer == question.get("correct_mapping"):
+                correct_answers += 1
+        elif question.get("type") in ["short_answer", "fill_in_blank"]:
+            correct_answer = question.get("correct_answer")
+            acceptable_answers = question.get("acceptable_answers", [])
+            if user_answer == correct_answer or user_answer in acceptable_answers:
+                correct_answers += 1
+    
+    overall_accuracy = round((correct_answers / total_questions) * 100) if total_questions > 0 else 0
+    
+    # Create basic topic analysis
+    topics = [{
+        "name": "General Concepts",
+        "questionIndices": list(range(total_questions)),
+        "correctCount": correct_answers,
+        "totalCount": total_questions,
+        "accuracy": overall_accuracy,
+        "difficulty": "mixed",
+        "category": "general",
+        "keywords": ["concepts", "understanding"],
+        "reason": f"Overall performance: {overall_accuracy}% accuracy",
+        "suggestions": ["Review all questions", "Focus on incorrect answers", "Practice similar questions"]
+    }]
+    
+    weak_topics = topics if overall_accuracy < 70 else []
+    strong_topics = topics if overall_accuracy >= 80 else []
+    
+    recommendations = [
+        "Review all incorrect answers to understand your mistakes",
+        "Use the AI Flashcards tool to create study materials",
+        "Take more practice tests to improve your skills",
+        "Focus on areas where you made the most mistakes"
+    ]
+    
+    if overall_accuracy < 70:
+        recommendations.append("Consider seeking additional help or tutoring")
+    elif overall_accuracy >= 80:
+        recommendations.append("Challenge yourself with more difficult questions")
+    
+    return {
+        "topics": topics,
+        "weakTopics": weak_topics,
+        "strongTopics": strong_topics,
+        "recommendations": recommendations,
+        "overallAnalysis": {
+            "totalQuestions": total_questions,
+            "correctAnswers": correct_answers,
+            "overallAccuracy": overall_accuracy,
+            "performanceLevel": "Excellent" if overall_accuracy >= 90 else "Good" if overall_accuracy >= 80 else "Fair" if overall_accuracy >= 70 else "Needs Improvement",
+            "keyInsights": [f"Scored {correct_answers} out of {total_questions} questions correctly"],
+            "studyPriorities": ["Review incorrect answers", "Practice weak areas"]
+        }
+    }
