@@ -1,8 +1,8 @@
-// VoiceNotes.jsx — tags instead of folders
+// VoiceNotes.jsx — tags instead of folders, now with Pause/Resume while recording
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-import { Mic, Save, Trash2, Download, Share2, Tag as TagIcon, AudioWaveform as Waveform } from 'lucide-react';
+import { Mic, Save, Trash2, Download, Share2, Tag as TagIcon, AudioWaveform as Waveform, PauseCircle, PlayCircle } from 'lucide-react';
 
 const API_URL = "http://localhost:8000";
 
@@ -23,6 +23,7 @@ const VoiceNotes = () => {
   const [selectedTagFilter, setSelectedTagFilter] = useState('');
   const [noteTitle, setNoteTitle] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [audioUrl, setAudioUrl] = useState(null);
   const [chunks, setChunks] = useState([]);
@@ -89,7 +90,7 @@ const VoiceNotes = () => {
       analyser.getByteTimeDomainData(dataArray);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#7c3aed';
+      ctx.strokeStyle = isPaused ? '#a3a3a3' : '#7c3aed';
       ctx.beginPath();
       const width = canvas.width;
       const height = canvas.height;
@@ -103,6 +104,16 @@ const VoiceNotes = () => {
       }
       ctx.lineTo(width, height / 2);
       ctx.stroke();
+
+      if (isPaused) {
+        // overlay "Paused"
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Paused', canvas.width / 2, canvas.height / 2);
+      }
     };
     draw();
   };
@@ -132,21 +143,68 @@ const VoiceNotes = () => {
 
     mediaRecorderRef.current.start();
     setIsRecording(true);
+    setIsPaused(false);
     setRecordingDuration(0);
     timerRef.current = setInterval(() => setRecordingDuration((prev) => prev + 1), 1000);
   };
 
+  const pauseRecording = () => {
+    if (!isRecording || isPaused) return;
+    try {
+      if (mediaRecorderRef.current && typeof mediaRecorderRef.current.pause === 'function') {
+        mediaRecorderRef.current.pause();
+      }
+    } catch (e) {
+      console.warn('MediaRecorder.pause not supported, ignoring.');
+    }
+    clearInterval(timerRef.current);
+    setIsPaused(true);
+    SpeechRecognition.stopListening();
+  };
+
+  const resumeRecording = () => {
+    if (!isRecording || !isPaused) return;
+    try {
+      if (mediaRecorderRef.current && typeof mediaRecorderRef.current.resume === 'function') {
+        mediaRecorderRef.current.resume();
+      }
+    } catch (e) {
+      console.warn('MediaRecorder.resume not supported, ignoring.');
+    }
+    setIsPaused(false);
+    timerRef.current = setInterval(() => setRecordingDuration((prev) => prev + 1), 1000);
+    SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
+  };
+
   const stopRecording = () => {
     SpeechRecognition.stopListening();
-    mediaRecorderRef.current?.stop();
+    try {
+      mediaRecorderRef.current?.stop();
+    } catch (e) {
+      // ignore
+    }
     mediaRecorderRef.current?.stream.getTracks().forEach((t) => t.stop());
     clearInterval(timerRef.current);
     cancelAnimationFrame(animationRef.current);
     audioContextRef.current?.close();
     setIsRecording(false);
+    setIsPaused(false);
   };
 
   const toggleRecording = () => (isRecording ? stopRecording() : startRecording());
+  const togglePause = () => (isPaused ? resumeRecording() : pauseRecording());
+
+  // Optional: spacebar to pause/resume while recording
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.code === 'Space' && isRecording) {
+        e.preventDefault();
+        togglePause();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isRecording, isPaused]);
 
   const addPendingTag = () => {
     const t = tagInput.trim();
@@ -314,12 +372,26 @@ const VoiceNotes = () => {
             <button
               onClick={() => (isRecording ? stopRecording() : startRecording())}
               className={`p-4 rounded-full transition ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'}`}
+              title={isRecording ? 'Stop' : 'Start recording'}
             >
               <Mic className="h-6 w-6" />
             </button>
+
+            {isRecording && (
+              <button
+                onClick={togglePause}
+                className={`p-4 rounded-full transition ${isPaused ? 'bg-gray-100 text-gray-700' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'}`}
+                title={isPaused ? 'Resume (Space)' : 'Pause (Space)'}
+              >
+                {isPaused ? <PlayCircle className="h-6 w-6" /> : <PauseCircle className="h-6 w-6" />}
+              </button>
+            )}
+
             <div>
-              <p className="text-sm text-gray-700">{isRecording ? 'Recording...' : 'Ready to record'}</p>
-              {isRecording && <p className="text-xs text-red-600">{formatDuration(recordingDuration)}</p>}
+              <p className="text-sm text-gray-700">
+                {isRecording ? (isPaused ? 'Paused' : 'Recording...') : 'Ready to record'}
+              </p>
+              {isRecording && <p className={`text-xs ${isPaused ? 'text-gray-500' : 'text-red-600'}`}>{formatDuration(recordingDuration)}</p>}
             </div>
           </div>
 
@@ -347,8 +419,8 @@ const VoiceNotes = () => {
         <canvas ref={canvasRef} className="mt-4 w-full h-24 rounded bg-gray-100" />
 
         {isRecording && (
-          <div className="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-100">
-            <p className="text-gray-700 min-h-[3rem]">{transcript || 'Listening...'}</p>
+          <div className={`mt-6 p-4 rounded-lg border ${isPaused ? 'bg-gray-100 border-gray-200' : 'bg-gray-50 border-gray-100'}`}>
+            <p className="text-gray-700 min-h-[3rem]">{isPaused ? '— Paused —' : (transcript || 'Listening...')}</p>
           </div>
         )}
 
