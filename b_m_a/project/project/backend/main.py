@@ -962,6 +962,7 @@ async def delete_folder(folder_id: str, user_claims: dict = Depends(validate_tok
         print("delete_folder error:", e)
         raise HTTPException(status_code=500, detail="Failed to delete folder")
 
+
 @app.get("/folders/stats")
 async def folder_stats(user_claims: dict = Depends(validate_token)):
     try:
