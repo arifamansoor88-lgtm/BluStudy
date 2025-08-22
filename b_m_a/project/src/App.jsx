@@ -12,6 +12,8 @@ import MindMaps from "./pages/tools/MindMaps";
 import PracticeTests from "./pages/tools/PracticeTests/PracticeTests";
 import StudyPlans from "./pages/tools/studyPlans/StudyPlans";
 import Summarizer from "./pages/tools/summarizer";
+import Workspace from "./pages/Workspace";
+import FolderView from "./pages/FolderView";
 import PublicLibrary from "./pages/publicLibrary";
 import FlashcardStudyPage from './pages/tools/AIFlashcards/FlashcardStudy';
 
@@ -32,6 +34,8 @@ function App() {
           <Route path="/tools/practice-tests" element={<PracticeTests />} />
           <Route path="/tools/study-planner" element={<StudyPlans />} />
           <Route path="/tools/summarizer" element={<Summarizer />} />
+          <Route path="/workspace" element={<Workspace />} />
+          <Route path="/workspace/folder/:id" element={<FolderView />} />
           <Route path="/tools/flashcards/FlashcardStudyPage/:deckId" element={<FlashcardStudyPage  />} />
           <Route path="/public_Library" element={<PublicLibrary />} />
           {/* Add more routes as needed */}
