@@ -23,9 +23,21 @@ class FlashcardDocument(BaseModel):
     contentType: str
     data: FlashcardDeck
 
-class SaveFlashcardResponse(BaseModel):
+class VoiceNoteResponse(BaseModel):
     id: str
-    message: str
+    userId: str
+    contentType: str = "voice_note"
+    title: Optional[str] = None
+    text: str = ""
+    tags: List[str] = Field(default_factory=list)
+    duration: Optional[int] = None
+    visibility: str = "Private"  # "Private" | "Public"
+    timestamp: str
+    audio_url: Optional[str] = None
+    settings: Dict[str, Any] = Field(default_factory=dict)
+
+
+
 
 # Mindmap Models
 class MindmapNode(BaseModel):
@@ -62,19 +74,16 @@ class SaveMindmapResponse(BaseModel):
     id: str
     message: str
 
+
+# =========================
+# Quiz models
+# =========================
+
 class QuizOptions(BaseModel):
     numQuestions: int
-    selectedTopics: List[str]
-    customTopics: str
-    questionFormats: Dict[str, bool]
-
-class QuizAttempt(BaseModel):
-    attemptId: str
-    timestamp: str
-    score: float
-    timeTaken: int
-    userAnswers: List[Any]
-    mode: str  
+    selectedTopics: List[str] = Field(default_factory=list)
+    customTopics: Optional[str] = None
+    questionFormats: Dict[str, Any] = Field(default_factory=dict)
 
 class TestProgress(BaseModel):
     """Model for saving incomplete test progress"""
@@ -95,73 +104,54 @@ class SavedAnswer(BaseModel):
 
 class QuizData(BaseModel):
     title: str
-    questions: List[Dict[str, Any]]
-    userAnswers: Optional[List[Any]] = None
+    questions: Any  # keep flexible; AI output varies
+    userAnswers: Optional[Any] = None
     score: Optional[float] = None
-    timeTaken: Optional[int] = None
-    resourceName: str
+    timeTaken: int = 0
+    resourceName: Optional[str] = None
     options: QuizOptions
-    attempts: Optional[List[QuizAttempt]] = []
-    originalQuizId: Optional[str] = None
-    # New fields for enhanced save functionality
-    testProgress: Optional[TestProgress] = None
-    savedAnswers: Optional[List[SavedAnswer]] = []
-    
+    attempts: List[Dict[str, Any]] = Field(default_factory=list)
+
 class QuizDocument(BaseModel):
-    contentType: str
+    contentType: str = "quiz"
     data: QuizData
 
 class SavedQuizResponse(BaseModel):
     id: str
     message: str
 
+class QuizAttempt(BaseModel):
+    attemptId: str
+    timestamp: str
+    score: Optional[float] = None
+    timeTaken: int
+    userAnswers: Any
+    mode: Optional[str] = None
+
 class SaveQuizAttemptRequest(BaseModel):
     quizId: str
-    score: float
+    score: Optional[float] = None
     timeTaken: int
-    userAnswers: List[Any]
-    mode: str
+    userAnswers: Any
+    mode: Optional[str] = None
 
 class SaveQuizAttemptResponse(BaseModel):
     quizId: str
     attemptId: str
     message: str
 
-class SaveTestProgressRequest(BaseModel):
-    """Request model for saving test progress"""
-    quizId: str
-    currentQuestion: int
-    userAnswers: List[Any]
-    timeElapsed: int
-    isCompleted: bool = False
 
-class SaveTestProgressResponse(BaseModel):
-    """Response model for saving test progress"""
-    quizId: str
-    message: str
-    lastSaved: str
-
-class SaveAnswerRequest(BaseModel):
-    """Request model for saving individual answers"""
-    quizId: str
-    questionIndex: int
-    userAnswer: Any
-    isCorrect: bool
-    explanation: Optional[str] = None
-    timeSpent: Optional[int] = None
-
-class SaveAnswerResponse(BaseModel):
-    """Response model for saving individual answers"""
-    quizId: str
-    answerId: str
-    message: str
+# =========================
+# Study plan models
+# =========================
 
 class StudyPlanData(BaseModel):
     title: str
-    description: str
-    content: Dict[str, Any]
-    tags: List[str] = []
-    pdfs: List[str] = []
+    description: str = ""
+    content: Any  # AI-generated structure; keep flexible
+    tags: List[str] = Field(default_factory=list)
+    pdfs: List[str] = Field(default_factory=list)
+    duration_info: Optional[Dict[str, Any]] = None
     updatedAt: Optional[str] = None
 
 class StudyPlanDocument(BaseModel):
@@ -174,13 +164,9 @@ class SaveStudyPlanResponse(BaseModel):
 
 class UpdateStudyPlanRequest(BaseModel):
     planId: str
-    quizIds: List[str] = []
+    quizIds: List[str] = Field(default_factory=list)
 
 class UpdateStudyPlanResponse(BaseModel):
     id: str
     message: str
-    updatedPlan: Dict[str, Any]
-
-class Summary(BaseModel):
-    summary: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    updatedPlan: Any

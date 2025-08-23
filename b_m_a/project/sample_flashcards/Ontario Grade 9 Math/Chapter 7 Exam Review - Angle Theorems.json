@@ -1,0 +1,65 @@
+{
+  "title": "Chapter 7 Exam Review - Angle Theorems",
+  "cards": [
+    {
+      "question": "What are corresponding angles?",
+      "answer": "Angles that are in the same relative position at intersections of a transversal with two lines.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What are alternate angles?",
+      "answer": "Angles on opposite sides of the transversal but inside the two lines.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What are co-interior angles?",
+      "answer": "Angles on the same side of the transversal and inside the two lines.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the measure of angle x in diagram 3a?",
+      "answer": "45°",
+      "difficulty": "easy",
+      "important": false
+    },
+    {
+      "question": "How do you classify a triangle with all sides equal?",
+      "answer": "Equilateral triangle.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How do you classify a triangle with two equal sides?",
+      "answer": "Isosceles triangle.",
+      "difficulty": "easy",
+      "important": false
+    },
+    {
+      "question": "What type of triangle has one right angle and two equal sides?",
+      "answer": "Isosceles right triangle.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the measure of angle x in diagram 7a?",
+      "answer": "81°",
+      "difficulty": "easy",
+      "important": false
+    },
+    {
+      "question": "What is the value of x in equation 4a?",
+      "answer": "14",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "How do you classify a triangle with all sides of different lengths and one obtuse angle?",
+      "answer": "Scalene obtuse triangle.",
+      "difficulty": "medium",
+      "important": true
+    }
+  ]
+}

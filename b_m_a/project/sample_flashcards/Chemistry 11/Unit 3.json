@@ -1,0 +1,126 @@
+{
+    "title": "Unit 3 - Types of Chemical Reactions",
+    "cards": [
+      {
+        "question": "What are the five main types of chemical reactions studied in Chemistry 11?",
+        "answer": "Synthesis, decomposition, single displacement, double displacement, combustion",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What type of reaction is: 2H2 + O2 → 2H2O?",
+        "answer": "Synthesis reaction",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What type of reaction is: 2HgO → 2Hg + O2?",
+        "answer": "Decomposition reaction",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What type of reaction is: Zn + 2HCl → ZnCl2 + H2?",
+        "answer": "Single displacement reaction",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What type of reaction is: AgNO3 + NaCl → AgCl + NaNO3?",
+        "answer": "Double displacement reaction",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What type of reaction is: CH4 + 2O2 → CO2 + 2H2O?",
+        "answer": "Combustion reaction",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "In a combustion reaction, what are the typical products if oxygen reacts with a hydrocarbon?",
+        "answer": "Carbon dioxide and water",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "How do you identify a decomposition reaction?",
+        "answer": "One compound breaks down into two or more simpler substances.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What evidence suggests a chemical reaction has occurred?",
+        "answer": "Color change, gas formation, precipitate formation, heat/light change",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the general form of a synthesis reaction?",
+        "answer": "A + B → AB",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What is the general form of a single displacement reaction?",
+        "answer": "A + BC → AC + B",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the general form of a double displacement reaction?",
+        "answer": "AB + CD → AD + CB",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the general form of a decomposition reaction?",
+        "answer": "AB → A + B",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Why is balancing chemical equations important?",
+        "answer": "It ensures conservation of mass and follows the Law of Conservation of Matter.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What is a neutralization reaction classified as?",
+        "answer": "A type of double displacement reaction between an acid and a base.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Predict the products: CaCO3 → ?",
+        "answer": "CaO + CO2 (decomposition)",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Predict the products: 2K + Cl2 → ?",
+        "answer": "2KCl (synthesis)",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What type of reaction is photosynthesis?",
+        "answer": "Synthesis reaction (6CO2 + 6H2O → C6H12O6 + 6O2)",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What happens during a redox reaction?",
+        "answer": "One species is oxidized (loses electrons) and another is reduced (gains electrons).",
+        "difficulty": "hard",
+        "important": true
+      },
+      {
+        "question": "Why are combustion reactions important in real life?",
+        "answer": "They release energy used for heating, electricity, and transportation.",
+        "difficulty": "medium",
+        "important": true
+      }
+    ]
+  }
+  

@@ -1,0 +1,65 @@
+{
+  "title": "Linear Relations - Exam Review",
+  "cards": [
+    {
+      "question": "What is the opposite of the hypothesis 'Most people’s favourite colour is blue'?",
+      "answer": "Most people’s favourite colour is not blue.",
+      "difficulty": "easy",
+      "important": false
+    },
+    {
+      "question": "What type of data is collected by a student council president surveying students?",
+      "answer": "Primary data.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the population in the statement 'Generally, girls learn to talk before boys do'?",
+      "answer": "All children.",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "What type of sample involves interviewing newly qualified Chartered Accountants at a single company?",
+      "answer": "Non-random sample.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "How can workers in a company be divided for a stratified random sample?",
+      "answer": "By gender, age, or seniority.",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "What is the dependent variable in the pair 'physical activity and heart rate'?",
+      "answer": "Heart rate.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the trend in the number of math graduates from the university between 1999 and 2004?",
+      "answer": "The number of graduates increased every year.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What does the flat portion of a swimmer’s distance-time graph represent?",
+      "answer": "Stopping at the dock directly across the lake.",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "Define 'interpolate'.",
+      "answer": "To estimate values lying between given data.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "Does a graph showing a constant rate of movement represent a linear or non-linear relation?",
+      "answer": "Linear relation.",
+      "difficulty": "easy",
+      "important": false
+    }
+  ]
+}

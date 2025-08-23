@@ -1,0 +1,34 @@
+﻿# --- Added ignores (feature branch cleanup) ---
+node_modules/
+dist/
+build/
+.vite/
+.parcel-cache/
+
+venv/
+backend/venv/
+b_m_a/project/backend/venv/
+**/__pycache__/
+**/*.py[cod]
+node_modules/
+dist/
+build/
+.vite/
+.parcel-cache/
+venv/
+backend/venv/
+b_m_a/project/backend/venv/
+**/__pycache__/
+**/*.py[cod]
+# Snapshot ignores
+node_modules/
+dist/
+build/
+.vite/
+.parcel-cache/
+
+venv/
+backend/venv/
+b_m_a/project/backend/venv/
+**/__pycache__/
+**/*.py[cod]
