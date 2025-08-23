@@ -99,176 +99,155 @@ export const shouldUseAIEvaluation = (questionType) => {
 };
 
 /**
- * Enhanced topic extraction from quiz questions using AI
+ * Enhanced topic extraction from quiz questions
  * @param {Array} questions - Array of quiz questions
- * @param {Array} userAnswers - Array of user answers
- * @param {Object} quizMetadata - Additional quiz metadata
- * @returns {Promise<Array>} - Promise resolving to array of topic objects with analysis
+ * @returns {Array} - Array of topic objects with analysis
  */
-export const extractTopicsFromQuestions = async (questions, userAnswers = [], quizMetadata = {}) => {
+export const extractTopicsFromQuestions = (questions) => {
   console.log("extractTopicsFromQuestions called with:", questions.length, "questions");
+  const topics = new Map();
   
-  try {
-    // Import the AI service
-    const { analyzeQuizPerformance } = await import('../../../api/apiService');
+  questions.forEach((question, index) => {
+    console.log(`Processing question ${index + 1}:`, question.question.substring(0, 100) + "...");
+    const extractedTopics = extractTopicsFromText(question.question, question);
+    console.log(`Question ${index + 1} extracted topics:`, extractedTopics);
     
-    // Use AI to analyze all questions and extract topics
-    console.log("Calling AI for comprehensive topic analysis...");
-    const aiAnalysis = await analyzeQuizPerformance(questions, userAnswers, quizMetadata);
-    console.log("AI analysis result:", aiAnalysis);
-    
-    if (aiAnalysis && aiAnalysis.topics && aiAnalysis.topics.length > 0) {
-      // Convert AI response to expected format and recalculate accuracy
-      const topics = aiAnalysis.topics.map(topic => {
-        // Recalculate correctCount and accuracy based on actual user answers
-        let correctCount = 0;
-        const questionIndices = topic.questionIndices || [];
-        
-        questionIndices.forEach(index => {
-          if (userAnswers[index] && isAnswerCorrect(questions[index], userAnswers[index])) {
-            correctCount++;
-          }
-        });
-        
-        const totalCount = questionIndices.length;
-        const accuracy = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
-        
-        console.log(`Topic "${topic.name}" recalculation:`, {
-          questionIndices,
-          correctCount,
-          totalCount,
-          accuracy,
-          userAnswers: questionIndices.map(i => userAnswers[i]),
-          correctAnswers: questionIndices.map(i => questions[i]?.correct_answer || questions[i]?.correct_answers || questions[i]?.correct_mapping)
-        });
-        
-        return {
+    extractedTopics.forEach(topic => {
+      if (!topics.has(topic.name)) {
+        topics.set(topic.name, {
           name: topic.name,
-          questionIndices: questionIndices,
-          correctCount: correctCount,
-          totalCount: totalCount,
-          accuracy: accuracy,
-          category: topic.category || 'general',
-          keywords: topic.keywords || [],
-          reason: topic.reason || '',
-          suggestions: topic.suggestions || []
-        };
-      });
-      
-      console.log("Converted AI topics:", topics);
-      console.log("Total questions processed:", questions.length);
-      
-      // Verify all questions are covered
-      const coveredQuestions = new Set();
-      topics.forEach(topic => {
-        topic.questionIndices.forEach(index => coveredQuestions.add(index));
-      });
-      
-      const missingQuestions = [];
-      for (let i = 0; i < questions.length; i++) {
-        if (!coveredQuestions.has(i)) {
-          missingQuestions.push(i);
-        }
-      }
-      
-      if (missingQuestions.length > 0) {
-        console.log("Questions not covered by AI analysis:", missingQuestions.map(i => i + 1));
-        
-        // Add missing questions to a general topic
-        const generalTopic = topics.find(t => t.name === 'General Concepts') || {
-          name: 'General Concepts',
           questionIndices: [],
           correctCount: 0,
           totalCount: 0,
           accuracy: 0,
-          category: 'general',
-          keywords: ['general'],
-          reason: 'General concepts and fundamentals',
-          suggestions: ['Review basic concepts and fundamentals']
-        };
-        
-        missingQuestions.forEach(index => {
-          generalTopic.questionIndices.push(index);
-          generalTopic.totalCount++;
-          if (userAnswers[index] && isAnswerCorrect(questions[index], userAnswers[index])) {
-            generalTopic.correctCount++;
-          }
+          difficulty: topic.difficulty || 'medium',
+          category: topic.category || 'general',
+          keywords: topic.keywords || []
         });
-        
-        // Update accuracy for general topic
-        generalTopic.accuracy = generalTopic.totalCount > 0 ? 
-          Math.round((generalTopic.correctCount / generalTopic.totalCount) * 100) : 0;
-        
-        // Add general topic if it wasn't already in the list
-        if (!topics.find(t => t.name === 'General Concepts')) {
-          topics.push(generalTopic);
-        }
       }
-      
-      return topics;
-    } else {
-      console.warn("AI analysis returned no topics, falling back to basic analysis");
-      return createFallbackTopics(questions, userAnswers);
-    }
-    
-  } catch (error) {
-    console.error("Error in AI topic extraction:", error);
-    console.log("Falling back to basic topic analysis");
-    return createFallbackTopics(questions, userAnswers);
-  }
-};
-
-/**
- * Create fallback topics when AI analysis fails
- * @param {Array} questions - Array of quiz questions
- * @param {Array} userAnswers - Array of user answers
- * @returns {Array} - Array of topic objects
- */
-export const createFallbackTopics = (questions, userAnswers = []) => {
-  console.log("Creating fallback topics for", questions.length, "questions");
-  
-  const topics = new Map();
-  
-  // Process each question and create contextual topics
-  questions.forEach((question, index) => {
-    const contextualTopic = createContextualTopic(question.question, question);
-    
-    if (!topics.has(contextualTopic.name)) {
-      topics.set(contextualTopic.name, {
-        name: contextualTopic.name,
-        questionIndices: [],
-        correctCount: 0,
-        totalCount: 0,
-        accuracy: 0,
-        category: contextualTopic.category,
-        keywords: contextualTopic.keywords,
-        reason: `Performance in ${contextualTopic.name}`,
-        suggestions: [`Review ${contextualTopic.name} concepts`]
-      });
-    }
-    
-    const topic = topics.get(contextualTopic.name);
-    topic.questionIndices.push(index);
-    topic.totalCount++;
-    
-    // Check if answer is correct
-    if (userAnswers[index] && isAnswerCorrect(question, userAnswers[index])) {
-      topic.correctCount++;
-    }
-  });
-  
-  // Calculate accuracy for each topic
-  topics.forEach(topic => {
-    topic.accuracy = topic.totalCount > 0 ? 
-      Math.round((topic.correctCount / topic.totalCount) * 100) : 0;
+      topics.get(topic.name).questionIndices.push(index);
+      topics.get(topic.name).totalCount++;
+    });
   });
   
   const result = Array.from(topics.values());
-  console.log("Fallback topics created:", result);
+  console.log("Final extracted topics:", result);
   return result;
 };
 
+/**
+ * Extract topics from question text using intelligent analysis
+ * @param {string} text - Question text
+ * @param {Object} question - Full question object
+ * @returns {Array} - Array of topic objects
+ */
+export const extractTopicsFromText = (text, question = {}) => {
+  console.log("extractTopicsFromText called with text:", text.substring(0, 100) + "...");
+  const topics = [];
+  const lowerText = text.toLowerCase();
+  
+  // Subject-specific topic patterns
+  const subjectPatterns = {
+    math: [
+      'algebra', 'calculus', 'geometry', 'trigonometry', 'statistics', 'probability',
+      'equations', 'functions', 'derivatives', 'integrals', 'matrices', 'vectors'
+    ],
+    science: [
+      'biology', 'chemistry', 'physics', 'anatomy', 'physiology', 'molecular',
+      'cellular', 'organic', 'inorganic', 'mechanics', 'thermodynamics', 'genetics'
+    ],
+    history: [
+      'ancient', 'medieval', 'renaissance', 'industrial', 'revolution', 'war',
+      'civilization', 'empire', 'dynasty', 'colonial', 'independence', 'reformation'
+    ],
+    literature: [
+      'poetry', 'prose', 'drama', 'novel', 'short story', 'essay', 'metaphor',
+      'symbolism', 'allegory', 'irony', 'satire', 'romanticism', 'modernism'
+    ],
+    language: [
+      'grammar', 'syntax', 'vocabulary', 'pronunciation', 'conjugation', 'declension',
+      'phonetics', 'morphology', 'semantics', 'pragmatics', 'dialect', 'accent'
+    ],
+    computer_science: [
+      'programming', 'algorithms', 'data structures', 'databases', 'networks',
+      'operating systems', 'software engineering', 'artificial intelligence', 'machine learning'
+    ]
+  };
 
+  // General academic topics
+  const generalTopics = [
+    'fundamentals', 'basics', 'principles', 'concepts', 'theories', 'methods',
+    'techniques', 'analysis', 'synthesis', 'evaluation', 'application', 'problem solving',
+    'critical thinking', 'research', 'experimentation', 'observation', 'hypothesis',
+    'conclusion', 'argument', 'evidence', 'reasoning', 'logic', 'deduction', 'induction'
+  ];
+
+  // Determine subject area and extract relevant topics
+  let subject = 'general';
+  for (const [subj, patterns] of Object.entries(subjectPatterns)) {
+    if (patterns.some(pattern => lowerText.includes(pattern))) {
+      subject = subj;
+      break;
+    }
+  }
+
+  // Extract subject-specific topics
+  if (subject !== 'general') {
+    const subjectTopics = subjectPatterns[subject];
+    subjectTopics.forEach(topic => {
+      if (lowerText.includes(topic)) {
+        topics.push({
+          name: topic,
+          difficulty: determineDifficulty(text, question),
+          category: subject,
+          keywords: [topic]
+        });
+      }
+    });
+  }
+
+  // Extract general academic topics
+  generalTopics.forEach(topic => {
+    if (lowerText.includes(topic)) {
+      topics.push({
+        name: topic,
+        difficulty: determineDifficulty(text, question),
+        category: 'academic_skills',
+        keywords: [topic]
+      });
+    }
+  });
+
+  // If no specific topics found, create contextual topics
+  if (topics.length === 0) {
+    console.log("No specific topics found, creating contextual topic");
+    const contextualTopic = createContextualTopic(text, question);
+    topics.push(contextualTopic);
+  }
+
+  console.log("Final topics for this text:", topics);
+  return topics;
+};
+
+/**
+ * Determine question difficulty based on text length and complexity
+ * @param {string} text - Question text
+ * @param {Object} question - Question object
+ * @returns {string} - Difficulty level
+ */
+export const determineDifficulty = (text, question) => {
+  const wordCount = text.split(' ').length;
+  const hasComplexTerms = /(because|therefore|however|although|nevertheless|furthermore|consequently)/i.test(text);
+  const hasMultipleSteps = text.includes('step') || text.includes('process') || text.includes('procedure');
+  
+  if (wordCount > 50 || hasComplexTerms || hasMultipleSteps) {
+    return 'advanced';
+  } else if (wordCount > 25 || question.type === 'multi_select' || question.type === 'drag_and_drop') {
+    return 'intermediate';
+  } else {
+    return 'basic';
+  }
+};
 
 /**
  * Create contextual topic when no specific topics are found
@@ -281,41 +260,16 @@ export const createContextualTopic = (text, question) => {
   const wordCount = text.split(' ').length;
   const questionType = question.type || 'multiple_choice';
   
-  // Extract key terms from the question text to create more meaningful topic names
-  const lowerText = text.toLowerCase();
-  
-  // Look for subject-specific keywords
   let topicName = 'general concepts';
   let category = 'general';
   
-  // Check for common subject areas
-  if (/electrical|electricity|voltage|current|resistance|power|energy|circuit|battery|capacitor/i.test(lowerText)) {
-    topicName = 'electrical concepts';
-    category = 'physics';
-  } else if (/math|algebra|calculus|geometry|equation|formula|number|calculation/i.test(lowerText)) {
-    topicName = 'mathematical concepts';
-    category = 'mathematics';
-  } else if (/chemical|chemistry|reaction|molecule|atom|element|compound/i.test(lowerText)) {
-    topicName = 'chemical concepts';
-    category = 'chemistry';
-  } else if (/biological|biology|cell|organism|species|evolution|genetic/i.test(lowerText)) {
-    topicName = 'biological concepts';
-    category = 'biology';
-  } else if (/historical|history|event|period|century|war|revolution/i.test(lowerText)) {
-    topicName = 'historical concepts';
-    category = 'history';
-  } else if (/literary|literature|author|book|poem|novel|writing/i.test(lowerText)) {
-    topicName = 'literary concepts';
-    category = 'literature';
+  // Determine topic based on question characteristics
+  if (wordCount < 30) {
+    topicName = 'basic concepts';
+  } else if (wordCount < 60) {
+    topicName = 'intermediate concepts';
   } else {
-    // Fallback to complexity-based naming
-    if (wordCount < 25) {
-      topicName = 'fundamental concepts';
-    } else if (wordCount < 50) {
-      topicName = 'intermediate concepts';
-    } else {
-      topicName = 'advanced concepts';
-    }
+    topicName = 'advanced concepts';
   }
   
   // Adjust based on question type
@@ -332,8 +286,9 @@ export const createContextualTopic = (text, question) => {
   
   const result = {
     name: topicName,
+    difficulty: determineDifficulty(text, question),
     category: category,
-    keywords: [topicName.toLowerCase().replace(/\s+/g, '_')]
+    keywords: [topicName]
   };
   console.log("Created contextual topic:", result);
   return result;
@@ -349,6 +304,8 @@ export const createContextualTopic = (text, question) => {
 export const analyzeTopicPerformance = (questions, userAnswers, topics) => {
   return topics.map(topic => {
     let correctCount = 0;
+    let totalTime = 0;
+    let difficultyBreakdown = { basic: 0, intermediate: 0, advanced: 0 };
     
     topic.questionIndices.forEach(index => {
       const question = questions[index];
@@ -357,6 +314,10 @@ export const analyzeTopicPerformance = (questions, userAnswers, topics) => {
       if (isAnswerCorrect(question, userAnswer)) {
         correctCount++;
       }
+      
+      // Track difficulty distribution
+      const difficulty = determineDifficulty(question.question, question);
+      difficultyBreakdown[difficulty]++;
     });
     
     const accuracy = topic.totalCount > 0 ? Math.round((correctCount / topic.totalCount) * 100) : 0;
@@ -366,12 +327,28 @@ export const analyzeTopicPerformance = (questions, userAnswers, topics) => {
       correctCount,
       accuracy,
       reason: getTopicReason(accuracy),
-      suggestions: getTopicSuggestions(accuracy)
+      suggestions: getTopicSuggestions(accuracy),
+      difficultyBreakdown,
+      averageDifficulty: calculateAverageDifficulty(difficultyBreakdown)
     };
   });
 };
 
-
+/**
+ * Calculate average difficulty based on breakdown
+ * @param {Object} difficultyBreakdown - Count of questions by difficulty
+ * @returns {string} - Average difficulty
+ */
+export const calculateAverageDifficulty = (difficultyBreakdown) => {
+  const total = difficultyBreakdown.basic + difficultyBreakdown.intermediate + difficultyBreakdown.advanced;
+  if (total === 0) return 'medium';
+  
+  const weightedScore = (difficultyBreakdown.basic * 1 + difficultyBreakdown.intermediate * 2 + difficultyBreakdown.advanced * 3) / total;
+  
+  if (weightedScore < 1.5) return 'basic';
+  if (weightedScore < 2.5) return 'intermediate';
+  return 'advanced';
+};
 
 /**
  * Get reason for topic performance
@@ -409,6 +386,7 @@ export const generateRecommendations = (topicPerformance) => {
   
   const weakTopics = topicPerformance.filter(t => t.accuracy < 70);
   const strongTopics = topicPerformance.filter(t => t.accuracy >= 80);
+  const advancedTopics = topicPerformance.filter(t => t.averageDifficulty === 'advanced');
   
   if (weakTopics.length > 0) {
     recommendations.push(`Focus on reviewing ${weakTopics.map(t => t.name).join(', ')}`);
@@ -416,6 +394,10 @@ export const generateRecommendations = (topicPerformance) => {
   
   if (strongTopics.length > 0) {
     recommendations.push(`Build on your strengths in ${strongTopics.map(t => t.name).join(', ')}`);
+  }
+  
+  if (advancedTopics.length > 0) {
+    recommendations.push("Consider breaking down complex topics into smaller, manageable concepts");
   }
   
   recommendations.push("Use the AI Flashcards tool to create study materials for difficult topics");

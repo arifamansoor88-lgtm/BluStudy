@@ -3,7 +3,6 @@ import { TestTube, PlusCircle, Check, X } from "lucide-react";
 import QuizWizard from "./QuizWizard";
 import QuizDisplay from "./QuizDisplay";
 import SavedQuizzesList from "./SavedQuizzesList";
-
 import { useQuizTimer, useQuizData } from "./hooks";
 import { isAnswerCorrect, shouldUseAIEvaluation } from "./utils";
 import {
@@ -64,14 +63,11 @@ const PracticeTests = () => {
     generateQuiz,
     saveQuiz,
     saveQuizAttempt,
-    
   } = useQuizData();
 
   // New state for AI-evaluated answers
   const [aiEvaluatedAnswers, setAiEvaluatedAnswers] = useState({});
   const [evaluatingAnswer, setEvaluatingAnswer] = useState(false);
-
-
 
   // Fetch saved quizzes on component mount
   useEffect(() => {
@@ -79,8 +75,6 @@ const PracticeTests = () => {
       fetchSavedQuizzes();
     }
   }, [showQuiz, fetchSavedQuizzes, quizzesFetchedRef]);
-
-
 
   // Create a new test
   const handleCreateTest = () => {
@@ -378,8 +372,6 @@ const PracticeTests = () => {
         
         // Also set the current explanation for backward compatibility
         setAiExplanation(explanation);
-
-        
       } catch (error) {
         console.error("Error getting explanation:", error);
         const errorMessage = "Failed to generate an explanation. Please try again.";
@@ -554,8 +546,6 @@ const PracticeTests = () => {
       const quizWithId = { ...savedQuiz.data, id: savedQuiz.id };
       setGeneratedQuiz(quizWithId);
 
-      
-
       // If there are saved answers, load them
       if (savedQuiz.data.userAnswers && savedQuiz.data.userAnswers.length > 0) {
         setUserAnswers(savedQuiz.data.userAnswers);
@@ -572,10 +562,10 @@ const PracticeTests = () => {
         resetTimer();
       }
 
-             // Set quiz status
-       setQuizStatus("ready");
-       setShowSummary(false);
-       setShowAttemptHistory(false); // Hide attempt history by default
+      // Set quiz status
+      setQuizStatus("ready");
+      setShowSummary(false);
+      setShowAttemptHistory(true); // Show attempt history by default
 
       setCurrentQuizQuestion(0);
     } catch (error) {
@@ -586,8 +576,6 @@ const PracticeTests = () => {
     }
   };
 
-
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Enhanced header with gradient underline */}
@@ -597,14 +585,12 @@ const PracticeTests = () => {
           <h1 className="text-3xl font-bold text-gray-900">Practice Tests</h1>
         </div>
         {showUpload && quizStatus !== "idle" && (
-          <div className="ml-auto flex gap-2">
-            <button
-              onClick={goBack}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors shadow-sm"
-            >
-              Back to Tests
-            </button>
-          </div>
+          <button
+            onClick={goBack}
+            className="ml-auto px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors shadow-sm"
+          >
+            Back to Tests
+          </button>
         )}
       </div>
 
@@ -618,7 +604,7 @@ const PracticeTests = () => {
               </h2>
               <p className="text-gray-600 text-center mb-8 max-w-2xl">
                 Create personalized quizzes based on your own content or choose
-                from saved quizzes below. Your progress and answers are automatically saved for later review.
+                from saved quizzes below.
               </p>
               <button
                 onClick={handleCreateTest}
@@ -659,55 +645,50 @@ const PracticeTests = () => {
               onBack={goBack}
             />
           ) : (
-            <div className="w-full">
-              {/* Main quiz display */}
-              <div className="w-full">
-                <QuizDisplay
-                  status={quizStatus}
-                  quiz={generatedQuiz}
-                  currentQuestion={currentQuizQuestion}
-                  userAnswers={userAnswers}
-                  timer={timer}
-                  quizMode={quizMode}
-                  showSummary={showSummary}
-                  showAnswerFeedback={showAnswerFeedback}
-                  isSaving={isSaving}
-                  saveSuccess={saveSuccess}
-                  quizAttempts={quizAttempts}
-                  showAttemptHistory={showAttemptHistory}
-                  onStartQuiz={startQuiz}
-                  onAnswerChange={handleQuizAnswer}
-                  onNextQuestion={nextQuizQuestion}
-                  onPreviousQuestion={() => goToQuestion(currentQuizQuestion - 1)}
-                  onGoToQuestion={goToQuestion}
-                  onCheckAnswer={checkAnswer}
-                  onReviewQuestions={setShowSummary}
-                  onReturnToTests={goBack}
-                  onToggleHistory={toggleAttemptHistory}
-                  aiExplanation={aiExplanation}
-                  aiExplanations={aiExplanations}
-                  loadingExplanation={loadingExplanation}
-                  evaluatingAnswer={evaluatingAnswer}
-                  aiEvaluatedAnswers={aiEvaluatedAnswers}
-                  checkedAnswers={checkedAnswers}
-                  getAnswerCorrectness={(questionIndex) => {
-                    const question = generatedQuiz.questions[questionIndex];
-                    const userAnswer = userAnswers[questionIndex];
+            <QuizDisplay
+              status={quizStatus}
+              quiz={generatedQuiz}
+              currentQuestion={currentQuizQuestion}
+              userAnswers={userAnswers}
+              timer={timer}
+              quizMode={quizMode}
+              showSummary={showSummary}
+              showAnswerFeedback={showAnswerFeedback}
+              isSaving={isSaving}
+              saveSuccess={saveSuccess}
+              quizAttempts={quizAttempts}
+              showAttemptHistory={showAttemptHistory}
+              onStartQuiz={startQuiz}
+              onAnswerChange={handleQuizAnswer}
+              onNextQuestion={nextQuizQuestion}
+              onPreviousQuestion={() => goToQuestion(currentQuizQuestion - 1)}
+              onGoToQuestion={goToQuestion}
+              onCheckAnswer={checkAnswer}
+              onReviewQuestions={setShowSummary}
+              onReturnToTests={goBack}
+              onToggleHistory={toggleAttemptHistory}
+              aiExplanation={aiExplanation}
+              aiExplanations={aiExplanations}
+              loadingExplanation={loadingExplanation}
+              evaluatingAnswer={evaluatingAnswer}
+              aiEvaluatedAnswers={aiEvaluatedAnswers}
+              checkedAnswers={checkedAnswers}
+              getAnswerCorrectness={(questionIndex) => {
+                const question = generatedQuiz.questions[questionIndex];
+                const userAnswer = userAnswers[questionIndex];
 
-                    // For questions that use AI evaluation
-                    if (
-                      shouldUseAIEvaluation(question.type) &&
-                      aiEvaluatedAnswers[questionIndex]
-                    ) {
-                      return aiEvaluatedAnswers[questionIndex].isCorrect;
-                    }
+                // For questions that use AI evaluation
+                if (
+                  shouldUseAIEvaluation(question.type) &&
+                  aiEvaluatedAnswers[questionIndex]
+                ) {
+                  return aiEvaluatedAnswers[questionIndex].isCorrect;
+                }
 
-                    // Fall back to standard evaluation
-                    return isAnswerCorrect(question, userAnswer);
-                  }}
-                />
-              </div>
-            </div>
+                // Fall back to standard evaluation
+                return isAnswerCorrect(question, userAnswer);
+              }}
+            />
           )}
         </>
       )}
@@ -724,8 +705,6 @@ const PracticeTests = () => {
           />
         </div>
       )}
-
-      
     </div>
   );
 };

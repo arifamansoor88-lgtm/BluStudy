@@ -767,13 +767,15 @@ const MindMaps = () => {
     try {
       setIsLoading(true);
       setError('');
-      console.log('Fetching saved mindmaps...');
       
       // Add a small delay to ensure MSAL is ready
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      const mindmaps = await getMindmaps();
-      console.log('Fetched mindmaps:', mindmaps);
+      const allItems = await getMindmaps();
+      
+      // Filter for actual mindmaps (contentType === 'mindmap')
+      const mindmaps = allItems.filter(item => item.contentType === 'mindmap');
+      
       setSavedMindmaps(mindmaps);
     } catch (err) {
       console.error('Error fetching mindmaps:', err);
@@ -843,6 +845,9 @@ const MindMaps = () => {
       setShowSaveDialog(false);
       setMindmapTitle('');
       
+      // Clear current mindmap ID so next save creates a new mindmap
+      setCurrentMindmapId(null);
+      
       // Refresh saved mindmaps list
       await fetchSavedMindmaps();
       
@@ -911,10 +916,6 @@ const MindMaps = () => {
   }, [currentMindmapId, fetchSavedMindmaps]);
 
   const clearCurrentMindmap = useCallback(() => {
-    console.log('Clearing mindmap...');
-    console.log('Current nodes:', nodes.length);
-    console.log('Current edges:', edges.length);
-    
     // Clear all nodes and edges
     setNodes([]);
     setEdges([]);
@@ -940,7 +941,6 @@ const MindMaps = () => {
     
     // Force React Flow to re-render by using setTimeout
     setTimeout(() => {
-      console.log('Forcing re-render...');
       setNodes([]);
       setEdges([]);
     }, 0);
@@ -1190,6 +1190,22 @@ const MindMaps = () => {
           <ControlSection title="Save/Load">
             <div className="flex gap-2">
               <button
+                onClick={() => {
+                  // Clear current mindmap and start fresh
+                  setCurrentMindmapId(null);
+                  setMindmapTitle('');
+                  setNodes([]);
+                  setEdges([]);
+                  setGroupNodeMap(new Map());
+                  setRenderKey(prev => prev + 1);
+                }}
+                className="px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm flex items-center gap-1"
+                title="Start new mindmap"
+              >
+                <Plus className="h-4 w-4" />
+                New
+              </button>
+              <button
                 onClick={() => setShowSaveDialog(true)}
                 className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm flex items-center gap-1"
                 title="Save current mindmap"
@@ -1297,9 +1313,9 @@ const MindMaps = () => {
                     className="flex items-center justify-between p-3 border border-gray-200 rounded-md hover:bg-gray-50"
                   >
                     <div className="flex-1">
-                      <h4 className="font-medium">{mindmap.data.title}</h4>
+                      <h4 className="font-medium">{mindmap.data?.title || 'Untitled Mindmap'}</h4>
                       <p className="text-sm text-gray-500">
-                        {new Date(mindmap.createdAt).toLocaleDateString()}
+                        {mindmap.createdAt ? new Date(mindmap.createdAt).toLocaleDateString() : 'Unknown date'}
                       </p>
                     </div>
                     <div className="flex gap-2">

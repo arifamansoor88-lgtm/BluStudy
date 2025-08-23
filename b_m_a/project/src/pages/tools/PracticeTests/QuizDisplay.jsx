@@ -39,51 +39,12 @@ const QuizDisplay = ({
   checkedAnswers,
   getAnswerCorrectness,
 }) => {
-  // State for selected attempt in review mode
-  const [selectedAttempt, setSelectedAttempt] = React.useState(null);
-
-     // Helper function to get the correct attempt number
-   const getAttemptNumber = (attempt) => {
-     const index = quizAttempts.findIndex(a => a.attemptId === attempt.attemptId);
-     return index + 1;
-   };
-
   // Helper function to get the current question's explanation
   const getCurrentQuestionExplanation = () => {
     if (aiExplanations && aiExplanations[currentQuestionIndex]) {
       return aiExplanations[currentQuestionIndex];
     }
     return aiExplanation; // Fallback to the legacy aiExplanation
-  };
-
-  // Helper function to check if answer is correct (for past attempts review)
-  const isAnswerCorrectInline = (question, userAnswer) => {
-    if (!question || userAnswer === null || userAnswer === undefined) return false;
-
-    switch (question.type) {
-      case "multiple_choice":
-        return userAnswer === question.correct_answer;
-      case "multi_select":
-        if (!Array.isArray(userAnswer)) return false;
-        return (
-          JSON.stringify([...userAnswer].sort()) ===
-          JSON.stringify([...question.correct_answers].sort())
-        );
-      case "drag_and_drop":
-        if (!userAnswer || typeof userAnswer !== "object") return false;
-        return Object.keys(question.correct_mapping).every(
-          (key) => userAnswer[key] === question.correct_mapping[key]
-        );
-      case "short_answer":
-      case "fill_in_blank":
-        return (
-          userAnswer === question.correct_answer ||
-          (question.acceptable_answers &&
-            question.acceptable_answers.includes(userAnswer))
-        );
-      default:
-        return false;
-    }
   };
 
   // No quiz data available
@@ -119,7 +80,55 @@ const QuizDisplay = ({
           You'll be timed, but there's no time limit.
         </p>
 
-        <div className="space-y-4 w-full max-w-md mb-8">
+        {showAttemptHistory && quizAttempts && quizAttempts.length > 0 ? (
+          <div className="w-full max-w-3xl mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Past Attempts</h3>
+              <button
+                onClick={() => onToggleHistory(false)}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Hide History
+              </button>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2">Date</th>
+                    <th className="text-left py-2">Mode</th>
+                    <th className="text-left py-2">Score</th>
+                    <th className="text-left py-2">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {quizAttempts.map((attempt) => (
+                    <tr key={attempt.attemptId} className="border-b">
+                      <td className="py-2">
+                        {new Date(attempt.timestamp).toLocaleDateString()}{" "}
+                        {new Date(attempt.timestamp).toLocaleTimeString()}
+                      </td>
+                      <td className="py-2 capitalize">{attempt.mode}</td>
+                      <td className="py-2">{attempt.score}%</td>
+                      <td className="py-2">{formatTime(attempt.timeTaken)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : quizAttempts && quizAttempts.length > 0 ? (
+          <button
+            onClick={() => onToggleHistory(true)}
+            className="mb-8 text-blue-600 hover:text-blue-800 flex items-center"
+          >
+            <span className="mr-1">
+              View {quizAttempts.length} Past Attempts
+            </span>
+          </button>
+        ) : null}
+
+        <div className="space-y-4 w-full max-w-md">
           <h3 className="text-lg font-medium text-center">Choose a mode:</h3>
           <button
             onClick={() => onStartQuiz("quiz")}
@@ -140,198 +149,6 @@ const QuizDisplay = ({
             </p>
           </button>
         </div>
-
-        {showAttemptHistory && quizAttempts && quizAttempts.length > 0 ? (
-          <div className="w-full max-w-4xl mb-8 flex flex-col items-center">
-            <div className="flex justify-between items-center mb-4 w-full">
-              <h3 className="text-lg font-semibold">Past Attempts Review</h3>
-              <button
-                onClick={() => onToggleHistory(false)}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                Hide History
-              </button>
-            </div>
-            
-            {/* Attempt Selection */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 w-full">
-              <div className="p-4 border-b border-gray-200">
-                <h4 className="font-medium text-gray-900 mb-3 text-center">Select an attempt to review:</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 justify-items-center">
-                                     {quizAttempts.map((attempt, index) => (
-                     <button
-                       key={attempt.attemptId}
-                       onClick={() => {
-                         // If clicking the same attempt, deselect it
-                         if (selectedAttempt?.attemptId === attempt.attemptId) {
-                           setSelectedAttempt(null);
-                         } else {
-                           setSelectedAttempt(attempt);
-                         }
-                       }}
-                       className={`p-3 rounded-lg border text-center transition-colors w-full ${
-                         selectedAttempt?.attemptId === attempt.attemptId
-                           ? 'border-red-500 bg-red-50'
-                           : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                       }`}
-                     >
-                      <div className="flex flex-col items-center mb-1">
-                                                 <span className="text-sm font-medium text-gray-900 mb-1">
-                           Attempt {index + 1}
-                         </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          attempt.score >= 80 ? 'bg-green-100 text-green-800' :
-                          attempt.score >= 60 ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {attempt.score}%
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-500 text-center">
-                        {new Date(attempt.timestamp).toLocaleDateString()} at{' '}
-                        {new Date(attempt.timestamp).toLocaleTimeString()}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1 text-center">
-                        {formatTime(attempt.timeTaken)} • {attempt.mode}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Selected Attempt Review */}
-            {selectedAttempt && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 w-full">
-                <div className="p-4 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium text-gray-900">
-                        Attempt {getAttemptNumber(selectedAttempt)} Review
-                      </h4>
-                      <p className="text-sm text-gray-500">
-                        {new Date(selectedAttempt.timestamp).toLocaleDateString()} at{' '}
-                        {new Date(selectedAttempt.timestamp).toLocaleTimeString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-semibold text-gray-900">{selectedAttempt.score}%</div>
-                      <div className="text-sm text-gray-500">{formatTime(selectedAttempt.timeTaken)}</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-4">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Questions Review */}
-                    <div>
-                      <h5 className="font-medium text-gray-900 mb-3">Questions & Answers</h5>
-                      <div className="space-y-4 max-h-96 overflow-y-auto">
-                        {quiz.questions.map((question, index) => {
-                          const userAnswer = selectedAttempt.userAnswers[index];
-                          const isCorrect = isAnswerCorrectInline(question, userAnswer);
-                          
-                          return (
-                            <div key={index} className="border border-gray-200 rounded-lg p-3">
-                              <div className="flex items-start justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-900">
-                                  Question {index + 1}
-                                </span>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {isCorrect ? 'Correct' : 'Incorrect'}
-                                </span>
-                              </div>
-                              
-                              <div className="text-sm text-gray-700 mb-2">
-                                {question.question}
-                              </div>
-                              
-                              <div className="space-y-1">
-                                <div className="text-xs text-gray-500">Your Answer:</div>
-                                <div className="text-sm bg-gray-50 p-2 rounded">
-                                  {userAnswer === null || userAnswer === undefined ? (
-                                    <span className="text-gray-400 italic">No answer provided</span>
-                                  ) : Array.isArray(userAnswer) ? (
-                                    userAnswer.join(', ')
-                                  ) : (
-                                    String(userAnswer)
-                                  )}
-                                </div>
-                              </div>
-                              
-                              {question.type === 'multiple_choice' && (
-                                <div className="mt-2">
-                                  <div className="text-xs text-gray-500">Correct Answer:</div>
-                                  <div className="text-sm bg-green-50 p-2 rounded text-green-800">
-                                    {question.correct_answer}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    
-                    {/* Summary Stats */}
-                    <div>
-                      <h5 className="font-medium text-gray-900 mb-3">Performance Summary</h5>
-                      <div className="space-y-4">
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="text-center">
-                              <div className="text-2xl font-bold text-gray-900">{selectedAttempt.score}%</div>
-                              <div className="text-sm text-gray-500">Score</div>
-                            </div>
-                            <div className="text-center">
-                              <div className="text-2xl font-bold text-gray-900">
-                                {selectedAttempt.userAnswers.filter((answer, index) => 
-                                  isAnswerCorrectInline(quiz.questions[index], answer)
-                                ).length}
-                              </div>
-                              <div className="text-sm text-gray-500">Correct</div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <h6 className="font-medium text-gray-900 mb-2">Question Types</h6>
-                          <div className="space-y-2">
-                            {Object.entries(
-                              quiz.questions.reduce((acc, question) => {
-                                const type = question.type || 'unknown';
-                                acc[type] = (acc[type] || 0) + 1;
-                                return acc;
-                              }, {})
-                            ).map(([type, count]) => (
-                              <div key={type} className="flex justify-between text-sm">
-                                <span className="text-gray-600 capitalize">
-                                  {type.replace('_', ' ')}
-                                </span>
-                                <span className="font-medium">{count}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : quizAttempts && quizAttempts.length > 0 ? (
-          <button
-            onClick={() => onToggleHistory(true)}
-            className="mb-8 text-blue-600 hover:text-blue-800 flex items-center"
-          >
-            <span className="mr-1">
-              Review Questions & Answers from {quizAttempts.length} Past Attempts
-            </span>
-          </button>
-        ) : null}
       </div>
     );
   }

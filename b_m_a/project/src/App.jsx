@@ -11,7 +11,7 @@ import VoiceNotes from "./pages/tools/VoiceNotes";
 import MindMaps from "./pages/tools/MindMaps";
 import PracticeTests from "./pages/tools/PracticeTests/PracticeTests";
 import StudyPlans from "./pages/tools/studyPlans/StudyPlans";
-import Summarizer from "./pages/tools/Summarizer";
+import Summarizer from "./pages/tools/summarizer";
 import Workspace from "./pages/Workspace";
 import FolderView from "./pages/FolderView";
 import PublicLibrary from "./pages/publicLibrary";
@@ -37,7 +37,8 @@ function App() {
           <Route path="/workspace" element={<Workspace />} />
           <Route path="/workspace/folder/:id" element={<FolderView />} />
           <Route path="/tools/flashcards/FlashcardStudyPage/:deckId" element={<FlashcardStudyPage  />} />
-          <Route path="/public_Library" element={<PublicLibrary />} />   
+          <Route path="/public_Library" element={<PublicLibrary />} />
+          {/* Add more routes as needed */}
         </Routes>
       </div>
     </Router>

@@ -12,17 +12,20 @@ from dotenv import load_dotenv
 import msal
 from jose import jwt
 from fastapi import (
-    FastAPI, Depends, HTTPException, status, File, UploadFile, Form, Query, Body, Request,
-    StreamingResponse, RedirectResponse, JSONResponse, FileResponse
+    FastAPI, Depends, HTTPException, status, File, UploadFile, Form, Query, Body, Request
 )
-from fastapi.security import OAuth2PasswordBearer
+try:
+    from fastapi import StreamingResponse, RedirectResponse, JSONResponse, FileResponse
+except ImportError:
+    from fastapi.responses import StreamingResponse, RedirectResponse, JSONResponse, FileResponse
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from database import client, container
 from pdf_utils import extract_text_from_pdf
 from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
-from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, SaveFlashcardResponse, FlashcardDocument MindmapDocument, SaveMindmapResponse 
+from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse 
 from pydantic import BaseModel
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 import time
@@ -1195,7 +1198,7 @@ async def analyze_quiz_performance_endpoint(
 
 
 # Save flashcard endpoint - protected 
-@app.post("/save-flashcard", response_model=SaveFlashcardResponse)
+@app.post("/save-flashcard", response_model=dict)
 async def save_flashcard(flashcard: FlashcardDocument, user_claims: dict = Depends(validate_token)):
     try:
         # Prepare document for Cosmos DB
@@ -1370,36 +1373,22 @@ async def get_flashcards(user_claims: dict = Depends(validate_token)):
 @app.post("/save-mindmap", response_model=SaveMindmapResponse)
 async def save_mindmap(mindmap: MindmapDocument, user_claims: dict = Depends(validate_token)):
     try:
-        print(f"Saving mindmap for user: {user_claims['sub']}")
-        
         # Prepare document for Cosmos DB
         document = {
             "id": str(uuid.uuid4()),
-            "userId": user_claims["sub"],
+            "userId": user_claims["sub"],  
             "contentType": mindmap.contentType,
             "createdAt": datetime.utcnow().isoformat(),
-            "updatedAt": datetime.utcnow().isoformat(),
-            "data": mindmap.data.dict()
+            "data": mindmap.data.dict()  
         }
         
         # Save to Cosmos DB
-        try:
-            container.create_item(body=document)
-            print(f"Mindmap saved successfully with ID: {document['id']}")
-            return {"id": document["id"], "message": "Mindmap saved successfully"}
-        except Exception as db_error:
-            print(f"Database error saving mindmap: {db_error}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to save mindmap to database: {str(db_error)}"
-            )
-    except HTTPException:
-        # Re-raise HTTP exceptions
-        raise
+        container.create_item(body=document)
+        return {"id": document["id"], "message": "Mindmap saved successfully"}
     except Exception as e:
         print(f"Error saving mindmap: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Failed to save mindmap: {str(e)}"
         )
 
@@ -1407,8 +1396,6 @@ async def save_mindmap(mindmap: MindmapDocument, user_claims: dict = Depends(val
 @app.put("/update-mindmap/{mindmap_id}", response_model=SaveMindmapResponse)
 async def update_mindmap(mindmap_id: str, mindmap: MindmapDocument, user_claims: dict = Depends(validate_token)):
     try:
-        print(f"Updating mindmap {mindmap_id} for user: {user_claims['sub']}")
-        
         # First, retrieve the existing mindmap
         try:
             existing_mindmap = container.read_item(
@@ -1439,7 +1426,6 @@ async def update_mindmap(mindmap_id: str, mindmap: MindmapDocument, user_claims:
                 item=mindmap_id,
                 body=existing_mindmap
             )
-            print(f"Mindmap updated successfully with ID: {mindmap_id}")
             return {"id": mindmap_id, "message": "Mindmap updated successfully"}
         except Exception as db_error:
             print(f"Database error updating mindmap: {db_error}")
@@ -1461,10 +1447,8 @@ async def update_mindmap(mindmap_id: str, mindmap: MindmapDocument, user_claims:
 @app.get("/mindmaps")
 async def get_mindmaps(user_claims: dict = Depends(validate_token)):
     try:
-        print(f"Fetching mindmaps for user: {user_claims['sub']}")
-        
         # Query parameters for Cosmos DB
-        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'mindmap' ORDER BY c.updatedAt DESC"
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'mindmap' ORDER BY c.createdAt DESC"
         parameters = [{"name": "@userId", "value": user_claims["sub"]}]
         
         # Query Cosmos DB
@@ -1474,7 +1458,6 @@ async def get_mindmaps(user_claims: dict = Depends(validate_token)):
                 parameters=parameters,
                 enable_cross_partition_query=True
             ))
-            print(f"Found {len(items)} mindmaps for user")
             return items
         except Exception as db_error:
             print(f"Database error fetching mindmaps: {db_error}")

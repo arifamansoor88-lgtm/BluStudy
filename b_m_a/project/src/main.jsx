@@ -13,14 +13,3 @@ createRoot(document.getElementById("root")).render(
     </MsalProvider>
   </StrictMode>
 );
-
-
-
-
-
-
-
-
-
-
-
