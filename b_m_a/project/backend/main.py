@@ -12,27 +12,25 @@ from dotenv import load_dotenv
 import msal
 from jose import jwt
 from fastapi import (
-    FastAPI, Depends, HTTPException, status, File, UploadFile, Form, Query, Body, Request,
-    StreamingResponse, RedirectResponse, JSONResponse, FileResponse
+    FastAPI, Depends, HTTPException, status, File, UploadFile, Form, Query, Body, Request
 )
-from fastapi.security import OAuth2PasswordBearer
+try:
+    from fastapi import StreamingResponse, RedirectResponse, JSONResponse, FileResponse
+except ImportError:
+    from fastapi.responses import StreamingResponse, RedirectResponse, JSONResponse, FileResponse
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from database import client, container
 from pdf_utils import extract_text_from_pdf
-from openai_client import (
-    generate_quiz, generate_answer_explanation, evaluate_short_answer,
-    generate_study_plan, update_study_plan, summarize_text,
-    generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
-)
-from models import (
-    VoiceNoteResponse, QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest,
-    SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse,
-    UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck,
-    SaveFlashcardResponse, FlashcardDocument
-)
+from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
+from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse 
+from pydantic import BaseModel
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
+import time
 
+# Load the environment variables
 load_dotenv()
 
 # --------------------------------------------------------------------------------------
@@ -383,6 +381,42 @@ async def validate_token(token: str = Depends(oauth2_scheme)):
         return decoded_token
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Authentication failed: {e}")
+
+# ---------------------------
+# Dev token endpoint (Swagger helper)
+# ---------------------------
+@app.post("/token")
+async def dev_issue_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    DEV ONLY: Issues a dummy JWT so Swagger `/docs` can call protected endpoints.
+    Username becomes the `sub` (prefixed) so your Cosmos partition key is stable.
+    Password is ignored.
+    """
+    username = (form_data.username or "devuser").strip().lower()
+
+    # Deterministic user id/partition key
+    sub = f"dev-{username}"
+
+    now = int(time.time())
+    payload = {
+        "sub": sub,
+        "name": username.split("@")[0] if "@" in username else username,
+        "preferred_username": username,
+        "emails": [username] if "@" in username else [],
+        "iat": now,
+        "exp": now + 3600,  # 1 hour
+    }
+
+    # Same dummy key you reference in validate_token
+    token = jwt.encode(
+        payload,
+        key="development_key_not_for_production",
+        algorithm="HS256",
+    )
+
+    return {"access_token": token, "token_type": "bearer"}
+
+
 
 # --------------------------------------------------------------------------------------
 # Routes
@@ -1162,11 +1196,119 @@ async def analyze_quiz_performance_endpoint(
             detail=f"Error analyzing quiz performance: {str(e)}"
         )
 
-# ----- Flashcards (Placeholder Endpoints) -----
-@app.post("/generate-flashcard", response_model=SaveFlashcardResponse)
-async def create_flashcard(
-    file: UploadFile = File(None),
-    text: str = Body(None),
+
+# Save flashcard endpoint - protected 
+@app.post("/save-flashcard", response_model=dict)
+async def save_flashcard(flashcard: FlashcardDocument, user_claims: dict = Depends(validate_token)):
+    try:
+        # Prepare document for Cosmos DB
+        document = {
+            "id": str(uuid.uuid4()),
+            "userId": user_claims["sub"],  
+            "contentType": flashcard.contentType,
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": flashcard.data.dict()  
+        }
+        
+        # Save to Cosmos DB
+        container.create_item(body=document)
+        return {"id": document["id"], "message": "Flashcards saved successfully"}
+    except Exception as e:
+        print(f"Error saving flashcards: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to save flashcards: {str(e)}"
+        )
+    
+# Get all flashcard decks for a user - protected
+@app.get("/decks")
+async def get_decks(user_claims: dict = Depends(validate_token)):
+    try:
+        # Query parameters for Cosmos DB
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'flashcard' ORDER BY c.createdAt DESC"
+        parameters = [{"name": "@userId", "value": user_claims["sub"]}]
+        
+        # Query Cosmos DB
+        items = list(container.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=True
+        ))
+        return items
+    except Exception as e:
+        print(f"Error fetching decks: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to fetch decks: {str(e)}"
+        )
+
+# Get a specific deck by ID - protected
+@app.get("/decks/{deck_id}")
+async def get_decks(deck_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the deck from Cosmos DB (using partition key)
+        deck = container.read_item(
+            item=deck_id, 
+            partition_key=user_claims["sub"]
+        )
+        
+        # Verify the deck belongs to the user
+        if deck["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Access denied"
+            )
+            
+        return deck
+    except Exception as e:
+        print(f"Error fetching deck: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Deck not found"
+        )
+
+# Delete flashcard deck endpoint - protected
+@app.delete("/delete-deck/{deck_id}", response_model=dict)
+async def delete_deck(deck_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the deck from Cosmos DB
+        deck = container.read_item(
+            item=deck_id,
+            partition_key=user_claims["sub"]
+        )
+
+        # Verify the deck belongs to the user
+        if deck["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+
+        # Delete the deck from Cosmos DB
+        container.delete_item(
+            item=deck_id,
+            partition_key=user_claims["sub"]
+        )
+
+        return {"message": "Flashcard deck deleted successfully"}
+
+    except Exception as e:
+        print(f"Error deleting deck: {str(e)}")
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Deck not found"
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete deck: {str(e)}"
+        )
+
+# PDF upload and flashcard generation endpoint - protected
+@app.post("/generate-flashcard")
+async def generate_flashcard(
+    file: UploadFile = File(...), 
+    num_cards: int = Form(10),
     user_claims: dict = Depends(validate_token)
 ):
     try:
@@ -1224,6 +1366,178 @@ async def get_flashcards(user_claims: dict = Depends(validate_token)):
     except Exception as e:
         print(f"Error fetching flashcards: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to fetch flashcards: {str(e)}")
+
+# Mindmap API Endpoints
+
+# Save mindmap endpoint - protected
+@app.post("/save-mindmap", response_model=SaveMindmapResponse)
+async def save_mindmap(mindmap: MindmapDocument, user_claims: dict = Depends(validate_token)):
+    try:
+        # Prepare document for Cosmos DB
+        document = {
+            "id": str(uuid.uuid4()),
+            "userId": user_claims["sub"],  
+            "contentType": mindmap.contentType,
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": mindmap.data.dict()  
+        }
+        
+        # Save to Cosmos DB
+        container.create_item(body=document)
+        return {"id": document["id"], "message": "Mindmap saved successfully"}
+    except Exception as e:
+        print(f"Error saving mindmap: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to save mindmap: {str(e)}"
+        )
+
+# Update mindmap endpoint - protected
+@app.put("/update-mindmap/{mindmap_id}", response_model=SaveMindmapResponse)
+async def update_mindmap(mindmap_id: str, mindmap: MindmapDocument, user_claims: dict = Depends(validate_token)):
+    try:
+        # First, retrieve the existing mindmap
+        try:
+            existing_mindmap = container.read_item(
+                item=mindmap_id,
+                partition_key=user_claims["sub"]
+            )
+            
+            # Verify the mindmap belongs to the user
+            if existing_mindmap["userId"] != user_claims["sub"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied"
+                )
+        except Exception as e:
+            print(f"Error retrieving mindmap: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Mindmap not found"
+            )
+        
+        # Update the mindmap document
+        existing_mindmap["data"] = mindmap.data.dict()
+        existing_mindmap["updatedAt"] = datetime.utcnow().isoformat()
+        
+        # Save to Cosmos DB
+        try:
+            container.replace_item(
+                item=mindmap_id,
+                body=existing_mindmap
+            )
+            return {"id": mindmap_id, "message": "Mindmap updated successfully"}
+        except Exception as db_error:
+            print(f"Database error updating mindmap: {db_error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to update mindmap in database: {str(db_error)}"
+            )
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        print(f"Error updating mindmap: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update mindmap: {str(e)}"
+        )
+
+# Get all mindmaps for a user - protected
+@app.get("/mindmaps")
+async def get_mindmaps(user_claims: dict = Depends(validate_token)):
+    try:
+        # Query parameters for Cosmos DB
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'mindmap' ORDER BY c.createdAt DESC"
+        parameters = [{"name": "@userId", "value": user_claims["sub"]}]
+        
+        # Query Cosmos DB
+        try:
+            items = list(container.query_items(
+                query=query,
+                parameters=parameters,
+                enable_cross_partition_query=True
+            ))
+            return items
+        except Exception as db_error:
+            print(f"Database error fetching mindmaps: {db_error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to fetch mindmaps from database: {str(db_error)}"
+            )
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        print(f"Error fetching mindmaps: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch mindmaps: {str(e)}"
+        )
+
+# Get a specific mindmap by ID - protected
+@app.get("/mindmaps/{mindmap_id}")
+async def get_mindmap(mindmap_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the mindmap from Cosmos DB (using partition key)
+        mindmap = container.read_item(
+            item=mindmap_id,
+            partition_key=user_claims["sub"]
+        )
+        
+        # Verify the mindmap belongs to the user
+        if mindmap["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+            
+        return mindmap
+    except Exception as e:
+        print(f"Error fetching mindmap: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Mindmap not found"
+        )
+
+# Delete mindmap endpoint - protected
+@app.delete("/delete-mindmap/{mindmap_id}", response_model=dict)
+async def delete_mindmap(mindmap_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        # Get the mindmap from Cosmos DB
+        mindmap = container.read_item(
+            item=mindmap_id,
+            partition_key=user_claims["sub"]
+        )
+
+        # Verify the mindmap belongs to the user
+        if mindmap["userId"] != user_claims["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+
+        # Delete the mindmap from Cosmos DB
+        container.delete_item(
+            item=mindmap_id,
+            partition_key=user_claims["sub"]
+        )
+
+        return {"message": "Mindmap deleted successfully"}
+
+    except Exception as e:
+        print(f"Error deleting mindmap: {str(e)}")
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Mindmap not found"
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete mindmap: {str(e)}"
+        )
+
+
 
 # --------------------------------------------------------------------------------------
 # Dev server

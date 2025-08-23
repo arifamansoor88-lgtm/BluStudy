@@ -405,3 +405,116 @@ export const analyzeQuizPerformance = async (questions, userAnswers, quizMetadat
     throw error;
   }
 };
+
+
+// Mindmap API Functions
+
+/**
+ * Save a mindmap to the database
+ * @param {Object} mindmapData - The mindmap data to save
+ * @returns {Promise<Object>} - The saved mindmap response
+ */
+export const saveMindmap = async (mindmapData) => {
+  const endpoint = "http://localhost:8000/save-mindmap";
+
+  const requestBody = {
+    contentType: "mindmap",
+    data: mindmapData
+  };
+
+  const options = {
+    method: "POST",
+    body: JSON.stringify(requestBody),
+  };
+
+  try {
+    const response = await callProtectedApi(endpoint, options);
+    return response; // Expected format: { id: "...", message: "..." }
+  } catch (error) {
+    console.error("Error saving mindmap:", error);
+    throw error;
+  }
+};
+
+/**
+ * Update an existing mindmap in the database
+ * @param {String} mindmapId - The ID of the mindmap to update
+ * @param {Object} mindmapData - The updated mindmap data
+ * @returns {Promise<Object>} - The update response
+ */
+export const updateMindmap = async (mindmapId, mindmapData) => {
+  const endpoint = `http://localhost:8000/update-mindmap/${mindmapId}`;
+
+  const requestBody = {
+    contentType: "mindmap",
+    data: mindmapData
+  };
+
+  const options = {
+    method: "PUT",
+    body: JSON.stringify(requestBody),
+  };
+
+  try {
+    const response = await callProtectedApi(endpoint, options);
+    return response; // Expected format: { id: "...", message: "..." }
+  } catch (error) {
+    console.error("Error updating mindmap:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get all mindmaps for the current user
+ * @returns {Promise<Array>} - List of mindmaps
+ */
+export const getMindmaps = async () => {
+  const endpoint = "http://localhost:8000/mindmaps";
+
+  try {
+    const response = await callProtectedApi(endpoint);
+    return response; // Expected format: Array of mindmap documents
+  } catch (error) {
+    console.error("Error fetching mindmaps:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get a specific mindmap by ID
+ * @param {String} mindmapId - The ID of the mindmap to retrieve
+ * @returns {Promise<Object>} - The mindmap data
+ */
+export const getMindmap = async (mindmapId) => {
+  const endpoint = `http://localhost:8000/mindmaps/${mindmapId}`;
+
+  try {
+    const response = await callProtectedApi(endpoint);
+    return response; // Expected format: Mindmap document
+  } catch (error) {
+    console.error(`Error fetching mindmap ${mindmapId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a mindmap
+ * @param {String} mindmapId - The ID of the mindmap to delete
+ * @returns {Promise<Object>} - The delete response
+ */
+export const deleteMindmap = async (mindmapId) => {
+  const endpoint = `http://localhost:8000/delete-mindmap/${mindmapId}`;
+
+  const options = {
+    method: "DELETE",
+  };
+
+  try {
+    const response = await callProtectedApi(endpoint, options);
+    return response; // Expected format: { message: "..." }
+  } catch (error) {
+    console.error(`Error deleting mindmap ${mindmapId}:`, error);
+    throw error;
+  }
+};
+
