@@ -700,8 +700,6 @@ const MindMaps = () => {
 
   // Node click handling
   const onNodeClick = useCallback((event, node) => {
-    console.log('Node clicked:', node.id, 'Type:', node.type, 'Selected:', node.selected);
-    
     if (node.type === 'group') {
       event.stopPropagation();
       return;
