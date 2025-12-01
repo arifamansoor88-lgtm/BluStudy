@@ -32,6 +32,7 @@ const VoiceNotes = () => {
   const [privacySettings, setPrivacySettings] = useState({});
   const [tagInput, setTagInput] = useState('');
   const [pendingTags, setPendingTags] = useState([]); // tags for the note being created
+  const [micPermissionError, setMicPermissionError] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const timerRef = useRef(null);
@@ -120,32 +121,49 @@ const VoiceNotes = () => {
 
   const startRecording = async () => {
     resetTranscript();
-    SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
+    setMicPermissionError(false);
+    
+    try {
+      SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
+    } catch (e) {
+      // Speech recognition might fail, continue anyway
+    }
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorderRef.current = new MediaRecorder(stream);
-    const localChunks = [];
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      const localChunks = [];
 
-    mediaRecorderRef.current.ondataavailable = (e) => { if (e.data.size > 0) localChunks.push(e.data); };
-    mediaRecorderRef.current.onstop = () => {
-      const blob = new Blob(localChunks, { type: 'audio/webm' });
-      const url = URL.createObjectURL(blob);
-      setAudioUrl(url);
-      setChunks(localChunks);
-    };
+      mediaRecorderRef.current.ondataavailable = (e) => { if (e.data.size > 0) localChunks.push(e.data); };
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(localChunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        setAudioUrl(url);
+        setChunks(localChunks);
+      };
 
-    audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    await audioContextRef.current.resume();
-    analyserRef.current = audioContextRef.current.createAnalyser();
-    sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
-    sourceRef.current.connect(analyserRef.current);
-    drawWaveform();
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      await audioContextRef.current.resume();
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
+      sourceRef.current.connect(analyserRef.current);
+      drawWaveform();
 
-    mediaRecorderRef.current.start();
-    setIsRecording(true);
-    setIsPaused(false);
-    setRecordingDuration(0);
-    timerRef.current = setInterval(() => setRecordingDuration((prev) => prev + 1), 1000);
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setIsPaused(false);
+      setRecordingDuration(0);
+      timerRef.current = setInterval(() => setRecordingDuration((prev) => prev + 1), 1000);
+    } catch (error) {
+      console.log('Microphone access denied or error:', error.name);
+      setMicPermissionError(true);
+      try {
+        SpeechRecognition.stopListening();
+      } catch (e) {
+        // Ignore if speech recognition wasn't started
+      }
+      return; // Stop execution here
+    }
   };
 
   const pauseRecording = () => {
@@ -415,6 +433,12 @@ const VoiceNotes = () => {
             </>
           )}
         </div>
+
+        {micPermissionError && (
+          <div className="bg-red-100 border-2 border-red-400 p-4 rounded-lg mt-4">
+            <p className="text-red-700 font-medium">Please Enable your microphone.</p>
+          </div>
+        )}
 
         <canvas ref={canvasRef} className="mt-4 w-full h-24 rounded bg-gray-100" />
 
