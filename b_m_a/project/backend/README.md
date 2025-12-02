@@ -49,6 +49,19 @@ chmod +x run.sh  # Make it executable (first time only)
 ./run.sh
 ```
 
+## Maintaining Dependencies
+
+Whenever you install a new Python package during development, make sure to update `requirements.txt` so new development environments remain consistent.
+
+To check the installed version of a package:
+
+```bash
+pip show <package_name>
+```
+
+and promptly add it to the `requirements.txt` file.
+
+
 ## API Documentation
 
 When running the server, access the auto-generated API documentation at:
