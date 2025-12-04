@@ -443,6 +443,12 @@ async def dev_issue_token(form_data: OAuth2PasswordRequestForm = Depends()):
 def read_root():
     return {"message": "Backend is running", "storage": storage_mode, "cosmos_error": cosmos_error}
 
+@app.get("/.well-known/appspecific/com.chrome.devtools.json")
+def chrome_devtools_config():
+    """Handle Chrome DevTools automatic request to suppress 404 errors"""
+    from starlette.responses import Response
+    return Response(status_code=204)
+
 @app.get("/health")
 def health_check():
     try:
@@ -707,7 +713,11 @@ def _stream_inline_audio(item: Dict[str, Any]) -> StreamingResponse:
     except Exception:
         raise HTTPException(status_code=500, detail="Corrupt inline audio")
     ctype = item.get("audio_content_type") or _guess_content_type(item.get("audio_filename"))
-    return StreamingResponse(iter([raw]), media_type=ctype)
+    async def generate():
+        chunk_size = 65536  
+        for i in range(0, len(raw), chunk_size):
+            yield raw[i:i + chunk_size]
+    return StreamingResponse(generate(), media_type=ctype)
 
 @app.get("/voice-notes/{note_id}/audio")
 async def get_voice_note_audio(
@@ -749,7 +759,11 @@ async def get_voice_note_audio(
         file_path = item["audio_local_path"]
         if not os.path.exists(file_path):
             raise HTTPException(status_code=404, detail="Audio file not found")
-        return FileResponse(file_path, media_type=item.get("audio_content_type") or "audio/webm")
+        
+        relative_path = os.path.relpath(file_path, "static")
+        base_url = str(request.base_url).rstrip("/")
+        static_url = f"{base_url}/static/{relative_path.replace(os.sep, '/')}"
+        return RedirectResponse(url=static_url, status_code=307)
 
     blob = (item.get("audio_blob_url") or "").strip()
     if blob.startswith("http://") or blob.startswith("https://"):
