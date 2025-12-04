@@ -1,23 +1,42 @@
 // VoiceNotes.jsx — tags instead of folders, now with Pause/Resume while recording
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import { useMsal } from '@azure/msal-react';
+import { useNavigate } from 'react-router-dom';
 import { Mic, Save, Trash2, Download, Share2, Tag as TagIcon, AudioWaveform as Waveform, PauseCircle, PlayCircle } from 'lucide-react';
 
 const API_URL = "http://localhost:8000";
 
-const USER_ID_KEY = "voice_notes_user_id";
-const getUserId = () => {
-  let id = localStorage.getItem(USER_ID_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(USER_ID_KEY, id);
-  }
-  return id;
-};
-axios.defaults.headers.common['X-User-Id'] = getUserId();
-
 const VoiceNotes = () => {
+  const { instance, accounts } = useMsal();
+  const navigate = useNavigate();
+  
+  // Get user ID from logged-in account (account-based, not device-based)
+  const account = useMemo(
+    () => instance.getActiveAccount() || accounts?.[0] || {},
+    [instance, accounts]
+  );
+  const claims = account?.idTokenClaims || {};
+  const userId = account?.localAccountId || claims?.oid || claims?.sub || null;
+
+  // Redirect to sign in if not authenticated
+  useEffect(() => {
+    if (!accounts?.length || !userId) {
+      navigate("/signin");
+      return;
+    }
+    if (!instance.getActiveAccount() && accounts?.length) {
+      instance.setActiveAccount(accounts[0]);
+    }
+  }, [instance, accounts, navigate, userId]);
+
+  // Set user ID in axios headers whenever it changes
+  useEffect(() => {
+    if (userId) {
+      axios.defaults.headers.common['X-User-Id'] = userId;
+    }
+  }, [userId]);
   const [notes, setNotes] = useState([]);
   const [allTags, setAllTags] = useState([]);
   const [selectedTagFilter, setSelectedTagFilter] = useState('');
@@ -45,6 +64,7 @@ const VoiceNotes = () => {
   const { transcript, resetTranscript } = useSpeechRecognition();
 
   const fetchNotes = async () => {
+    if (!userId) return; // Don't fetch if not logged in
     try {
       const params = new URLSearchParams();
       if (selectedTagFilter) params.append('tag', selectedTagFilter);
@@ -59,7 +79,7 @@ const VoiceNotes = () => {
     }
   };
 
-  useEffect(() => { fetchNotes(); }, [selectedTagFilter]);
+  useEffect(() => { fetchNotes(); }, [selectedTagFilter, userId]);
 
   // canvas sizing
   useEffect(() => {
@@ -315,6 +335,11 @@ const VoiceNotes = () => {
     const matchesTag = !selectedTagFilter || (n.tags || []).map(x => x.toLowerCase()).includes(selectedTagFilter.toLowerCase());
     return matchesQ && matchesTag;
   });
+
+  // Don't render until user is authenticated
+  if (!userId) {
+    return null;
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
