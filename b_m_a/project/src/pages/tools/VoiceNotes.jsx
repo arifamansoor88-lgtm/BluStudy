@@ -81,6 +81,45 @@ const VoiceNotes = () => {
 
   useEffect(() => { fetchNotes(); }, [selectedTagFilter, userId]);
 
+  // Refresh notes when page becomes visible after being hidden (handles browser back button)
+  // Only refresh if page was hidden for more than 1 second
+  useEffect(() => {
+    let hiddenTime = null;
+    let refreshTimeout = null;
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenTime = Date.now();
+      } else if (document.visibilityState === 'visible' && userId && hiddenTime) {
+        const timeHidden = Date.now() - hiddenTime;
+        if (timeHidden > 1000) {
+          clearTimeout(refreshTimeout);
+          refreshTimeout = setTimeout(() => {
+            fetchNotes();
+          }, 500);
+        }
+        hiddenTime = null;
+      }
+    };
+    
+    // Handle browser back/forward navigation
+    const handlePageshow = (e) => {
+      // If page was loaded from cache (back button), refresh notes
+      if (e.persisted && userId) {
+        setTimeout(() => fetchNotes(), 300);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pageshow', handlePageshow);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', handlePageshow);
+      clearTimeout(refreshTimeout);
+    };
+  }, [userId]);
+
   // canvas sizing
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -292,11 +331,22 @@ const VoiceNotes = () => {
   };
 
   const deleteNote = async (id) => {
+    const confirmed = window.confirm('Are you sure you want to delete this note?');
+    if (!confirmed) {
+      return;
+    }
     try {
       await axios.delete(`${API_URL}/voice-notes/${id}`);
       setNotes(prev => prev.filter(n => n.id !== id));
     } catch (err) {
+      // If note is already deleted (404), silently remove it from UI
+      // This handles browser back button cache issues
+      if (err.response?.status === 404) {
+        setNotes(prev => prev.filter(n => n.id !== id));
+        return;
+      }
       console.error("Error deleting note:", err);
+      alert('Failed to delete note. Please try again.');
     }
   };
 
