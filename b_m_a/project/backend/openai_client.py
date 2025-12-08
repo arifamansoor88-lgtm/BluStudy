@@ -16,30 +16,83 @@ summarizer_client = AzureOpenAI(
 )
 SUMMARIZER_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_DEPLOYMENT_NAME")
 
-def summarize_text(text: str) -> str:
+def summarize_text(text: str, style: str = "high", format: str = "bullet") -> str:
     """
-    Summarize text using Azure OpenAI GPT model via the chat completions API.
-    
-    Args:
-        text (str): The text to summarize.
-        
-    Returns:
-        str: The generated summary.
+    Clean, stable, UI-friendly summarizer for Azure OpenAI.
+    Supports:
+      style: "high" or "detailed"
+      format: "bullet", "key", "qa"
     """
+
+    # System prompt (merged from both versions)
+    system_prompts = {
+        "high": (
+            "You are a summarization assistant. Produce a concise, clean summary. "
+            "Do NOT use markdown, symbols, or decorative formatting."
+        ),
+        "detailed": (
+            "You are a summarization assistant. Produce a detailed summary with clear structure. "
+            "Do NOT use markdown, symbols, or decorative formatting."
+        )
+    }
+
+    system_msg = system_prompts.get(style, system_prompts["high"])
+
+    # Format instructions (simplified from their version)
+    if format == "bullet":
+        user_msg = (
+            "Summarize the text using simple bullet-style lines. "
+            "Each line should start with '- '. "
+            "No markdown, no headings, no nested bullets.\n\n"
+            f"Text:\n{text}"
+        )
+    elif format == "key":
+        user_msg = (
+            "Extract only the essential key points as numbered sentences. "
+            "No markdown or special formatting.\n\n"
+            f"Text:\n{text}"
+        )
+    elif format == "qa":
+        user_msg = (
+            "Generate study-style Q&A pairs based on the most important ideas. "
+            "Label them with 'Q:' and 'A:'. No markdown symbols.\n\n"
+            f"Text:\n{text}"
+        )
+    else:
+        user_msg = f"Summarize the text:\n{text}"
+
+    # Token length (from their version)
+    max_tokens = 350 if style == "high" else 900
+
     try:
         response = summarizer_client.chat.completions.create(
             model=SUMMARIZER_DEPLOYMENT_NAME,
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that summarizes text concisely."},
-                {"role": "user", "content": f"Please summarize the following text:\n\n{text}"}
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": user_msg},
             ],
-            max_tokens=150,
-            temperature=0.5
+            max_tokens=max_tokens,
+            temperature=0.3,
         )
-        return response.choices[0].message.content.strip()
+
+        raw = response.choices[0].message.content.strip()
+
+        # Clean output
+        cleaned = (
+            raw.replace("**", "")
+               .replace("#", "")
+               .replace("\t", " ")
+               .replace("\r", " ")
+               .strip()
+        )
+
+        return cleaned
+
     except Exception as e:
-        print(f"Error while calling Azure OpenAI for summarization: {str(e)}")
-        raise Exception(f"Azure OpenAI summarization request failed: {str(e)}")
+        print("Azure summarization error:", str(e))
+        raise Exception("Azure summarization error: " + str(e))
+
+
     
 
 # ---------------------------
