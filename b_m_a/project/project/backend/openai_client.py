@@ -16,7 +16,7 @@ summarizer_client = AzureOpenAI(
 )
 SUMMARIZER_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_DEPLOYMENT_NAME")
 
-def summarize_text(text: str, style: str = "high", format: str = "bullet") -> str:
+def summarize_text_v2(text: str, style: str = "high", format: str = "bullet") -> str:
     """
     Summarize text using Azure OpenAI GPT model via the chat completions API.
 

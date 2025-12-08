@@ -1135,33 +1135,49 @@ async def evaluate_answer(request: ShortAnswerEvaluationRequest, user_claims: di
 @app.post("/summarize")
 async def summarize_file(
     file: UploadFile = None,
-    text: str = Body(None)
+    text: str = Body(None),
+    style: str = Body("high"),
+    format: str = Body("bullet"),
 ):
     print("🔍 Entered /summarize route")
+
     if not file and not text:
         raise HTTPException(status_code=400, detail="Please provide a file or text.")
+
     try:
+        # ----- EXTRACT TEXT -----
         if file:
             allowed = ["application/pdf", "text/plain"]
             if file.content_type not in allowed:
                 raise HTTPException(status_code=400, detail="Invalid file type.")
+
             file_location = f"temp_{file.filename}"
             with open(file_location, "wb") as f:
                 f.write(await file.read())
+
             if file.content_type == "application/pdf":
                 extracted_text = extract_text_from_pdf(file_location)
             else:
                 with open(file_location, "r", encoding="utf-8") as tf:
                     extracted_text = tf.read()
+
             os.remove(file_location)
         else:
             extracted_text = text
 
-        summary = summarize_text(extracted_text)
-        return {"summary": summary}
+        # ----- CALL SUMMARIZER -----
+        summary = summarize_text(extracted_text, style=style, format=format)
+
+        return {
+            "summary": summary,
+            "styleUsed": style,
+            "formatUsed": format,
+        }
+
     except Exception as e:
         print(f"❌ Error during processing: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # ----- Quiz Performance Analysis -----
 class QuizPerformanceRequest(BaseModel):

@@ -57,10 +57,10 @@ const Summarizer = () => {
   const callGenerateSummary = async (input) => {
     if (input instanceof FormData) {
       input.append('style', summaryStyle);
-      input.append('summary_format', summaryFormat);
+      input.append("format", summaryFormat);
       return await generateSummary(input);
     } else {
-      return await generateSummary({ ...input, style: summaryStyle, summary_format: summaryFormat });
+      return await generateSummary({ ...input, style: summaryStyle, format: summaryFormat });
     }
   };
 
