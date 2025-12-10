@@ -223,9 +223,9 @@ cosmos_error: Optional[str] = None
 if storage_mode == "cosmos":
     try:
         from azure.cosmos import CosmosClient, PartitionKey
-        cosmos_client = CosmosClient(COSMOS_URL, credential=COSMOS_KEY)
-        _database = cosmos_client.get_database_client(COSMOS_DB_NAME)
-        container = _database.get_container_client(COSMOS_CONTAINER_NAME)
+        cosmos_client = CosmosClient(os.getenv("COSMOS_DB_URL"), credential=os.getenv("COSMOS_DB_KEY"))
+        _database = cosmos_client.get_database_client("ai-education-platform-db")
+        container = _database.get_container_client("userContent")
         list(container.query_items(query="SELECT TOP 1 * FROM c", enable_cross_partition_query=True))
     except Exception as e:
         cosmos_error = str(e)
