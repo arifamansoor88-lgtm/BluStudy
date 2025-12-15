@@ -36,7 +36,7 @@ function App() {
           <Route path="/tools/summarizer" element={<Summarizer />} />
           <Route path="/workspace" element={<Workspace />} />
           <Route path="/workspace/folder/:id" element={<FolderView />} />
-          <Route path="/tools/flashcards/FlashcardStudyPage/:deckId" element={<FlashcardStudyPage  />} />
+          <Route path="/tools/flashcards/study/:deckId" element={<FlashcardStudyPage  />} />
           <Route path="/public_Library" element={<PublicLibrary />} />
           {/* Add more routes as needed */}
         </Routes>

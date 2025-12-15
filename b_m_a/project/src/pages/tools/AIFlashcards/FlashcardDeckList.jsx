@@ -1,4 +1,5 @@
-import React from "react";
+import { useState } from "react";
+import { useEffect } from "react";
 import { useDeckData } from './hooks';
 import { X } from 'lucide-react';
 
@@ -31,8 +32,17 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
     };
 
     useEffect(() => {
-        setLocalDecks(decks);
-    }, [decks]); // Sync localDecks whenever parent updates decks
+    const normalizedDecks = (decks || []).map(deck => ({
+        ...deck,
+        data: deck.data ?? {
+            title: deck.title ?? "Untitled Deck",
+            cards: deck.cards ?? []
+        }
+    }));
+
+    setLocalDecks(normalizedDecks);
+}, [decks]);
+
 
     if (!decks || decks.length === 0) {
         return (
@@ -48,8 +58,8 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
 
     return (
         <div className="space-y-4">
-            {decks.map((deck) => {
-                const cards = deck.data.cards || [];
+            {localDecks.map((deck) => {
+                const cards = deck?.data?.cards ?? [];
 
                 return (
                     <div
@@ -64,7 +74,7 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
                             <X className="h-4 w-4" />
                         </button>
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                            {deck.data.title || "Untitled Deck"}
+                            {deck?.data?.title ?? "Untitled Deck"}
                         </h3>
 
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-600 dark:text-gray-400">

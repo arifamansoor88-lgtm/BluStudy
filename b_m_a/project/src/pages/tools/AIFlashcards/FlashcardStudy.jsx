@@ -9,59 +9,68 @@ const FlashcardStudyPage = () => {
     const [index, setIndex] = useState(0);
     const [flipped, setFlipped] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [flashcards, setFlashcards] = useState(useLocation().state?.flashcards || []);
-    const { deckId } = useParams();
     const [deckTitle, setDeckTitle] = useState(useLocation().state?.title || []);
-    const [loading, setLoading] = useState(false);
     const { saveDeck, deleteDeck, getFlashcardByID, updateDeck } = useDeckData();
     const [newQuestion, setNewQuestion] = useState('');
     const [newAnswer, setNewAnswer] = useState('');
     const [newDifficulty, setNewDifficulty] = useState(null);
+    const location = useLocation();
+    const { deckId } = useParams();
+
+    const [flashcards, setFlashcards] = useState([]);
+    const [loading, setLoading] = useState(true);
+
 
     // Update flashcards when file changes
     useEffect(() => {
-        if (flashcards.length > 0 && flashcards[0].originalIndex === undefined) {
-            setFlashcards(flashcards.map((card, i) => ({
-                ...card,
-                originalIndex: i
-            })));
-        }
-    }, [useLocation().state?.flashcards]);
+  if (
+    location.state?.flashcards &&
+    flashcards.length === 0
+  ) {
+    setFlashcards(
+      location.state.flashcards.map((card, i) => ({
+        ...card,
+        originalIndex: i,
+      }))
+    );
+  }
+}, [location.state]);
+
 
     // Load flashcards from backend
     useEffect(() => {
-        if (flashcards.length === 0 && deckId) {
-            setLoading(true);
-            getFlashcardByID(deckId)
-                .then(deck => {
-                    setFlashcards(deck.data.flashcards || []);
-                })
-                .catch(err => {
-                    console.error("Error loading deck", err);
-                })
-                .finally(() => setLoading(false));
-        }
-    }, [deckId, getFlashcardByID]);
+      if (!deckId) return;
 
-    // This autosaves when leaving the page.
-    useEffect(() => {
-        return () => {
-          (async () => {
-            try {
-              await updateDeck(deckTitle, deckId, flashcards);
-              console.log("Saved deck on unmount");
-            } catch (err) {
-              console.error("Save on unmount failed", err);
-            }
-          })();
-        };
-      }, [deckTitle, deckId, flashcards, updateDeck]);
+      setLoading(true);
+      getFlashcardByID(deckId)
+        .then((deck) => {
+          setFlashcards(deck.data.flashcards || []);
+          setDeckTitle(deck.data.title || "");
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    }, [deckId]);
 
-    const difficultyWeights = {
-        hard: 3,
-        medium: 2,
-        easy: 1
-    };
+
+    // // This autosaves when leaving the page.
+    // useEffect(() => {
+    //     return () => {
+    //       (async () => {
+    //         try {
+    //           await updateDeck(deckTitle, deckId, flashcards);
+    //           console.log("Saved deck on unmount");
+    //         } catch (err) {
+    //           console.error("Save on unmount failed", err);
+    //         }
+    //       })();
+    //     };
+    //   }, [deckTitle, deckId, flashcards, updateDeck]);
+
+    // const difficultyWeights = {
+    //     hard: 3,
+    //     medium: 2,
+    //     easy: 1
+    // };
 
     const smartShuffle = () => {
         const shuffled = [...flashcards].sort((a, b) => {
@@ -238,6 +247,8 @@ const FlashcardStudyPage = () => {
     }
 
     const currentCard = flashcards[index];
+    if (!currentCard) return null;
+
 
     return (
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
