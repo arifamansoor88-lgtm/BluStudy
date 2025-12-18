@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Brain, Plus, X, Save, Pencil, MoveRight } from 'lucide-react';
 import { useDeckData } from './hooks';
 import FlashcardDifficultySelector from "./FlashcardDifficultySelector";
 import StarSelector from "./StarSelector"
 import FlashcardDeckList from './FlashcardDeckList';
-import FlashcardStudyPage from './FlashcardStudy';
 import { Link, useNavigate } from "react-router-dom";
 
 const AIFlashcards = () => {
@@ -16,6 +15,19 @@ const AIFlashcards = () => {
     const [selectedDeckID, setSelectedDeckID] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const navigate = useNavigate();
+
+    const {
+        savedDecks,
+        isSaving,
+        saveSuccess,
+        error,
+        setError,
+        decksFetchedRef,
+        fetchSavedDecks,
+        saveDeck,
+        deleteDeck,
+        generateFlashcards
+    } = useDeckData();
 
     const addCard = () => {
         if (newQuestion && newAnswer && difficulty) {
@@ -67,12 +79,15 @@ const AIFlashcards = () => {
     }
 
     const saveCardTestDeck = async () => {
-        let deckName = prompt("Choose a name for this deck");
-        let id = await saveDeck(deckName, cards);
-        navigate(`./FlashcardStudyPage/tools/flashcards/FlashcardStudyPage/${id}`, {
-            state: { flashcards: cards }
-        });
-    }
+      let deckName = prompt("Choose a name for this deck");
+      let id = await saveDeck(deckName, cards);
+      navigate(`/tools/flashcards/study/${id}`, {
+        state: {
+          flashcards: cards,
+          title: deckName,
+        },
+      });
+    };
 
     const handleFileUpload = async (e) => {
         const file = e.target.files[0];
@@ -88,19 +103,6 @@ const AIFlashcards = () => {
             }
         }
     }
-
-    const {
-        savedDecks,
-        isSaving,
-        saveSuccess,
-        error,
-        setError,
-        decksFetchedRef,
-        fetchSavedDecks,
-        saveDeck,
-        deleteDeck,
-        generateFlashcards
-    } = useDeckData();
 
     // Fetch saved decks on component mount
     useEffect(() => {
@@ -303,10 +305,12 @@ const AIFlashcards = () => {
 
             <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">Saved Decks</h2>
-                <FlashcardDeckList
-                    decks={savedDecks}
-                    onDeckSelect={handleDeckSelect}
-                />
+                {savedDecks.length > 0 && (
+                    <FlashcardDeckList
+                        decks={savedDecks}
+                        onDeckSelect={handleDeckSelect}
+                    />
+                    )}
             </div>
         </div>
     );
