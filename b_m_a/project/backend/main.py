@@ -156,7 +156,8 @@ class LocalContainer:
 
     def query_items(self, query: str, parameters: Optional[List[Dict[str, Any]]] = None, enable_cross_partition_query: bool = True):
         items = self._load()
-        params = {p["name"]: p["value"] for p in (parameters or [])}
+        # Lowercase parameter names to handle case variations (e.g., @userId vs @userid)
+        params = {p["name"].lower(): p["value"] for p in (parameters or [])}
         q = query.replace("\n", " ").strip().lower()
 
         def contains_ci(hay: Optional[str], needle: str) -> bool:
@@ -184,8 +185,7 @@ class LocalContainer:
             return filtered
 
         if "from c where c.userid = @userid and c.contenttype = 'quiz'" in q:
-            # Support both @userid and @userId parameter names (query is lowercased, so @userId becomes @userid)
-            user_id = params.get("@userid") or params.get("@userId")
+            user_id = params.get("@userid")
 
             filtered = [
                 it
