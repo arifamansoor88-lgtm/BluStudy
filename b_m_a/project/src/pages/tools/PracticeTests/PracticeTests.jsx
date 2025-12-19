@@ -61,6 +61,7 @@ const PracticeTests = () => {
     fetchSavedQuizzes,
     fetchQuizWithHistory,
     generateQuiz,
+    generateQuizFromTopic,
     saveQuiz,
     saveQuizAttempt,
   } = useQuizData();
@@ -68,6 +69,9 @@ const PracticeTests = () => {
   // New state for AI-evaluated answers
   const [aiEvaluatedAnswers, setAiEvaluatedAnswers] = useState({});
   const [evaluatingAnswer, setEvaluatingAnswer] = useState(false);
+
+  // Creation mode: "pdf" (current) or "topic"
+  const [creationMode, setCreationMode] = useState("pdf");
 
   // Fetch saved quizzes on component mount
   useEffect(() => {
@@ -105,6 +109,9 @@ const PracticeTests = () => {
     setAiEvaluatedAnswers({});
     setError("");
 
+    // Default to PDF mode when starting a new test
+    setCreationMode("pdf");
+
     // Reset the quizzesFetchedRef to ensure fresh data when returning to home screen
     quizzesFetchedRef.current = false;
   };
@@ -126,7 +133,8 @@ const PracticeTests = () => {
 
   // Quiz wizard navigation
   const handleNextStep = () => {
-    if (currentStep === 1 && !selectedFile) {
+    // In PDF mode, require a file on step 1
+    if (creationMode === "pdf" && currentStep === 1 && !selectedFile) {
       setError("Please upload a PDF file first");
       return;
     }
@@ -188,7 +196,8 @@ const PracticeTests = () => {
       return;
     }
 
-    if (!selectedFile) {
+    // If we're in PDF mode, ensure a file is selected
+    if (creationMode === "pdf" && !selectedFile) {
       setError("Please select a PDF file");
       return;
     }
@@ -203,10 +212,15 @@ const PracticeTests = () => {
 
     try {
       console.log("=== Starting Quiz Generation ===");
-      console.log("File:", selectedFile);
-      console.log("File name:", selectedFile.name);
-      console.log("File size:", selectedFile.size);
-      console.log("File type:", selectedFile.type);
+      console.log("Creation mode:", creationMode);
+      if (creationMode === "pdf") {
+        console.log("File:", selectedFile);
+        console.log("File name:", selectedFile.name);
+        console.log("File size:", selectedFile.size);
+        console.log("File type:", selectedFile.type);
+      } else {
+        console.log("Topic-based generation, customTopics:", customTopics);
+      }
       console.log("Number of questions:", numQuestions);
       console.log("Selected topics:", selectedTopics);
       console.log("Custom topics:", customTopics);
@@ -214,15 +228,29 @@ const PracticeTests = () => {
       
       // Ensure we use a valid number (at least 10)
       const validNumQuestions = Math.max(10, questions);
-      
-      // Generate quiz using the hook
-      const quizData = await generateQuiz(
-        selectedFile,
-        validNumQuestions,
-        selectedTopics,
-        customTopics,
-        questionFormats
-      );
+
+      let quizData;
+      if (creationMode === "pdf") {
+        // Generate quiz using the PDF-based hook
+        quizData = await generateQuiz(
+          selectedFile,
+          validNumQuestions,
+          selectedTopics,
+          customTopics,
+          questionFormats
+        );
+      } else {
+        // Generate quiz using the topic-based hook
+        // Use customTopics as the primary topic string
+        const topicText = customTopics || "General concepts";
+        quizData = await generateQuizFromTopic(
+          topicText,
+          validNumQuestions,
+          selectedTopics,
+          customTopics,
+          questionFormats
+        );
+      }
 
       console.log("=== Quiz Generation Successful ===");
       console.log("Quiz data received:", quizData);
@@ -679,6 +707,8 @@ const PracticeTests = () => {
               uploading={uploading}
               quizData={generatedQuiz}
               onBack={goBack}
+              creationMode={creationMode}
+              setCreationMode={setCreationMode}
             />
           ) : (
             <QuizDisplay
