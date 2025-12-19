@@ -72,6 +72,8 @@ const PracticeTests = () => {
 
   // Creation mode: "pdf" (current) or "topic"
   const [creationMode, setCreationMode] = useState("pdf");
+  // Main topic for topic-based generation (separate from focus topics)
+  const [mainTopic, setMainTopic] = useState("");
 
   // Fetch saved quizzes on component mount
   useEffect(() => {
@@ -88,6 +90,7 @@ const PracticeTests = () => {
     setSelectedFile(null);
     setSelectedTopics([]);
     setCustomTopics("");
+    setMainTopic(""); // Reset main topic
     setNumQuestions(20);
     setQuestionFormats({
       multiple_choice: true,
@@ -136,6 +139,12 @@ const PracticeTests = () => {
     // In PDF mode, require a file on step 1
     if (creationMode === "pdf" && currentStep === 1 && !selectedFile) {
       setError("Please upload a PDF file first");
+      return;
+    }
+    
+    // In topic mode, require main topic on step 1
+    if (creationMode === "topic" && currentStep === 1 && !mainTopic.trim()) {
+      setError("Please type a topic to generate a test.");
       return;
     }
 
@@ -219,7 +228,8 @@ const PracticeTests = () => {
         console.log("File size:", selectedFile.size);
         console.log("File type:", selectedFile.type);
       } else {
-        console.log("Topic-based generation, customTopics:", customTopics);
+        console.log("Topic-based generation, mainTopic:", mainTopic);
+        console.log("Additional focus topics:", customTopics);
       }
       console.log("Number of questions:", numQuestions);
       console.log("Selected topics:", selectedTopics);
@@ -241,13 +251,14 @@ const PracticeTests = () => {
         );
       } else {
         // Generate quiz using the topic-based hook
-        // Use customTopics as the primary topic string
-        const topicText = customTopics || "General concepts";
+        // Use mainTopic as the primary topic string (from Step 1)
+        const topicText = mainTopic || "General concepts";
+        // customTopics in Step 2 are additional focus topics
         quizData = await generateQuizFromTopic(
           topicText,
           validNumQuestions,
           selectedTopics,
-          customTopics,
+          customTopics, // Additional focus topics from Step 2
           questionFormats
         );
       }
@@ -709,6 +720,8 @@ const PracticeTests = () => {
               onBack={goBack}
               creationMode={creationMode}
               setCreationMode={setCreationMode}
+              mainTopic={mainTopic}
+              setMainTopic={setMainTopic}
             />
           ) : (
             <QuizDisplay

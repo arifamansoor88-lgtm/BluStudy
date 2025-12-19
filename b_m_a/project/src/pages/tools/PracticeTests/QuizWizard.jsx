@@ -34,6 +34,8 @@ const QuizWizard = ({
   onBack = () => {},
   creationMode,
   setCreationMode,
+  mainTopic,
+  setMainTopic,
 }) => {
   const [showDropZone, setShowDropZone] = useState(true);
 
@@ -199,8 +201,8 @@ const QuizWizard = ({
                     className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md text-sm resize-none focus:outline-none focus:ring-1 focus:ring-red-500"
                     rows={3}
                     placeholder="Type a topic, chapter, or concept. AI will generate the test."
-                    value={customTopics}
-                    onChange={(e) => setCustomTopics(e.target.value)}
+                    value={mainTopic}
+                    onChange={(e) => setMainTopic(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
                   />
                 </div>
@@ -219,18 +221,38 @@ const QuizWizard = ({
           </h2>
 
           <div className="space-y-6">
+            {/* Show main topic if in topic mode (read-only) */}
+            {creationMode === "topic" && mainTopic && (
+              <div>
+                <h3 className="text-lg font-medium mb-2">
+                  Main Topic
+                </h3>
+                <div className="px-4 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+                  {mainTopic}
+                </div>
+                <p className="text-sm text-gray-500 mt-1">
+                  This is your main topic from Step 1. Add additional focus topics below if needed.
+                </p>
+              </div>
+            )}
+            
             <div>
               <h3 className="text-lg font-medium mb-2">
-                Focus Topics (Optional)
+                Additional Focus Topics (Optional)
               </h3>
               <div className="space-y-3">
                 <input
                   type="text"
-                  placeholder="Enter topics separated by commas"
+                  placeholder="Enter additional topics separated by commas (e.g., specific subtopics)"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md"
                   value={customTopics}
                   onChange={(e) => setCustomTopics(e.target.value)}
                 />
+                <p className="text-sm text-gray-500">
+                  {creationMode === "topic" 
+                    ? "Add specific subtopics or areas to focus on within your main topic."
+                    : "Enter topics separated by commas to focus the quiz on specific areas."}
+                </p>
               </div>
             </div>
           </div>
