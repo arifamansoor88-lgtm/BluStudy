@@ -382,6 +382,7 @@ const PerformanceSummary = ({
           loadingAttemptAnalysis={loadingAttemptAnalysis}
           selectedAttemptId={selectedAttemptId}
           onClearAnalysis={clearAttemptAnalysis}
+          quiz={quiz}
         />
       )}
     </div>
@@ -689,7 +690,8 @@ const AttemptHistory = ({
   selectedAttemptAnalysis, 
   loadingAttemptAnalysis, 
   selectedAttemptId, 
-  onClearAnalysis 
+  onClearAnalysis,
+  quiz
 }) => {
   if (!attempts || !attempts.length) return null;
 
@@ -974,19 +976,21 @@ const performTopicAnalysis = async (quiz, userAnswers) => {
     if (!aiAnalysis.strongTopics) aiAnalysis.strongTopics = [];
     if (!aiAnalysis.recommendations) aiAnalysis.recommendations = [];
     
-    // Validate question indices in topics
+    // Validate and convert question indices in topics
     if (aiAnalysis.topics) {
       const maxValidIndex = quiz.questions.length - 1;
       aiAnalysis.topics.forEach(topic => {
         if (topic.questionIndices) {
-          // Filter out invalid indices
-          const validIndices = topic.questionIndices.filter(index => 
-            index >= 0 && index <= maxValidIndex
-          );
-          if (validIndices.length !== topic.questionIndices.length) {
+          const originalIndices = [...topic.questionIndices]; // Keep original for warning
+          // Convert to 0-indexed 
+          const validIndices = originalIndices
+            .map(index => (index > 0 && index <= quiz.questions.length ? index - 1 : index)) // Convert 1-indexed to 0-indexed
+            .filter(index => index >= 0 && index <= maxValidIndex);
+          
+          if (validIndices.length !== originalIndices.length) {
             console.warn(`Topic "${topic.name}" had invalid question indices:`, {
-              original: topic.questionIndices,
-              valid: validIndices,
+              original: originalIndices,
+              convertedAndValid: validIndices,
               maxValidIndex
             });
           }

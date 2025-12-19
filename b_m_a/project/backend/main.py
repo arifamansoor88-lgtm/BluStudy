@@ -184,9 +184,16 @@ class LocalContainer:
             return filtered
 
         if "from c where c.userid = @userid and c.contenttype = 'quiz'" in q:
-            user_id = params.get("@userid")
-            filtered = [it for it in items if (it.get("userId") == user_id and it.get("contentType") == "quiz")]
-            filtered.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
+            # Support both @userid and @userId parameter names (query is lowercased, so @userId becomes @userid)
+            user_id = params.get("@userid") or params.get("@userId")
+
+            filtered = [
+                it
+                for it in items
+                if (it.get("userId") == user_id or it.get("user_id") == user_id)
+                and (it.get("contentType", "").lower() == "quiz" or it.get("contenttype", "").lower() == "quiz")
+            ]
+            filtered.sort(key=lambda x: x.get("createdAt", "") or x.get("createdat", ""), reverse=True)
             return filtered
 
         if "from c where c.userid = '" in q and "and c.contenttype = 'study_plan'" in q:
@@ -900,6 +907,96 @@ async def create_quiz(
         print(f"Error generating quiz: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to generate quiz: {str(e)}")
 
+
+@app.post("/generate-quiz-from-topic")
+async def create_quiz_from_topic(
+    payload: Dict[str, Any],
+    user_claims: dict = Depends(validate_token),
+):
+    """
+    Generate and save a quiz based on a plain topic/chapter/concept string,
+    reusing the existing Azure OpenAI quiz generation logic.
+    """
+    try:
+        print(f"Generating topic-based quiz for user: {user_claims['sub']}")
+        topic: str = (payload.get("topic") or "").strip()
+        if not topic:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Topic is required",
+            )
+
+        num_questions = payload.get("num_questions") or 10
+        try:
+            num_questions = int(num_questions)
+        except Exception:
+            num_questions = 10
+        num_questions = max(10, min(40, num_questions))
+
+        focus_topics = payload.get("focus_topics") or ""
+        question_formats_payload = payload.get("question_formats") or {}
+        if isinstance(question_formats_payload, dict):
+            formats_dict = {
+                k: bool(v) for k, v in question_formats_payload.items() if bool(v)
+            }
+        else:
+            formats_dict = {
+                "multiple_choice": True,
+                "multi_select": True,
+                "drag_and_drop": True,
+            }
+
+        selected_formats = [fmt for fmt, selected in formats_dict.items() if selected]
+        if not selected_formats:
+            selected_formats = ["multiple_choice"]
+
+        # Use the topic string as synthetic "text" input for the quiz generator
+        synthetic_text = f"Create a quiz for the following topic/chapter/concept:\n\n{topic}"
+
+        quiz_json = generate_quiz(
+            text=synthetic_text,
+            num_questions=num_questions,
+            focus_topics=focus_topics.strip(),
+            question_formats=selected_formats,
+        )
+
+        quiz_data = json.loads(quiz_json)
+        quiz_id = str(uuid.uuid4())
+        quiz_document = {
+            "id": quiz_id,
+            "userId": user_claims["sub"],
+            "contentType": "quiz",
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": {
+                "title": quiz_data.get("quiz_title", topic or "Generated Quiz"),
+                "questions": quiz_data.get("questions", []),
+                "userAnswers": None,
+                "score": None,
+                "timeTaken": 0,
+                "resourceName": topic,
+                "options": {
+                    "numQuestions": num_questions,
+                    "selectedTopics": (focus_topics.split(",") if focus_topics else []),
+                    "customTopics": focus_topics,
+                    "questionFormats": formats_dict,
+                },
+                "attempts": [],
+            },
+        }
+
+        container.create_item(body=quiz_document)
+        quiz_data["id"] = quiz_document["id"]
+        print(f"Topic-based quiz generated and saved with ID: {quiz_id}")
+        return quiz_data
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error generating topic-based quiz: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate topic-based quiz: {str(e)}",
+        )
+
 @app.post("/save-quiz", response_model=SavedQuizResponse)
 async def save_quiz(quiz: QuizDocument, user_claims: dict = Depends(validate_token)):
     try:
@@ -1201,49 +1298,33 @@ async def evaluate_answer(request: ShortAnswerEvaluationRequest, user_claims: di
 @app.post("/summarize")
 async def summarize_file(
     file: UploadFile = None,
-    text: str = Body(None),
-    style: str = Body("high"),
-    format: str = Body("bullet"),
+    text: str = Body(None)
 ):
     print("🔍 Entered /summarize route")
-
     if not file and not text:
         raise HTTPException(status_code=400, detail="Please provide a file or text.")
-
     try:
-        # ----- EXTRACT TEXT -----
         if file:
             allowed = ["application/pdf", "text/plain"]
             if file.content_type not in allowed:
                 raise HTTPException(status_code=400, detail="Invalid file type.")
-
             file_location = f"temp_{file.filename}"
             with open(file_location, "wb") as f:
                 f.write(await file.read())
-
             if file.content_type == "application/pdf":
                 extracted_text = extract_text_from_pdf(file_location)
             else:
                 with open(file_location, "r", encoding="utf-8") as tf:
                     extracted_text = tf.read()
-
             os.remove(file_location)
         else:
             extracted_text = text
 
-        # ----- CALL SUMMARIZER -----
-        summary = summarize_text(extracted_text, style=style, format=format)
-
-        return {
-            "summary": summary,
-            "styleUsed": style,
-            "formatUsed": format,
-        }
-
+        summary = summarize_text(extracted_text)
+        return {"summary": summary}
     except Exception as e:
         print(f"❌ Error during processing: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 # ----- Quiz Performance Analysis -----
 class QuizPerformanceRequest(BaseModel):
@@ -1265,11 +1346,44 @@ async def analyze_quiz_performance_endpoint(
 ):
     try:
         print(f"Analyzing quiz performance for user: {user_claims['sub']}")
-        analysis_result = analyze_quiz_performance(
+        analysis_result = await analyze_quiz_performance(
             request.questions,
             request.userAnswers,
             request.quizMetadata
         )
+        def _normalize_topic_list(items: Any) -> List[Dict[str, Any]]:
+            if not isinstance(items, list):
+                return []
+            normalized: List[Dict[str, Any]] = []
+            for item in items:
+                if isinstance(item, dict):
+                    normalized.append(item)
+                elif isinstance(item, str):
+                    normalized.append(
+                        {
+                            "name": item,
+                            "questionIndices": [],
+                            "correctCount": 0,
+                            "totalCount": 0,
+                            "accuracy": 0,
+                            "difficulty": "unknown",
+                            "category": "general",
+                            "keywords": [],
+                            "reason": f"Topic identified: {item}",
+                            "suggestions": [f"Review {item}", f"Practice {item}"],
+                        }
+                    )
+            return normalized
+
+        analysis_result = analysis_result or {}
+        analysis_result.setdefault("topics", [])
+        analysis_result["weakTopics"] = _normalize_topic_list(
+            analysis_result.get("weakTopics", [])
+        )
+        analysis_result["strongTopics"] = _normalize_topic_list(
+            analysis_result.get("strongTopics", [])
+        )
+
         return analysis_result
     except Exception as e:
         print(f"Error in analyze-quiz-performance endpoint: {str(e)}")
