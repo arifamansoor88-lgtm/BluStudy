@@ -20,6 +20,14 @@ const FlashcardStudyPage = () => {
     const [flashcards, setFlashcards] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const normalizeCard = (card) => ({
+      front: card.front ?? card.question,
+      back: card.back ?? card.answer,
+      difficulty: card.difficulty ?? "medium",
+      important: card.important ?? false,
+    });
+
+
 
     // Update flashcards when file changes
     useEffect(() => {
@@ -44,8 +52,8 @@ const FlashcardStudyPage = () => {
       setLoading(true);
       getFlashcardByID(deckId)
         .then((deck) => {
-          setFlashcards(deck.data.flashcards || []);
-          setDeckTitle(deck.data.title || "");
+          setFlashcards(deck.cards.map(normalizeCard));
+          setDeckTitle(deck.title);
         })
         .catch(console.error)
         .finally(() => setLoading(false));
@@ -66,11 +74,11 @@ const FlashcardStudyPage = () => {
     //     };
     //   }, [deckTitle, deckId, flashcards, updateDeck]);
 
-    // const difficultyWeights = {
-    //     hard: 3,
-    //     medium: 2,
-    //     easy: 1
-    // };
+    const difficultyWeights = {
+        hard: 3,
+        medium: 2,
+        easy: 1
+    };
 
     const smartShuffle = () => {
         const shuffled = [...flashcards].sort((a, b) => {
@@ -155,8 +163,7 @@ const FlashcardStudyPage = () => {
             setNewDifficulty(null);
 
             try {
-                await deleteDeck(deckId); // Delete old deck
-                await saveDeck(deckTitle, updatedFlashcards); // Save updated deck
+                updateDeck(deckTitle, deckId, flashcards);
             } catch (error) {
                 console.error('Error saving new card to deck:', error);
             }
@@ -293,7 +300,7 @@ const FlashcardStudyPage = () => {
                         className="relative cursor-pointer w-full h-64 bg-white shadow-lg rounded-lg flex items-center justify-center text-center text-2xl font-semibold text-gray-700 transition-transform transform-gpu hover:scale-105"
                         onClick={handleFlip}
                     >
-                        {flipped ? currentCard.answer : currentCard.question}
+                        {flipped ? currentCard.back : currentCard.front}
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
