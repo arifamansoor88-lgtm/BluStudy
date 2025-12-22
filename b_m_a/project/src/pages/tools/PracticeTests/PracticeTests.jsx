@@ -94,6 +94,16 @@ const PracticeTests = () => {
       fill_in_blank: false,
     });
     setGeneratedQuiz(null);
+    setQuizStatus("idle");
+    setCurrentQuizQuestion(0);
+    setUserAnswers([]);
+    setShowSummary(false);
+    setShowAnswerFeedback(false);
+    setAiExplanation("");
+    setAiExplanations({});
+    setCheckedAnswers({});
+    setAiEvaluatedAnswers({});
+    setError("");
 
     // Reset the quizzesFetchedRef to ensure fresh data when returning to home screen
     quizzesFetchedRef.current = false;
@@ -124,9 +134,14 @@ const PracticeTests = () => {
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     } else {
-      // When on step 3 and clicking "Generate", prevent going back
-      // to step 1 if we're already in the process of uploading
+      // When on step 3 and clicking "Generate", validate before generating
       if (!uploading) {
+        // Validate minimum number of questions
+        const questions = typeof numQuestions === 'number' ? numQuestions : parseInt(String(numQuestions));
+        if (isNaN(questions) || questions < 10) {
+          setError("Minimum Number of Questions is 10!");
+          return;
+        }
         handleGenerateQuiz();
       }
     }
@@ -155,6 +170,14 @@ const PracticeTests = () => {
 
   // Quiz generation
   const handleGenerateQuiz = async () => {
+    // Validate minimum number of questions (safety check)
+    const questions = typeof numQuestions === 'number' ? numQuestions : parseInt(numQuestions);
+    if (isNaN(questions) || questions < 10) {
+      setError("Minimum Number of Questions is 10!");
+      setNumQuestions(10);
+      return;
+    }
+
     // Check if at least one question format is selected
     const hasSelectedFormat = Object.values(questionFormats).some(
       (value) => value
@@ -189,10 +212,13 @@ const PracticeTests = () => {
       console.log("Custom topics:", customTopics);
       console.log("Question formats:", questionFormats);
       
+      // Ensure we use a valid number (at least 10)
+      const validNumQuestions = Math.max(10, questions);
+      
       // Generate quiz using the hook
       const quizData = await generateQuiz(
         selectedFile,
-        numQuestions,
+        validNumQuestions,
         selectedTopics,
         customTopics,
         questionFormats
@@ -523,8 +549,17 @@ const PracticeTests = () => {
     setShowQuiz(true);
     setShowUpload(false);
     setGeneratedQuiz(null);
-    setError("");
+    setQuizStatus("idle");
     setCurrentStep(1);
+    setCurrentQuizQuestion(0);
+    setUserAnswers([]);
+    setShowSummary(false);
+    setShowAnswerFeedback(false);
+    setAiExplanation("");
+    setAiExplanations({});
+    setCheckedAnswers({});
+    setAiEvaluatedAnswers({});
+    setError("");
 
     quizzesFetchedRef.current = false;
 
@@ -640,6 +675,7 @@ const PracticeTests = () => {
               handleFileSelect={handleFileSelect}
               handleToggleTopic={toggleTopic}
               error={error}
+              setError={setError}
               uploading={uploading}
               quizData={generatedQuiz}
               onBack={goBack}

@@ -1,23 +1,42 @@
 // VoiceNotes.jsx — tags instead of folders, now with Pause/Resume while recording
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import { useMsal } from '@azure/msal-react';
+import { useNavigate } from 'react-router-dom';
 import { Mic, Save, Trash2, Download, Share2, Tag as TagIcon, AudioWaveform as Waveform, PauseCircle, PlayCircle } from 'lucide-react';
 
 const API_URL = "http://localhost:8000";
 
-const USER_ID_KEY = "voice_notes_user_id";
-const getUserId = () => {
-  let id = localStorage.getItem(USER_ID_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(USER_ID_KEY, id);
-  }
-  return id;
-};
-axios.defaults.headers.common['X-User-Id'] = getUserId();
-
 const VoiceNotes = () => {
+  const { instance, accounts } = useMsal();
+  const navigate = useNavigate();
+  
+  // Get user ID from logged-in account (account-based, not device-based)
+  const account = useMemo(
+    () => instance.getActiveAccount() || accounts?.[0] || {},
+    [instance, accounts]
+  );
+  const claims = account?.idTokenClaims || {};
+  const userId = account?.localAccountId || claims?.oid || claims?.sub || null;
+
+  // Redirect to sign in if not authenticated
+  useEffect(() => {
+    if (!accounts?.length || !userId) {
+      navigate("/signin");
+      return;
+    }
+    if (!instance.getActiveAccount() && accounts?.length) {
+      instance.setActiveAccount(accounts[0]);
+    }
+  }, [instance, accounts, navigate, userId]);
+
+  // Set user ID in axios headers whenever it changes
+  useEffect(() => {
+    if (userId) {
+      axios.defaults.headers.common['X-User-Id'] = userId;
+    }
+  }, [userId]);
   const [notes, setNotes] = useState([]);
   const [allTags, setAllTags] = useState([]);
   const [selectedTagFilter, setSelectedTagFilter] = useState('');
@@ -32,6 +51,7 @@ const VoiceNotes = () => {
   const [privacySettings, setPrivacySettings] = useState({});
   const [tagInput, setTagInput] = useState('');
   const [pendingTags, setPendingTags] = useState([]); // tags for the note being created
+  const [micPermissionError, setMicPermissionError] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const timerRef = useRef(null);
@@ -44,6 +64,7 @@ const VoiceNotes = () => {
   const { transcript, resetTranscript } = useSpeechRecognition();
 
   const fetchNotes = async () => {
+    if (!userId) return; // Don't fetch if not logged in
     try {
       const params = new URLSearchParams();
       if (selectedTagFilter) params.append('tag', selectedTagFilter);
@@ -58,7 +79,46 @@ const VoiceNotes = () => {
     }
   };
 
-  useEffect(() => { fetchNotes(); }, [selectedTagFilter]);
+  useEffect(() => { fetchNotes(); }, [selectedTagFilter, userId]);
+
+  // Refresh notes when page becomes visible after being hidden (handles browser back button)
+  // Only refresh if page was hidden for more than 1 second
+  useEffect(() => {
+    let hiddenTime = null;
+    let refreshTimeout = null;
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenTime = Date.now();
+      } else if (document.visibilityState === 'visible' && userId && hiddenTime) {
+        const timeHidden = Date.now() - hiddenTime;
+        if (timeHidden > 1000) {
+          clearTimeout(refreshTimeout);
+          refreshTimeout = setTimeout(() => {
+            fetchNotes();
+          }, 500);
+        }
+        hiddenTime = null;
+      }
+    };
+    
+    // Handle browser back/forward navigation
+    const handlePageshow = (e) => {
+      // If page was loaded from cache (back button), refresh notes
+      if (e.persisted && userId) {
+        setTimeout(() => fetchNotes(), 300);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pageshow', handlePageshow);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', handlePageshow);
+      clearTimeout(refreshTimeout);
+    };
+  }, [userId]);
 
   // canvas sizing
   useEffect(() => {
@@ -120,32 +180,49 @@ const VoiceNotes = () => {
 
   const startRecording = async () => {
     resetTranscript();
-    SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
+    setMicPermissionError(false);
+    
+    try {
+      SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
+    } catch (e) {
+      // Speech recognition might fail, continue anyway
+    }
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorderRef.current = new MediaRecorder(stream);
-    const localChunks = [];
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      const localChunks = [];
 
-    mediaRecorderRef.current.ondataavailable = (e) => { if (e.data.size > 0) localChunks.push(e.data); };
-    mediaRecorderRef.current.onstop = () => {
-      const blob = new Blob(localChunks, { type: 'audio/webm' });
-      const url = URL.createObjectURL(blob);
-      setAudioUrl(url);
-      setChunks(localChunks);
-    };
+      mediaRecorderRef.current.ondataavailable = (e) => { if (e.data.size > 0) localChunks.push(e.data); };
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(localChunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        setAudioUrl(url);
+        setChunks(localChunks);
+      };
 
-    audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    await audioContextRef.current.resume();
-    analyserRef.current = audioContextRef.current.createAnalyser();
-    sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
-    sourceRef.current.connect(analyserRef.current);
-    drawWaveform();
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      await audioContextRef.current.resume();
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
+      sourceRef.current.connect(analyserRef.current);
+      drawWaveform();
 
-    mediaRecorderRef.current.start();
-    setIsRecording(true);
-    setIsPaused(false);
-    setRecordingDuration(0);
-    timerRef.current = setInterval(() => setRecordingDuration((prev) => prev + 1), 1000);
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setIsPaused(false);
+      setRecordingDuration(0);
+      timerRef.current = setInterval(() => setRecordingDuration((prev) => prev + 1), 1000);
+    } catch (error) {
+      console.log('Microphone access denied or error:', error.name);
+      setMicPermissionError(true);
+      try {
+        SpeechRecognition.stopListening();
+      } catch (e) {
+        // Ignore if speech recognition wasn't started
+      }
+      return; // Stop execution here
+    }
   };
 
   const pauseRecording = () => {
@@ -254,11 +331,22 @@ const VoiceNotes = () => {
   };
 
   const deleteNote = async (id) => {
+    const confirmed = window.confirm('Are you sure you want to delete this note?');
+    if (!confirmed) {
+      return;
+    }
     try {
       await axios.delete(`${API_URL}/voice-notes/${id}`);
       setNotes(prev => prev.filter(n => n.id !== id));
     } catch (err) {
+      // If note is already deleted (404), silently remove it from UI
+      // This handles browser back button cache issues
+      if (err.response?.status === 404) {
+        setNotes(prev => prev.filter(n => n.id !== id));
+        return;
+      }
       console.error("Error deleting note:", err);
+      alert('Failed to delete note. Please try again.');
     }
   };
 
@@ -297,6 +385,11 @@ const VoiceNotes = () => {
     const matchesTag = !selectedTagFilter || (n.tags || []).map(x => x.toLowerCase()).includes(selectedTagFilter.toLowerCase());
     return matchesQ && matchesTag;
   });
+
+  // Don't render until user is authenticated
+  if (!userId) {
+    return null;
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -415,6 +508,12 @@ const VoiceNotes = () => {
             </>
           )}
         </div>
+
+        {micPermissionError && (
+          <div className="bg-red-100 border-2 border-red-400 p-4 rounded-lg mt-4">
+            <p className="text-red-700 font-medium">Please Enable your microphone.</p>
+          </div>
+        )}
 
         <canvas ref={canvasRef} className="mt-4 w-full h-24 rounded bg-gray-100" />
 

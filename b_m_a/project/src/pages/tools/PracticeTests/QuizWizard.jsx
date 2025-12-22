@@ -30,6 +30,7 @@ const QuizWizard = ({
   handleFileSelect,
   handleToggleTopic,
   error,
+  setError,
   uploading,
   quizData,
   onBack = () => {},
@@ -261,15 +262,43 @@ const QuizWizard = ({
             <input
               type="number"
               id="num-questions"
-              min="5"
+              min="10"
               max="50"
-              value={numQuestions}
-              onChange={(e) => setNumQuestions(parseInt(e.target.value))}
+              value={numQuestions || ""}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                // Allow empty input so user can delete the number
+                if (inputValue === "") {
+                  setNumQuestions("");
+                } else {
+                  const value = parseInt(inputValue);
+                  // Only set if it's a valid number
+                  if (!isNaN(value)) {
+                    setNumQuestions(value);
+                  }
+                }
+                // Clear error when user changes the number
+                if (setError && error) {
+                  setError("");
+                }
+              }}
+              onBlur={(e) => {
+                // Only clamp to max, don't auto-correct minimum
+                const value = parseInt(e.target.value);
+                if (!isNaN(value) && value > 50) {
+                  setNumQuestions(50);
+                }
+              }}
               className="w-full p-4 border border-gray-300 rounded-md text-lg"
             />
             <p className="text-sm text-gray-500 mt-2">
-              50 questions or fewer. You can add more later.
+              Minimum 10 questions, maximum 50 questions. You can add more later.
             </p>
+            {error && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-600 font-medium">{error}</p>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 mb-4">
@@ -416,9 +445,13 @@ const QuizWizard = ({
           disabled={uploading}
           className={`flex items-center gap-2 px-6 py-2 ${
             currentStep === 3
-              ? "bg-red-600 hover:bg-red-700"
+              ? uploading
+                ? "bg-gray-400 cursor-not-allowed"
+                : (isNaN(parseInt(numQuestions)) || parseInt(numQuestions) < 10)
+                ? "bg-gray-400 cursor-not-allowed opacity-60"
+                : "bg-red-600 hover:bg-red-700"
               : "bg-gray-800 hover:bg-gray-900"
-          } text-white rounded-md`}
+          } text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {uploading && currentStep === 3 && (
             <div className="animate-spin mr-2 h-4 w-4 border-2 rounded-full border-white border-t-transparent"></div>

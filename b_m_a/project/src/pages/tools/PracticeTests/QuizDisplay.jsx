@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Clock, ArrowRight, Check, X, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { formatTime } from "./utils";
@@ -39,6 +39,9 @@ const QuizDisplay = ({
   checkedAnswers,
   getAnswerCorrectness,
 }) => {
+  // State to track if user tried to click finish button with unanswered questions
+  const [triedToFinishWithUnanswered, setTriedToFinishWithUnanswered] = useState(false);
+
   // Helper function to get the current question's explanation
   const getCurrentQuestionExplanation = () => {
     if (aiExplanations && aiExplanations[currentQuestionIndex]) {
@@ -46,6 +49,32 @@ const QuizDisplay = ({
     }
     return aiExplanation; // Fallback to the legacy aiExplanation
   };
+
+  // Helper function to check if all questions are answered
+  const areAllQuestionsAnswered = () => {
+    if (!userAnswers || !Array.isArray(userAnswers)) return false;
+    return userAnswers.every(answer => {
+      if (answer === null || answer === undefined || answer === "") {
+        return false;
+      }
+      if (Array.isArray(answer)) {
+        return answer.length > 0;
+      }
+      if (typeof answer === 'object' && answer !== null) {
+        return Object.values(answer).some(value => 
+          value !== null && value !== undefined && value !== ""
+        );
+      }
+      return true;
+    });
+  };
+
+  // Clear the warning state when all questions are answered or when navigating away from last question
+  useEffect(() => {
+    if (areAllQuestionsAnswered() || (quiz && currentQuestionIndex !== quiz.questions.length - 1)) {
+      setTriedToFinishWithUnanswered(false);
+    }
+  }, [userAnswers, currentQuestionIndex, quiz]);
 
   // No quiz data available
   if (!quiz && status !== "loading") {
@@ -189,23 +218,6 @@ const QuizDisplay = ({
     return true;
   };
 
-  // Helper function to check if all questions are answered
-  const areAllQuestionsAnswered = () => {
-    return userAnswers.every(answer => {
-      if (answer === null || answer === undefined || answer === "") {
-        return false;
-      }
-      if (Array.isArray(answer)) {
-        return answer.length > 0;
-      }
-      if (typeof answer === 'object' && answer !== null) {
-        return Object.values(answer).some(value => 
-          value !== null && value !== undefined && value !== ""
-        );
-      }
-      return true;
-    });
-  };
 
   // In progress
   if (status === "in-progress") {
@@ -308,8 +320,8 @@ const QuizDisplay = ({
 
         {/* Current Question */}
         <div className="bg-white p-6 rounded-lg shadow-sm">
-          {/* Warning message when trying to finish with unanswered questions */}
-          {currentQuestionIndex === quiz.questions.length - 1 && !areAllQuestionsAnswered() && (
+          {/* Warning message only when user tries to click finish button with unanswered questions */}
+          {triedToFinishWithUnanswered && currentQuestionIndex === quiz.questions.length - 1 && !areAllQuestionsAnswered() && (
             <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -459,11 +471,18 @@ const QuizDisplay = ({
                 )}
 
               <button
-                onClick={onNextQuestion}
-                disabled={currentQuestionIndex === quiz.questions.length - 1 && !areAllQuestionsAnswered()}
+                onClick={() => {
+                  // If on last question and not all answered, show warning
+                  if (currentQuestionIndex === quiz.questions.length - 1 && !areAllQuestionsAnswered()) {
+                    setTriedToFinishWithUnanswered(true);
+                    return; // Don't proceed
+                  }
+                  // Otherwise, proceed normally
+                  onNextQuestion();
+                }}
                 className={`px-4 py-2 flex items-center gap-2 rounded-md ${
                   currentQuestionIndex === quiz.questions.length - 1 && !areAllQuestionsAnswered()
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-60"
                     : "bg-red-600 text-white hover:bg-red-700"
                 }`}
               >

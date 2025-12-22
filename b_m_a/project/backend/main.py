@@ -200,6 +200,23 @@ class LocalContainer:
             filtered.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
             return filtered
 
+        # Handle voice notes query: "WHERE c.userId = @uid AND c.contentType = 'voice_note'"
+        if "from c where c.userid = @uid and c.contenttype = 'voice_note'" in q:
+            user_id = params.get("@uid")
+            # Support both userId and user_id 
+            filtered = [
+                self._ensure_defaults(it) for it in items 
+                if (it.get("userId") == user_id or it.get("user_id") == user_id) 
+                and it.get("contentType") == "voice_note"
+            ]
+            return filtered
+
+        # Handle query by ID: "WHERE c.id = @id" (for finding notes across users)
+        if "from c where c.id = @id" in q:
+            item_id = params.get("@id")
+            filtered = [it for it in items if it.get("id") == item_id]
+            return filtered
+
         return items
 
     @staticmethod
@@ -426,6 +443,12 @@ async def dev_issue_token(form_data: OAuth2PasswordRequestForm = Depends()):
 def read_root():
     return {"message": "Backend is running", "storage": storage_mode, "cosmos_error": cosmos_error}
 
+@app.get("/.well-known/appspecific/com.chrome.devtools.json")
+def chrome_devtools_config():
+    """Handle Chrome DevTools automatic request to suppress 404 errors"""
+    from starlette.responses import Response
+    return Response(status_code=204)
+
 @app.get("/health")
 def health_check():
     try:
@@ -600,18 +623,53 @@ async def update_voice_note(
 @app.delete("/voice-notes/{note_id}")
 async def delete_voice_note(note_id: str, request: Request, user_id: Optional[str] = Query(None)):
     uid = _resolve_user_id(request, user_id_q=user_id)
+    existing = None
+    
+    # Try to find the note with current user_id first
     try:
         existing = container.read_item(item=note_id, partition_key=uid)
-        if existing.get("contentType") != "voice_note":
-            raise HTTPException(status_code=404, detail="Note not found")
-        if STORAGE_BACKEND == "local" and existing.get("audio_local_path"):
-            try:
-                os.remove(existing["audio_local_path"])
-            except Exception:
-                pass
-        container.delete_item(item=note_id, partition_key=uid)
     except Exception:
+        pass
+    
+    # If not found, search across all items using query (works for both local and Cosmos)
+    if not existing:
+        # Use cross-partition query to find note by ID
+        q = "SELECT * FROM c WHERE c.id = @id"
+        res = list(container.query_items(
+            query=q,
+            parameters=[{"name": "@id", "value": note_id}],
+            enable_cross_partition_query=True
+        ))
+        # Filter for voice notes
+        for item in res:
+            if item.get("contentType") == "voice_note":
+                existing = item
+                break
+    
+    if not existing or existing.get("contentType") != "voice_note":
         raise HTTPException(status_code=404, detail="Note not found")
+    
+    # Use the note's actual user_id (NOT LOCAL STORAGE WHICH WAS THE ISSUE BEFORE)
+    actual_uid = existing.get("userId") or existing.get("user_id") or uid
+    
+    # Delete audio file if using local storage
+    if STORAGE_BACKEND == "local" and existing.get("audio_local_path"):
+        try:
+            os.remove(existing["audio_local_path"])
+        except Exception:
+            pass
+    
+    # Delete using the note's actual user_id
+    try:
+        container.delete_item(item=note_id, partition_key=actual_uid)
+    except Exception:
+        # If partition key check fails, try with None (allows deletion even if user_id changed)
+        # This is safe because we already verified it's a voice_n0te 
+        try:
+            container.delete_item(item=note_id, partition_key=None)
+        except Exception:
+            raise HTTPException(status_code=404, detail="Note not found")
+    
     return {"message": "Note deleted"}
 
 @app.get("/public/voice-notes")
@@ -655,7 +713,11 @@ def _stream_inline_audio(item: Dict[str, Any]) -> StreamingResponse:
     except Exception:
         raise HTTPException(status_code=500, detail="Corrupt inline audio")
     ctype = item.get("audio_content_type") or _guess_content_type(item.get("audio_filename"))
-    return StreamingResponse(iter([raw]), media_type=ctype)
+    async def generate():
+        chunk_size = 65536  
+        for i in range(0, len(raw), chunk_size):
+            yield raw[i:i + chunk_size]
+    return StreamingResponse(generate(), media_type=ctype)
 
 @app.get("/voice-notes/{note_id}/audio")
 async def get_voice_note_audio(
@@ -697,7 +759,11 @@ async def get_voice_note_audio(
         file_path = item["audio_local_path"]
         if not os.path.exists(file_path):
             raise HTTPException(status_code=404, detail="Audio file not found")
-        return FileResponse(file_path, media_type=item.get("audio_content_type") or "audio/webm")
+        
+        relative_path = os.path.relpath(file_path, "static")
+        base_url = str(request.base_url).rstrip("/")
+        static_url = f"{base_url}/static/{relative_path.replace(os.sep, '/')}"
+        return RedirectResponse(url=static_url, status_code=307)
 
     blob = (item.get("audio_blob_url") or "").strip()
     if blob.startswith("http://") or blob.startswith("https://"):
