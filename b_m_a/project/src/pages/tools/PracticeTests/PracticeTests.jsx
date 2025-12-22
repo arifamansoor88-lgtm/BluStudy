@@ -223,10 +223,10 @@ const PracticeTests = () => {
       console.log("=== Starting Quiz Generation ===");
       console.log("Creation mode:", creationMode);
       if (creationMode === "pdf") {
-        console.log("File:", selectedFile);
-        console.log("File name:", selectedFile.name);
-        console.log("File size:", selectedFile.size);
-        console.log("File type:", selectedFile.type);
+      console.log("File:", selectedFile);
+      console.log("File name:", selectedFile.name);
+      console.log("File size:", selectedFile.size);
+      console.log("File type:", selectedFile.type);
       } else {
         console.log("Topic-based generation, mainTopic:", mainTopic);
         console.log("Additional focus topics:", customTopics);
@@ -238,17 +238,17 @@ const PracticeTests = () => {
       
       // Ensure we use a valid number (at least 10)
       const validNumQuestions = Math.max(10, questions);
-
+      
       let quizData;
       if (creationMode === "pdf") {
         // Generate quiz using the PDF-based hook
         quizData = await generateQuiz(
-          selectedFile,
-          validNumQuestions,
-          selectedTopics,
-          customTopics,
-          questionFormats
-        );
+        selectedFile,
+        validNumQuestions,
+        selectedTopics,
+        customTopics,
+        questionFormats
+      );
       } else {
         // Generate quiz using the topic-based hook
         // Use mainTopic as the primary topic string (from Step 1)
