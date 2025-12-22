@@ -16,6 +16,7 @@ import Workspace from "./pages/Workspace";
 import FolderView from "./pages/FolderView";
 import PublicLibrary from "./pages/publicLibrary";
 import FlashcardStudyPage from './pages/tools/AIFlashcards/FlashcardStudy';
+import MindMapDashboard from './pages/tools/MindMapDashboard';
 
 function App() {
   return (
@@ -30,7 +31,8 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/tools/flashcards" element={<AIFlashcards />} />
           <Route path="/tools/voice-notes" element={<VoiceNotes />} />
-          <Route path="/tools/mind-maps" element={<MindMaps />} />
+          <Route path="/tools/mind-maps" element={<MindMapDashboard />} />
+          <Route path="/tools/maps" element={<MindMaps />} />
           <Route path="/tools/practice-tests" element={<PracticeTests />} />
           <Route path="/tools/study-planner" element={<StudyPlans />} />
           <Route path="/tools/summarizer" element={<Summarizer />} />
