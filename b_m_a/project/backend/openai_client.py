@@ -105,58 +105,63 @@ flashcard_client = AzureOpenAI(
 )
 FLASHCARD_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_DEPLOYMENT_NAME")
 
-def generate_flashcard(text: str,
-                       num_flashcards: int = 10) -> str:
+def generate_flashcard(text: str, num_flashcards: int = 10) -> str:
     """
-   Generates Flashcards based on inputted text
-    
-    Args:
-        text (str): The text to summarize.
-        num_flashcards: The number of flashcarrds to generate
-        
-    Returns:
-        str: JSON Flashcards
+    Generates a flashcard deck from text.
+    Returns STRICT JSON ONLY.
     """
     try:
         response = flashcard_client.chat.completions.create(
-            model=SUMMARIZER_DEPLOYMENT_NAME,
+            model=FLASHCARD_DEPLOYMENT_NAME,
             messages=[
-                {"role": "system", "content": "You are a helpful AI that creates concise flashcards from educational content."},
-                {"role": "user", "content": f""""
-                    You are a flashcard generator for study purposes. Given the following educational text, extract {num_flashcards} key concepts or facts and convert them into flashcards. Each flashcard should consist of a concise question and a short, clear answer. Do not include explanations or extra formatting.
-
-                    ---
-
-                    # Output Format (as JSON array):
-                    {{
-                        "title": "...",
-                        "cards": [
-                            {{
-                                "question": "...",
-                                "answer": "...",
-                                "difficulty": "...",
-                                "important": false
-                            }}
-                        ]
-                    }}
-
-                    Only return valid JSON. Do not explain or include any extra text.
-
-                    Make sure the questions are varied and focus on important points from the content.
-
-                    ---
-
-                    Text:
-                    {text}
-                """}
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a flashcard deck generator.\n"
+                        "CRITICAL RULES:\n"
+                        "- Output ONLY valid JSON\n"
+                        "- NO markdown\n"
+                        "- NO backticks\n"
+                        "- NO explanations\n"
+                        "- NO extra text\n"
+                        "- Follow the schema EXACTLY\n\n"
+                        "If you violate these rules, the response is invalid."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Generate a flashcard deck with exactly {num_flashcards} cards "
+                        "from the following document.\n\n"
+                        "JSON schema (must match exactly):\n"
+                        "{\n"
+                        '  "title": "Short descriptive title",\n'
+                        '  "cards": [\n'
+                        "    {\n"
+                        '      "front": "Question",\n'
+                        '      "back": "Answer",\n'
+                        '      "tags": ["tag1", "tag2"]\n'
+                        "    }\n"
+                        "  ]\n"
+                        "}\n\n"
+                        "Use ONLY the provided text. Do not use prior knowledge.\n\n"
+                        "Document text:\n"
+                        "<<<\n"
+                        f"{text}\n"
+                        ">>>"
+                    ),
+                },
             ],
-            max_tokens=600,
-            temperature=0.5
+            temperature=0.3,
+            max_tokens=800,
         )
+
         return response.choices[0].message.content.strip()
+
     except Exception as e:
-        print(f"Error while calling Azure OpenAI for flashcard generatiohn: {str(e)}")
+        print(f"Azure OpenAI flashcard generation error: {str(e)}")
         raise Exception(f"Azure OpenAI generation request failed: {str(e)}")
+
 
 
 # ---------------------------

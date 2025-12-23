@@ -1286,10 +1286,11 @@ async def save_flashcard(flashcard: FlashcardDocument, user_claims: dict = Depen
         # Prepare document for Cosmos DB
         document = {
             "id": str(uuid.uuid4()),
-            "userId": user_claims["sub"],  
-            "contentType": flashcard.contentType,
+            "userId": user_claims["sub"],
+            "contentType": "flashcard_deck",
             "createdAt": datetime.utcnow().isoformat(),
-            "data": flashcard.data.dict()  
+            "title": flashcard.data.title,
+            "cards": flashcard.data.cards
         }
         
         # Save to Cosmos DB
@@ -1307,7 +1308,14 @@ async def save_flashcard(flashcard: FlashcardDocument, user_claims: dict = Depen
 async def get_decks(user_claims: dict = Depends(validate_token)):
     try:
         # Query parameters for Cosmos DB
-        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'flashcard' ORDER BY c.createdAt DESC"
+        query = """
+        SELECT c.id, c.title, ARRAY_LENGTH(c.cards) AS cardCount, c.createdAt
+        FROM c
+        WHERE c.userId = @userId
+        AND c.contentType = 'flashcard_deck'
+        ORDER BY c.createdAt DESC
+        """
+
         parameters = [{"name": "@userId", "value": user_claims["sub"]}]
         
         # Query Cosmos DB
@@ -1389,52 +1397,64 @@ async def delete_deck(deck_id: str, user_claims: dict = Depends(validate_token))
 # PDF upload and flashcard generation endpoint - protected
 @app.post("/generate-flashcard")
 async def generate_flashcard(
-    file: UploadFile = File(...), 
+    file: UploadFile = File(...),
     num_cards: int = Form(10),
     user_claims: dict = Depends(validate_token)
 ):
+    print(f"Generating flashcards for user: {user_claims['sub']}")
+
+    if not file or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(422, "Please upload a PDF")
+
+    file_path = f"./temp_{uuid.uuid4()}.pdf"
     try:
-        print(f"Generating flashcard for user: {user_claims['sub']}")
-        if not file and not text:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Please provide a file or text")
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
 
-        if file:
-            if not file.filename.lower().endswith(".pdf"):
-                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="File must be a PDF")
-            file_path = f"./temp_{file.filename}"
-            try:
-                with open(file_path, "wb") as f:
-                    f.write(await file.read())
-                extracted_text = extract_text_from_pdf(file_path)
-            finally:
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-        else:
-            extracted_text = text
+        extracted_text = extract_text_from_pdf(file_path)
 
-        flashcard_json = openai_generate_flashcard(extracted_text)
-        flashcard_data = json.loads(flashcard_json)
+        if len(extracted_text.strip()) < 200:
+            raise HTTPException(422, "PDF has insufficient readable text")
 
-        flashcard_id = str(uuid.uuid4())
-        flashcard_document = {
-            "id": flashcard_id,
-            "userId": user_claims["sub"],
-            "contentType": "flashcard",
-            "createdAt": datetime.utcnow().isoformat(),
-            "data": {
-                "front": flashcard_data.get("front", ""),
-                "back": flashcard_data.get("back", ""),
-                "tags": flashcard_data.get("tags", []),
-                "resourceName": file.filename if file else None
-            }
-        }
+    finally:
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
-        container.create_item(body=flashcard_document)
-        print(f"Flashcard created with ID: {flashcard_id}")
-        return {"id": flashcard_id, "message": "Flashcard created successfully"}
+    raw = openai_generate_flashcard(extracted_text, num_cards)
+    print("RAW LLM RESPONSE:", repr(raw))
+
+    def sanitize_llm_json(text: str) -> str:
+        text = text.strip()
+        if text.startswith("```"):
+            text = text.split("```", 2)[1]
+        return text.strip()
+
+    try:
+        clean = sanitize_llm_json(raw)
+        deck = json.loads(clean)
     except Exception as e:
-        print(f"Error generating flashcard: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to generate flashcard: {str(e)}")
+        raise HTTPException(500, f"Invalid LLM output: {str(e)}")
+
+    deck_id = str(uuid.uuid4())
+
+    document = {
+        "id": deck_id,
+        "userId": user_claims["sub"],
+        "contentType": "flashcard_deck",
+        "createdAt": datetime.utcnow().isoformat(),
+        "title": deck.get("title", "Generated Deck"),
+        "cards": deck["cards"],
+        "resourceName": file.filename
+    }
+
+    container.create_item(body=document)
+
+    return {
+        "deckId": deck_id,
+        "cardCount": len(deck["cards"]),
+        "message": "Flashcard deck created"
+    }
+
 
 @app.get("/flashcards")
 async def get_flashcards(user_claims: dict = Depends(validate_token)):

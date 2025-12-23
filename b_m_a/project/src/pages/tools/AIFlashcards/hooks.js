@@ -175,7 +175,7 @@ export const useDeckData = () => {
                 // Create a FormData object to send the file
                 const formData = new FormData();
                 formData.append("file", selectedFile);
-                formData.append("num_flashcards", numCards.toString()); // Convert to string
+                formData.append("num_cards", numCards.toString()); // Convert to string
 
 
                 // Use a direct URL string to avoid URL construction issues

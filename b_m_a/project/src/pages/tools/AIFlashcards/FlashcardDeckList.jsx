@@ -16,78 +16,82 @@ const StarIcon = (props) => (
 );
 
 const FlashcardDeckList = ({ decks, onDeckSelect }) => {
-    const { deleteDeck } = useDeckData();
-    const [localDecks, setLocalDecks] = useState([]);
+  const { deleteDeck } = useDeckData();
+  const [localDecks, setLocalDecks] = useState([]);
 
-    const handleDeleteDeck = async (deckId, e) => {
-        e.stopPropagation(); // Prevent triggering onDeckSelect
-        if (window.confirm("Are you sure you want to delete this deck?")) {
-            try {
-                await deleteDeck(deckId);
-                setLocalDecks(prev => prev.filter(deck => deck.id !== deckId)); // Remove locally
-            } catch (err) {
-                console.error('Failed to delete deck:', err);
-            }
-        }
-    };
-
-    useEffect(() => {
+  useEffect(() => {
     const normalizedDecks = (decks || []).map(deck => ({
-        ...deck,
-        data: deck.data ?? {
-            title: deck.title ?? "Untitled Deck",
-            cards: deck.cards ?? []
-        }
+      ...deck,
+      title: deck.title ?? deck.data?.title ?? "Untitled Deck",
+      cards: deck.cards ?? deck.data?.cards ?? [],
     }));
 
     setLocalDecks(normalizedDecks);
-}, [decks]);
+  }, [decks]);
 
+  const handleDeleteDeck = async (deckId, e) => {
+    e.stopPropagation();
+    if (!window.confirm("Delete this flashcard deck?")) return;
 
-    if (!decks || decks.length === 0) {
-        return (
-            <div className="text-center py-10 px-4">
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
-                    <p className="text-gray-600 dark:text-gray-400">
-                        No saved decks yet. Create a deck to get started!
-                    </p>
-                </div>
-            </div>
-        );
+    try {
+      await deleteDeck(deckId);
+      setLocalDecks(prev => prev.filter(d => d.id !== deckId));
+    } catch (err) {
+      console.error("Failed to delete deck:", err);
     }
+  };
 
+  if (!localDecks.length) {
     return (
-        <div className="space-y-4">
-            {localDecks.map((deck) => {
-                const cards = deck?.data?.cards ?? [];
-
-                return (
-                    <div
-                        key={deck.id}
-                        className="relative group bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md hover:shadow-lg cursor-pointer transition-shadow duration-200 ease-in-out"
-                        onClick={() => onDeckSelect(deck)}
-                    >
-                        <button
-                            onClick={(e) => handleDeleteDeck(deck.id, e)}
-                            className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                            <X className="h-4 w-4" />
-                        </button>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                            {deck?.data?.title ?? "Untitled Deck"}
-                        </h3>
-
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-600 dark:text-gray-400">
-                            <div className="flex items-center" title={`${cards.length} total cards`}>
-                                <CardStackIcon className="h-5 w-5 mr-1.5" />
-                                <span>{cards.length}</span>
-                            </div>
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
+      <div className="rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-500">
+        No flashcard decks yet. Upload a PDF to generate your first deck.
+      </div>
     );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {localDecks.map(deck => (
+        <div
+          key={deck.id}
+          onClick={() => onDeckSelect(deck.id)}
+          className="group relative cursor-pointer rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition"
+        >
+          {/* Delete */}
+          <button
+            onClick={(e) => handleDeleteDeck(deck.id, e)}
+            className="absolute top-4 right-4 rounded-full p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
+            title="Delete deck"
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          {/* Title */}
+          <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">
+            {deck.title}
+          </h3>
+
+          {/* Meta */}
+          <div className="flex items-center gap-4 text-sm text-gray-500">
+            <div className="flex items-center gap-1.5">
+              <CardStackIcon className="h-4 w-4" />
+              <span>{deck.cards.length} cards</span>
+            </div>
+
+            <span className="text-xs rounded-full bg-blue-50 px-2 py-0.5 text-blue-600">
+              AI-generated
+            </span>
+          </div>
+
+          {/* CTA hint */}
+          <div className="mt-6 text-sm font-medium text-blue-600 opacity-0 group-hover:opacity-100 transition">
+            Click to study →
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 };
+
 
 export default FlashcardDeckList;
