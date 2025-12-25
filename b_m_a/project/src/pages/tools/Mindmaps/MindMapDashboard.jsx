@@ -1,8 +1,12 @@
 import { Network, Search } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { getMindmaps } from '../../../api/apiService';
+import { useMsal, useIsAuthenticated } from '@azure/msal-react';
+import { InteractionStatus } from '@azure/msal-browser';
 
 const MindMapDashboard = () => {
+    const { instance, inProgress } = useMsal();
+    const isAuthenticated = useIsAuthenticated();
     const [search, setSearch] = useState('');
     const [savedMindmaps, setSavedMindmaps] = useState([]);
 
@@ -11,16 +15,22 @@ const MindMapDashboard = () => {
     }
 
     const fetchSavedMindmaps = useCallback(async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        try {
         const allItems = await getMindmaps();
-
         const mindmaps = allItems.filter(item => item.contentType === 'mindmap');
         setSavedMindmaps(mindmaps);
-    })
-
-    useEffect(() => {
-        fetchSavedMindmaps();
+        } catch (err) {
+            console.error("Fetch Failed.", err);
+        }
     }, []);
+
+  // Load saved mindmaps on component mount
+  useEffect(() => {
+        // Only fetch when MSAL is fully done initializing and user is logged in
+        if (isAuthenticated && inProgress === InteractionStatus.None) {
+            fetchSavedMindmaps();
+        }
+  }, [isAuthenticated, inProgress, fetchSavedMindmaps]);
 
     return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -44,8 +54,15 @@ const MindMapDashboard = () => {
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
                 <div className="px-6 py-3 border-b border-gray-100 flex items-center justify-between bg-white">
                     <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Boards in this team ()</span>
-                    <div className="flex items-center gap-1 text-gray-300">
-                    </div>
+                </div>
+                <div className="bg-color-white">
+                    {savedMindmaps.map((mindmap) => (
+                        <div key={mindmap.id}>
+                            <h1>
+                                {mindmap.data?.title}
+                            </h1>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
