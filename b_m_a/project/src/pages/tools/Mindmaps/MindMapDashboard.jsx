@@ -1,6 +1,6 @@
-import { Network, Search } from 'lucide-react';
+import { Network, Search, Trash, MoreVertical } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
-import { getMindmaps } from '../../../api/apiService';
+import { getMindmaps, deleteMindmap } from '../../../api/apiService';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
 import { InteractionStatus } from '@azure/msal-browser';
 
@@ -13,6 +13,9 @@ const MindMapDashboard = () => {
     const handleChange = (event) => {
         const response = setSearch(event.target.value);
     }
+
+    // Search Logic to search through saved mindmaps
+    const searchFilter = savedMindmaps.filter(mindmap => mindmap.data?.title.toLowerCase().includes(search.toLowerCase()));
 
     const fetchSavedMindmaps = useCallback(async () => {
         try {
@@ -34,11 +37,11 @@ const MindMapDashboard = () => {
 
     return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-4 mb-8">
                 <Network className="h-8 w-8 text-green-600" />
                 <h1 className="text-2xl font-bold text-gray-900">Mind Maps</h1>
             </div>
-            <div className="flex justify-between items-center gap-4">
+            <div className="flex justify-between items-center mb-4 gap-4">
                 <div className="relative flex-1 w-full">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
@@ -49,18 +52,26 @@ const MindMapDashboard = () => {
                         onChange={handleChange} />
                 </div>
                 <button className="rounded-lg border-1 border-gray-200 px-4 py-2 bg-white text-gray-900 text-bold shadow-lg">Filter</button>
-                <button className="rounded-lg px-6 py-2 bg-blue-500 text-white text-bold shadow-lg">+ New Board</button>
+                <button className="rounded-lg px-6 py-2 bg-blue-500 text-white text-bold shadow-lg hover:bg-blue-600">+ New Board</button>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
                 <div className="px-6 py-3 border-b border-gray-100 flex items-center justify-between bg-white">
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Boards in this team ()</span>
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Boards in this team ({savedMindmaps.length})</span>
                 </div>
-                <div className="bg-color-white">
-                    {savedMindmaps.map((mindmap) => (
-                        <div key={mindmap.id}>
+                <div className="bg-color-white px-6 py-3">
+                    {searchFilter.map((mindmap) => (
+                        <div key={mindmap.id} className="flex justify-between">
                             <h1>
                                 {mindmap.data?.title}
                             </h1>
+                            <div className="flex gap-2">
+                                <button>
+                                    <Trash className="text-gray-400"/>
+                                </button>
+                                <button>
+                                    <MoreVertical className="text-gray-400"/>
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
