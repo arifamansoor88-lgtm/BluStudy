@@ -1,13 +1,15 @@
+import { createPortal } from 'react-dom';
+
 const ConfirmModal = ({ setOpenModal, selectedMindmap, onConfirm }) => {
-    return (
-        <div className="w-screen h-screen bg-black/40 fixed flex justify-center items-center inset-0 z-[100] shadow-md">
+    return createPortal(
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-[100] m-0">
             <div className="w-[448px] h-44 rounded-lg bg-white gap-2 flex flex-col justify-between p-4">
-                <h3 className="text-lg">Delete Mindmap?</h3>
+                <h3 className="text-lg font-semibold">Delete Mindmap?</h3>
                 <div>
                     <p>
                         This will delete <span className="font-semibold">{selectedMindmap.data?.title}.</span>
                     </p>
-                    <p className="text-[14px] font-bold text-gray-400">
+                    <p className="text-[14px] text-gray-400">
                         Once deleted, mindmap cannot be recovered.
                     </p>
                 </div>
@@ -20,8 +22,9 @@ const ConfirmModal = ({ setOpenModal, selectedMindmap, onConfirm }) => {
                     </button>
                 </div>
             </div>
-        </div>
-    )
-}
+        </div>,
+        document.body
+    );
+};
 
 export default ConfirmModal;

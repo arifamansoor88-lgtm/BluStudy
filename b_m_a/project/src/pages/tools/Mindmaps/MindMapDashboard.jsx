@@ -1,17 +1,22 @@
 import { Network, Search, Trash, MoreVertical } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
-import { getMindmaps, deleteMindmap } from '../../../api/apiService';
+import { getMindmaps, deleteMindmap, createMindmap } from '../../../api/apiService';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
 import { InteractionStatus } from '@azure/msal-browser';
+import { useNavigate } from 'react-router-dom';
 import ConfirmModal from './ConfirmModal';
 
 const MindMapDashboard = () => {
     const { instance, inProgress } = useMsal();
     const isAuthenticated = useIsAuthenticated();
+    const navigate = useNavigate();
     const [search, setSearch] = useState('');
     const [savedMindmaps, setSavedMindmaps] = useState([]);
     const [selectedMindmap, setSelectedMindmap] = useState(null);
     const [openModal, setOpenModal] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [newMindmapTitle, setNewMindmapTitle] = useState('');
+    const [isCreating, setIsCreating] = useState(false);
 
     // Search Logic to search through saved mindmaps
     const searchFilter = savedMindmaps.filter(mindmap => mindmap.data?.title.toLowerCase().includes(search.toLowerCase()));
@@ -43,6 +48,26 @@ const MindMapDashboard = () => {
         }
     }
 
+    const handleCreateMindmap = async () => {
+        if (!newMindmapTitle.trim()) {
+            return;
+        }
+
+        try {
+            setIsCreating(true);
+            const response = await createMindmap(newMindmapTitle);
+            // Navigate to the new mindmap using its ID
+            navigate(`/tools/maps/${response.id}`);
+        } catch (err) {
+            console.error("Error creating mindmap:", err);
+            alert("Failed to create mindmap. Please try again.");
+        } finally {
+            setIsCreating(false);
+            setShowCreateModal(false);
+            setNewMindmapTitle('');
+        }
+    }
+
   // Load saved mindmaps on component mount
   useEffect(() => {
         // Only fetch when MSAL is fully done initializing and user is logged in
@@ -68,7 +93,11 @@ const MindMapDashboard = () => {
                         onChange={(e) => setSearch(e.target.value)} />
                 </div>
                 <button className="rounded-lg border-1 border-gray-200 px-4 py-2 bg-white text-gray-900 text-bold shadow-lg">Filter</button>
-                <button className="rounded-lg px-6 py-2 bg-blue-500 text-white text-bold shadow-lg hover:bg-blue-600">+ New Board</button>
+                <button 
+                    onClick={() => setShowCreateModal(true)}
+                    className="rounded-lg px-6 py-2 bg-blue-500 text-white text-bold shadow-lg hover:bg-blue-600">
+                    + New Board
+                </button>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
                 <div className="px-6 py-3 border-b border-gray-100 flex items-center justify-between bg-white">
@@ -76,8 +105,11 @@ const MindMapDashboard = () => {
                 </div>
                 <div className="bg-color-white px-6 py-3">
                     {searchFilter.map((mindmap) => (
-                        <div key={mindmap.id} className="flex justify-between">
-                            <h1>
+                        <div key={mindmap.id} className="flex justify-between items-center py-2 hover:bg-gray-50 rounded-lg px-2 transition-colors">
+                            <h1 
+                                className="cursor-pointer hover:text-blue-600 transition-colors"
+                                onClick={() => navigate(`/tools/maps/${mindmap.id}`)}
+                            >
                                 {mindmap.data?.title}
                             </h1>
                             <div className="flex gap-2">
@@ -92,7 +124,53 @@ const MindMapDashboard = () => {
                     ))}
                 </div>
             </div>
-            {openModal && <ConfirmModal setOpenModal={setOpenModal} onConfirm={handleConfirmDelete}/>}
+            {openModal && <ConfirmModal setOpenModal={setOpenModal} selectedMindmap={selectedMindmap}  onConfirm={handleConfirmDelete}/>}
+            
+            {/* Create Mindmap Modal */}
+            {showCreateModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <h2 className="text-xl font-bold mb-4">Create New Mind Map</h2>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Title
+                            </label>
+                            <input
+                                type="text"
+                                value={newMindmapTitle}
+                                onChange={(e) => setNewMindmapTitle(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !isCreating) {
+                                        handleCreateMindmap();
+                                    }
+                                }}
+                                placeholder="Enter mindmap title..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowCreateModal(false);
+                                    setNewMindmapTitle('');
+                                }}
+                                disabled={isCreating}
+                                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleCreateMindmap}
+                                disabled={!newMindmapTitle.trim() || isCreating}
+                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isCreating ? 'Creating...' : 'Create'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
