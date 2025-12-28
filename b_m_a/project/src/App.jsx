@@ -21,7 +21,7 @@ import FlashcardStudyPage from './pages/tools/AIFlashcards/FlashcardStudy';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
+      <div className="h-screen overflow-hidden bg-gray-50">
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
