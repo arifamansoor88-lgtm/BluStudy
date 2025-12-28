@@ -61,6 +61,7 @@ class MindmapGroup(BaseModel):
 
 class MindmapData(BaseModel):
     title: str
+    slug: Optional[str] = None
     nodes: List[MindmapNode]
     edges: List[MindmapEdge]
     groups: Optional[List[MindmapGroup]] = []
@@ -72,7 +73,11 @@ class MindmapDocument(BaseModel):
 
 class SaveMindmapResponse(BaseModel):
     id: str
+    slug: str
     message: str
+
+class CreateMindmapRequest(BaseModel):
+    title: str
 
 
 # =========================
