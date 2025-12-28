@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import ReactFlow, { 
   addEdge, 
   Controls, 
@@ -27,7 +28,7 @@ import {
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
-import { saveMindmap, getMindmaps, getMindmap, updateMindmap, deleteMindmap } from '../../api/apiService';
+import { saveMindmap, getMindmaps, getMindmap, updateMindmap, deleteMindmap } from '../../../api/apiService';
 
 // Custom CSS to override React Flow's selection border for groups
 const groupStyles = `
@@ -323,6 +324,7 @@ const ExportButton = ({ onClick, disabled, children, variant = "green", classNam
 };
 
 const MindMaps = () => {
+  const { id } = useParams(); // Get the mindmap ID from the URL
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [newNodeText, setNewNodeText] = useState('');
@@ -338,7 +340,7 @@ const MindMaps = () => {
   
   // Mindmap save/load state
   const [savedMindmaps, setSavedMindmaps] = useState([]);
-  const [currentMindmapId, setCurrentMindmapId] = useState(null);
+  const [currentMindmapId, setCurrentMindmapId] = useState(id || null); // Initialize with URL id
   const [mindmapTitle, setMindmapTitle] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -349,6 +351,7 @@ const MindMaps = () => {
   const [renderKey, setRenderKey] = useState(0);
   
   const reactFlowRef = useRef(null);
+  const hasLoadedInitialMindmap = useRef(false);
 
   // Inject custom CSS
   useEffect(() => {
@@ -360,6 +363,52 @@ const MindMaps = () => {
       document.head.removeChild(styleElement);
     };
   }, []);
+
+  // Load mindmap on mount if ID is provided in URL
+  useEffect(() => {
+    if (id && !hasLoadedInitialMindmap.current) {
+      hasLoadedInitialMindmap.current = true;
+      // Use a direct call to avoid dependency issues
+      const loadInitialMindmap = async () => {
+        try {
+          setIsLoading(true);
+          setError('');
+          
+          const mindmap = await getMindmap(id);
+          const data = mindmap.data;
+          
+          // Load nodes with proper delete functionality
+          const nodesWithDelete = data.nodes.map(node => ({
+            ...node,
+            data: {
+              ...node.data,
+              onDelete: deleteNode
+            }
+          }));
+          setNodes(nodesWithDelete);
+          
+          // Load edges
+          setEdges(data.edges);
+          
+          // Load groups
+          if (data.groups) {
+            setGroupNodeMap(new Map(data.metadata?.groupNodeMap || []));
+          }
+          
+          // Set current mindmap info
+          setCurrentMindmapId(id);
+          setMindmapTitle(data.title);
+        } catch (err) {
+          console.error('Error loading mindmap:', err);
+          setError('Failed to load mindmap');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      loadInitialMindmap();
+    }
+  }, [id]); // Only re-run if id changes
 
   // Delete node function
   const deleteNode = useCallback((nodeId) => {
