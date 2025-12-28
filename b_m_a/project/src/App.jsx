@@ -8,7 +8,8 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import AIFlashcards from "./pages/tools/AIFlashcards/AIFlashcards";
 import VoiceNotes from "./pages/tools/VoiceNotes";
-import MindMaps from "./pages/tools/MindMaps";
+import MindMaps from "./pages/tools/Mindmaps/MindMaps";
+import MindMapDashboard from './pages/tools/Mindmaps/MindMapDashboard';
 import PracticeTests from "./pages/tools/PracticeTests/PracticeTests";
 import StudyPlans from "./pages/tools/studyPlans/StudyPlans";
 import Summarizer from "./pages/tools/summarizer";
@@ -16,7 +17,6 @@ import Workspace from "./pages/Workspace";
 import FolderView from "./pages/FolderView";
 import PublicLibrary from "./pages/publicLibrary";
 import FlashcardStudyPage from './pages/tools/AIFlashcards/FlashcardStudy';
-import MindMapDashboard from './pages/tools/MindMapDashboard';
 
 function App() {
   return (
@@ -32,7 +32,7 @@ function App() {
           <Route path="/tools/flashcards" element={<AIFlashcards />} />
           <Route path="/tools/voice-notes" element={<VoiceNotes />} />
           <Route path="/tools/mind-maps" element={<MindMapDashboard />} />
-          <Route path="/tools/maps" element={<MindMaps />} />
+          <Route path="/tools/maps/:id" element={<MindMaps />} />
           <Route path="/tools/practice-tests" element={<PracticeTests />} />
           <Route path="/tools/study-planner" element={<StudyPlans />} />
           <Route path="/tools/summarizer" element={<Summarizer />} />
