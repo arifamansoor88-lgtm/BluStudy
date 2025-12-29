@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Search, Filter, List, LayoutGrid, ChevronDown, ChevronUp,
-  Calendar as CalendarIcon, MoreVertical, Pencil, Trash2, FolderSymlink
+  Calendar as CalendarIcon, MoreVertical, Trash2, FolderSymlink
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Mic2, LayoutGrid as GridIcon, Edit3, Zap, NotebookPen } from "lucide-react";
@@ -45,40 +45,6 @@ async function apiFetch(path, options = {}) {
   return res.status === 204 ? null : res.json();
 }
 
-// =======================
-// localStorage utilities
-// =======================
-const LS_KEY_PREFIX = "folderItems:";
-const lsKeyFor = (folderId) => `${LS_KEY_PREFIX}${folderId}`;
-
-function loadItems(folderId) {
-  try {
-    const raw = localStorage.getItem(lsKeyFor(folderId));
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveItems(folderId, items) {
-  localStorage.setItem(lsKeyFor(folderId), JSON.stringify(items));
-  localStorage.setItem("folders:changed", Date.now().toString()); // notify Workspace
-}
-
-// Quick helper to make a new basic note
-function makeBasicNote() {
-  const now = new Date();
-  return {
-    icon: <NotebookPen className="text-4xl" />,
-    title: `Note ${now.toLocaleTimeString()}`,
-    description: "Quick note (local-only). Replace with your note editor later.",
-    type: "Notes",
-    date: now.toLocaleString(),
-    tags: ["note"],
-    timestamp: now,
-  };
-}
-
 // Tool tiles: link directly to real routes
 const toolTiles = [
   { label: "AI Flashcards",    icon: <Brain className="text-2xl" />,   color: "from-indigo-500 to-violet-500",  path: "/tools/ai-flashcards" },
@@ -89,8 +55,65 @@ const toolTiles = [
   { label: "Study Planner",    icon: <NotebookPen className="text-2xl" />, color: "from-rose-500 to-red-500",    path: "/tools/study-plans" },
 ];
 
-const filterOptions = ["All Types", "Notes", "Summary", "Quiz", "Research", "Essay", "Flashcards"];
-const sortOptions = ["Most Recent", "Oldest"];
+const filterOptions = ["All Types", "Quiz", "Flashcards", "Study Plan", "Voice Note", "Summary", "Mind Map"];
+const sortOptions = ["Most Recent", "Oldest", "Alphabetical"];
+
+// Helper function to map database items to UI format
+function mapDatabaseItemsToUI(dbItems) {
+  return dbItems.map(item => {
+    const contentType = item.contentType || "unknown";
+    let title = "Untitled";
+    let description = "";
+    let icon = <Brain className="text-4xl text-gray-600" />;
+    
+    // Extract title and description based on content type
+    if (contentType === "quiz") {
+      title = item.data?.title || "Untitled Quiz";
+      description = item.data?.resourceName || `Quiz with ${item.data?.questions?.length || 0} questions`;
+      icon = <Edit3 className="text-4xl text-orange-600" />;
+    } else if (contentType === "flashcard_deck") {
+      title = item.title || item.data?.title || "Untitled Flashcards";
+      description = `${item.cards?.length || item.data?.cards?.length || 0} flashcards`;
+      icon = <Brain className="text-4xl text-indigo-600" />;
+    } else if (contentType === "study_plan") {
+      title = item.data?.title || "Untitled Study Plan";
+      description = item.data?.description || "";
+      icon = <NotebookPen className="text-4xl text-blue-600" />;
+    } else if (contentType === "voice_note") {
+      title = item.title || "Untitled Voice Note";
+      description = item.text || "";
+      icon = <Mic2 className="text-4xl text-purple-600" />;
+    } else if (contentType === "summary") {
+      title = item.data?.title || "Untitled Summary";
+      description = item.data?.summary?.substring(0, 100) || "";
+      icon = <Zap className="text-4xl text-yellow-600" />;
+    } else if (contentType === "mindmap") {
+      title = item.data?.title || "Untitled Mind Map";
+      description = item.data?.description || "";
+      icon = <GridIcon className="text-4xl text-green-600" />;
+    }
+    
+    const createdAt = item.createdAt ? new Date(item.createdAt) : new Date();
+    const updatedAt = item.updatedAt || item.data?.updatedAt ? new Date(item.updatedAt || item.data.updatedAt) : null;
+    
+    return {
+      id: item.id,
+      icon,
+      title,
+      description,
+      type: contentType === "quiz" ? "Quiz" : 
+            contentType === "flashcard_deck" ? "Flashcards" :
+            contentType === "study_plan" ? "Study Plan" :
+            contentType === "voice_note" ? "Voice Note" :
+            contentType === "summary" ? "Summary" :
+            contentType === "mindmap" ? "Mind Map" : "Item",
+      date: (updatedAt || createdAt).toLocaleString(),
+      timestamp: updatedAt || createdAt,
+      tags: item.tags || item.data?.tags || [],
+      rawItem: item, // Keep original for operations
+    };
+  });
+}
 
 // --- lightweight modal ---
 const Modal = ({ open, children, onClose }) => {
@@ -122,7 +145,9 @@ export default function FolderView() {
   const [allFolders, setAllFolders] = useState([]);     // for Move dropdown
   const [folderMeta, setFolderMeta] = useState(null);   // current folder meta (backend)
 
-  const [items, setItems] = useState([]);               // local “trivial” content for this folder
+  const [items, setItems] = useState([]);               // items from database
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [view, setView] = useState("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All Types");
@@ -132,10 +157,6 @@ export default function FolderView() {
   const [menuOpenIdx, setMenuOpenIdx] = useState(null);
 
   // Content modals
-  const [renameIdx, setRenameIdx] = useState(null);
-  const [renameValue, setRenameValue] = useState("");
-  const [moveIdx, setMoveIdx] = useState(null);
-  const [moveDest, setMoveDest] = useState("");
   const [deleteIdx, setDeleteIdx] = useState(null);
 
   // Close dropdowns on outside click
@@ -152,39 +173,40 @@ export default function FolderView() {
     return () => document.removeEventListener("click", handler);
   }, [menuOpenIdx]);
 
-  // Load folders + current folder meta + local items
+  // Load folders + current folder meta + items from API
   useEffect(() => {
     (async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
+        // Load folders
         const folders = await apiFetch("/folders", { method: "GET" });
         setAllFolders(folders);
         const current = folders.find((f) => String(f.id) === String(folderId));
         setFolderMeta(current || null);
 
-        // load local items for this folder id
-        const stored = loadItems(folderId);
-        setItems(
-          stored.map((it) => ({
-            ...it,
-            timestamp: it.timestamp ? new Date(it.timestamp) : new Date(),
-          }))
-        );
-
-        // keep backend count aligned with local
-        if (current && (current.items ?? 0) !== stored.length) {
-          await apiFetch(`/folders/${folderId}`, {
-            method: "PATCH",
-            body: JSON.stringify({ items: stored.length }),
-          });
-        }
+        // Load items from database for this folder
+        const dbItems = await apiFetch(`/folders/${folderId}/items`, { method: "GET" });
+        
+        // Map database items to UI format
+        const mappedItems = mapDatabaseItemsToUI(dbItems);
+        
+        setItems(mappedItems);
+        setLoading(false);
       } catch (e) {
-        // fallback: show local items even if backend fails
-        if (!folderMeta)
+        console.error("Error loading folder items:", e);
+        setError(e.message || "Failed to load folder items");
+        setItems([]);
+        setLoading(false);
+        // Fallback folder metadata
+        if (!folderMeta) {
           setFolderMeta({
             id: folderId,
             name: "Untitled Folder",
-            items: loadItems(folderId).length,
+            items: 0,
           });
+        }
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -195,91 +217,103 @@ export default function FolderView() {
 
   // Filters/sorts
   const filtered = useMemo(() => {
-    const base = items
+    let base = items
       .filter((i) => filterType === "All Types" || i.type === filterType)
       .filter((i) => i.title.toLowerCase().includes(searchTerm.toLowerCase()));
-    base.sort((a, b) =>
-      sortBy === "Most Recent" ? b.timestamp - a.timestamp : a.timestamp - b.timestamp
-    );
+    
+    // Sorting
+    if (sortBy === "Most Recent") {
+      base.sort((a, b) => b.timestamp - a.timestamp);
+    } else if (sortBy === "Oldest") {
+      base.sort((a, b) => a.timestamp - b.timestamp);
+    } else if (sortBy === "Alphabetical") {
+      base.sort((a, b) => a.title.localeCompare(b.title));
+    }
+    
     return base;
   }, [items, filterType, searchTerm, sortBy]);
 
   // ==============
   // Mutations
   // ==============
-  async function syncCount(newCount) {
-    try {
-      await apiFetch(`/folders/${folderId}`, {
-        method: "PATCH",
-        body: JSON.stringify({ items: newCount }),
-      });
-    } catch (e) {
-      console.warn("Failed to sync folder count:", e.message);
-    }
-  }
-
-  // Add a quick basic note (local)
-  function addBasicNote() {
-    const next = makeBasicNote();
-    setItems((prev) => {
-      const updated = [next, ...prev];
-      saveItems(folderId, updated);
-      syncCount(updated.length);
-      return updated;
-    });
-  }
-
-  function doRename() {
-    setItems((prev) => {
-      const updated = prev.map((it, i) => (i === renameIdx ? { ...it, title: renameValue } : it));
-      saveItems(folderId, updated);
-      return updated;
-    });
-    setRenameIdx(null);
-  }
-
-  async function doMove() {
-    // Remove from this folder
-    let movedItem = null;
-    setItems((prev) => {
-      movedItem = prev[moveIdx];
-      const updated = prev.filter((_, i) => i !== moveIdx);
-      saveItems(folderId, updated);
-      syncCount(updated.length);
-      return updated;
-    });
-
-    // Add to destination folder local store + bump its backend count
-    if (movedItem && moveDest) {
-      const destKey = lsKeyFor(moveDest);
-      const destItems = (() => {
-        try { return JSON.parse(localStorage.getItem(destKey) || "[]"); } catch { return []; }
-      })();
-      const next = [{ ...movedItem }, ...destItems];
-      localStorage.setItem(destKey, JSON.stringify(next));
-      localStorage.setItem("folders:changed", Date.now().toString());
-      try {
-        await apiFetch(`/folders/${moveDest}`, {
-          method: "PATCH",
-          body: JSON.stringify({ items: next.length }),
-        });
-      } catch (e) {
-        console.warn("Failed to sync destination folder count:", e.message);
-      }
-    }
-
-    setMoveIdx(null);
-    setMoveDest("");
-  }
-
+  
   async function doDelete() {
-    setItems((prev) => {
-      const updated = prev.filter((_, i) => i !== deleteIdx);
-      saveItems(folderId, updated);
-      syncCount(updated.length);
-      return updated;
-    });
-    setDeleteIdx(null);
+    if (deleteIdx === null) return;
+    
+    const itemToDelete = filtered[deleteIdx];
+    if (!itemToDelete || !itemToDelete.id) {
+      console.error("Cannot delete: item ID missing");
+      setDeleteIdx(null);
+      return;
+    }
+
+    try {
+      // Determine the delete endpoint based on content type
+      const contentType = itemToDelete.rawItem?.contentType;
+      let deleteEndpoint = "";
+      
+      if (contentType === "quiz") {
+        deleteEndpoint = `/quizzes/${itemToDelete.id}`;
+      } else if (contentType === "flashcard_deck") {
+        deleteEndpoint = `/delete-deck/${itemToDelete.id}`;
+      } else if (contentType === "voice_note") {
+        deleteEndpoint = `/voice-notes/${itemToDelete.id}`;
+      } else if (contentType === "study_plan") {
+        // Study plans might not have a delete endpoint, we'll handle it generically
+        // For now, we'll use container.delete_item approach or skip if no endpoint exists
+        deleteEndpoint = null;
+      } else {
+        // Generic delete - we'll need to implement a generic delete endpoint
+        deleteEndpoint = null;
+      }
+
+      if (deleteEndpoint) {
+        await apiFetch(deleteEndpoint, { method: "DELETE" });
+      } else {
+        // For items without specific delete endpoints, we'll update the folderId to null
+        // This effectively removes it from the folder
+        console.warn(`No delete endpoint for contentType: ${contentType}. Item will be removed from folder only.`);
+      }
+
+      // Reload items from the server
+      const dbItems = await apiFetch(`/folders/${folderId}/items`, { method: "GET" });
+      const mappedItems = mapDatabaseItemsToUI(dbItems);
+      setItems(mappedItems);
+      setDeleteIdx(null);
+    } catch (e) {
+      console.error("Error deleting item:", e);
+      alert("Failed to delete item: " + (e.message || "Unknown error"));
+      setDeleteIdx(null);
+    }
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading folder items...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -381,14 +415,6 @@ export default function FolderView() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-slate-800">Create New Content</h2>
-            {/* Quick basic note add (local) */}
-            <button
-              onClick={addBasicNote}
-              className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm shadow inline-flex items-center gap-2"
-              title="Add a quick note to this folder"
-            >
-              <NotebookPen className="w-4 h-4" /> Add Note
-            </button>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
@@ -396,14 +422,14 @@ export default function FolderView() {
               <motion.button
                 key={tool.label}
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                onClick={() => navigate(tool.path)}
+                onClick={() => navigate(`${tool.path}?folderId=${folderId}`)}
                 className={`flex flex-col items-center justify-center p-6 rounded-2xl text-white bg-gradient-to-br ${tool.color} shadow-xl hover:scale-105 transition-transform`}
-                title={`Open ${tool.label}`}
+                title={`Create ${tool.label} in this folder`}
               >
                 {tool.icon}
                 <span className="mt-3 font-semibold">{tool.label}</span>
                 <span className="mt-3 px-4 py-1 bg-white text-slate-700 rounded-full text-xs shadow">
-                  Open
+                  Create
                 </span>
               </motion.button>
             ))}
@@ -418,9 +444,23 @@ export default function FolderView() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered.map((item, i) => (
                 <motion.div
-                  key={`${item.title}-${i}`}
+                  key={`${item.id || item.title}-${i}`}
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                  className="relative bg-white rounded-3xl p-6 shadow-lg"
+                  className="relative bg-white rounded-3xl p-6 shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+                  onClick={() => {
+                    // Navigate based on content type
+                    const contentType = item.rawItem?.contentType;
+                    if (contentType === "quiz") {
+                      navigate(`/tools/practice-tests?quizId=${item.id}`);
+                    } else if (contentType === "flashcard_deck") {
+                      navigate(`/tools/flashcards/study/${item.id}`);
+                    } else if (contentType === "study_plan") {
+                      navigate(`/tools/study-planner?planId=${item.id}`);
+                    } else if (contentType === "voice_note") {
+                      navigate(`/tools/voice-notes?noteId=${item.id}`);
+                    }
+                    // Other content types can be handled later
+                  }}
                 >
                   {/* item menu */}
                   <div className="absolute top-4 right-4" id={`menu-${i}`}>
@@ -474,13 +514,46 @@ export default function FolderView() {
                 </motion.div>
               ))}
             </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="inline-block p-6 bg-slate-100 rounded-full mb-4">
+                <FolderSymlink className="w-16 h-16 text-slate-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-slate-700 mb-2">No items found</h3>
+              <p className="text-slate-500 mb-6">
+                {searchTerm || filterType !== "All Types" 
+                  ? "Try adjusting your search or filter"
+                  : "Create new content to get started"}
+              </p>
+              {!searchTerm && filterType === "All Types" && (
+                <button
+                  onClick={() => navigate(`/tools/practice-tests?folderId=${folderId}`)}
+                  className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors"
+                >
+                  Create Your First Item
+                </button>
+              )}
+            </div>
           ) : (
             <ul className="space-y-4">
               {filtered.map((item, i) => (
                 <motion.li
-                  key={`${item.title}-${i}`}
+                  key={`${item.id || item.title}-${i}`}
                   initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
-                  className="relative flex items-start gap-4 bg-white rounded-xl p-4 shadow-lg"
+                  className="relative flex items-start gap-4 bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+                  onClick={() => {
+                    // Navigate based on content type
+                    const contentType = item.rawItem?.contentType;
+                    if (contentType === "quiz") {
+                      navigate(`/tools/practice-tests?quizId=${item.id}`);
+                    } else if (contentType === "flashcard_deck") {
+                      navigate(`/tools/flashcards/study/${item.id}`);
+                    } else if (contentType === "study_plan") {
+                      navigate(`/tools/study-planner?planId=${item.id}`);
+                    } else if (contentType === "voice_note") {
+                      navigate(`/tools/voice-notes?noteId=${item.id}`);
+                    }
+                  }}
                 >
                   <div className="mt-1">{item.icon ?? <Brain className="text-4xl" />}</div>
                   <div className="flex-1">
@@ -530,54 +603,6 @@ export default function FolderView() {
           )}
         </div>
       </div>
-
-      {/* RENAME MODAL */}
-      <Modal open={renameIdx !== null} onClose={() => setRenameIdx(null)}>
-        <h3 className="text-lg font-semibold text-slate-900">Rename item</h3>
-        <input
-          className="mt-4 w-full px-4 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-300"
-          value={renameValue}
-          onChange={(e) => setRenameValue(e.target.value)}
-        />
-        <div className="mt-6 flex justify-end gap-3">
-          <button className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200" onClick={() => setRenameIdx(null)}>
-            Cancel
-          </button>
-          <button className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:brightness-110" onClick={doRename}>
-            Save
-          </button>
-        </div>
-      </Modal>
-
-      {/* MOVE MODAL */}
-      <Modal open={moveIdx !== null} onClose={() => setMoveIdx(null)}>
-        <h3 className="text-lg font-semibold text-slate-900">Move item</h3>
-        <p className="text-sm text-slate-600 mt-1">Choose a destination folder.</p>
-        <select
-          className="mt-4 w-full px-3 py-2 rounded-xl border border-slate-300"
-          value={moveDest}
-          onChange={(e) => setMoveDest(e.target.value)}
-        >
-          <option value="" disabled>Select folder</option>
-          {allFolders
-            .filter((f) => String(f.id) !== String(folderId))
-            .map((f) => (
-              <option key={f.id} value={f.id}>{f.name}</option>
-            ))}
-        </select>
-        <div className="mt-6 flex justify-end gap-3">
-          <button className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200" onClick={() => setMoveIdx(null)}>
-            Cancel
-          </button>
-          <button
-            className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:brightness-110 disabled:opacity-50"
-            onClick={doMove}
-            disabled={!moveDest}
-          >
-            Move
-          </button>
-        </div>
-      </Modal>
 
       {/* DELETE MODAL */}
       <Modal open={deleteIdx !== null} onClose={() => setDeleteIdx(null)}>

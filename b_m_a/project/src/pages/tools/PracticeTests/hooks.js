@@ -194,7 +194,8 @@ export const useQuizData = () => {
       numQuestions,
       selectedTopics,
       customTopics,
-      questionFormats
+      questionFormats,
+      folderId = null
     ) => {
       try {
         console.log("=== generateQuiz Hook Called ===");
@@ -256,6 +257,11 @@ export const useQuizData = () => {
           )
         );
 
+        // Add folderId if provided
+        if (folderId) {
+          formData.append("folder_id", folderId);
+        }
+
         // Use a direct URL string to avoid URL construction issues
         const apiUrl = "http://127.0.0.1:8000/generate-quiz";
 
@@ -312,7 +318,8 @@ export const useQuizData = () => {
       numQuestions,
       selectedTopics,
       customTopics,
-      questionFormats
+      questionFormats,
+      folderId = null
     ) => {
       try {
         console.log("=== generateQuizFromTopic Hook Called ===");
@@ -365,6 +372,11 @@ export const useQuizData = () => {
             {}
           ),
         };
+
+        // Add folderId if provided
+        if (folderId) {
+          requestBody.folder_id = folderId;
+        }
 
         console.log("Sending request to:", apiUrl);
         console.log("RequestBody contents:", requestBody);

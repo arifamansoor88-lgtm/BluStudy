@@ -4,9 +4,13 @@ import { useDeckData } from "./hooks";
 import FlashcardDifficultySelector from "./FlashcardDifficultySelector";
 import StarSelector from "./StarSelector";
 import FlashcardDeckList from "./FlashcardDeckList";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 const AIFlashcards = () => {
+  // Get folderId from URL query params if present
+  const [searchParams] = useSearchParams();
+  const folderId = searchParams.get('folderId');
+  
   const [cards, setCards] = useState([]);
   const [decks, setDecks] = useState([]);
   const [newQuestion, setNewQuestion] = useState("");
@@ -59,7 +63,7 @@ const AIFlashcards = () => {
         decksToImport.forEach((deckObj) => {
           if (deckObj.title && Array.isArray(deckObj.cards)) {
             // Save to existing system
-            saveDeck(deckObj.title, deckObj.cards);
+            saveDeck(deckObj.title, deckObj.cards, folderId);
           } else {
             console.error("Invalid JSON format:", deckObj);
           }
@@ -94,12 +98,12 @@ const AIFlashcards = () => {
 
   const saveCard = () => {
     let deckName = prompt("Choose a name for this deck");
-    saveDeck(deckName, cards);
+    saveDeck(deckName, cards, folderId);
   };
 
   const saveCardTestDeck = async () => {
     let deckName = prompt("Choose a name for this deck");
-    let id = await saveDeck(deckName, cards);
+    let id = await saveDeck(deckName, cards, folderId);
     navigate(`/tools/flashcards/study/${id}`, {
       state: {
         flashcards: cards,
@@ -113,7 +117,7 @@ const AIFlashcards = () => {
     if (file) {
       setIsProcessing(true);
       try {
-        await generateFlashcards(file, 10);
+        await generateFlashcards(file, 10, folderId);
         window.location.reload();
       } catch (error) {
         console.error("Error processing PDF:", error);

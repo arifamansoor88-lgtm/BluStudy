@@ -3,12 +3,16 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { useMsal } from '@azure/msal-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Mic, Save, Trash2, Download, Share2, Tag as TagIcon, AudioWaveform as Waveform, PauseCircle, PlayCircle } from 'lucide-react';
 
 const API_URL = "http://localhost:8000";
 
 const VoiceNotes = () => {
+  // Get folderId from URL query params if present
+  const [searchParams] = useSearchParams();
+  const folderId = searchParams.get('folderId');
+  
   const { instance, accounts } = useMsal();
   const navigate = useNavigate();
   
@@ -304,6 +308,11 @@ const VoiceNotes = () => {
     formData.append('duration', recordingDuration || 0);
     formData.append('visibility', privacySettings['temp'] || 'Private');
     formData.append('tags', pendingTags.join(', '));
+    
+    // Add folderId if provided
+    if (folderId) {
+      formData.append('folder_id', folderId);
+    }
 
     try {
       const res = await axios.post(`${API_URL}/voice-notes`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });

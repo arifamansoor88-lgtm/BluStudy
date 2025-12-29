@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ReactFlow, { 
   addEdge, 
   Controls, 
@@ -323,6 +324,10 @@ const ExportButton = ({ onClick, disabled, children, variant = "green", classNam
 };
 
 const MindMaps = () => {
+  // Get folderId from URL query params if present
+  const [searchParams] = useSearchParams();
+  const folderId = searchParams.get('folderId');
+  
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [newNodeText, setNewNodeText] = useState('');
@@ -835,7 +840,7 @@ const MindMaps = () => {
         response = await updateMindmap(currentMindmapId, mindmapData);
       } else {
         // Save new mindmap
-        response = await saveMindmap(mindmapData);
+        response = await saveMindmap(mindmapData, folderId);
         setCurrentMindmapId(response.id);
       }
 

@@ -74,6 +74,7 @@ const Navbar = () => {
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               <NavLink to="/dashboard">Dashboard</NavLink>
               <NavLink to="/tools">Study Tools</NavLink>
+              <NavLink to="/workspace">Workspace</NavLink>
               <NavLink to="/public_library">Public Library</NavLink>
             </div>
           </div>
@@ -128,6 +129,8 @@ const Navbar = () => {
             <div className="px-2 pt-2 pb-3 space-y-1">
               <MobileNavLink to="/dashboard">Dashboard</MobileNavLink>
               <MobileNavLink to="/tools">Study Tools</MobileNavLink>
+              <MobileNavLink to="/workspace">Workspace</MobileNavLink>
+              <MobileNavLink to="/public_library">Public Library</MobileNavLink>
               {isAuthenticated ? (
                 <button
                   onClick={handleSignOut}

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Upload,
   AlertCircle,
@@ -16,6 +17,10 @@ import { generateStudyPlan } from "../../../api/apiService";
  * Wizard component for creating a new study plan
  */
 const StudyPlanWizard = ({ onBack, onPlanCreated }) => {
+  // Get folderId from URL query params if present
+  const [searchParams] = useSearchParams();
+  const folderId = searchParams.get('folderId');
+  
   // State for wizard steps
   const [currentStep, setCurrentStep] = useState(1);
   const [uploading, setUploading] = useState(false);
@@ -132,7 +137,8 @@ const StudyPlanWizard = ({ onBack, onPlanCreated }) => {
         title,
         enhancedDescription,
         tagsString,
-        JSON.stringify(durationInfo) // Pass duration as metadata
+        JSON.stringify(durationInfo), // Pass duration as metadata
+        folderId // Pass folderId if present
       );
 
       setGeneratedPlan(result);

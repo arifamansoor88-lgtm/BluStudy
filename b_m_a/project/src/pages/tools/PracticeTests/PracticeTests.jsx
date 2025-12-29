@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { TestTube, PlusCircle, Check, X } from "lucide-react";
 import QuizWizard from "./QuizWizard";
 import QuizDisplay from "./QuizDisplay";
@@ -14,6 +15,10 @@ import {
  * Main PracticeTests component that coordinates all other components
  */
 const PracticeTests = () => {
+  // Get folderId from URL query params if present
+  const [searchParams] = useSearchParams();
+  const folderId = searchParams.get('folderId');
+  
   // State for quiz display
   const [showQuiz, setShowQuiz] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
@@ -247,7 +252,8 @@ const PracticeTests = () => {
           validNumQuestions,
           selectedTopics,
           customTopics,
-          questionFormats
+          questionFormats,
+          folderId // Pass folderId if present
         );
       } else {
         // Generate quiz using the topic-based hook
@@ -259,7 +265,8 @@ const PracticeTests = () => {
           validNumQuestions,
           selectedTopics,
           customTopics, // Additional focus topics from Step 2
-          questionFormats
+          questionFormats,
+          folderId // Pass folderId if present
         );
       }
 

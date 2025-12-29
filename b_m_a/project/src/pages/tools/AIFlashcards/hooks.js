@@ -75,7 +75,8 @@ export const useDeckData = () => {
     const saveDeck = useCallback(
         async (
             deckName,
-            cards
+            cards,
+            folderId = null
         ) => {
             try {
                 setIsSaving(true);
@@ -93,9 +94,14 @@ export const useDeckData = () => {
                 };
 
                 // Save to API
+                const requestBody = { ...deckData };
+                if (folderId) {
+                    requestBody.folder_id = folderId;
+                }
+                
                 const response = await axios.post(
                     "http://localhost:8000/save-flashcard",
-                    deckData,
+                    requestBody,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -168,6 +174,7 @@ export const useDeckData = () => {
         async (
             selectedFile,
             numCards,
+            folderId = null
         ) => {
             try {
                 const token = await getToken();
@@ -176,7 +183,11 @@ export const useDeckData = () => {
                 const formData = new FormData();
                 formData.append("file", selectedFile);
                 formData.append("num_cards", numCards.toString()); // Convert to string
-
+                
+                // Add folderId if provided
+                if (folderId) {
+                    formData.append("folder_id", folderId);
+                }
 
                 // Use a direct URL string to avoid URL construction issues
                 const apiUrl = "http://localhost:8000/generate-flashcard";

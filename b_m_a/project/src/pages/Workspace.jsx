@@ -100,40 +100,20 @@ export default function Workspace() {
     setLoading(true);
     setErr("");
     try {
-      const [foldersRes, statsRes] = await Promise.allSettled([
-        apiFetch("/folders", { method: "GET" }),
-        apiFetch("/folders/stats", { method: "GET" }),
-      ]);
+      const foldersRes = await apiFetch("/folders", { method: "GET" });
 
       // Folders
-      let serverFolders = [];
-      if (foldersRes.status === "fulfilled") {
-        serverFolders = (foldersRes.value || []).map(f => ({
-          id: f.id,
-          name: f.name,
-          items: f.items ?? 0,
-          color: f.color || folderColors[0],
-          starred: !!f.starred,
-        }));
-        setFolders(serverFolders);
-      } else {
-        // if folders call failed (likely not signed in)
-        setFolders([]);
-        setErr(foldersRes.reason?.message || "Failed to load folders.");
-      }
-
-      // Stats
-      if (statsRes.status === "fulfilled") {
-        setStats(statsRes.value || deriveStats(serverFolders));
-      } else {
-        // fallback: derive client-side if folders are available
-        setStats(deriveStats(serverFolders));
-        if (!err) {
-          // keep existing message if one already set
-          const msg = statsRes.reason?.message;
-          if (msg) setErr(prev => prev || msg);
-        }
-      }
+      const serverFolders = (foldersRes || []).map(f => ({
+        id: f.id,
+        name: f.name,
+        items: f.items ?? 0,
+        color: f.color || folderColors[0],
+        starred: !!f.starred,
+      }));
+      setFolders(serverFolders);
+      
+      // Derive stats client-side from folders
+      setStats(deriveStats(serverFolders));
     } catch (e) {
       setFolders([]);
       setStats({ totalFolders: 0, starredFolders: 0, totalItems: 0 });
@@ -141,7 +121,7 @@ export default function Workspace() {
     } finally {
       setLoading(false);
     }
-  }, [deriveStats, err]);
+  }, [deriveStats]);
 
   useEffect(() => {
     loadAll();
@@ -187,13 +167,8 @@ export default function Workspace() {
         starred: !!created.starred,
       }, ...folders];
       setFolders(next);
-      // refresh/derive stats
-      try {
-        const s = await apiFetch("/folders/stats", { method: "GET" });
-        setStats(s);
-      } catch {
-        setStats(deriveStats(next));
-      }
+      // Derive stats client-side from folders
+      setStats(deriveStats(next));
       // reset modal
       setNewFolderName("");
       setSelectedColor(folderColors[0]);
@@ -215,13 +190,8 @@ export default function Workspace() {
       });
       const next = folders.map(x => x.id === id ? { ...x, starred: !!updated.starred } : x);
       setFolders(next);
-      // stats may change (starred count)
-      try {
-        const s = await apiFetch("/folders/stats", { method: "GET" });
-        setStats(s);
-      } catch {
-        setStats(deriveStats(next));
-      }
+      // Derive stats client-side from folders
+      setStats(deriveStats(next));
     } catch (e) {
       setErr("Failed to toggle star.");
     }
@@ -247,12 +217,8 @@ export default function Workspace() {
       await apiFetch(`/folders/${id}`, { method: "DELETE" });
       const next = folders.filter(x => x.id !== id);
       setFolders(next);
-      try {
-        const s = await apiFetch("/folders/stats", { method: "GET" });
-        setStats(s);
-      } catch {
-        setStats(deriveStats(next));
-      }
+      // Derive stats client-side from folders
+      setStats(deriveStats(next));
     } catch (e) {
       setErr("Failed to delete folder.");
     }
