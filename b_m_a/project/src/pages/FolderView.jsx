@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Search, Filter, List, LayoutGrid, ChevronDown, ChevronUp,
-  Calendar as CalendarIcon, MoreVertical, Trash2, FolderSymlink
+  Calendar as CalendarIcon, MoreVertical, Trash2, FolderSymlink, Folder, FolderPlus, ChevronRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Mic2, LayoutGrid as GridIcon, Edit3, Zap, NotebookPen } from "lucide-react";
@@ -57,6 +57,16 @@ const toolTiles = [
 
 const filterOptions = ["All Types", "Quiz", "Flashcards", "Study Plan", "Voice Note", "Summary", "Mind Map"];
 const sortOptions = ["Most Recent", "Oldest", "Alphabetical"];
+
+const folderColors = [
+  "from-indigo-100 to-indigo-200",
+  "from-fuchsia-100 to-pink-100",
+  "from-amber-100 to-yellow-100",
+  "from-green-100 to-lime-100",
+  "from-cyan-100 to-sky-100",
+  "from-purple-100 to-violet-100",
+  "from-red-100 to-rose-100",
+];
 
 // Helper function to map database items to UI format
 function mapDatabaseItemsToUI(dbItems) {
@@ -144,6 +154,8 @@ export default function FolderView() {
 
   const [allFolders, setAllFolders] = useState([]);     // for Move dropdown
   const [folderMeta, setFolderMeta] = useState(null);   // current folder meta (backend)
+  const [subfolders, setSubfolders] = useState([]);     // subfolders within current folder
+  const [breadcrumbs, setBreadcrumbs] = useState([]);   // breadcrumb path
 
   const [items, setItems] = useState([]);               // items from database
   const [loading, setLoading] = useState(true);
@@ -158,6 +170,11 @@ export default function FolderView() {
 
   // Content modals
   const [deleteIdx, setDeleteIdx] = useState(null);
+  
+  // Subfolder creation modal
+  const [isCreateSubfolderModalOpen, setIsCreateSubfolderModalOpen] = useState(false);
+  const [newSubfolderName, setNewSubfolderName] = useState("");
+  const [selectedSubfolderColor, setSelectedSubfolderColor] = useState("from-indigo-100 to-indigo-200");
 
   // Close dropdowns on outside click
   const filterRef = useRef(); const sortRef = useRef();
@@ -173,6 +190,20 @@ export default function FolderView() {
     return () => document.removeEventListener("click", handler);
   }, [menuOpenIdx]);
 
+  // Build breadcrumb path recursively
+  const buildBreadcrumbs = (folders, currentFolderId, path = []) => {
+    const current = folders.find((f) => String(f.id) === String(currentFolderId));
+    if (!current) return path;
+    
+    const breadcrumb = { id: current.id, name: current.name };
+    const newPath = [breadcrumb, ...path];
+    
+    if (current.parentFolderId) {
+      return buildBreadcrumbs(folders, current.parentFolderId, newPath);
+    }
+    return newPath;
+  };
+
   // Load folders + current folder meta + items from API
   useEffect(() => {
     (async () => {
@@ -180,17 +211,34 @@ export default function FolderView() {
         setLoading(true);
         setError(null);
         
-        // Load folders
+        // Load all folders
         const folders = await apiFetch("/folders", { method: "GET" });
         setAllFolders(folders);
+        
+        // Find current folder
         const current = folders.find((f) => String(f.id) === String(folderId));
         setFolderMeta(current || null);
+        
+        // Build breadcrumbs
+        if (current) {
+          const crumbs = buildBreadcrumbs(folders, folderId);
+          setBreadcrumbs(crumbs);
+        } else {
+          setBreadcrumbs([]);
+        }
+        
+        // Filter subfolders (folders where parentFolderId === current folderId)
+        const subfoldersList = folders.filter((f) => String(f.parentFolderId) === String(folderId));
+        setSubfolders(subfoldersList);
 
-        // Load items from database for this folder
+        // Load items from database for this folder (non-folder items only)
         const dbItems = await apiFetch(`/folders/${folderId}/items`, { method: "GET" });
         
+        // Filter out folders from items (folders are shown separately)
+        const contentItems = dbItems.filter(item => item.contentType !== "folder");
+        
         // Map database items to UI format
-        const mappedItems = mapDatabaseItemsToUI(dbItems);
+        const mappedItems = mapDatabaseItemsToUI(contentItems);
         
         setItems(mappedItems);
         setLoading(false);
@@ -198,6 +246,8 @@ export default function FolderView() {
         console.error("Error loading folder items:", e);
         setError(e.message || "Failed to load folder items");
         setItems([]);
+        setSubfolders([]);
+        setBreadcrumbs([]);
         setLoading(false);
         // Fallback folder metadata
         if (!folderMeta) {
@@ -232,6 +282,64 @@ export default function FolderView() {
     
     return base;
   }, [items, filterType, searchTerm, sortBy]);
+
+  // Calculate folder depth (0 = root, 1 = first level, 2 = second level, 3 = max)
+  const calculateFolderDepth = (folderId, visited = new Set()) => {
+    if (visited.has(folderId)) return 0; // Circular reference protection
+    visited.add(folderId);
+    
+    const folder = allFolders.find((f) => String(f.id) === String(folderId));
+    if (!folder || !folder.parentFolderId) return 0;
+    return 1 + calculateFolderDepth(folder.parentFolderId, visited);
+  };
+
+  // Create subfolder
+  async function createSubfolder() {
+    if (!newSubfolderName.trim()) return;
+    
+    // Check depth limit (max depth is 3 levels, so current folder can be at most depth 2)
+    const currentDepth = folderMeta ? calculateFolderDepth(folderId) : 0;
+    if (currentDepth >= 2) {
+      alert("Cannot create subfolder: Maximum nesting depth (3 levels) reached.");
+      return;
+    }
+    
+    try {
+      await apiFetch("/folders", {
+        method: "POST",
+        body: JSON.stringify({
+          name: newSubfolderName.trim(),
+          parentFolderId: folderId,
+          color: selectedSubfolderColor,
+        }),
+      });
+      
+      // Refresh all data by re-running the load logic
+      const folders = await apiFetch("/folders", { method: "GET" });
+      setAllFolders(folders);
+      
+      const current = folders.find((f) => String(f.id) === String(folderId));
+      setFolderMeta(current || null);
+      
+      // Build breadcrumbs
+      if (current) {
+        const crumbs = buildBreadcrumbs(folders, folderId);
+        setBreadcrumbs(crumbs);
+      }
+      
+      // Filter subfolders
+      const subfoldersList = folders.filter((f) => String(f.parentFolderId) === String(folderId));
+      setSubfolders(subfoldersList);
+      
+      // Reset modal
+      setNewSubfolderName("");
+      setSelectedSubfolderColor(folderColors[0]);
+      setIsCreateSubfolderModalOpen(false);
+    } catch (e) {
+      console.error("Error creating subfolder:", e);
+      alert("Failed to create subfolder: " + (e.message || "Unknown error"));
+    }
+  }
 
   // ==============
   // Mutations
@@ -316,6 +424,10 @@ export default function FolderView() {
     );
   }
 
+  // Calculate current folder depth
+  const currentDepth = folderMeta ? calculateFolderDepth(folderId) : 0;
+  const canCreateSubfolder = currentDepth < 2; // Max depth is 3, so we can create subfolder if current depth < 2
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* NAVBAR */}
@@ -328,10 +440,26 @@ export default function FolderView() {
           >
             <ArrowLeft className="w-5 h-5 text-slate-700" />
           </button>
-          <div>
+          <div className="flex-1">
+            {/* Breadcrumbs */}
+            {breadcrumbs.length > 0 && (
+              <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
+                {breadcrumbs.map((crumb, idx) => (
+                  <React.Fragment key={crumb.id}>
+                    <button
+                      onClick={() => navigate(`/workspace/folder/${crumb.id}`)}
+                      className="hover:text-slate-700 hover:underline"
+                    >
+                      {crumb.name}
+                    </button>
+                    {idx < breadcrumbs.length - 1 && <ChevronRight className="w-4 h-4" />}
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
             <h1 className="text-2xl font-bold text-slate-800">{folderName}</h1>
             <p className="text-sm text-slate-500">
-              {dynamicCount} items • Updated just now
+              {subfolders.length} {subfolders.length === 1 ? 'subfolder' : 'subfolders'} • {dynamicCount} {dynamicCount === 1 ? 'item' : 'items'}
             </p>
           </div>
         </div>
@@ -411,10 +539,56 @@ export default function FolderView() {
       </div>
 
       <div className="px-6 py-8 space-y-8">
-        {/* Create New Content */}
+        {/* Subfolders Section */}
+        {subfolders.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-slate-800">Subfolders</h2>
+              {canCreateSubfolder && (
+                <button
+                  onClick={() => setIsCreateSubfolderModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  <FolderPlus className="w-4 h-4" />
+                  New Subfolder
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {subfolders.map((subfolder) => (
+                <motion.div
+                  key={subfolder.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  onClick={() => navigate(`/workspace/folder/${subfolder.id}`)}
+                  className={`rounded-2xl p-4 bg-gradient-to-br ${subfolder.color || folderColors[0]} cursor-pointer shadow-md border border-white/40 hover:scale-105 transition-transform`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Folder className="w-5 h-5 text-slate-700" />
+                    <div className="text-sm font-semibold text-slate-800 truncate flex-1">
+                      {subfolder.name}
+                    </div>
+                  </div>
+                  <div className="text-xs text-slate-600">{subfolder.items ?? 0} items</div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Create New Content / Subfolder */}
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-slate-800">Create New Content</h2>
+            {canCreateSubfolder && (
+              <button
+                onClick={() => setIsCreateSubfolderModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                <FolderPlus className="w-4 h-4" />
+                {subfolders.length > 0 ? "New Subfolder" : "Create Subfolder"}
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
@@ -473,20 +647,8 @@ export default function FolderView() {
                     {menuOpenIdx === i && (
                       <div className="absolute right-0 mt-2 w-40 bg-white border border-slate-200 rounded-xl shadow-lg z-20">
                         <button
-                          className="w-full text-left px-3 py-2 hover:bg-slate-100 flex items-center gap-2"
-                          onClick={() => { setRenameIdx(i); setRenameValue(item.title); setMenuOpenIdx(null); }}
-                        >
-                          <Pencil className="w-4 h-4" /> Rename
-                        </button>
-                        <button
-                          className="w-full text-left px-3 py-2 hover:bg-slate-100 flex items-center gap-2"
-                          onClick={() => { setMoveIdx(i); setMoveDest(""); setMenuOpenIdx(null); }}
-                        >
-                          <FolderSymlink className="w-4 h-4" /> Move
-                        </button>
-                        <button
                           className="w-full text-left px-3 py-2 hover:bg-slate-100 flex items-center gap-2 text-red-600"
-                          onClick={() => { setDeleteIdx(i); setMenuOpenIdx(null); }}
+                          onClick={(e) => { e.stopPropagation(); setDeleteIdx(i); setMenuOpenIdx(null); }}
                         >
                           <Trash2 className="w-4 h-4" /> Delete
                         </button>
@@ -577,20 +739,8 @@ export default function FolderView() {
                     {menuOpenIdx === i && (
                       <div className="absolute right-0 mt-2 w-40 bg-white border border-slate-200 rounded-xl shadow-lg z-20">
                         <button
-                          className="w-full text-left px-3 py-2 hover:bg-slate-100 flex items-center gap-2"
-                          onClick={() => { setRenameIdx(i); setRenameValue(item.title); setMenuOpenIdx(null); }}
-                        >
-                          <Pencil className="w-4 h-4" /> Rename
-                        </button>
-                        <button
-                          className="w-full text-left px-3 py-2 hover:bg-slate-100 flex items-center gap-2"
-                          onClick={() => { setMoveIdx(i); setMoveDest(""); setMenuOpenIdx(null); }}
-                        >
-                          <FolderSymlink className="w-4 h-4" /> Move
-                        </button>
-                        <button
                           className="w-full text-left px-3 py-2 hover:bg-slate-100 flex items-center gap-2 text-red-600"
-                          onClick={() => { setDeleteIdx(i); setMenuOpenIdx(null); }}
+                          onClick={(e) => { e.stopPropagation(); setDeleteIdx(i); setMenuOpenIdx(null); }}
                         >
                           <Trash2 className="w-4 h-4" /> Delete
                         </button>
@@ -614,6 +764,55 @@ export default function FolderView() {
           </button>
           <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 text-white" onClick={doDelete}>
             Delete
+          </button>
+        </div>
+      </Modal>
+
+      {/* CREATE SUBFOLDER MODAL */}
+      <Modal open={isCreateSubfolderModalOpen} onClose={() => setIsCreateSubfolderModalOpen(false)}>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">Create New Subfolder</h3>
+        <input
+          type="text"
+          placeholder="Subfolder name"
+          value={newSubfolderName}
+          onChange={(e) => setNewSubfolderName(e.target.value)}
+          className="w-full px-4 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 mb-4"
+          onKeyPress={(e) => {
+            if (e.key === "Enter" && newSubfolderName.trim()) {
+              createSubfolder();
+            }
+          }}
+        />
+        <div className="flex flex-wrap gap-2 mb-4">
+          {folderColors.map((color, idx) => (
+            <button
+              key={idx}
+              onClick={() => setSelectedSubfolderColor(color)}
+              className={`w-8 h-8 rounded-full bg-gradient-to-br ${color} border-2 ${
+                selectedSubfolderColor === color ? "border-indigo-500" : "border-transparent"
+              }`}
+              title={color}
+            />
+          ))}
+        </div>
+        {!canCreateSubfolder && (
+          <p className="text-sm text-amber-600 mb-4">
+            Maximum nesting depth (3 levels) reached. Cannot create subfolder here.
+          </p>
+        )}
+        <div className="flex justify-end gap-3">
+          <button
+            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200"
+            onClick={() => setIsCreateSubfolderModalOpen(false)}
+          >
+            Cancel
+          </button>
+          <button
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white disabled:opacity-50"
+            onClick={createSubfolder}
+            disabled={!newSubfolderName.trim() || !canCreateSubfolder}
+          >
+            Create
           </button>
         </div>
       </Modal>

@@ -102,13 +102,17 @@ export default function Workspace() {
     try {
       const foldersRes = await apiFetch("/folders", { method: "GET" });
 
+      // Filter to show only root-level folders (parentFolderId is null or undefined)
+      const rootFolders = (foldersRes || []).filter(f => !f.parentFolderId);
+
       // Folders
-      const serverFolders = (foldersRes || []).map(f => ({
+      const serverFolders = rootFolders.map(f => ({
         id: f.id,
         name: f.name,
         items: f.items ?? 0,
         color: f.color || folderColors[0],
         starred: !!f.starred,
+        parentFolderId: f.parentFolderId,
       }));
       setFolders(serverFolders);
       
@@ -154,8 +158,7 @@ export default function Workspace() {
         body: JSON.stringify({
           name: newFolderName.trim(),
           color: selectedColor,
-          starred: false,
-          items: 0,
+          // parentFolderId is omitted (null) for root-level folders
         }),
       });
       // update list
