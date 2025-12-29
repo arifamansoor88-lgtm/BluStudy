@@ -95,36 +95,34 @@ const MindMapDashboard = () => {
         <div className="h-screen overflow-hidden bg-gray-50">
             {/* Header */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="flex flex-col gap-6">
                         <div className="flex items-center gap-3">
                             <Network className="h-9 w-9 text-green-600" />
                             <h1 className="text-3xl font-semibold text-gray-900">MindMaps</h1>
                         </div>
-                        <div className="flex items-center gap-4 flex-1 max-w-2xl">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                                <input
-                                    className="w-full pl-10 bg-white pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                                    placeholder="Search by title..."
-                                    type="text"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)} />
-                            </div>
-                            <select className="px-4 py-2 border border-gray-200 rounded-lg bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                                <option>All Boards</option>
-                                <option>My Boards</option>
-                                <option>Shared</option>
-                            </select>
-                            <button 
-                                onClick={() => setShowCreateModal(true)}
-                                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap">
-                                + New Board
-                            </button>
-                        </div>
-                    </div>
                 </div>
             {/* Content */}
             <div className="max-w-7xl mx-auto px-6 py-4">
+                <div className="mb-4 flex items-center gap-2 flex-1 max-w-2xl">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <input
+                            className="w-full pl-10 bg-white pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                            placeholder="Search by title..."
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)} />
+                    </div>
+                    <select className="px-4 py-2 border border-gray-200 rounded-lg bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        <option>All Boards</option>
+                        <option>My Boards</option>
+                        <option>Shared</option>
+                    </select>
+                    <button 
+                        onClick={() => setShowCreateModal(true)}
+                        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap">
+                        + New Board
+                    </button>
+                </div>
                 <div className="bg-white rounded-lg border border-gray-200 overflow-y-auto max-h-[70vh]">
                     {/* List Header */}
                     <div className="px-6 py-4 border-b border-gray-100">
