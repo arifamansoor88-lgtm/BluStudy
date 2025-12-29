@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { useMsal } from "@azure/msal-react";
+import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { protectedResources } from "../../../authConfig";
 
 /**
@@ -101,6 +102,23 @@ export const useQuizData = () => {
       return tokenResponse.accessToken;
     } catch (error) {
       console.error("Token acquisition failed:", error);
+      
+      // If silent token acquisition fails, try interactive login
+      if (error instanceof InteractionRequiredAuthError) {
+        console.log("Silent token acquisition failed, attempting interactive login...");
+        try {
+          const tokenResponse = await instance.acquireTokenPopup({
+            scopes: protectedResources.todoListApi.scopes,
+            account: account,
+          });
+          console.log("Token acquired via interactive login");
+          return tokenResponse.accessToken;
+        } catch (interactiveError) {
+          console.error("Interactive authentication failed:", interactiveError);
+          throw interactiveError;
+        }
+      }
+      
       throw error;
     }
   }, [instance, accounts, inProgress]);
@@ -287,6 +305,96 @@ export const useQuizData = () => {
     [getToken]
   );
 
+  // Generate a new quiz from a plain topic/chapter/concept
+  const generateQuizFromTopic = useCallback(
+    async (
+      topicText,
+      numQuestions,
+      selectedTopics,
+      customTopics,
+      questionFormats
+    ) => {
+      try {
+        console.log("=== generateQuizFromTopic Hook Called ===");
+        console.log("Topic text:", topicText);
+        console.log("Number of questions:", numQuestions);
+        console.log("Selected topics:", selectedTopics);
+        console.log("Custom topics:", customTopics);
+        console.log("Question formats:", questionFormats);
+
+        const token = await getToken();
+        if (!token) {
+          throw new Error("No authentication token available");
+        }
+
+        console.log("Token acquired, making API request...");
+
+        // Combine selected topics and custom topics
+        const allTopics = [...selectedTopics];
+        if (customTopics) {
+          allTopics.push(...customTopics.split(",").map((t) => t.trim()));
+        }
+        const filteredTopics = allTopics.filter(
+          (topic) => topic && topic.trim() !== ""
+        );
+
+        const formatMapping = {
+          multiple_choice: "multiple_choice",
+          multi_select: "multi_select",
+          drag_and_drop: "drag_and_drop",
+          true_false: "multiple_choice",
+          short_response: "short_answer",
+          fill_in_blank: "fill_in_blank",
+        };
+
+        const selectedFormats = Object.entries(questionFormats)
+          .filter(([_, selected]) => selected)
+          .map(([format, _]) => formatMapping[format]);
+
+        if (selectedFormats.length === 0) {
+          selectedFormats.push("multiple_choice");
+        }
+
+        const apiUrl = "http://127.0.0.1:8000/generate-quiz-from-topic";
+        const requestBody = {
+          topic: topicText,
+          num_questions: numQuestions,
+          focus_topics: filteredTopics.join(", "),
+          question_formats: selectedFormats.reduce(
+            (obj, format) => ({ ...obj, [format]: true }),
+            {}
+          ),
+        };
+
+        console.log("Sending request to:", apiUrl);
+        console.log("RequestBody contents:", requestBody);
+
+        const response = await axios.post(apiUrl, requestBody, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        console.log("=== API Response Received ===");
+        console.log("Response status:", response.status);
+        console.log("Response data:", response.data);
+
+        return response.data;
+      } catch (err) {
+        console.error("=== generateQuizFromTopic Hook Error ===");
+        console.error("Error generating quiz from topic:", err);
+        console.error("Error response:", err.response?.data);
+        console.error("Error status:", err.response?.status);
+        
+        throw new Error(
+          err.response?.data?.detail || err.message || "Failed to generate quiz from topic"
+        );
+      }
+    },
+    [getToken]
+  );
+
   // Save a quiz
   const saveQuiz = useCallback(
     async (
@@ -422,6 +530,7 @@ export const useQuizData = () => {
     fetchSavedQuizzes,
     fetchQuizWithHistory,
     generateQuiz,
+    generateQuizFromTopic,
     saveQuiz,
     saveQuizAttempt,
   };
