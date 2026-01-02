@@ -108,7 +108,7 @@ const MindMapDashboard = () => {
                         <div 
                             key={mindmap.id} 
                             className="flex flex-col border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all cursor-pointer bg-white"
-                            onClick={() => navigate(`/tools/maps/${mindmap.data?.slug || mindmap.id}`)}
+                            onClick={() => navigate(`/tools/maps/${mindmap.id}`)}
                         >
                             {/* Preview Image */}
                             <div className="w-full h-48 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-gray-100">

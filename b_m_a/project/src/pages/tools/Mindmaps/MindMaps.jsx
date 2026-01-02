@@ -400,6 +400,14 @@ const MindMaps = () => {
             setGroupNodeMap(new Map(data.metadata?.groupNodeMap || []));
           }
           
+          // Calculate the next ID based on existing nodes to avoid collisions
+          const existingIds = data.nodes.map(node => {
+            const match = node.id.match(/node-(\d+)/);
+            return match ? parseInt(match[1], 10) : 0;
+          });
+          const maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0;
+          setNextId(maxId + 1);
+          
           // Set current mindmap info (use the actual mindmap ID, not the slug)
           setCurrentMindmapId(mindmap.id);
           setMindmapTitle(data.title);
@@ -974,6 +982,14 @@ const MindMaps = () => {
       if (data.groups) {
         setGroupNodeMap(new Map(data.metadata?.groupNodeMap || []));
       }
+      
+      // Calculate the next ID based on existing nodes to avoid collisions
+      const existingIds = data.nodes.map(node => {
+        const match = node.id.match(/node-(\d+)/);
+        return match ? parseInt(match[1], 10) : 0;
+      });
+      const maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0;
+      setNextId(maxId + 1);
       
       // Set current mindmap info
       setCurrentMindmapId(mindmapId);
