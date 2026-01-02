@@ -1547,15 +1547,45 @@ async def get_mindmaps(user_claims: dict = Depends(validate_token)):
             detail=f"Failed to fetch mindmaps: {str(e)}"
         )
 
-# Get a specific mindmap by ID - protected
+# Get a specific mindmap by ID or slug - protected
 @app.get("/mindmaps/{mindmap_id}")
 async def get_mindmap(mindmap_id: str, user_claims: dict = Depends(validate_token)):
     try:
-        # Get the mindmap from Cosmos DB (using partition key)
-        mindmap = container.read_item(
-            item=mindmap_id,
-            partition_key=user_claims["sub"]
-        )
+        mindmap = None
+        
+        # First, try to get by ID directly
+        try:
+            mindmap = container.read_item(
+                item=mindmap_id,
+                partition_key=user_claims["sub"]
+            )
+        except Exception:
+            # ID lookup failed, try slug lookup
+            pass
+        
+        # If ID lookup failed, try finding by slug
+        if not mindmap:
+            query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'mindmap' AND c.data.slug = @slug"
+            parameters = [
+                {"name": "@userId", "value": user_claims["sub"]},
+                {"name": "@slug", "value": mindmap_id}
+            ]
+            
+            items = list(container.query_items(
+                query=query,
+                parameters=parameters,
+                enable_cross_partition_query=True
+            ))
+            
+            if items:
+                mindmap = items[0]
+        
+        # If still not found, raise error
+        if not mindmap:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Mindmap not found"
+            )
         
         # Verify the mindmap belongs to the user
         if mindmap["userId"] != user_claims["sub"]:
@@ -1565,6 +1595,8 @@ async def get_mindmap(mindmap_id: str, user_claims: dict = Depends(validate_toke
             )
             
         return mindmap
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error fetching mindmap: {str(e)}")
         raise HTTPException(

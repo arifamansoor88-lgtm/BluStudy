@@ -65,6 +65,7 @@ class MindmapData(BaseModel):
     nodes: List[MindmapNode]
     edges: List[MindmapEdge]
     groups: Optional[List[MindmapGroup]] = []
+    svgPreview: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = {}
 
 class MindmapDocument(BaseModel):

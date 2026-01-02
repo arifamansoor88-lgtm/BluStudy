@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { useMsal, useIsAuthenticated } from '@azure/msal-react';
+import { InteractionStatus } from '@azure/msal-browser';
 import ReactFlow, { 
   addEdge, 
   Controls, 
@@ -26,7 +28,7 @@ import {
   Network,
   RotateCcw
 } from 'lucide-react';
-import { toPng } from 'html-to-image';
+import { toPng, toSvg } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { saveMindmap, getMindmaps, getMindmap, updateMindmap, deleteMindmap } from '../../../api/apiService';
 
@@ -324,7 +326,9 @@ const ExportButton = ({ onClick, disabled, children, variant = "green", classNam
 };
 
 const MindMaps = () => {
-  const { id } = useParams(); // Get the mindmap ID from the URL
+  const { id: slug } = useParams(); // Get the mindmap slug from the URL
+  const { inProgress } = useMsal();
+  const isAuthenticated = useIsAuthenticated();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [newNodeText, setNewNodeText] = useState('');
@@ -340,7 +344,7 @@ const MindMaps = () => {
   
   // Mindmap save/load state
   const [savedMindmaps, setSavedMindmaps] = useState([]);
-  const [currentMindmapId, setCurrentMindmapId] = useState(id || null); // Initialize with URL id
+  const [currentMindmapId, setCurrentMindmapId] = useState(null);
   const [mindmapTitle, setMindmapTitle] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -366,7 +370,8 @@ const MindMaps = () => {
 
   // Load mindmap on mount if ID is provided in URL
   useEffect(() => {
-    if (id && !hasLoadedInitialMindmap.current) {
+    // Skip if slug is null, undefined, or the literal string "null"
+    if (slug && slug !== 'null' && !hasLoadedInitialMindmap.current && isAuthenticated && inProgress === InteractionStatus.None) {
       hasLoadedInitialMindmap.current = true;
       // Use a direct call to avoid dependency issues
       const loadInitialMindmap = async () => {
@@ -374,7 +379,7 @@ const MindMaps = () => {
           setIsLoading(true);
           setError('');
           
-          const mindmap = await getMindmap(id);
+          const mindmap = await getMindmap(slug);
           const data = mindmap.data;
           
           // Load nodes with proper delete functionality
@@ -395,8 +400,8 @@ const MindMaps = () => {
             setGroupNodeMap(new Map(data.metadata?.groupNodeMap || []));
           }
           
-          // Set current mindmap info
-          setCurrentMindmapId(id);
+          // Set current mindmap info (use the actual mindmap ID, not the slug)
+          setCurrentMindmapId(mindmap.id);
           setMindmapTitle(data.title);
         } catch (err) {
           console.error('Error loading mindmap:', err);
@@ -408,7 +413,7 @@ const MindMaps = () => {
       
       loadInitialMindmap();
     }
-  }, [id]); // Only re-run if id changes
+  }, [slug, isAuthenticated, inProgress]); // Only re-run if slug or auth status changes
 
   // Delete node function
   const deleteNode = useCallback((nodeId) => {
@@ -840,9 +845,39 @@ const MindMaps = () => {
     }
   }, []);
 
+  // Export as image string for preview
+  const exportAsPreviewImage = useCallback(async () => {
+    if (!reactFlowRef.current || nodes.length === 0) {
+      return null;
+    }
+
+    try {
+      const reactFlowElement = reactFlowRef.current.querySelector('.react-flow__viewport');
+      
+      if (reactFlowElement) {
+        // Use PNG for better compatibility and quality
+        const imageDataUrl = await toPng(reactFlowElement, {
+          backgroundColor: '#ffffff',
+          width: 800,
+          height: 600,
+          quality: 0.8,
+          style: {
+            transform: 'scale(1)',
+            transformOrigin: 'top left',
+          },
+        });
+        return imageDataUrl;
+      }
+    } catch (error) {
+      console.error('Error exporting preview image:', error);
+    }
+    return null;
+  }, [nodes]);
+
   const saveCurrentMindmap = useCallback(async () => {
-    if (!mindmapTitle.trim()) {
-      setError('Please enter a title for your mindmap');
+    // Use slug from URL to identify the mindmap
+    if (!slug || slug === 'null') {
+      setError('No mindmap loaded to save');
       return;
     }
 
@@ -850,14 +885,21 @@ const MindMaps = () => {
       setIsSaving(true);
       setError('');
       
+      // Generate preview image
+      const previewImage = await exportAsPreviewImage();
+      
       // Prepare mindmap data
       const mindmapData = {
-        title: mindmapTitle,
+        title: mindmapTitle || 'Untitled Mindmap',
+        slug: slug, // Keep the same slug
         nodes: nodes.map(node => ({
           id: node.id,
           type: node.type,
           position: node.position,
-          data: node.data
+          data: {
+            ...node.data,
+            onDelete: undefined // Don't save function references
+          }
         })),
         edges: edges.map(edge => ({
           id: edge.id,
@@ -870,34 +912,34 @@ const MindMaps = () => {
           id: node.id,
           type: node.type,
           position: node.position,
-          data: node.data
+          data: {
+            ...node.data,
+            onDelete: undefined,
+            onNameChange: undefined
+          }
         })),
+        svgPreview: previewImage,
         metadata: {
           groupNodeMap: Array.from(groupNodeMap.entries()),
-          createdAt: new Date().toISOString()
+          updatedAt: new Date().toISOString()
         }
       };
 
-      let response;
+      // Use currentMindmapId if available, otherwise fetch by slug first
       if (currentMindmapId) {
-        // Update existing mindmap
-        response = await updateMindmap(currentMindmapId, mindmapData);
+        await updateMindmap(currentMindmapId, mindmapData);
       } else {
-        // Save new mindmap
-        response = await saveMindmap(mindmapData);
-        setCurrentMindmapId(response.id);
+        // Fetch the mindmap by slug to get the ID, then update
+        const existingMindmap = await getMindmap(slug);
+        if (existingMindmap && existingMindmap.id) {
+          setCurrentMindmapId(existingMindmap.id);
+          await updateMindmap(existingMindmap.id, mindmapData);
+        } else {
+          throw new Error('Could not find mindmap to update');
+        }
       }
 
       setSaveSuccess(true);
-      setShowSaveDialog(false);
-      setMindmapTitle('');
-      
-      // Clear current mindmap ID so next save creates a new mindmap
-      setCurrentMindmapId(null);
-      
-      // Refresh saved mindmaps list
-      await fetchSavedMindmaps();
-      
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
       console.error('Error saving mindmap:', err);
@@ -905,7 +947,7 @@ const MindMaps = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [mindmapTitle, nodes, edges, groupNodeMap, currentMindmapId, fetchSavedMindmaps]);
+  }, [slug, mindmapTitle, nodes, edges, groupNodeMap, currentMindmapId, exportAsPreviewImage]);
 
   const loadMindmap = useCallback(async (mindmapId) => {
     try {
@@ -1253,12 +1295,13 @@ const MindMaps = () => {
                 New
               </button>
               <button
-                onClick={() => setShowSaveDialog(true)}
-                className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm flex items-center gap-1"
+                onClick={saveCurrentMindmap}
+                disabled={!slug || slug === 'null' || isSaving}
+                className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Save current mindmap"
               >
                 <Save className="h-4 w-4" />
-                Save
+                {isSaving ? 'Saving...' : (saveSuccess ? 'Saved!' : 'Save')}
               </button>
               <button
                 onClick={() => {
