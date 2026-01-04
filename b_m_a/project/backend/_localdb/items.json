@@ -1,1 +1,92 @@
-[]
+[
+  {
+    "id": "770bf268-1b22-4a1d-b603-949c8062d761",
+    "userId": "71be6cbc-466f-4a97-bd0d-fdb423d86d9e",
+    "contentType": "flashcard",
+    "createdAt": "2026-01-04T19:27:28.391405",
+    "title": "Understanding Hashmaps",
+    "cards": [
+      {
+        "front": "What is a hashmap?",
+        "back": "A data structure that stores key-value pairs for efficient retrieval.",
+        "tags": [
+          "data structure",
+          "hashmaps"
+        ]
+      },
+      {
+        "front": "What is the primary advantage of using a hashmap?",
+        "back": "Fast lookups, insertions, and deletions with average O(1) time complexity.",
+        "tags": [
+          "advantages",
+          "hashmaps"
+        ]
+      },
+      {
+        "front": "What is a hash function?",
+        "back": "A function that maps keys to specific indices in a hashmap.",
+        "tags": [
+          "hash function",
+          "hashmaps"
+        ]
+      },
+      {
+        "front": "What happens in case of a hash collision?",
+        "back": "Multiple keys are mapped to the same index, and collision resolution strategies are used.",
+        "tags": [
+          "collisions",
+          "hashmaps"
+        ]
+      },
+      {
+        "front": "Name one common collision resolution strategy.",
+        "back": "Chaining, where a linked list is used to store multiple values at the same index.",
+        "tags": [
+          "collisions",
+          "hashmaps"
+        ]
+      },
+      {
+        "front": "What is the load factor in a hashmap?",
+        "back": "The ratio of the number of elements to the size of the hashmap.",
+        "tags": [
+          "load factor",
+          "hashmaps"
+        ]
+      },
+      {
+        "front": "What happens when the load factor exceeds a threshold?",
+        "back": "The hashmap is resized, typically doubling its capacity.",
+        "tags": [
+          "resizing",
+          "hashmaps"
+        ]
+      },
+      {
+        "front": "What is the time complexity of resizing a hashmap?",
+        "back": "O(n), as all elements need to be rehashed.",
+        "tags": [
+          "resizing",
+          "hashmaps"
+        ]
+      },
+      {
+        "front": "Can hashmaps store duplicate keys?",
+        "back": "No, each key in a hashmap must be unique.",
+        "tags": [
+          "keys",
+          "hashmaps"
+        ]
+      },
+      {
+        "front": "What is the difference between a hashmap and a hashtable?",
+        "back": "A hashmap is not synchronized, while a hashtable is thread-safe.",
+        "tags": [
+          "comparison",
+          "hashmaps"
+        ]
+      }
+    ],
+    "resourceName": "topic"
+  }
+]

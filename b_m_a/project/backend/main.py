@@ -1393,6 +1393,76 @@ async def delete_deck(deck_id: str, user_claims: dict = Depends(validate_token))
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete deck: {str(e)}"
         )
+    
+class TopicFlashcardRequest(BaseModel):
+    topic: str
+    num_cards: int = 10
+
+@app.post("/generate-flashcard-topic")
+async def generate_flashcard_from_topic(
+    payload: TopicFlashcardRequest,
+    user_claims: dict = Depends(validate_token)
+):
+    topic = payload.topic.strip()
+
+    if len(topic) < 5:
+        raise HTTPException(422, "Topic is too short")
+
+    # 🔹 Prompt engineering — IMPORTANT
+    prompt = f"""
+You are an expert tutor.
+
+Generate a flashcard deck for the following topic:
+"{topic}"
+
+Rules:
+- Output VALID JSON ONLY
+- No markdown
+- No commentary
+- Structure:
+
+{{
+  "title": "<concise deck title>",
+  "cards": [
+    {{
+      "question": "...",
+      "answer": "...",
+      "difficulty": "easy|medium|hard",
+      "important": false
+    }}
+  ]
+}}
+
+Generate exactly {payload.num_cards} cards.
+"""
+
+    raw = openai_generate_flashcard(prompt, payload.num_cards)
+    print("RAW LLM RESPONSE:", repr(raw))
+
+    try:
+        deck = json.loads(raw)
+    except Exception as e:
+        raise HTTPException(500, f"Invalid LLM output: {str(e)}")
+
+    deck_id = str(uuid.uuid4())
+
+    document = {
+        "id": deck_id,
+        "userId": user_claims["sub"],
+        "contentType": "flashcard",
+        "createdAt": datetime.utcnow().isoformat(),
+        "title": deck.get("title", topic),
+        "cards": deck["cards"],
+        "resourceName": "topic"
+    }
+
+    container.create_item(body=document)
+
+    return {
+        "deckId": deck_id,
+        "cardCount": len(deck["cards"]),
+        "message": "Flashcard deck created from topic"
+    }
 
 # PDF upload and flashcard generation endpoint - protected
 @app.post("/generate-flashcard")
