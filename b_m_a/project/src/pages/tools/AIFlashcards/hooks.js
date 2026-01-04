@@ -163,6 +163,42 @@ export const useDeckData = () => {
         [getToken, fetchSavedDecks]
     );
 
+    const generateFlashcardsFromTopic = useCallback(
+    async (topic, numCards = 10) => {
+        try {
+            const token = await getToken();
+
+            const response = await axios.post(
+                "http://localhost:8000/generate-flashcard-topic",
+                {
+                    topic,
+                    num_cards: numCards,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            decksFetchedRef.current = false;
+            await fetchSavedDecks();
+
+            return response.data;
+        } catch (err) {
+            console.error("Error generating flashcards from topic:", err);
+            throw new Error(
+                err.response?.data?.detail ||
+                err.message ||
+                "Failed to generate flashcards"
+            );
+        }
+    },
+    [getToken, fetchSavedDecks]
+);
+
+
     // Generate a new deck
     const generateFlashcards = useCallback(
         async (
@@ -284,6 +320,7 @@ export const useDeckData = () => {
         saveDeck,
         deleteDeck,
         decksFetchedRef,
+        generateFlashcardsFromTopic,
         generateFlashcards,
         getFlashcardByID,
         updateDeck,

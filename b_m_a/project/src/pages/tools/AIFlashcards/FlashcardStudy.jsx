@@ -1,407 +1,265 @@
 import React, { useState, useEffect } from 'react';
-import { RotateCw, ArrowLeft, FileDown, Volume2, Pencil, Shuffle, Plus } from 'lucide-react';
+import {
+  RotateCw,
+  ArrowLeft,
+  FileDown,
+  Volume2,
+  Pencil,
+  Shuffle,
+  Plus
+} from 'lucide-react';
 import { useLocation, Link, useParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import { useDeckData } from './hooks';
 import FlashcardDifficultySelector from './FlashcardDifficultySelector';
 
 const FlashcardStudyPage = () => {
-    const [index, setIndex] = useState(0);
-    const [flipped, setFlipped] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [deckTitle, setDeckTitle] = useState(useLocation().state?.title || []);
-    const { saveDeck, deleteDeck, getFlashcardByID, updateDeck } = useDeckData();
-    const [newQuestion, setNewQuestion] = useState('');
-    const [newAnswer, setNewAnswer] = useState('');
-    const [newDifficulty, setNewDifficulty] = useState(null);
-    const location = useLocation();
-    const { deckId } = useParams();
+  const [index, setIndex] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const location = useLocation();
+  const { deckId } = useParams();
 
-    const [flashcards, setFlashcards] = useState([]);
-    const [loading, setLoading] = useState(true);
+  const { getFlashcardByID, updateDeck } = useDeckData();
 
-    const normalizeCard = (card) => ({
-      front: card.front ?? card.question,
-      back: card.back ?? card.answer,
-      difficulty: card.difficulty ?? "medium",
-      important: card.important ?? false,
+  const [deckTitle, setDeckTitle] = useState(location.state?.title || '');
+  const [flashcards, setFlashcards] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [newQuestion, setNewQuestion] = useState('');
+  const [newAnswer, setNewAnswer] = useState('');
+  const [newDifficulty, setNewDifficulty] = useState(null);
+
+  /* ----------------------------------------
+     NORMALIZE EVERYTHING INTO ONE SHAPE
+  -----------------------------------------*/
+  const normalizeCard = (card) => ({
+    question: card.question ?? card.front ?? '',
+    answer: card.answer ?? card.back ?? '',
+    difficulty: card.difficulty ?? 'medium',
+    important: card.important ?? false
+  });
+
+  /* ----------------------------------------
+     LOAD FROM BACKEND
+  -----------------------------------------*/
+  useEffect(() => {
+    if (!deckId) return;
+
+    setLoading(true);
+    getFlashcardByID(deckId)
+      .then((deck) => {
+        setDeckTitle(deck.title);
+        setFlashcards(deck.cards.map(normalizeCard));
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [deckId]);
+
+  /* ----------------------------------------
+     STUDY MODE CONTROLS
+  -----------------------------------------*/
+  const handleFlip = () => setFlipped((p) => !p);
+
+  const handleNext = () => {
+    setIndex((i) => (i + 1) % flashcards.length);
+    setFlipped(false);
+  };
+
+  const speakCard = () => {
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const text = flipped
+      ? flashcards[index].answer
+      : flashcards[index].question;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    synth.speak(utterance);
+  };
+
+  const difficultyWeights = { easy: 1, medium: 2, hard: 3 };
+
+  const smartShuffle = () => {
+    const shuffled = [...flashcards].sort(
+      (a, b) =>
+        Math.random() * (1 / difficultyWeights[a.difficulty]) -
+        Math.random() * (1 / difficultyWeights[b.difficulty])
+    );
+    setFlashcards(shuffled);
+    setIndex(0);
+    setFlipped(false);
+  };
+
+  /* ----------------------------------------
+     EDIT MODE
+  -----------------------------------------*/
+  const handleCardEdit = (i, field, value) => {
+    setFlashcards((prev) => {
+      const updated = [...prev];
+      updated[i] = { ...updated[i], [field]: value };
+      return updated;
     });
+  };
 
+  const handleAddCard = () => {
+    if (!newQuestion || !newAnswer || !newDifficulty) return;
 
+    setFlashcards((prev) => [
+      ...prev,
+      {
+        question: newQuestion,
+        answer: newAnswer,
+        difficulty: newDifficulty,
+        important: false
+      }
+    ]);
 
-    // Update flashcards when file changes
-    useEffect(() => {
-  if (
-    location.state?.flashcards &&
-    flashcards.length === 0
-  ) {
-    setFlashcards(
-      location.state.flashcards.map((card, i) => ({
-        ...card,
-        originalIndex: i,
-      }))
+    setNewQuestion('');
+    setNewAnswer('');
+    setNewDifficulty(null);
+  };
+
+  const toggleEditMode = async () => {
+    if (isEditing) {
+      await updateDeck(deckTitle, deckId, flashcards);
+    }
+    setIsEditing((p) => !p);
+  };
+
+  /* ----------------------------------------
+     EXPORTS
+  -----------------------------------------*/
+  const exportToJSON = () => {
+    const blob = new Blob(
+      [JSON.stringify({ title: deckTitle, cards: flashcards }, null, 2)],
+      { type: 'application/json' }
     );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${deckTitle || 'flashcards'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  /* ----------------------------------------
+     RENDER
+  -----------------------------------------*/
+  if (loading) {
+    return <div className="text-center py-16">Loading flashcards…</div>;
   }
-}, [location.state]);
 
+  if (!flashcards.length) {
+    return <div className="text-center py-16">No flashcards available.</div>;
+  }
 
-    // Load flashcards from backend
-    useEffect(() => {
-      if (!deckId) return;
+  const currentCard = flashcards[index];
 
-      setLoading(true);
-      getFlashcardByID(deckId)
-        .then((deck) => {
-          setFlashcards(deck.cards.map(normalizeCard));
-          setDeckTitle(deck.title);
-        })
-        .catch(console.error)
-        .finally(() => setLoading(false));
-    }, [deckId]);
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-10">
+      <div className="flex justify-between mb-6">
+        <Link to="/tools/flashcards" className="text-blue-600 flex items-center">
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          Back
+        </Link>
 
-
-    // // This autosaves when leaving the page.
-    // useEffect(() => {
-    //     return () => {
-    //       (async () => {
-    //         try {
-    //           await updateDeck(deckTitle, deckId, flashcards);
-    //           console.log("Saved deck on unmount");
-    //         } catch (err) {
-    //           console.error("Save on unmount failed", err);
-    //         }
-    //       })();
-    //     };
-    //   }, [deckTitle, deckId, flashcards, updateDeck]);
-
-    const difficultyWeights = {
-        hard: 3,
-        medium: 2,
-        easy: 1
-    };
-
-    const smartShuffle = () => {
-        const shuffled = [...flashcards].sort((a, b) => {
-            const weightA = difficultyWeights[a.difficulty || 'medium'] || 1;
-            const weightB = difficultyWeights[b.difficulty || 'medium'] || 1;
-            return (Math.random() * (1 / weightA)) - (Math.random() * (1 / weightB));
-        });
-
-        setFlashcards(shuffled);
-        setIndex(shuffled[0]?.originalIndex || 0);
-        setFlipped(false);
-    };
-
-    const handleNext = () => {
-        setIndex((prevIndex) => (prevIndex + 1) % flashcards.length);
-        setFlipped(false);
-    };
-
-    const exportToJSON = () => {
-        const deckData = {
-            title: deckTitle,
-            cards: flashcards.map(({ question, answer, difficulty, important }) => ({
-                question,
-                answer,
-                difficulty,
-                important
-            }))
-        };
-
-        const blob = new Blob([JSON.stringify(deckData, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${deckTitle || "flashcards"}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    };
-
-    const handleFlip = () => setFlipped((prev) => !prev);
-
-    const speakCard = () => {
-        const synth = window.speechSynthesis;
-        synth.cancel();
-        const text = flipped ? flashcards[index].answer : flashcards[index].question;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US';
-        synth.speak(utterance);
-    };
-
-    const handleEditStatusChange = async () => {
-        if (isEditing && (newQuestion || newAnswer || newDifficulty)) {
-            if (window.confirm('You have unsaved changes in the new card form. Save them before closing?')) {
-                await handleAddCard();
-            }
-        }
-        if (isEditing) {
-            await updateDeck(deckTitle, deckId, flashcards);
-        }
-        console.log(deckTitle);
-        setIsEditing((prev) => !prev);
-        setNewQuestion('');
-        setNewAnswer('');
-        setNewDifficulty(null);
-    };
-
-    const handleAddCard = async () => {
-        if (newQuestion && newAnswer && newDifficulty) {
-            const newCard = {
-                question: newQuestion,
-                answer: newAnswer,
-                difficulty: newDifficulty,
-                important: false,
-                originalIndex: flashcards.length
-            };
-            const updatedFlashcards = [...flashcards, newCard];
-            setFlashcards(updatedFlashcards);
-            setNewQuestion('');
-            setNewAnswer('');
-            setNewDifficulty(null);
-
-            try {
-                updateDeck(deckTitle, deckId, flashcards);
-            } catch (error) {
-                console.error('Error saving new card to deck:', error);
-            }
-        }
-    };
-
-    const exportToPDF = () => {
-        const doc = new jsPDF({
-            orientation: 'portrait',
-            unit: 'pt',
-            format: 'a4'
-        });
-
-        const cardWidth = 400;
-        const cardHeight = 250;
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const centerX = (pageWidth - cardWidth) / 2;
-        const centerY = (pageHeight - cardHeight) / 2;
-
-        flashcards.forEach((card, i) => {
-            doc.setFillColor(255, 255, 255);
-            doc.setDrawColor(200);
-            doc.setLineWidth(1);
-            doc.roundedRect(centerX, centerY, cardWidth, cardHeight, 10, 10, 'FD');
-            doc.setFontSize(16);
-            doc.setTextColor(51, 51, 51);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`Card ${i + 1}`, pageWidth / 2, centerY - 20, { align: 'center' });
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'normal');
-            doc.text(card.question, pageWidth / 2, pageHeight / 2, {
-                align: 'center',
-                maxWidth: cardWidth - 40
-            });
-            doc.addPage();
-
-            doc.setFillColor(255, 255, 255);
-            doc.setDrawColor(200);
-            doc.setLineWidth(1);
-            doc.roundedRect(centerX, centerY, cardWidth, cardHeight, 10, 10, 'FD');
-            doc.setFontSize(16);
-            doc.setTextColor(51, 51, 51);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`Answer to Card ${i + 1}`, pageWidth / 2, centerY - 20, { align: 'center' });
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'normal');
-            doc.text(card.answer, pageWidth / 2, pageHeight / 2, {
-                align: 'center',
-                maxWidth: cardWidth - 40
-            });
-
-            if (i < flashcards.length - 1) {
-                doc.addPage();
-            }
-        });
-
-        doc.save('flashcards.pdf');
-    };
-
-    const handleCardEdit = (i, field, value) => {
-        const updated = [...flashcards];
-        updated[i][field] = value;
-        setFlashcards(updated);
-    };
-
-    if (loading) {
-        return (
-            <div className="max-w-3xl mx-auto py-16 px-4 text-center">
-                <p className="text-gray-600 text-lg">Loading flashcards...</p>
-            </div>
-        );
-    }
-
-    if (flashcards.length === 0) {
-        return (
-            <div className="max-w-3xl mx-auto py-16 px-4 text-center">
-                <p className="text-gray-600 text-lg">No flashcards available.</p>
-                <Link
-                    to="/tools/flashcards"
-                    className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Flashcards
-                </Link>
-            </div>
-        );
-    }
-
-    const currentCard = flashcards[index];
-    if (!currentCard) return null;
-
-
-    return (
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <div className="mb-6 flex justify-between items-center">
-                <Link
-                    to="/tools/flashcards"
-                    className="inline-flex items-center text-sm text-blue-600 hover:underline"
-                >
-                    <ArrowLeft className="w-4 h-4 mr-1" />
-                    Back to Flashcards
-                </Link>
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={exportToPDF}
-                        className="inline-flex items-center gap-2 text-sm text-green-600 hover:underline"
-                    >
-                        <FileDown className="w-4 h-4" />
-                        Export to PDF
-                    </button>
-                    <button
-                        onClick={handleEditStatusChange}
-                        className="inline-flex items-center gap-2 text-sm text-gray-600 hover:underline"
-                    >
-                        <Pencil className="w-4 h-4" />
-                        {isEditing ? 'Close Editor' : 'Edit Cards'}
-                    </button>
-
-                    <button
-                        onClick={exportToJSON}
-                        className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
-                    >
-                        <FileDown className="w-4 h-4" />
-                        Export to JSON
-                    </button>
-
-                </div>
-            </div>
-
-            {!isEditing ? (
-                <>
-                    <div
-                        className="relative cursor-pointer w-full h-64 bg-white shadow-lg rounded-lg flex items-center justify-center text-center text-2xl font-semibold text-gray-700 transition-transform transform-gpu hover:scale-105"
-                        onClick={handleFlip}
-                    >
-                        {flipped ? currentCard.back : currentCard.front}
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                speakCard();
-                            }}
-                            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-                            title="Speak"
-                        >
-                            <Volume2 className="w-5 h-5" />
-                        </button>
-                    </div>
-
-                    <div className="mt-6 flex justify-between items-center">
-                        <button
-                            onClick={handleNext}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                        >
-                            <RotateCw className="w-4 h-4" />
-                            Next Card
-                        </button>
-                        <button
-                            onClick={smartShuffle}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-                        >
-                            <Shuffle className="w-4 h-4" />
-                            Smart Shuffle
-                        </button>
-                        <p className="text-sm text-gray-500">
-                            Card {index + 1} of {flashcards.length}
-                        </p>
-                    </div>
-                </>
-            ) : (
-                <div className="space-y-6">
-                    {flashcards.map((card, i) => (
-                        <div key={i} className="bg-white p-4 rounded-lg shadow">
-                            <p className="text-gray-600 font-medium mb-2">Card {i + 1}</p>
-                            <input
-                                className="w-full mb-2 px-3 py-2 border rounded-md text-sm"
-                                value={card.question}
-                                onChange={(e) => handleCardEdit(i, 'question', e.target.value)}
-                                placeholder="Edit question"
-                            />
-                            <input
-                                className="w-full mb-2 px-3 py-2 border rounded-md text-sm"
-                                value={card.answer}
-                                onChange={(e) => handleCardEdit(i, 'answer', e.target.value)}
-                                placeholder="Edit answer"
-                            />
-                            <select
-                                className="w-full px-3 py-2 border rounded-md text-sm"
-                                value={card.difficulty || 'medium'}
-                                onChange={(e) => handleCardEdit(i, 'difficulty', e.target.value)}
-                            >
-                                <option value="easy">Easy</option>
-                                <option value="medium">Medium</option>
-                                <option value="hard">Hard</option>
-                            </select>
-                        </div>
-                    ))}
-                    <div className="bg-white p-4 rounded-lg shadow">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Add New Flashcard</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Question</label>
-                                <input
-                                    type="text"
-                                    value={newQuestion}
-                                    onChange={(e) => setNewQuestion(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                                    placeholder="Enter your question"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Answer</label>
-                                <input
-                                    type="text"
-                                    value={newAnswer}
-                                    onChange={(e) => setNewAnswer(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                                    placeholder="Enter the answer"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
-                                <FlashcardDifficultySelector onSelect={setNewDifficulty} />
-                            </div>
-                            <button
-                                onClick={handleAddCard}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                disabled={!newQuestion || !newAnswer || !newDifficulty}
-                            >
-                                <Plus className="h-4 w-4" />
-                                Add Card
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+        <div className="flex gap-4">
+          <button onClick={toggleEditMode} className="text-gray-600 flex items-center">
+            <Pencil className="w-4 h-4 mr-1" />
+            {isEditing ? 'Save Editor' : 'Edit Cards'}
+          </button>
+          <button onClick={exportToJSON} className="text-blue-600 flex items-center">
+            <FileDown className="w-4 h-4 mr-1" />
+            Export JSON
+          </button>
         </div>
-    );
+      </div>
+
+      {!isEditing ? (
+        <>
+          <div
+            className="h-64 bg-white rounded-lg shadow flex items-center justify-center text-2xl font-semibold cursor-pointer"
+            onClick={handleFlip}
+          >
+            {flipped ? currentCard.answer : currentCard.question}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                speakCard();
+              }}
+              className="absolute top-3 right-3"
+            >
+              <Volume2 />
+            </button>
+          </div>
+
+          <div className="flex justify-between mt-6">
+            <button onClick={handleNext} className="bg-blue-600 text-white px-4 py-2 rounded">
+              Next Card
+            </button>
+            <button onClick={smartShuffle} className="bg-purple-600 text-white px-4 py-2 rounded">
+              Smart Shuffle
+            </button>
+            <span className="text-gray-500">
+              Card {index + 1} of {flashcards.length}
+            </span>
+          </div>
+        </>
+      ) : (
+        <div className="space-y-6">
+          {flashcards.map((card, i) => (
+            <div key={i} className="bg-white p-4 rounded shadow">
+              <p className="mb-2 font-medium">Card {i + 1}</p>
+              <input
+                value={card.question}
+                onChange={(e) => handleCardEdit(i, 'question', e.target.value)}
+                className="w-full mb-2 border px-3 py-2 rounded"
+              />
+              <input
+                value={card.answer}
+                onChange={(e) => handleCardEdit(i, 'answer', e.target.value)}
+                className="w-full mb-2 border px-3 py-2 rounded"
+              />
+              <select
+                value={card.difficulty}
+                onChange={(e) => handleCardEdit(i, 'difficulty', e.target.value)}
+                className="w-full border px-3 py-2 rounded"
+              >
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+          ))}
+
+          <div className="bg-white p-4 rounded shadow">
+            <h3 className="font-medium mb-4">Add New Flashcard</h3>
+            <input
+              value={newQuestion}
+              onChange={(e) => setNewQuestion(e.target.value)}
+              placeholder="Question"
+              className="w-full mb-2 border px-3 py-2 rounded"
+            />
+            <input
+              value={newAnswer}
+              onChange={(e) => setNewAnswer(e.target.value)}
+              placeholder="Answer"
+              className="w-full mb-2 border px-3 py-2 rounded"
+            />
+            <FlashcardDifficultySelector onSelect={setNewDifficulty} />
+            <button
+              onClick={handleAddCard}
+              disabled={!newQuestion || !newAnswer || !newDifficulty}
+              className="mt-3 bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Card
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default FlashcardStudyPage;
