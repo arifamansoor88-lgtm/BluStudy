@@ -243,7 +243,7 @@ const PracticeTests = () => {
       
       // Ensure we use a valid number (at least 10)
       const validNumQuestions = Math.max(10, questions);
-
+      
       let quizData;
       if (creationMode === "pdf") {
         // Generate quiz using the PDF-based hook

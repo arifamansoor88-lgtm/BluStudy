@@ -13,6 +13,7 @@ const AIFlashcards = () => {
   
   const [cards, setCards] = useState([]);
   const [decks, setDecks] = useState([]);
+  const [topicPrompt, setTopicPrompt] = useState("");
   const [newQuestion, setNewQuestion] = useState("");
   const [newAnswer, setNewAnswer] = useState("");
   const [difficulty, setDifficulty] = useState(null);
@@ -30,6 +31,7 @@ const AIFlashcards = () => {
     fetchSavedDecks,
     saveDeck,
     deleteDeck,
+    generateFlashcardsFromTopic,
     generateFlashcards,
     getFlashcardByID,
   } = useDeckData();
@@ -101,6 +103,26 @@ const AIFlashcards = () => {
     saveDeck(deckName, cards, folderId);
   };
 
+  const handleTopicGenerate = async () => {
+    if (!topicPrompt) return;
+
+    setIsProcessing(true);
+    try {
+      const result = await generateFlashcardsFromTopic(topicPrompt, 10);
+
+      navigate(`/tools/flashcards/study/${result.deckId}`, {
+        state: {
+          title: topicPrompt,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate flashcards from topic");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const saveCardTestDeck = async () => {
     let deckName = prompt("Choose a name for this deck");
     let id = await saveDeck(deckName, cards, folderId);
@@ -155,6 +177,49 @@ const AIFlashcards = () => {
         <p className="mt-3 text-gray-600 max-w-2xl mx-auto">
           Upload a PDF and instantly generate study-ready flashcards using AI.
         </p>
+      </div>
+
+      {/* Topic Generator */}
+      <div className="max-w-2xl mx-auto mb-24">
+        <div className="rounded-3xl border border-gray-200 bg-gradient-to-br from-blue-50 to-white p-10 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
+              <Brain className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900">
+              Generate Flashcards from a Topic
+            </h3>
+          </div>
+
+          <p className="text-sm text-gray-600 mb-6 max-w-xl">
+            Type any topic, concept, or course name and let AI generate a
+            complete flashcard deck for you.
+          </p>
+
+          <textarea
+            value={topicPrompt}
+            onChange={(e) => setTopicPrompt(e.target.value)}
+            placeholder="e.g. Binary search trees, time complexity, and rotations"
+            className="
+        w-full rounded-xl border border-gray-300 p-4 text-sm
+        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+        resize-none h-28
+      "
+          />
+
+          <div className="mt-6 flex justify-end">
+            <button
+              disabled={!topicPrompt}
+              onClick={handleTopicGenerate}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3
+             text-sm font-medium text-white hover:bg-blue-700 transition
+             disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Generate Flashcards
+              <MoveRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Upload Card */}

@@ -373,12 +373,12 @@ export const useQuizData = () => {
           ),
         };
 
-        // Add folderId if provided
-        if (folderId) {
-          requestBody.folder_id = folderId;
-        }
+      // Add folderId if provided
+      if (folderId) {
+        requestBody.folder_id = folderId;
+      }
 
-        console.log("Sending request to:", apiUrl);
+      console.log("Sending request to:", apiUrl);
         console.log("RequestBody contents:", requestBody);
 
         const response = await axios.post(apiUrl, requestBody, {
