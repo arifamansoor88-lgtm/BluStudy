@@ -296,20 +296,28 @@ const NodeToolbar = ({ node, position, onDelete, onEdit }) => {
         transform: 'translateX(-50%)'
       }}
     >
-      <button 
-        onClick={() => onEdit(node)}
-        className="p-1.5 hover:bg-blue-50 rounded-md transition-colors"
-        title="Edit"
-      >
-        <Pencil size={16} className="text-blue-500" />
-      </button>
-      <button 
-        onClick={() => onDelete(node.id)}
-        className="p-1.5 hover:bg-red-50 rounded-md transition-colors"
-        title="Delete"
-      >
-        <Trash2 size={16} className="text-red-500" />
-      </button>
+      <div className="relative group">
+        <button 
+          onClick={() => onEdit(node)}
+          className="p-1.5 hover:bg-blue-50 rounded-md transition-colors"
+        >
+          <Pencil size={16} className="text-blue-500" />
+        </button>
+        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+          Edit
+        </span>
+      </div>
+      <div className="relative group">
+        <button 
+          onClick={() => onDelete(node.id)}
+          className="p-1.5 hover:bg-red-50 rounded-md transition-colors"
+        >
+          <Trash2 size={16} className="text-red-500" />
+        </button>
+        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+          Delete
+        </span>
+      </div>
     </div>
   );
 };
@@ -410,14 +418,18 @@ const HeaderBar = ({ title, onBack, onSave, onExport, onTitleChange, onShowMindm
         </div>
         
         {/* Export Menu */}
-        <div className="relative">
+        <div className="relative group">
           <button 
             onClick={() => setShowExportMenu(!showExportMenu)}
             className="p-1.5 hover:bg-gray-100 rounded transition-colors"
-            title="Export"
           >
             <Share2 size={16} className="text-gray-500" />
           </button>
+          {!showExportMenu && (
+            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 text-xs font-medium text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              Export
+            </span>
+          )}
           
           {showExportMenu && (
             <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[140px]">
@@ -440,18 +452,22 @@ const HeaderBar = ({ title, onBack, onSave, onExport, onTitleChange, onShowMindm
         </div>
         
         {/* Save Button - inside top bar */}
-        <button 
-          onClick={onSave}
-          disabled={isSaving}
-          className={`p-1.5 rounded transition-colors ${
-            saveSuccess 
-              ? 'text-green-500 hover:bg-green-50' 
-              : 'text-gray-500 hover:bg-gray-100'
-          } disabled:opacity-50`}
-          title={isSaving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save'}
-        >
-          <Save size={16} />
-        </button>
+        <div className="relative group">
+          <button 
+            onClick={onSave}
+            disabled={isSaving}
+            className={`p-1.5 rounded transition-colors ${
+              saveSuccess 
+                ? 'text-green-500 hover:bg-green-50' 
+                : 'text-gray-500 hover:bg-gray-100'
+            } disabled:opacity-50`}
+          >
+            <Save size={16} />
+          </button>
+          <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 text-xs font-medium text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            {isSaving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save'}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -630,49 +646,65 @@ const BottomToolbar = ({
       
       {/* Main Toolbar */}
       <div className="flex items-center gap-1 bg-gray-100 rounded-2xl px-3 py-2 shadow-lg border border-gray-200">
-        <button
-          onClick={() => toggleMenu('colors')}
-          className={`p-3 rounded-xl transition-colors ${
-            activeMenu === 'colors' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
-          }`}
-          title="Colors"
-        >
-          <Palette size={20} className="text-gray-600" />
-        </button>
+        <div className="relative group">
+          <button
+            onClick={() => toggleMenu('colors')}
+            className={`p-3 rounded-xl transition-colors ${
+              activeMenu === 'colors' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+            }`}
+          >
+            <Palette size={20} className="text-gray-600" />
+          </button>
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Colors
+          </span>
+        </div>
         
-        <button
-          onClick={() => toggleMenu('shapes')}
-          className={`p-3 rounded-xl transition-colors ${
-            activeMenu === 'shapes' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
-          }`}
-          title="Shapes"
-        >
-          <Shapes size={20} className="text-gray-600" />
-        </button>
+        <div className="relative group">
+          <button
+            onClick={() => toggleMenu('shapes')}
+            className={`p-3 rounded-xl transition-colors ${
+              activeMenu === 'shapes' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+            }`}
+          >
+            <Shapes size={20} className="text-gray-600" />
+          </button>
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Shapes
+          </span>
+        </div>
         
-        <button
-          onClick={onAddNode}
-          className="p-3 rounded-xl hover:bg-white/50 transition-colors"
-          title="Add Node"
-        >
-          <Plus size={20} className="text-gray-600" />
-        </button>
+        <div className="relative group">
+          <button
+            onClick={onAddNode}
+            className="p-3 rounded-xl hover:bg-white/50 transition-colors"
+          >
+            <Plus size={20} className="text-gray-600" />
+          </button>
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Add Node
+          </span>
+        </div>
         
-        <button
-          onClick={() => toggleMenu('layouts')}
-          className={`p-3 rounded-xl transition-colors ${
-            activeMenu === 'layouts' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
-          }`}
-          title="Layouts"
-        >
-          <LayoutGrid size={20} className="text-gray-600" />
-        </button>
+        <div className="relative group">
+          <button
+            onClick={() => toggleMenu('layouts')}
+            className={`p-3 rounded-xl transition-colors ${
+              activeMenu === 'layouts' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+            }`}
+          >
+            <LayoutGrid size={20} className="text-gray-600" />
+          </button>
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Layouts
+          </span>
+        </div>
       </div>
     </div>
   );
 };
 
-const MindMapsNew = () => {
+const MindMaps = () => {
   const { id: slug } = useParams();
   const navigate = useNavigate();
   const { inProgress } = useMsal();
@@ -863,6 +895,12 @@ const MindMapsNew = () => {
   // Keyboard handler for deleting edges
   useEffect(() => {
     const handleKeyDown = (event) => {
+      // Escape to deselect edge
+      if (event.key === 'Escape' && selectedEdge) {
+        setSelectedEdge(null);
+        return;
+      }
+      
       if ((event.key === 'Delete' || event.key === 'Backspace') && selectedEdge) {
         // Don't delete if we're in an input field
         if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
@@ -1129,4 +1167,4 @@ const MindMapsNew = () => {
   );
 };
 
-export default MindMapsNew;
+export default MindMaps;

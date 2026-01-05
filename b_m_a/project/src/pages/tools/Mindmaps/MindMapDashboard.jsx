@@ -236,7 +236,8 @@ const MindMapDashboard = () => {
                 <div className="px-6 py-3 border-b border-gray-100 flex items-center justify-between bg-white">
                     <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Boards in this team ({filteredAndSortedMindmaps.length})</span>
                 </div>
-                <div className="bg-color-white px-6 py-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-color-white px-6 py-3 max-h-[600px] overflow-y-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredAndSortedMindmaps.map((mindmap) => (
                         <div 
                             key={mindmap.id} 
@@ -284,6 +285,7 @@ const MindMapDashboard = () => {
                             </div>
                         </div>
                     ))}
+                    </div>
                 </div>
             </div>
             {openModal && <ConfirmModal setOpenModal={setOpenModal} selectedMindmap={selectedMindmap}  onConfirm={handleConfirmDelete}/>}
