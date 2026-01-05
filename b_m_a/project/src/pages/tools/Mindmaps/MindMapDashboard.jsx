@@ -1,4 +1,4 @@
-import { Network, Search, Trash, MoreVertical, Pencil } from 'lucide-react';
+import { Network, Search, Trash, MoreVertical, Pencil, Filter, ChevronDown, Calendar, SortAsc } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { getMindmaps, deleteMindmap, createMindmap, updateMindmap } from '../../../api/apiService';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
@@ -19,9 +19,28 @@ const MindMapDashboard = () => {
     const [isCreating, setIsCreating] = useState(false);
     const [editingMindmap, setEditingMindmap] = useState(null);
     const [editTitle, setEditTitle] = useState('');
+    const [showFilterMenu, setShowFilterMenu] = useState(false);
+    const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'alphabetical', 'reverse-alphabetical'
+    const [filterHasPreview, setFilterHasPreview] = useState(false);
 
-    // Search Logic to search through saved mindmaps
-    const searchFilter = savedMindmaps.filter(mindmap => mindmap.data?.title.toLowerCase().includes(search.toLowerCase()));
+    // Search and filter logic
+    const filteredAndSortedMindmaps = savedMindmaps
+        .filter(mindmap => mindmap.data?.title?.toLowerCase().includes(search.toLowerCase()))
+        .filter(mindmap => !filterHasPreview || mindmap.data?.svgPreview)
+        .sort((a, b) => {
+            switch (sortBy) {
+                case 'oldest':
+                    return new Date(a.data?.metadata?.updatedAt || 0) - new Date(b.data?.metadata?.updatedAt || 0);
+                case 'newest':
+                    return new Date(b.data?.metadata?.updatedAt || 0) - new Date(a.data?.metadata?.updatedAt || 0);
+                case 'alphabetical':
+                    return (a.data?.title || '').localeCompare(b.data?.title || '');
+                case 'reverse-alphabetical':
+                    return (b.data?.title || '').localeCompare(a.data?.title || '');
+                default:
+                    return 0;
+            }
+        });
 
     const fetchSavedMindmaps = useCallback(async () => {
         try {
@@ -127,7 +146,86 @@ const MindMapDashboard = () => {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)} />
                 </div>
-                <button className="rounded-lg border-1 border-gray-200 px-4 py-2 bg-white text-gray-900 text-bold shadow-lg">Filter</button>
+                <div className="relative">
+                    <button 
+                        onClick={() => setShowFilterMenu(!showFilterMenu)}
+                        className={`rounded-lg border border-gray-200 px-4 py-2.5 bg-white text-gray-900 font-medium shadow-sm flex items-center gap-2 hover:bg-gray-50 transition-colors ${
+                            (sortBy !== 'newest' || filterHasPreview) ? 'ring-2 ring-blue-500/20 border-blue-400' : ''
+                        }`}
+                    >
+                        <Filter size={16} />
+                        Filter
+                        <ChevronDown size={14} className={`transition-transform ${showFilterMenu ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {showFilterMenu && (
+                        <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 w-56 z-50">
+                            <div className="px-3 py-2 border-b border-gray-100">
+                                <span className="text-xs font-semibold text-gray-500 uppercase">Sort By</span>
+                            </div>
+                            <button
+                                onClick={() => { setSortBy('newest'); }}
+                                className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-sm ${
+                                    sortBy === 'newest' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+                                }`}
+                            >
+                                <Calendar size={14} />
+                                Newest First
+                            </button>
+                            <button
+                                onClick={() => { setSortBy('oldest'); }}
+                                className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-sm ${
+                                    sortBy === 'oldest' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+                                }`}
+                            >
+                                <Calendar size={14} />
+                                Oldest First
+                            </button>
+                            <button
+                                onClick={() => { setSortBy('alphabetical'); }}
+                                className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-sm ${
+                                    sortBy === 'alphabetical' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+                                }`}
+                            >
+                                <SortAsc size={14} />
+                                A → Z
+                            </button>
+                            <button
+                                onClick={() => { setSortBy('reverse-alphabetical'); }}
+                                className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-sm ${
+                                    sortBy === 'reverse-alphabetical' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+                                }`}
+                            >
+                                <SortAsc size={14} className="rotate-180" />
+                                Z → A
+                            </button>
+                            
+                            <div className="px-3 py-2 border-t border-gray-100 mt-1">
+                                <span className="text-xs font-semibold text-gray-500 uppercase">Filter</span>
+                            </div>
+                            <label className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={filterHasPreview}
+                                    onChange={(e) => setFilterHasPreview(e.target.checked)}
+                                    className="rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-700">Has preview only</span>
+                            </label>
+                            
+                            {(sortBy !== 'newest' || filterHasPreview) && (
+                                <div className="px-3 py-2 border-t border-gray-100">
+                                    <button
+                                        onClick={() => { setSortBy('newest'); setFilterHasPreview(false); }}
+                                        className="text-sm text-blue-500 hover:text-blue-600"
+                                    >
+                                        Reset filters
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
                 <button 
                     onClick={() => setShowCreateModal(true)}
                     className="rounded-lg px-6 py-2 bg-blue-500 text-white text-bold shadow-lg hover:bg-blue-600">
@@ -136,10 +234,10 @@ const MindMapDashboard = () => {
             </div>
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
                 <div className="px-6 py-3 border-b border-gray-100 flex items-center justify-between bg-white">
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Boards in this team ({savedMindmaps.length})</span>
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Boards in this team ({filteredAndSortedMindmaps.length})</span>
                 </div>
                 <div className="bg-color-white px-6 py-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {searchFilter.map((mindmap) => (
+                    {filteredAndSortedMindmaps.map((mindmap) => (
                         <div 
                             key={mindmap.id} 
                             className="flex flex-col border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all cursor-pointer bg-white"
