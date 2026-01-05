@@ -1,6 +1,6 @@
-import { Network, Search, Trash, MoreVertical } from 'lucide-react';
+import { Network, Search, Trash, MoreVertical, Pencil } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
-import { getMindmaps, deleteMindmap, createMindmap } from '../../../api/apiService';
+import { getMindmaps, deleteMindmap, createMindmap, updateMindmap } from '../../../api/apiService';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
 import { InteractionStatus } from '@azure/msal-browser';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +17,8 @@ const MindMapDashboard = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newMindmapTitle, setNewMindmapTitle] = useState('');
     const [isCreating, setIsCreating] = useState(false);
+    const [editingMindmap, setEditingMindmap] = useState(null);
+    const [editTitle, setEditTitle] = useState('');
 
     // Search Logic to search through saved mindmaps
     const searchFilter = savedMindmaps.filter(mindmap => mindmap.data?.title.toLowerCase().includes(search.toLowerCase()));
@@ -65,6 +67,39 @@ const MindMapDashboard = () => {
             setIsCreating(false);
             setShowCreateModal(false);
             setNewMindmapTitle('');
+        }
+    }
+
+    const handleEditClick = (mindmap, e) => {
+        e.stopPropagation();
+        setEditingMindmap(mindmap);
+        setEditTitle(mindmap.data?.title || '');
+    }
+
+    const handleSaveEdit = async () => {
+        if (!editTitle.trim() || !editingMindmap) return;
+
+        try {
+            const updatedData = {
+                ...editingMindmap.data,
+                title: editTitle.trim()
+            };
+            await updateMindmap(editingMindmap.id, updatedData);
+            
+            // Update local state
+            setSavedMindmaps(mindmaps => 
+                mindmaps.map(m => 
+                    m.id === editingMindmap.id 
+                        ? { ...m, data: { ...m.data, title: editTitle.trim() } }
+                        : m
+                )
+            );
+        } catch (err) {
+            console.error("Error updating mindmap:", err);
+            alert("Failed to update mindmap name.");
+        } finally {
+            setEditingMindmap(null);
+            setEditTitle('');
         }
     }
 
@@ -133,15 +168,19 @@ const MindMapDashboard = () => {
                                 </h1>
                                 <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                                     <button 
+                                        onClick={(e) => handleEditClick(mindmap, e)}
+                                        title="Edit name"
+                                    >
+                                        <Pencil className="text-gray-400 rounded-lg p-1 hover:bg-blue-50 w-6 h-6"/>
+                                    </button>
+                                    <button 
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDeleteClick(mindmap);
                                         }}
+                                        title="Delete"
                                     >
                                         <Trash className="text-gray-400 rounded-lg p-1 hover:bg-red-50 w-6 h-6"/>
-                                    </button>
-                                    <button onClick={(e) => e.stopPropagation()}>
-                                        <MoreVertical className="text-gray-400 w-4 h-4"/>
                                     </button>
                                 </div>
                             </div>
@@ -191,6 +230,54 @@ const MindMapDashboard = () => {
                                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isCreating ? 'Creating...' : 'Create'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Mindmap Modal */}
+            {editingMindmap && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <h2 className="text-xl font-bold mb-4">Rename Mind Map</h2>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Title
+                            </label>
+                            <input
+                                type="text"
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleSaveEdit();
+                                    } else if (e.key === 'Escape') {
+                                        setEditingMindmap(null);
+                                        setEditTitle('');
+                                    }
+                                }}
+                                placeholder="Enter new title..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setEditingMindmap(null);
+                                    setEditTitle('');
+                                }}
+                                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveEdit}
+                                disabled={!editTitle.trim()}
+                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Save
                             </button>
                         </div>
                     </div>
