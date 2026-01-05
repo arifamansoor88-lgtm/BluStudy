@@ -438,22 +438,21 @@ const HeaderBar = ({ title, onBack, onSave, onExport, onTitleChange, onShowMindm
             </div>
           )}
         </div>
+        
+        {/* Save Button - inside top bar */}
+        <button 
+          onClick={onSave}
+          disabled={isSaving}
+          className={`p-1.5 rounded transition-colors ${
+            saveSuccess 
+              ? 'text-green-500 hover:bg-green-50' 
+              : 'text-gray-500 hover:bg-gray-100'
+          } disabled:opacity-50`}
+          title={isSaving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save'}
+        >
+          <Save size={16} />
+        </button>
       </div>
-      
-      {/* Save Button */}
-      <button 
-        onClick={onSave}
-        disabled={isSaving}
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg shadow-md border transition-colors ${
-          saveSuccess 
-            ? 'bg-green-500 text-white border-green-500' 
-            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-        } disabled:opacity-50`}
-        title="Save"
-      >
-        <Save size={16} />
-        <span className="text-sm font-medium">{isSaving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save'}</span>
-      </button>
     </div>
   );
 };
@@ -689,6 +688,7 @@ const MindMapsNew = () => {
   const [editingNode, setEditingNode] = useState(null);
   const [showAddNodeModal, setShowAddNodeModal] = useState(false);
   const [showMindmapSidebar, setShowMindmapSidebar] = useState(false);
+  const [selectedEdge, setSelectedEdge] = useState(null);
   
   const [currentMindmapId, setCurrentMindmapId] = useState(null);
   const [mindmapTitle, setMindmapTitle] = useState('');
@@ -841,7 +841,41 @@ const MindMapsNew = () => {
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
     setNodePosition(null);
+    setSelectedEdge(null);
   }, []);
+
+  // Edge click - select edge
+  const onEdgeClick = useCallback((event, edge) => {
+    event.stopPropagation();
+    setSelectedEdge(edge);
+    setSelectedNode(null);
+    setNodePosition(null);
+  }, []);
+
+  // Delete selected edge
+  const deleteSelectedEdge = useCallback(() => {
+    if (selectedEdge) {
+      setEdges(eds => eds.filter(e => e.id !== selectedEdge.id));
+      setSelectedEdge(null);
+    }
+  }, [selectedEdge, setEdges]);
+
+  // Keyboard handler for deleting edges
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if ((event.key === 'Delete' || event.key === 'Backspace') && selectedEdge) {
+        // Don't delete if we're in an input field
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+          return;
+        }
+        event.preventDefault();
+        deleteSelectedEdge();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedEdge, deleteSelectedEdge]);
 
   // Layout functions
   const applyLayout = useCallback((type) => {
@@ -1002,11 +1036,20 @@ const MindMapsNew = () => {
       <div ref={reactFlowRef} className="w-full h-full">
         <ReactFlow
           nodes={nodes}
-          edges={edges}
+          edges={edges.map(edge => ({
+            ...edge,
+            style: {
+              ...edge.style,
+              stroke: selectedEdge?.id === edge.id ? '#EF4444' : '#6B7280',
+              strokeWidth: selectedEdge?.id === edge.id ? 3 : 2,
+            },
+            animated: selectedEdge?.id === edge.id,
+          }))}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          onEdgeClick={onEdgeClick}
           onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
           connectionMode="loose"
@@ -1023,6 +1066,21 @@ const MindMapsNew = () => {
           onDelete={deleteNode}
           onEdit={(node) => setEditingNode(node)}
         />
+        
+        {/* Edge Delete Hint */}
+        {selectedEdge && (
+          <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-40 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-3">
+            <span className="text-sm">Connection selected</span>
+            <button
+              onClick={deleteSelectedEdge}
+              className="flex items-center gap-1 bg-white text-red-500 px-2 py-1 rounded text-sm font-medium hover:bg-red-50"
+            >
+              <Trash2 size={14} />
+              Delete
+            </button>
+            <span className="text-xs opacity-75">or press Delete/Backspace</span>
+          </div>
+        )}
       </div>
       
       {/* Edit Node Modal */}
