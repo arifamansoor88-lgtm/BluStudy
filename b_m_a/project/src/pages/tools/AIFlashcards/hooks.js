@@ -170,7 +170,7 @@ export const useDeckData = () => {
     );
 
     const generateFlashcardsFromTopic = useCallback(
-    async (topic, numCards = 10) => {
+    async (topic, numCards = 10, folderId = null) => {
         try {
             const token = await getToken();
 
@@ -179,6 +179,7 @@ export const useDeckData = () => {
                 {
                     topic,
                     num_cards: numCards,
+                    ...(folderId && { folder_id: folderId }),
                 },
                 {
                     headers: {

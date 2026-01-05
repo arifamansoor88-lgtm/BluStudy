@@ -108,7 +108,7 @@ const AIFlashcards = () => {
 
     setIsProcessing(true);
     try {
-      const result = await generateFlashcardsFromTopic(topicPrompt, 10);
+      const result = await generateFlashcardsFromTopic(topicPrompt, 10, folderId);
 
       navigate(`/tools/flashcards/study/${result.deckId}`, {
         state: {

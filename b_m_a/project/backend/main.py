@@ -1579,6 +1579,7 @@ async def delete_deck(deck_id: str, user_claims: dict = Depends(validate_token))
 class TopicFlashcardRequest(BaseModel):
     topic: str
     num_cards: int = 10
+    folder_id: Optional[str] = None
 
 @app.post("/generate-flashcard-topic")
 async def generate_flashcard_from_topic(
@@ -1631,12 +1632,15 @@ Generate exactly {payload.num_cards} cards.
     document = {
         "id": deck_id,
         "userId": user_claims["sub"],
-        "contentType": "flashcard",
+        "contentType": "flashcard_deck",
         "createdAt": datetime.utcnow().isoformat(),
         "title": deck.get("title", topic),
         "cards": deck["cards"],
         "resourceName": "topic"
     }
+
+    if payload.folder_id:
+        document["folderId"] = payload.folder_id
 
     container.create_item(body=document)
 

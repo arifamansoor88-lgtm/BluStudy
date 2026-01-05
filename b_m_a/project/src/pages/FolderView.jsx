@@ -659,11 +659,14 @@ export default function FolderView() {
       let deleteEndpoint = "";
       
       if (contentType === "quiz") {
-        deleteEndpoint = `/quizzes/${itemToDelete.id}`;
+        // Remove quiz from folder only (don't delete the quiz itself)
+        deleteEndpoint = null;
       } else if (contentType === "flashcard_deck") {
-        deleteEndpoint = `/delete-deck/${itemToDelete.id}`;
+        // Remove flashcard deck from folder only (don't delete the deck itself)
+        deleteEndpoint = null;
       } else if (contentType === "voice_note") {
-        deleteEndpoint = `/voice-notes/${itemToDelete.id}`;
+        // Remove voice note from folder only (don't delete the note itself)
+        deleteEndpoint = null;
       } else if (contentType === "uploaded_file") {
         deleteEndpoint = null;
       } else if (contentType === "study_plan") {
@@ -683,10 +686,24 @@ export default function FolderView() {
           console.warn("Delete endpoint not available, removing from folder only");
         });
       } else {
-        // For items without specific delete endpoints, we'll update the folderId to null
-        // This effectively removes it from the folder
-        console.warn(`No delete endpoint for contentType: ${contentType}. Item will be removed from folder only.`);
+        // For items without specific delete endpoints (including quizzes), remove from folder only
+        await apiFetch(`/items/${itemToDelete.id}/move`, {
+          method: "PATCH",
+          body: JSON.stringify({ folder_id: null }),
+        });
       }
+
+      // Reload all folders to get updated item counts
+      const folders = await apiFetch("/folders", { method: "GET" });
+      setAllFolders(folders);
+      
+      // Update current folder meta
+      const current = folders.find((f) => String(f.id) === String(folderId));
+      setFolderMeta(current || null);
+      
+      // Update subfolders with new counts
+      const subfoldersList = folders.filter((f) => String(f.parentFolderId) === String(folderId));
+      setSubfolders(subfoldersList);
 
       // Reload items from the server
       const dbItems = await apiFetch(`/folders/${folderId}/items`, { method: "GET" });
