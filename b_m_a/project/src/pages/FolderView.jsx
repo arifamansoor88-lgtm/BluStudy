@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Search, Filter, List, LayoutGrid, ChevronDown, ChevronUp,
-  Calendar as CalendarIcon, MoreVertical, Trash2, FolderSymlink, Folder, FolderPlus, ChevronRight
+  Calendar as CalendarIcon, MoreVertical, Trash2, FolderSymlink, Folder, FolderPlus, ChevronRight, Upload, File as FileIcon, CheckSquare, Square
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Mic2, LayoutGrid as GridIcon, Edit3, Zap, NotebookPen } from "lucide-react";
@@ -14,7 +14,13 @@ import { msalInstance, protectedResources } from "../authConfig";
 const API_BASE = "http://localhost:8000";
 
 async function getToken() {
+  // Ensure MSAL is init before actually using it
+  await msalInstance.initialize();
+  
   const accounts = msalInstance.getAllAccounts();
+  if (!accounts || accounts.length === 0) {
+    throw new Error("You need to sign in to access this folder.");
+  }
   const request = {
     scopes: protectedResources.todoListApi.scopes,
     account: accounts[0],
@@ -47,7 +53,7 @@ async function apiFetch(path, options = {}) {
 
 // Tool tiles: link directly to real routes
 const toolTiles = [
-  { label: "AI Flashcards",    icon: <Brain className="text-2xl" />,   color: "from-indigo-500 to-violet-500",  path: "/tools/ai-flashcards" },
+  { label: "AI Flashcards",    icon: <Brain className="text-2xl" />,   color: "from-indigo-500 to-violet-500",  path: "/tools/flashcards" },
   { label: "Voice Notes",      icon: <Mic2 className="text-2xl" />,    color: "from-purple-500 to-pink-500",    path: "/tools/voice-notes" },
   { label: "Mind Maps",        icon: <GridIcon className="text-2xl" />, color: "from-green-500 to-emerald-500",  path: "/tools/mind-maps" },
   { label: "Practice Tests",   icon: <Edit3 className="text-2xl" />,   color: "from-orange-500 to-yellow-500", path: "/tools/practice-tests" },
@@ -55,7 +61,7 @@ const toolTiles = [
   { label: "Study Planner",    icon: <NotebookPen className="text-2xl" />, color: "from-rose-500 to-red-500",    path: "/tools/study-plans" },
 ];
 
-const filterOptions = ["All Types", "Quiz", "Flashcards", "Study Plan", "Voice Note", "Summary", "Mind Map"];
+const filterOptions = ["All Types", "Quiz", "Flashcards", "Study Plan", "Voice Note", "Summary", "Mind Map", "File"];
 const sortOptions = ["Most Recent", "Oldest", "Alphabetical"];
 
 const folderColors = [
@@ -101,6 +107,13 @@ function mapDatabaseItemsToUI(dbItems) {
       title = item.data?.title || "Untitled Mind Map";
       description = item.data?.description || "";
       icon = <GridIcon className="text-4xl text-green-600" />;
+    } else if (contentType === "uploaded_file") {
+      title = item.data?.title || item.data?.originalFilename || "Untitled File";
+      const fileSize = item.data?.fileSize || 0;
+      const sizeMB = fileSize > 0 ? (fileSize / (1024 * 1024)).toFixed(2) : "0";
+      description = `${sizeMB} MB • ${item.data?.fileType || "file"}`;
+      // Use file icon for all files (images will open when clicked)
+      icon = <FileIcon className="text-4xl text-blue-600" />;
     }
     
     const createdAt = item.createdAt ? new Date(item.createdAt) : new Date();
@@ -116,7 +129,8 @@ function mapDatabaseItemsToUI(dbItems) {
             contentType === "study_plan" ? "Study Plan" :
             contentType === "voice_note" ? "Voice Note" :
             contentType === "summary" ? "Summary" :
-            contentType === "mindmap" ? "Mind Map" : "Item",
+            contentType === "mindmap" ? "Mind Map" :
+            contentType === "uploaded_file" ? "File" : "Item",
       date: (updatedAt || createdAt).toLocaleString(),
       timestamp: updatedAt || createdAt,
       tags: item.tags || item.data?.tags || [],
@@ -167,6 +181,13 @@ export default function FolderView() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [menuOpenIdx, setMenuOpenIdx] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [draggedItems, setDraggedItems] = useState([]); // For multi-drag
+  const [dragOverFolder, setDragOverFolder] = useState(null);
+  const [selectedItems, setSelectedItems] = useState(new Set());
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [pendingMoveFolderId, setPendingMoveFolderId] = useState(null); // For confirmation dialog
 
   // Content modals
   const [deleteIdx, setDeleteIdx] = useState(null);
@@ -242,6 +263,8 @@ export default function FolderView() {
         
         setItems(mappedItems);
         setLoading(false);
+        // Clear selection when folder changes
+        setSelectedItems(new Set());
       } catch (e) {
         console.error("Error loading folder items:", e);
         setError(e.message || "Failed to load folder items");
@@ -249,6 +272,7 @@ export default function FolderView() {
         setSubfolders([]);
         setBreadcrumbs([]);
         setLoading(false);
+        setSelectedItems(new Set());
         // Fallback folder metadata
         if (!folderMeta) {
           setFolderMeta({
@@ -345,6 +369,280 @@ export default function FolderView() {
   // Mutations
   // ==============
   
+  // Move item to folder (single or multiple items)
+  async function moveItemToFolder(itemIdOrIds, targetFolderId) {
+    try {
+      // Handle both single item (string) and multiple items (array)
+      const itemsToMove = Array.isArray(itemIdOrIds) ? itemIdOrIds : [itemIdOrIds];
+      
+      // Move all items
+      for (const itemId of itemsToMove) {
+        await apiFetch(`/items/${itemId}/move`, {
+          method: "PATCH",
+          body: JSON.stringify({ folder_id: targetFolderId }),
+        });
+      }
+      
+      // Reload all folders to get updated item counts
+      const folders = await apiFetch("/folders", { method: "GET" });
+      setAllFolders(folders);
+      
+      // Update current folder meta
+      const current = folders.find((f) => String(f.id) === String(folderId));
+      setFolderMeta(current || null);
+      
+      // Update subfolders with new counts
+      const subfoldersList = folders.filter((f) => String(f.parentFolderId) === String(folderId));
+      setSubfolders(subfoldersList);
+      
+      // Reload items in current folder after move
+      const dbItems = await apiFetch(`/folders/${folderId}/items`, { method: "GET" });
+      const contentItems = dbItems.filter(item => item.contentType !== "folder");
+      const mappedItems = mapDatabaseItemsToUI(contentItems);
+      setItems(mappedItems);
+      
+      // Clear selection if items were moved
+      if (Array.isArray(itemIdOrIds)) {
+        setSelectedItems(new Set());
+      }
+    } catch (e) {
+      console.error("Error moving item:", e);
+      alert("Failed to move item: " + (e.message || "Unknown error"));
+    }
+  }
+
+  // Bulk move selected items to folder (called after confirmation)
+  async function bulkMoveItems(targetFolderId) {
+    try {
+      const itemsToMove = Array.from(selectedItems);
+      
+      // Move all selected items
+      for (const itemId of itemsToMove) {
+        await apiFetch(`/items/${itemId}/move`, {
+          method: "PATCH",
+          body: JSON.stringify({ folder_id: targetFolderId }),
+        });
+      }
+      
+      // Reload all folders to get updated item counts
+      const folders = await apiFetch("/folders", { method: "GET" });
+      setAllFolders(folders);
+      
+      // Update current folder meta
+      const current = folders.find((f) => String(f.id) === String(folderId));
+      setFolderMeta(current || null);
+      
+      // Update subfolders with new counts
+      const subfoldersList = folders.filter((f) => String(f.parentFolderId) === String(folderId));
+      setSubfolders(subfoldersList);
+      
+      // Reload items in current folder after move
+      const dbItems = await apiFetch(`/folders/${folderId}/items`, { method: "GET" });
+      const contentItems = dbItems.filter(item => item.contentType !== "folder");
+      const mappedItems = mapDatabaseItemsToUI(contentItems);
+      setItems(mappedItems);
+      
+      // Clear selection and close modals
+      setSelectedItems(new Set());
+      setShowMoveModal(false);
+      setPendingMoveFolderId(null);
+    } catch (e) {
+      console.error("Error moving items:", e);
+      alert("Failed to move items: " + (e.message || "Unknown error"));
+      setPendingMoveFolderId(null);
+    }
+  }
+
+  // Handle folder selection in move modal (show confirmation)
+  function handleMoveFolderSelection(targetFolderId) {
+    setPendingMoveFolderId(targetFolderId);
+  }
+
+  // Confirm and execute the move
+  function confirmMove() {
+    if (pendingMoveFolderId !== null) {
+      bulkMoveItems(pendingMoveFolderId);
+    }
+  }
+
+  // Cancel the pending move
+  function cancelPendingMove() {
+    setPendingMoveFolderId(null);
+  }
+
+  // Toggle item selection
+  function toggleItemSelection(itemId) {
+    setSelectedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  }
+
+  // Toggle select all
+  function toggleSelectAll() {
+    if (selectedItems.size === filtered.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(filtered.map(item => item.id)));
+    }
+  }
+
+  // Create custom drag image (Google Drive style)
+  function createDragImage(e, item, selectedItemsSet, itemsList) {
+    const dragPreview = document.createElement("div");
+    dragPreview.style.position = "absolute";
+    dragPreview.style.top = "-1000px";
+    dragPreview.style.left = "-1000px";
+    dragPreview.style.padding = "10px 14px";
+    dragPreview.style.background = "white";
+    dragPreview.style.borderRadius = "10px";
+    dragPreview.style.boxShadow = "0 8px 24px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1)";
+    dragPreview.style.display = "flex";
+    dragPreview.style.alignItems = "center";
+    dragPreview.style.gap = "10px";
+    dragPreview.style.zIndex = "10000";
+    dragPreview.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    dragPreview.style.border = "1px solid rgba(0,0,0,0.08)";
+    
+    // Get icon color and SVG based on item type
+    const getIconData = (itemType) => {
+      if (itemType === 'Quiz') {
+        return {
+          color: '#ea580c',
+          svg: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>'
+        };
+      }
+      if (itemType === 'Flashcards') {
+        return {
+          color: '#4f46e5',
+          svg: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>'
+        };
+      }
+      if (itemType === 'Study Plan') {
+        return {
+          color: '#3b82f6',
+          svg: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>'
+        };
+      }
+      if (itemType === 'Voice Note') {
+        return {
+          color: '#9333ea',
+          svg: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11a7 7 0 0 1-7 7m0 0a7 7 0 0 1-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 0 1-3-3V5a3 3 0 1 1 6 0v6a3 3 0 0 1-3 3z"></path></svg>'
+        };
+      }
+      if (itemType === 'Summary') {
+        return {
+          color: '#eab308',
+          svg: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>'
+        };
+      }
+      if (itemType === 'Mind Map') {
+        return {
+          color: '#10b981',
+          svg: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>'
+        };
+      }
+      if (itemType === 'File') {
+        return {
+          color: '#3b82f6',
+          svg: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>'
+        };
+      }
+      // Default
+      return {
+        color: '#6b7280',
+        svg: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>'
+      };
+    };
+    
+    const iconData = getIconData(item.type);
+    
+    // If item is selected and there are multiple selected, show stacked preview
+    if (selectedItemsSet.has(item.id) && selectedItemsSet.size > 1) {
+      const selectedCount = selectedItemsSet.size;
+      
+      dragPreview.innerHTML = `
+        <div style="display: flex; align-items: center; position: relative; width: 56px; height: 48px;">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 2; position: absolute; left: 0;">
+            ${iconData.svg}
+          </div>
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1; position: absolute; left: 8px; opacity: 0.85;">
+          </div>
+          <div style="position: absolute; right: -8px; top: -4px; width: 20px; height: 20px; background: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 3;">
+            ${selectedCount}
+          </div>
+        </div>
+        <span style="font-weight: 600; color: #1e293b; font-size: 15px; letter-spacing: -0.01em;">${selectedCount} items</span>
+      `;
+    } else {
+      // Single item drag - show icon and title
+      const truncatedTitle = item.title.length > 18 ? item.title.substring(0, 18) + '...' : item.title;
+      
+      dragPreview.innerHTML = `
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-shrink: 0;">
+          ${iconData.svg}
+        </div>
+        <span style="font-weight: 600; color: #1e293b; font-size: 15px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -0.01em;">${truncatedTitle}</span>
+      `;
+    }
+    
+    document.body.appendChild(dragPreview);
+    e.dataTransfer.setDragImage(dragPreview, 10, 10);
+    
+    // Clean up after a delay
+    setTimeout(() => {
+      if (document.body.contains(dragPreview)) {
+        document.body.removeChild(dragPreview);
+      }
+    }, 0);
+  }
+
+  // File upload handler
+  async function handleFileUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("folder_id", folderId);
+        
+        const token = await getToken();
+        const response = await fetch(`${API_BASE}/upload-file`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to upload ${file.name}`);
+        }
+      }
+      
+      // Reload items after upload
+      const dbItems = await apiFetch(`/folders/${folderId}/items`, { method: "GET" });
+      const contentItems = dbItems.filter(item => item.contentType !== "folder");
+      const mappedItems = mapDatabaseItemsToUI(contentItems);
+      setItems(mappedItems);
+    } catch (e) {
+      console.error("Error uploading file:", e);
+      alert("Failed to upload file: " + (e.message || "Unknown error"));
+    } finally {
+      setUploading(false);
+      // Reset file input
+      event.target.value = "";
+    }
+  }
+
   async function doDelete() {
     if (deleteIdx === null) return;
     
@@ -366,6 +664,8 @@ export default function FolderView() {
         deleteEndpoint = `/delete-deck/${itemToDelete.id}`;
       } else if (contentType === "voice_note") {
         deleteEndpoint = `/voice-notes/${itemToDelete.id}`;
+      } else if (contentType === "uploaded_file") {
+        deleteEndpoint = null;
       } else if (contentType === "study_plan") {
         // Study plans might not have a delete endpoint, we'll handle it generically
         // For now, we'll use container.delete_item approach or skip if no endpoint exists
@@ -377,6 +677,11 @@ export default function FolderView() {
 
       if (deleteEndpoint) {
         await apiFetch(deleteEndpoint, { method: "DELETE" });
+      } else if (contentType === "uploaded_file") {
+        // Delete uploaded file, remove from database and delete file from disk
+        await apiFetch(`/files/${itemToDelete.id}`, { method: "DELETE" }).catch(() => {
+          console.warn("Delete endpoint not available, removing from folder only");
+        });
       } else {
         // For items without specific delete endpoints, we'll update the folderId to null
         // This effectively removes it from the folder
@@ -474,6 +779,26 @@ export default function FolderView() {
               className="pl-10 pr-4 py-2 rounded-full border border-slate-300 shadow-sm focus:ring-1 focus:ring-indigo-300"
             />
           </div>
+          <button
+            onClick={toggleSelectAll}
+            className="px-4 py-2 bg-white rounded-full border border-slate-300 shadow-sm hover:bg-slate-50"
+            title="Select All"
+          >
+            {selectedItems.size === filtered.length && filtered.length > 0 ? (
+              <CheckSquare className="w-5 h-5 text-indigo-600" />
+            ) : (
+              <Square className="w-5 h-5 text-slate-600" />
+            )}
+          </button>
+          {selectedItems.size > 0 && (
+            <button
+              onClick={() => setSelectedItems(new Set())}
+              className="px-4 py-2 bg-white rounded-full border border-slate-300 shadow-sm hover:bg-slate-50 text-sm text-slate-700"
+              title="Clear Selection"
+            >
+              Cancel
+            </button>
+          )}
 
           <div className="relative" ref={filterRef}>
             <button
@@ -561,7 +886,32 @@ export default function FolderView() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   onClick={() => navigate(`/workspace/folder/${subfolder.id}`)}
-                  className={`rounded-2xl p-4 bg-gradient-to-br ${subfolder.color || folderColors[0]} cursor-pointer shadow-md border border-white/40 hover:scale-105 transition-transform`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOverFolder(subfolder.id);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    setDragOverFolder(null);
+                  }}
+                  onDrop={async (e) => {
+                    e.preventDefault();
+                    setDragOverFolder(null);
+                    
+                    // Handle multi-drag (selected items)
+                    if (draggedItems.length > 0) {
+                      await moveItemToFolder(draggedItems, subfolder.id);
+                      setDraggedItems([]);
+                    } 
+                    // Handle single drag
+                    else if (draggedItem && draggedItem !== subfolder.id) {
+                      await moveItemToFolder(draggedItem, subfolder.id);
+                      setDraggedItem(null);
+                    }
+                  }}
+                  className={`rounded-2xl p-4 bg-gradient-to-br ${subfolder.color || folderColors[0]} cursor-pointer shadow-md border-2 transition-transform ${
+                    dragOverFolder === subfolder.id ? "border-indigo-500 scale-105" : "border-white/40 hover:scale-105"
+                  }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <Folder className="w-5 h-5 text-slate-700" />
@@ -580,15 +930,28 @@ export default function FolderView() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-slate-800">Create New Content</h2>
-            {canCreateSubfolder && (
-              <button
-                onClick={() => setIsCreateSubfolderModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                <FolderPlus className="w-4 h-4" />
-                {subfolders.length > 0 ? "New Subfolder" : "Create Subfolder"}
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
+                <Upload className="w-4 h-4" />
+                {uploading ? "Uploading..." : "Upload Files"}
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                />
+              </label>
+              {canCreateSubfolder && (
+                <button
+                  onClick={() => setIsCreateSubfolderModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  <FolderPlus className="w-4 h-4" />
+                  {subfolders.length > 0 ? "New Subfolder" : "Create Subfolder"}
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
@@ -611,8 +974,43 @@ export default function FolderView() {
         </div>
 
         {/* Your Content */}
-        <div>
-          <h2 className="text-lg font-bold text-slate-800 mb-4">Your Content</h2>
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOverFolder(folderId);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            setDragOverFolder(null);
+          }}
+          onDrop={async (e) => {
+            e.preventDefault();
+            setDragOverFolder(null);
+            
+            // Handle multi-drag (selected items)
+            if (draggedItems.length > 0) {
+              await moveItemToFolder(draggedItems, folderId);
+              setDraggedItems([]);
+            }
+            // Handle single drag
+            else if (draggedItem) {
+              await moveItemToFolder(draggedItem, folderId);
+              setDraggedItem(null);
+            }
+          }}
+          className={dragOverFolder === folderId ? "border-2 border-indigo-500 rounded-xl p-4" : ""}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-slate-800">Your Content</h2>
+            {selectedItems.size > 0 && (
+              <button
+                onClick={() => setShowMoveModal(true)}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
+              >
+                Move {selectedItems.size} item{selectedItems.size !== 1 ? 's' : ''}
+              </button>
+            )}
+          </div>
 
           {view === "grid" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -620,8 +1018,47 @@ export default function FolderView() {
                 <motion.div
                   key={`${item.id || item.title}-${i}`}
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                  className="relative bg-white rounded-3xl p-6 shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
-                  onClick={() => {
+                  draggable
+                  onDragStart={(e) => {
+                    // Create custom drag image (Google Drive style kindof)
+                    createDragImage(e, item, selectedItems, items);
+                    
+                    // If item is selected and there are multiple selected, drag all selected items
+                    if (selectedItems.has(item.id) && selectedItems.size > 1) {
+                      const selectedArray = Array.from(selectedItems);
+                      setDraggedItems(selectedArray);
+                      setDraggedItem(null); // Clear single drag
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", `moving-${selectedArray.length}-items`);
+                    } else {
+                      // Single item drag
+                      setDraggedItem(item.id);
+                      setDraggedItems([]);
+                      e.dataTransfer.effectAllowed = "move";
+                    }
+                  }}
+                  onDragEnd={() => {
+                    setDraggedItem(null);
+                    setDraggedItems([]);
+                  }}
+                  className={`relative bg-white rounded-3xl p-6 shadow-lg cursor-pointer hover:shadow-xl transition-shadow ${
+                    (draggedItem === item.id || draggedItems.includes(item.id)) ? "opacity-50" : ""
+                  } ${selectedItems.has(item.id) ? "ring-2 ring-indigo-500" : ""}`}
+                  onClick={(e) => {
+                    // If clicking on checkbox, don't navigate
+                    if (e.target.closest('.checkbox-container')) {
+                      e.stopPropagation();
+                      toggleItemSelection(item.id);
+                      return;
+                    }
+                    
+                    // If in selection mode, toggle selection instead of navigating
+                    if (selectedItems.size > 0) {
+                      toggleItemSelection(item.id);
+                      return;
+                    }
+                    
+                    // Normal click behavior
                     // Navigate based on content type
                     const contentType = item.rawItem?.contentType;
                     if (contentType === "quiz") {
@@ -632,10 +1069,47 @@ export default function FolderView() {
                       navigate(`/tools/study-planner?planId=${item.id}`);
                     } else if (contentType === "voice_note") {
                       navigate(`/tools/voice-notes?noteId=${item.id}`);
+                    } else if (contentType === "uploaded_file") {
+                      // Open file with authentication
+                      (async () => {
+                        try {
+                          const token = await getToken();
+                          const response = await fetch(`${API_BASE}/files/${item.id}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                          });
+                          if (response.ok) {
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            window.open(url, "_blank");
+                            // Clean up URL after a delay
+                            setTimeout(() => window.URL.revokeObjectURL(url), 100);
+                          }
+                        } catch (e) {
+                          console.error("Error opening file:", e);
+                          alert("Failed to open file");
+                        }
+                      })();
                     }
                     // Other content types can be handled later
                   }}
                 >
+                  {/* Checkbox */}
+                  <div className="absolute top-4 left-4 checkbox-container">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleItemSelection(item.id);
+                      }}
+                      className="p-1 rounded hover:bg-slate-100"
+                    >
+                      {selectedItems.has(item.id) ? (
+                        <CheckSquare className="w-5 h-5 text-indigo-600" />
+                      ) : (
+                        <Square className="w-5 h-5 text-slate-400" />
+                      )}
+                    </button>
+                  </div>
+
                   {/* item menu */}
                   <div className="absolute top-4 right-4" id={`menu-${i}`}>
                     <button
@@ -702,8 +1176,47 @@ export default function FolderView() {
                 <motion.li
                   key={`${item.id || item.title}-${i}`}
                   initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
-                  className="relative flex items-start gap-4 bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
-                  onClick={() => {
+                  draggable
+                  onDragStart={(e) => {
+                    // Create custom drag image (Google Drive style)
+                    createDragImage(e, item, selectedItems, items);
+                    
+                    // If item is selected and there are multiple selected, drag all selected items
+                    if (selectedItems.has(item.id) && selectedItems.size > 1) {
+                      const selectedArray = Array.from(selectedItems);
+                      setDraggedItems(selectedArray);
+                      setDraggedItem(null); // Clear single drag
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", `moving-${selectedArray.length}-items`);
+                    } else {
+                      // Single item drag
+                      setDraggedItem(item.id);
+                      setDraggedItems([]);
+                      e.dataTransfer.effectAllowed = "move";
+                    }
+                  }}
+                  onDragEnd={() => {
+                    setDraggedItem(null);
+                    setDraggedItems([]);
+                  }}
+                  className={`relative flex items-start gap-4 bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-shadow ${
+                    (draggedItem === item.id || draggedItems.includes(item.id)) ? "opacity-50" : ""
+                  } ${selectedItems.has(item.id) ? "ring-2 ring-indigo-500" : ""}`}
+                  onClick={(e) => {
+                    // If clicking on checkbox, don't navigate
+                    if (e.target.closest('.checkbox-container')) {
+                      e.stopPropagation();
+                      toggleItemSelection(item.id);
+                      return;
+                    }
+                    
+                    // If in selection mode, toggle selection instead of navigating
+                    if (selectedItems.size > 0) {
+                      toggleItemSelection(item.id);
+                      return;
+                    }
+                    
+                    // Normal click behavior
                     // Navigate based on content type
                     const contentType = item.rawItem?.contentType;
                     if (contentType === "quiz") {
@@ -714,9 +1227,44 @@ export default function FolderView() {
                       navigate(`/tools/study-planner?planId=${item.id}`);
                     } else if (contentType === "voice_note") {
                       navigate(`/tools/voice-notes?noteId=${item.id}`);
+                    } else if (contentType === "uploaded_file") {
+                      // Open file with authentication
+                      (async () => {
+                        try {
+                          const token = await getToken();
+                          const response = await fetch(`${API_BASE}/files/${item.id}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                          });
+                          if (response.ok) {
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            window.open(url, "_blank");
+                            // Clean up URL after a delay
+                            setTimeout(() => window.URL.revokeObjectURL(url), 100);
+                          }
+                        } catch (e) {
+                          console.error("Error opening file:", e);
+                          alert("Failed to open file");
+                        }
+                      })();
                     }
                   }}
                 >
+                  <div className="checkbox-container">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleItemSelection(item.id);
+                      }}
+                      className="p-1 rounded hover:bg-slate-100"
+                    >
+                      {selectedItems.has(item.id) ? (
+                        <CheckSquare className="w-5 h-5 text-indigo-600" />
+                      ) : (
+                        <Square className="w-5 h-5 text-slate-400" />
+                      )}
+                    </button>
+                  </div>
                   <div className="mt-1">{item.icon ?? <Brain className="text-4xl" />}</div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-slate-800">{item.title}</h3>
@@ -764,6 +1312,100 @@ export default function FolderView() {
           </button>
           <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 text-white" onClick={doDelete}>
             Delete
+          </button>
+        </div>
+      </Modal>
+
+      {/* MOVE MODAL */}
+      <Modal open={showMoveModal} onClose={() => { setShowMoveModal(false); setPendingMoveFolderId(null); }}>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">
+          Move {selectedItems.size} item{selectedItems.size !== 1 ? 's' : ''} to folder
+        </h3>
+        <div className="max-h-64 overflow-y-auto space-y-2 mb-4">
+          {/* Current folder option (move back) */}
+          <button
+            onClick={() => {
+              handleMoveFolderSelection(folderId);
+            }}
+            className="w-full text-left px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center gap-2"
+          >
+            <Folder className="w-5 h-5 text-slate-600" />
+            <span className="font-medium">{folderName}</span>
+            <span className="text-sm text-slate-500 ml-auto">(Current folder)</span>
+          </button>
+          
+          {/* Subfolders */}
+          {subfolders.map((subfolder) => (
+            <button
+              key={subfolder.id}
+              onClick={() => {
+                handleMoveFolderSelection(subfolder.id);
+              }}
+              className="w-full text-left px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center gap-2"
+            >
+              <Folder className="w-5 h-5 text-slate-600" />
+              <span className="font-medium">{subfolder.name}</span>
+              <span className="text-sm text-slate-500 ml-auto">{subfolder.items ?? 0} items</span>
+            </button>
+          ))}
+          
+          {/* All other folders (excluding current and subfolders) */}
+          {allFolders
+            .filter(f => String(f.id) !== String(folderId) && String(f.parentFolderId) !== String(folderId))
+            .map((folder) => (
+              <button
+                key={folder.id}
+                onClick={() => {
+                  handleMoveFolderSelection(folder.id);
+                }}
+                className="w-full text-left px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center gap-2"
+              >
+                <Folder className="w-5 h-5 text-slate-600" />
+                <span className="font-medium">{folder.name}</span>
+                <span className="text-sm text-slate-500 ml-auto">{folder.items ?? 0} items</span>
+              </button>
+            ))}
+        </div>
+        <div className="flex justify-end gap-3">
+          <button
+            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200"
+            onClick={() => { setShowMoveModal(false); setPendingMoveFolderId(null); }}
+          >
+            Cancel
+          </button>
+        </div>
+      </Modal>
+
+      {/* CONFIRMATION MODAL FOR MOVE */}
+      <Modal open={pendingMoveFolderId !== null} onClose={cancelPendingMove}>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">
+          Confirm Move
+        </h3>
+        <p className="text-slate-600 mb-6">
+          Are you sure you want to move {selectedItems.size} item{selectedItems.size !== 1 ? 's' : ''} to{' '}
+          <span className="font-semibold">
+            {pendingMoveFolderId && (() => {
+              if (String(pendingMoveFolderId) === String(folderId)) {
+                return folderName;
+              }
+              const targetFolder = subfolders.find(f => String(f.id) === String(pendingMoveFolderId)) ||
+                                 allFolders.find(f => String(f.id) === String(pendingMoveFolderId));
+              return targetFolder?.name || 'selected folder';
+            })()}
+          </span>?
+        </p>
+        <div className="flex justify-end gap-3">
+          <button
+            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200"
+            onClick={cancelPendingMove}
+          >
+            Cancel
+          </button>
+          <button
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white hover:scale-[1.02] transition-transform"
+            onClick={confirmMove}
+          >
+            Confirm Move
           </button>
         </div>
       </Modal>

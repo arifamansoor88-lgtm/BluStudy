@@ -2066,6 +2066,205 @@ async def get_folder_items(
         raise HTTPException(status_code=500, detail="Failed to fetch folder items")
 
 
+@app.patch("/items/{item_id}/move")
+async def move_item(
+    item_id: str,
+    request: Dict[str, Any] = Body(...),
+    user_claims: dict = Depends(validate_token)
+):
+    """
+    Move an item to a different folder by updating its folderId.
+    Pass null to move item out of folders (root level).
+    Request body: {"folder_id": "folder-id-string"} or {"folder_id": null}
+    """
+    try:
+        # Extract folder_id from request body
+        folder_id = request.get("folder_id") or request.get("folderId")
+        
+        # Read the item
+        doc = container.read_item(item=item_id, partition_key=user_claims["sub"])
+        
+        # Verify ownership
+        if doc.get("userId") != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Validate target folder if provided
+        if folder_id:
+            try:
+                target_folder = container.read_item(item=folder_id, partition_key=user_claims["sub"])
+                if target_folder.get("contentType") != "folder":
+                    raise HTTPException(status_code=400, detail="Target is not a folder")
+                if target_folder.get("userId") != user_claims["sub"]:
+                    raise HTTPException(status_code=403, detail="Access denied to target folder")
+            except CosmosResourceNotFoundError:
+                raise HTTPException(status_code=404, detail="Target folder not found")
+        
+        # Update folderId
+        if folder_id:
+            doc["folderId"] = folder_id
+        else:
+            # Remove from folder (set to null or remove key)
+            doc.pop("folderId", None)
+        
+        doc["updatedAt"] = datetime.utcnow().isoformat()
+        container.replace_item(item=item_id, body=doc)
+        
+        return {"message": "Item moved successfully", "folderId": folder_id}
+    except HTTPException:
+        raise
+    except CosmosResourceNotFoundError:
+        raise HTTPException(status_code=404, detail="Item not found")
+    except Exception as e:
+        print(f"Error moving item: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to move item: {str(e)}")
+
+
+# --------------------------------------------------------------------------------------
+# File Upload Endpoint
+# --------------------------------------------------------------------------------------
+@app.post("/upload-file")
+async def upload_file(
+    file: UploadFile = File(...),
+    folder_id: Optional[str] = Form(None),
+    user_claims: dict = Depends(validate_token)
+):
+    """
+    Simple file upload endpoint that stores file metadata in Cosmos DB.
+    Files are stored in static/uploads directory.
+    """
+    try:
+        # Create uploads directory if it doesn't exist
+        upload_dir = "static/uploads"
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # Generate unique filename to avoid collisions
+        file_id = str(uuid.uuid4())
+        file_extension = os.path.splitext(file.filename)[1] if file.filename else ""
+        stored_filename = f"{file_id}{file_extension}"
+        file_path = os.path.join(upload_dir, stored_filename)
+        
+        # Save file to disk
+        with open(file_path, "wb") as f:
+            content = await file.read()
+            f.write(content)
+        
+        # Get file size
+        file_size = len(content)
+        
+        # Determine file type
+        file_type = file.content_type or "application/octet-stream"
+        is_image = file_type.startswith("image/")
+        is_pdf = file_type == "application/pdf"
+        
+        # Create document for Cosmos DB
+        file_document = {
+            "id": file_id,
+            "userId": user_claims["sub"],
+            "contentType": "uploaded_file",
+            "folderId": folder_id,
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": {
+                "title": file.filename or "Untitled File",
+                "originalFilename": file.filename,
+                "storedFilename": stored_filename,
+                "filePath": file_path,
+                "fileSize": file_size,
+                "fileType": file_type,
+                "isImage": is_image,
+                "isPdf": is_pdf,
+            }
+        }
+        
+        container.create_item(body=file_document)
+        
+        return {
+            "id": file_id,
+            "filename": file.filename,
+            "fileSize": file_size,
+            "fileType": file_type,
+            "folderId": folder_id,
+            "message": "File uploaded successfully"
+        }
+    except Exception as e:
+        print(f"Error uploading file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
+
+
+@app.get("/files/{file_id}")
+async def get_file(
+    file_id: str,
+    user_claims: dict = Depends(validate_token)
+):
+    """
+    Serve uploaded file. Only allows access to files owned by the user.
+    """
+    try:
+        # Get file document from Cosmos DB
+        file_doc = container.read_item(item=file_id, partition_key=user_claims["sub"])
+        
+        # Verify ownership
+        if file_doc.get("userId") != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Verify it's an uploaded file
+        if file_doc.get("contentType") != "uploaded_file":
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        file_path = file_doc.get("data", {}).get("filePath")
+        if not file_path or not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="File not found on disk")
+        
+        return FileResponse(
+            path=file_path,
+            media_type=file_doc.get("data", {}).get("fileType", "application/octet-stream"),
+            filename=file_doc.get("data", {}).get("originalFilename", "file")
+        )
+    except CosmosResourceNotFoundError:
+        raise HTTPException(status_code=404, detail="File not found")
+    except Exception as e:
+        print(f"Error serving file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to serve file: {str(e)}")
+
+
+@app.delete("/files/{file_id}")
+async def delete_file(
+    file_id: str,
+    user_claims: dict = Depends(validate_token)
+):
+    """
+    Delete uploaded file from database and disk.
+    """
+    try:
+        # Get file document from Cosmos DB
+        file_doc = container.read_item(item=file_id, partition_key=user_claims["sub"])
+        
+        # Verify ownership
+        if file_doc.get("userId") != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Verify it's an uploaded file
+        if file_doc.get("contentType") != "uploaded_file":
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Delete file from disk
+        file_path = file_doc.get("data", {}).get("filePath")
+        if file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                print(f"Warning: Failed to delete file from disk: {str(e)}")
+        
+        # Delete from database
+        container.delete_item(item=file_id, partition_key=user_claims["sub"])
+        
+        return {"message": "File deleted successfully"}
+    except CosmosResourceNotFoundError:
+        raise HTTPException(status_code=404, detail="File not found")
+    except Exception as e:
+        print(f"Error deleting file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
+
+
 # --------------------------------------------------------------------------------------
 # Dev server
 # --------------------------------------------------------------------------------------

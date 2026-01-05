@@ -193,7 +193,6 @@ export default function FolderManager({
       )}
 
       <div>
-        <h2 className="text-xl font-semibold text-slate-700 mb-4">📁 All Folders</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {folders.filter((f) => !f.starred).map((folder) => (
             <motion.div
