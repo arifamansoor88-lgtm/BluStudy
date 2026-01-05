@@ -367,7 +367,7 @@ const HeaderBar = ({ title, onBack, onSave, onExport, onTitleChange, onShowMindm
       <div className="flex items-center gap-2 bg-white rounded-lg shadow-md px-3 py-2 border border-gray-200">
         <button 
           onClick={onBack}
-          className="flex items-center justify-center w-8 h-8 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors"
+          className="flex items-center justify-center w-8 h-8 bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
           title="Back to Dashboard"
         >
           <Network size={18} className="text-white" />
