@@ -8,7 +8,7 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import AIFlashcards from "./pages/tools/AIFlashcards/AIFlashcards";
 import VoiceNotes from "./pages/tools/VoiceNotes";
-import MindMaps from "./pages/tools/Mindmaps/MindMapsNew";
+import MindMaps from "./pages/tools/Mindmaps/MindMap";
 import MindMapDashboard from './pages/tools/Mindmaps/MindMapDashboard';
 import PracticeTests from "./pages/tools/PracticeTests/PracticeTests";
 import StudyPlans from "./pages/tools/studyPlans/StudyPlans";
