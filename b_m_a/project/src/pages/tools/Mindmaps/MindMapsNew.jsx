@@ -32,10 +32,13 @@ import {
   LayoutGrid,
   Palette,
   Shapes,
+  FolderOpen,
+  PlusCircle,
+  X,
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
-import { getMindmap, updateMindmap } from '../../../api/apiService';
+import { getMindmap, getMindmaps, updateMindmap } from '../../../api/apiService';
 
 // Color configuration
 const COLOR_PALETTE = {
@@ -312,7 +315,7 @@ const NodeToolbar = ({ node, position, onDelete, onEdit }) => {
 };
 
 // Top Header Bar
-const HeaderBar = ({ title, onBack, onSave, onExport, onTitleChange, isSaving, saveSuccess }) => {
+const HeaderBar = ({ title, onBack, onSave, onExport, onTitleChange, onShowMindmaps, isSaving, saveSuccess }) => {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -395,6 +398,13 @@ const HeaderBar = ({ title, onBack, onSave, onExport, onTitleChange, isSaving, s
                 <Pencil size={16} />
                 Rename
               </button>
+              <button 
+                onClick={() => { onShowMindmaps(); setShowOptionsMenu(false); }}
+                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-sm text-gray-700"
+              >
+                <FolderOpen size={16} />
+                Load
+              </button>
             </div>
           )}
         </div>
@@ -444,6 +454,94 @@ const HeaderBar = ({ title, onBack, onSave, onExport, onTitleChange, isSaving, s
         <Save size={16} />
         <span className="text-sm font-medium">{isSaving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save'}</span>
       </button>
+    </div>
+  );
+};
+
+// Mindmap Sidebar for loading other mindmaps
+const MindmapSidebar = ({ isOpen, onClose, onSelectMindmap, currentMindmapId }) => {
+  const [mindmaps, setMindmaps] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      const fetchMindmaps = async () => {
+        setIsLoading(true);
+        try {
+          const allItems = await getMindmaps();
+          const filteredMindmaps = allItems.filter(item => item.contentType === 'mindmap');
+          setMindmaps(filteredMindmaps);
+        } catch (err) {
+          console.error('Error fetching mindmaps:', err);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchMindmaps();
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[90]" onClick={onClose}>
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/20" />
+      
+      {/* Sidebar */}
+      <div 
+        className="absolute right-0 top-0 h-full w-72 bg-gray-100 shadow-xl overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+          <h3 className="font-semibold text-gray-800">Saved Mindmaps</h3>
+          <button 
+            onClick={onClose}
+            className="p-1 hover:bg-gray-100 rounded transition-colors"
+          >
+            <X size={18} className="text-gray-500" />
+          </button>
+        </div>
+        
+        {/* Mindmap List */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          {isLoading ? (
+            <div className="text-center text-gray-500 py-4">Loading...</div>
+          ) : mindmaps.length === 0 ? (
+            <div className="text-center text-gray-500 py-4">No mindmaps found</div>
+          ) : (
+            mindmaps.map((mindmap) => (
+              <button
+                key={mindmap.id}
+                onClick={() => onSelectMindmap(mindmap)}
+                className={`w-full bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow ${
+                  mindmap.id === currentMindmapId ? 'border-blue-400 ring-2 ring-blue-100' : 'border-gray-200'
+                }`}
+              >
+                {/* Preview Image */}
+                <div className="w-full h-28 bg-gray-50 flex items-center justify-center">
+                  {mindmap.data?.svgPreview ? (
+                    <img 
+                      src={mindmap.data.svgPreview} 
+                      alt={mindmap.data?.title || 'Mindmap'} 
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <Network size={32} className="text-gray-300" />
+                  )}
+                </div>
+                {/* Title */}
+                <div className="px-3 py-2 text-left">
+                  <span className="text-sm font-medium text-gray-700 truncate block">
+                    {mindmap.data?.title || 'Untitled'}
+                  </span>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -590,6 +688,7 @@ const MindMapsNew = () => {
   const [nodePosition, setNodePosition] = useState(null);
   const [editingNode, setEditingNode] = useState(null);
   const [showAddNodeModal, setShowAddNodeModal] = useState(false);
+  const [showMindmapSidebar, setShowMindmapSidebar] = useState(false);
   
   const [currentMindmapId, setCurrentMindmapId] = useState(null);
   const [mindmapTitle, setMindmapTitle] = useState('');
@@ -600,6 +699,46 @@ const MindMapsNew = () => {
   
   const reactFlowRef = useRef(null);
   const hasLoadedInitialMindmap = useRef(false);
+
+  // Delete node (defined early so other functions can use it)
+  const deleteNode = useCallback((nodeId) => {
+    setNodes(nds => nds.filter(n => n.id !== nodeId));
+    setEdges(eds => eds.filter(e => e.source !== nodeId && e.target !== nodeId));
+    setSelectedNode(null);
+  }, [setNodes, setEdges]);
+
+  // Load a specific mindmap
+  const loadMindmapById = useCallback(async (mindmap) => {
+    try {
+      setIsLoading(true);
+      setShowMindmapSidebar(false);
+      
+      const data = mindmap.data;
+      const nodesWithCallbacks = data.nodes.map(node => ({
+        ...node,
+        data: { ...node.data, onDelete: deleteNode }
+      }));
+      setNodes(nodesWithCallbacks);
+      setEdges(data.edges || []);
+      setCurrentMindmapId(mindmap.id);
+      setMindmapTitle(data.title);
+      
+      // Calculate next ID
+      const existingIds = data.nodes.map(node => {
+        const match = node.id.match(/node-(\d+)/);
+        return match ? parseInt(match[1], 10) : 0;
+      });
+      setNextId(Math.max(...existingIds, 0) + 1);
+      
+      // Update URL
+      navigate(`/tools/maps/${mindmap.id}`, { replace: true });
+    } catch (err) {
+      console.error('Error loading mindmap:', err);
+      setError('Failed to load mindmap');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [navigate, setNodes, setEdges, deleteNode]);
 
   // Update node (name/color)
   const updateNode = useCallback((nodeId, updates) => {
@@ -655,14 +794,7 @@ const MindMapsNew = () => {
       
       loadMindmap();
     }
-  }, [slug, isAuthenticated, inProgress]);
-
-  // Delete node
-  const deleteNode = useCallback((nodeId) => {
-    setNodes(nds => nds.filter(n => n.id !== nodeId));
-    setEdges(eds => eds.filter(e => e.source !== nodeId && e.target !== nodeId));
-    setSelectedNode(null);
-  }, [setNodes, setEdges]);
+  }, [slug, isAuthenticated, inProgress, deleteNode]);
 
   // Add node with custom label/color
   const addNode = useCallback(({ label, color }) => {
@@ -861,6 +993,7 @@ const MindMapsNew = () => {
         onSave={handleSave}
         onExport={handleExport}
         onTitleChange={setMindmapTitle}
+        onShowMindmaps={() => setShowMindmapSidebar(true)}
         isSaving={isSaving}
         saveSuccess={saveSuccess}
       />
@@ -918,6 +1051,14 @@ const MindMapsNew = () => {
         onShapeChange={setSelectedShape}
         onAddNode={() => setShowAddNodeModal(true)}
         onLayoutChange={applyLayout}
+      />
+      
+      {/* Mindmap Sidebar */}
+      <MindmapSidebar
+        isOpen={showMindmapSidebar}
+        onClose={() => setShowMindmapSidebar(false)}
+        onSelectMindmap={loadMindmapById}
+        currentMindmapId={currentMindmapId}
       />
       
       {/* Loading/Error states */}
