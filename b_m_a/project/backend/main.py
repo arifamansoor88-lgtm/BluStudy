@@ -1386,6 +1386,63 @@ async def summarize_file(
         print(f"❌ Error during processing: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ----- Save Summary to Folder -----
+class SaveSummaryRequest(BaseModel):
+    title: str
+    description: Optional[str] = None
+    contentType: str = "summary"
+    folderId: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
+
+@app.post("/save-summary")
+async def save_summary(
+    request: SaveSummaryRequest,
+    user_claims: dict = Depends(validate_token)
+):
+    try:
+        user_id = user_claims.get("oid") or user_claims.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="User ID not found in token")
+        
+        summary_id = str(uuid.uuid4())
+        document = {
+            "id": summary_id,
+            "userId": user_id,
+            "title": request.title,
+            "description": request.description or "",
+            "contentType": "summary",
+            "data": request.data or {},
+            "createdAt": datetime.utcnow().isoformat(),
+            "updatedAt": datetime.utcnow().isoformat(),
+        }
+        
+        # Add folderId if provided
+        if request.folderId:
+            document["folderId"] = request.folderId
+        
+        container.create_item(body=document)
+        print(f"Summary saved with ID: {summary_id}")
+        return {"id": summary_id, "message": "Summary saved successfully"}
+    except Exception as e:
+        print(f"Error saving summary: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to save summary: {str(e)}")
+
+@app.get("/summaries")
+async def get_summaries(user_claims: dict = Depends(validate_token)):
+    try:
+        user_id = user_claims.get("oid") or user_claims.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="User ID not found in token")
+        print(f"Fetching summaries for user: {user_id}")
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'summary' ORDER BY c.createdAt DESC"
+        parameters = [{"name": "@userId", "value": user_id}]
+        items = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+        print(f"Found {len(items)} summaries for user")
+        return items
+    except Exception as e:
+        print(f"Error fetching summaries: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch summaries: {str(e)}")
+
 # ----- Quiz Performance Analysis -----
 class QuizPerformanceRequest(BaseModel):
     questions: List[Dict[str, Any]]

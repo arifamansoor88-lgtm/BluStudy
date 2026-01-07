@@ -206,10 +206,30 @@ export default function SaveToFolderButton({
 
       const item = typeof buildItem === "function" ? buildItem() : defaultBuildItem();
 
-      // local list -> so FolderView shows immediately
-      const existing = loadItems(folderIdToUse);
-      const updated = [item, ...existing];
-      saveItems(folderIdToUse, updated);
+      // If this is a Smart Summarizer item, save to database (not localStorage)
+      if (String(item?.type).toLowerCase() === "summary") {
+        await apiFetch("/save-summary", {
+          method: "POST",
+          body: JSON.stringify({
+            title: item.title,
+            description: item.description || "",
+            contentType: "summary",
+            folderId: folderIdToUse,
+            data: {
+              summary: item.fullText || item.description || "",
+              tags: item.tags || [],
+              // timestamp is stored as part of createdAt on the backend
+            },
+          }),
+        });
+        // notify workspace listeners so UI can refresh without using localStorage for storage
+        localStorage.setItem("folders:changed", Date.now().toString());
+      } else {
+        // Default behavior for other tools (localStorage mirror for instant UI)
+        const existing = loadItems(folderIdToUse);
+        const updated = [item, ...existing];
+        saveItems(folderIdToUse, updated);
+      }
 
       // bump backend count => Workspace stats in sync
       const newCount = folderItemsCount + 1;

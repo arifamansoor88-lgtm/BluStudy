@@ -100,8 +100,8 @@ function mapDatabaseItemsToUI(dbItems) {
       description = item.text || "";
       icon = <Mic2 className="text-4xl text-purple-600" />;
     } else if (contentType === "summary") {
-      title = item.data?.title || "Untitled Summary";
-      description = item.data?.summary?.substring(0, 100) || "";
+      title = item.title || item.data?.title || "Untitled Summary";
+      description = item.data?.summary?.substring(0, 100) || item.description || "";
       icon = <Zap className="text-4xl text-yellow-600" />;
     } else if (contentType === "mindmap") {
       title = item.data?.title || "Untitled Mind Map";
