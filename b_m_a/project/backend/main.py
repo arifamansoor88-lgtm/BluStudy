@@ -25,7 +25,7 @@ from pydantic import BaseModel
 from database import client, container
 from pdf_utils import extract_text_from_pdf
 from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
-from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse, CreateFolderRequest, UpdateFolderRequest, FolderOut 
+from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse, CreateMindmapRequest, CreateFolderRequest, UpdateFolderRequest, FolderOut 
 from pydantic import BaseModel
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 import time
@@ -278,9 +278,9 @@ cosmos_error: Optional[str] = None
 if storage_mode == "cosmos":
     try:
         from azure.cosmos import CosmosClient, PartitionKey
-        cosmos_client = CosmosClient(COSMOS_URL, credential=COSMOS_KEY)
-        _database = cosmos_client.get_database_client(COSMOS_DB_NAME)
-        container = _database.get_container_client(COSMOS_CONTAINER_NAME)
+#        cosmos_client = CosmosClient(os.getenv("COSMOS_DB_URL"), credential=os.getenv("COSMOS_DB_KEY"))
+        _database = cosmos_client.get_database_client("ai-education-platform-db")
+        container = _database.get_container_client("userContent")
         list(container.query_items(query="SELECT TOP 1 * FROM c", enable_cross_partition_query=True))
     except Exception as e:
         cosmos_error = str(e)
@@ -1789,6 +1789,57 @@ async def get_flashcards(user_claims: dict = Depends(validate_token)):
 
 # Mindmap API Endpoints
 
+def generate_slug(title: str) -> str:
+    """Generate a URL-friendly slug from a title"""
+    import re
+    # Convert to lowercase and replace spaces with hyphens
+    slug = title.lower().strip()
+    # Remove special characters
+    slug = re.sub(r'[^a-z0-9\s-]', '', slug)
+    # Replace multiple spaces/hyphens with single hyphen
+    slug = re.sub(r'[\s-]+', '-', slug)
+    # Remove leading/trailing hyphens
+    slug = slug.strip('-')
+    # Add random suffix to ensure uniqueness
+    import random
+    import string
+    suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+    return f"{slug}-{suffix}"
+
+# Create mindmap endpoint - protected
+@app.post("/create-mindmap", response_model=SaveMindmapResponse)
+async def create_mindmap(request: CreateMindmapRequest, user_claims: dict = Depends(validate_token)):
+    """Create a new mindmap with just a title and generate a unique slug"""
+    try:
+        # Generate unique slug
+        slug = generate_slug(request.title)
+        
+        # Create initial mindmap document
+        document = {
+            "id": str(uuid.uuid4()),
+            "userId": user_claims["sub"],
+            "contentType": "mindmap",
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": {
+                "title": request.title,
+                "slug": slug,
+                "nodes": [],
+                "edges": [],
+                "groups": [],
+                "metadata": {}
+            }
+        }
+        
+        # Save to Cosmos DB
+        container.create_item(body=document)
+        return {"id": document["id"], "slug": slug, "message": "Mindmap created successfully"}
+    except Exception as e:
+        print(f"Error creating mindmap: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create mindmap: {str(e)}"
+        )
+
 # Save mindmap endpoint - protected
 @app.post("/save-mindmap", response_model=SaveMindmapResponse)
 async def save_mindmap(mindmap: MindmapDocument, user_claims: dict = Depends(validate_token)):
@@ -1802,9 +1853,13 @@ async def save_mindmap(mindmap: MindmapDocument, user_claims: dict = Depends(val
             "data": mindmap.data.dict()  
         }
         
+        # Generate slug if not provided
+        if not document["data"].get("slug"):
+            document["data"]["slug"] = generate_slug(document["data"]["title"])
+        
         # Save to Cosmos DB
         container.create_item(body=document)
-        return {"id": document["id"], "message": "Mindmap saved successfully"}
+        return {"id": document["id"], "slug": document["data"]["slug"], "message": "Mindmap saved successfully"}
     except Exception as e:
         print(f"Error saving mindmap: {str(e)}")
         raise HTTPException(
@@ -1846,7 +1901,8 @@ async def update_mindmap(mindmap_id: str, mindmap: MindmapDocument, user_claims:
                 item=mindmap_id,
                 body=existing_mindmap
             )
-            return {"id": mindmap_id, "message": "Mindmap updated successfully"}
+            slug = existing_mindmap["data"].get("slug", "")
+            return {"id": mindmap_id, "slug": slug, "message": "Mindmap updated successfully"}
         except Exception as db_error:
             print(f"Database error updating mindmap: {db_error}")
             raise HTTPException(
@@ -1895,15 +1951,45 @@ async def get_mindmaps(user_claims: dict = Depends(validate_token)):
             detail=f"Failed to fetch mindmaps: {str(e)}"
         )
 
-# Get a specific mindmap by ID - protected
+# Get a specific mindmap by ID or slug - protected
 @app.get("/mindmaps/{mindmap_id}")
 async def get_mindmap(mindmap_id: str, user_claims: dict = Depends(validate_token)):
     try:
-        # Get the mindmap from Cosmos DB (using partition key)
-        mindmap = container.read_item(
-            item=mindmap_id,
-            partition_key=user_claims["sub"]
-        )
+        mindmap = None
+        
+        # First, try to get by ID directly
+        try:
+            mindmap = container.read_item(
+                item=mindmap_id,
+                partition_key=user_claims["sub"]
+            )
+        except Exception:
+            # ID lookup failed, try slug lookup
+            pass
+        
+        # If ID lookup failed, try finding by slug
+        if not mindmap:
+            query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'mindmap' AND c.data.slug = @slug"
+            parameters = [
+                {"name": "@userId", "value": user_claims["sub"]},
+                {"name": "@slug", "value": mindmap_id}
+            ]
+            
+            items = list(container.query_items(
+                query=query,
+                parameters=parameters,
+                enable_cross_partition_query=True
+            ))
+            
+            if items:
+                mindmap = items[0]
+        
+        # If still not found, raise error
+        if not mindmap:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Mindmap not found"
+            )
         
         # Verify the mindmap belongs to the user
         if mindmap["userId"] != user_claims["sub"]:
@@ -1913,6 +1999,8 @@ async def get_mindmap(mindmap_id: str, user_claims: dict = Depends(validate_toke
             )
             
         return mindmap
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error fetching mindmap: {str(e)}")
         raise HTTPException(

@@ -61,9 +61,11 @@ class MindmapGroup(BaseModel):
 
 class MindmapData(BaseModel):
     title: str
+    slug: Optional[str] = None
     nodes: List[MindmapNode]
     edges: List[MindmapEdge]
     groups: Optional[List[MindmapGroup]] = []
+    svgPreview: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = {}
 
 class MindmapDocument(BaseModel):
@@ -72,7 +74,11 @@ class MindmapDocument(BaseModel):
 
 class SaveMindmapResponse(BaseModel):
     id: str
+    slug: str
     message: str
+
+class CreateMindmapRequest(BaseModel):
+    title: str
 
 
 # =========================

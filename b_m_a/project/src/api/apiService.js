@@ -417,6 +417,28 @@ export const analyzeQuizPerformance = async (questions, userAnswers, quizMetadat
 // Mindmap API Functions
 
 /**
+ * Create a new mindmap with a title
+ * @param {String} title - The title for the new mindmap
+ * @returns {Promise<Object>} - The created mindmap response with id and slug
+ */
+export const createMindmap = async (title) => {
+  const endpoint = "http://localhost:8000/create-mindmap";
+  
+  const options = {
+    method: "POST",
+    body: JSON.stringify({ title }),
+  };
+
+  try {
+    const response = await callProtectedApi(endpoint, options);
+    return response; // Expected format: { id: "...", slug: "...", message: "..." }
+  } catch (error) {
+    console.error("Error creating mindmap:", error);
+    throw error;
+  }
+};
+
+/**
  * Save a mindmap to the database
  * @param {Object} mindmapData - The mindmap data to save
  * @param {String} folderId - Optional folder ID to save the mindmap in
