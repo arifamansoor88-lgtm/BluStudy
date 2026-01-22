@@ -2,10 +2,8 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   FolderPlus,
   Star,
-  BarChart3,
   FolderKanban,
   List,
-  RefreshCcw,
   Search
 } from "lucide-react";
 import FolderManager from "./FolderManager";
@@ -18,6 +16,9 @@ const API_BASE = "http://localhost:8000";
 
 // ---------- Auth + API helpers ----------
 async function getToken() {
+  // Ensure MSAL is initialized before using it
+  await msalInstance.initialize();
+  
   const accounts = msalInstance.getAllAccounts();
   if (!accounts || accounts.length === 0) {
     // Surface a clear message to the UI; don't crash
@@ -80,14 +81,23 @@ export default function Workspace() {
   const [newFolderName, setNewFolderName] = useState("");
   const [selectedColor, setSelectedColor] = useState(folderColors[0]);
 
-  const statCards = useMemo(
-    () => [
-      { icon: <FolderKanban className="w-6 h-6 text-blue-700" />,   count: stats.totalFolders ?? 0, label: "Total Folders",  bg: "from-blue-500 to-indigo-500" },
-      { icon: <Star className="w-6 h-6 text-yellow-600" />,         count: stats.starredFolders ?? 0, label: "Starred Folders", bg: "from-yellow-400 to-amber-500" },
-      { icon: <BarChart3 className="w-6 h-6 text-green-600" />,     count: stats.totalItems ?? 0,    label: "Total Items",    bg: "from-green-400 to-emerald-500" },
-    ],
-    [stats]
-  );
+  // Recursively count items in a folder and all its subfolders
+  const countItemsRecursively = useCallback((folderId, allFolders) => {
+    let count = 0;
+    const folder = allFolders.find(f => f.id === folderId);
+    if (!folder) return 0;
+    
+    // Add direct items in this folder
+    count += folder.items ?? 0;
+    
+    // Find all subfolders and recursively count their items
+    const subfolders = allFolders.filter(f => f.parentFolderId === folderId);
+    for (const subfolder of subfolders) {
+      count += countItemsRecursively(subfolder.id, allFolders);
+    }
+    
+    return count;
+  }, []);
 
   const deriveStats = useCallback((list) => {
     const totalFolders = list.length;
@@ -100,40 +110,25 @@ export default function Workspace() {
     setLoading(true);
     setErr("");
     try {
-      const [foldersRes, statsRes] = await Promise.allSettled([
-        apiFetch("/folders", { method: "GET" }),
-        apiFetch("/folders/stats", { method: "GET" }),
-      ]);
+      // Fetch ALL folders (not just root) to calculate recursive counts
+      const allFoldersRes = await apiFetch("/folders", { method: "GET" });
 
-      // Folders
-      let serverFolders = [];
-      if (foldersRes.status === "fulfilled") {
-        serverFolders = (foldersRes.value || []).map(f => ({
-          id: f.id,
-          name: f.name,
-          items: f.items ?? 0,
-          color: f.color || folderColors[0],
-          starred: !!f.starred,
-        }));
-        setFolders(serverFolders);
-      } else {
-        // if folders call failed (likely not signed in)
-        setFolders([]);
-        setErr(foldersRes.reason?.message || "Failed to load folders.");
-      }
+      // Filter to show only root-level folders (parentFolderId is null or undefined)
+      const rootFolders = (allFoldersRes || []).filter(f => !f.parentFolderId);
 
-      // Stats
-      if (statsRes.status === "fulfilled") {
-        setStats(statsRes.value || deriveStats(serverFolders));
-      } else {
-        // fallback: derive client-side if folders are available
-        setStats(deriveStats(serverFolders));
-        if (!err) {
-          // keep existing message if one already set
-          const msg = statsRes.reason?.message;
-          if (msg) setErr(prev => prev || msg);
-        }
-      }
+      // Calculate recursive item counts for each root folder
+      const serverFolders = rootFolders.map(f => ({
+        id: f.id,
+        name: f.name,
+        items: countItemsRecursively(f.id, allFoldersRes), // Recursive count
+        color: f.color || folderColors[0],
+        starred: !!f.starred,
+        parentFolderId: f.parentFolderId,
+      }));
+      setFolders(serverFolders);
+      
+      // Derive stats client-side from folders
+      setStats(deriveStats(serverFolders));
     } catch (e) {
       setFolders([]);
       setStats({ totalFolders: 0, starredFolders: 0, totalItems: 0 });
@@ -141,7 +136,7 @@ export default function Workspace() {
     } finally {
       setLoading(false);
     }
-  }, [deriveStats, err]);
+  }, [deriveStats, countItemsRecursively]);
 
   useEffect(() => {
     loadAll();
@@ -174,8 +169,7 @@ export default function Workspace() {
         body: JSON.stringify({
           name: newFolderName.trim(),
           color: selectedColor,
-          starred: false,
-          items: 0,
+          // parentFolderId is omitted (null) for root-level folders
         }),
       });
       // update list
@@ -187,13 +181,8 @@ export default function Workspace() {
         starred: !!created.starred,
       }, ...folders];
       setFolders(next);
-      // refresh/derive stats
-      try {
-        const s = await apiFetch("/folders/stats", { method: "GET" });
-        setStats(s);
-      } catch {
-        setStats(deriveStats(next));
-      }
+      // Derive stats client-side from folders
+      setStats(deriveStats(next));
       // reset modal
       setNewFolderName("");
       setSelectedColor(folderColors[0]);
@@ -205,26 +194,7 @@ export default function Workspace() {
 
   // Callbacks for child (FolderManager)
   async function onToggleStar(id) {
-    setErr("");
-    const f = folders.find(x => x.id === id);
-    if (!f) return;
-    try {
-      const updated = await apiFetch(`/folders/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ starred: !f.starred }),
-      });
-      const next = folders.map(x => x.id === id ? { ...x, starred: !!updated.starred } : x);
-      setFolders(next);
-      // stats may change (starred count)
-      try {
-        const s = await apiFetch("/folders/stats", { method: "GET" });
-        setStats(s);
-      } catch {
-        setStats(deriveStats(next));
-      }
-    } catch (e) {
-      setErr("Failed to toggle star.");
-    }
+    return;
   }
 
   async function onRename(id, newName) {
@@ -247,12 +217,8 @@ export default function Workspace() {
       await apiFetch(`/folders/${id}`, { method: "DELETE" });
       const next = folders.filter(x => x.id !== id);
       setFolders(next);
-      try {
-        const s = await apiFetch("/folders/stats", { method: "GET" });
-        setStats(s);
-      } catch {
-        setStats(deriveStats(next));
-      }
+      // Derive stats client-side from folders
+      setStats(deriveStats(next));
     } catch (e) {
       setErr("Failed to delete folder.");
     }
@@ -286,15 +252,6 @@ export default function Workspace() {
           </button>
 
           <button
-            onClick={loadAll}
-            className="p-2 rounded-lg shadow-inner bg-white/70 backdrop-blur border border-slate-300"
-            title="Refresh"
-            disabled={loading}
-          >
-            <RefreshCcw className={`w-5 h-5 text-slate-700 ${loading ? "animate-spin" : ""}`} />
-          </button>
-
-          <button
             onClick={() => setIsModalOpen(true)}
             className="px-4 py-2 rounded-xl shadow bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white font-medium hover:scale-[1.03] transition-transform"
           >
@@ -309,27 +266,6 @@ export default function Workspace() {
           {err}
         </div>
       ) : null}
-
-      {/* STATS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-        {statCards.map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-            className={`p-6 rounded-2xl text-white shadow-xl bg-gradient-to-br ${stat.bg}`}
-          >
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-white bg-opacity-20">{stat.icon}</div>
-              <div>
-                <div className="text-2xl font-bold">{stat.count}</div>
-                <div className="text-sm opacity-90">{stat.label}</div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
 
       {/* FOLDER MANAGER */}
       <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>

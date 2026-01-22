@@ -166,6 +166,7 @@ export const evaluateShortAnswer = async (question, userAnswer) => {
  * @param {String} description - Optional description of the study plan
  * @param {String} tags - Comma-separated list of tags
  * @param {String} durationMetadata - Optional JSON string with duration info
+ * @param {String} folderId - Optional folder ID to save the study plan in
  * @returns {Promise<Object>} - The generated study plan
  */
 export const generateStudyPlan = async (
@@ -173,7 +174,8 @@ export const generateStudyPlan = async (
   title,
   description = "",
   tags = "",
-  durationMetadata = ""
+  durationMetadata = "",
+  folderId = null
 ) => {
   const endpoint = "http://localhost:8000/generate-study-plan";
 
@@ -207,6 +209,11 @@ export const generateStudyPlan = async (
   // Add duration metadata if provided
   if (durationMetadata) {
     formData.append("duration_metadata", durationMetadata);
+  }
+  
+  // Add folderId if provided
+  if (folderId) {
+    formData.append("folder_id", folderId);
   }
 
   try {
@@ -434,15 +441,21 @@ export const createMindmap = async (title) => {
 /**
  * Save a mindmap to the database
  * @param {Object} mindmapData - The mindmap data to save
+ * @param {String} folderId - Optional folder ID to save the mindmap in
  * @returns {Promise<Object>} - The saved mindmap response
  */
-export const saveMindmap = async (mindmapData) => {
+export const saveMindmap = async (mindmapData, folderId = null) => {
   const endpoint = "http://localhost:8000/save-mindmap";
 
   const requestBody = {
     contentType: "mindmap",
     data: mindmapData
   };
+  
+  // Add folderId if provided
+  if (folderId) {
+    requestBody.folder_id = folderId;
+  }
 
   const options = {
     method: "POST",

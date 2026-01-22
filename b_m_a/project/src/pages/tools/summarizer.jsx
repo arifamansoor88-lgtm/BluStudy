@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
@@ -12,14 +13,31 @@ import {
   ClipboardCopy,
   PencilLine,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  FolderPlus,
+  Loader2,
+  PlusCircle,
+  BookOpen
 } from 'lucide-react';
 import { generateSummary } from '../../api/apiService';
+import { msalInstance, protectedResources } from '../../authConfig';
 
 // reusable save-to-folder button
 import SaveToFolderButton from '../../components/SaveToFolderButton';
 
+const API_BASE = "http://localhost:8000";
+
 const Summarizer = () => {
+  // Get folderId from URL query params if present
+  const [searchParams] = useSearchParams();
+  const folderId = searchParams.get('folderId');
+  
+  // View state: 'create' or 'saved'
+  const [viewMode, setViewMode] = useState('create');
+  const [savedSummaries, setSavedSummaries] = useState([]);
+  const [loadingSummaries, setLoadingSummaries] = useState(false);
+  const [selectedSummary, setSelectedSummary] = useState(null);
+  
   const [file, setFile] = useState(null);
   const [summary, setSummary] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -53,6 +71,72 @@ const Summarizer = () => {
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [dirty]);
+
+  // Fetch saved summaries
+  const fetchSavedSummaries = useCallback(async () => {
+    setLoadingSummaries(true);
+    try {
+      const accounts = msalInstance.getAllAccounts();
+      const request = { scopes: protectedResources.todoListApi.scopes, account: accounts[0] };
+      let token;
+      try {
+        const r = await msalInstance.acquireTokenSilent(request);
+        token = r.accessToken;
+      } catch {
+        const r = await msalInstance.acquireTokenPopup(request);
+        token = r.accessToken;
+      }
+
+      const response = await fetch(`${API_BASE}/summaries`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch summaries");
+      }
+
+      const data = await response.json();
+      setSavedSummaries(data);
+    } catch (err) {
+      console.error("Error fetching summaries:", err);
+      setError("Failed to load saved summaries");
+    } finally {
+      setLoadingSummaries(false);
+    }
+  }, []);
+
+  // Fetch summaries on mount when in saved view
+  useEffect(() => {
+    if (viewMode === 'saved') {
+      fetchSavedSummaries();
+    }
+  }, [viewMode, fetchSavedSummaries]);
+
+  // Handle creating a new summary
+  const handleCreateNew = () => {
+    setViewMode('create');
+    setSelectedSummary(null);
+    setFile(null);
+    setSummary('');
+    setError('');
+    setDirty(false);
+    setIsEditing(true);
+    setLastSavedAt(null);
+  };
+
+  // Handle selecting a saved summary
+  const handleSelectSummary = (savedSummary) => {
+    setSelectedSummary(savedSummary);
+    setSummary(savedSummary.data?.summary || '');
+    setFile(savedSummary.data?.fileName ? { name: savedSummary.data.fileName } : null);
+    setSummaryStyle(savedSummary.data?.style || 'high');
+    setSummaryFormat(savedSummary.data?.format || 'bullet');
+    setDirty(false);
+    setIsEditing(false);
+    setViewMode('create');
+  };
 
   const callGenerateSummary = async (input) => {
     if (input instanceof FormData) {
@@ -187,6 +271,75 @@ const Summarizer = () => {
   const handleSaved = () => {
     setDirty(false);
     setLastSavedAt(Date.now());
+    // Refresh saved summaries list (if not in a folder, always refresh)
+    if (!folderId) {
+      fetchSavedSummaries();
+    }
+  };
+
+  // State for saving to folder directly (when folderId is in URL)
+  const [isSavingToFolder, setIsSavingToFolder] = useState(false);
+
+  // Save directly to the folder specified in URL params
+  const saveToCurrentFolder = async () => {
+    if (!folderId || !summary) return;
+    
+    setIsSavingToFolder(true);
+    try {
+      // Get token
+      const accounts = msalInstance.getAllAccounts();
+      const request = { scopes: protectedResources.todoListApi.scopes, account: accounts[0] };
+      let token;
+      try {
+        const r = await msalInstance.acquireTokenSilent(request);
+        token = r.accessToken;
+      } catch {
+        const r = await msalInstance.acquireTokenPopup(request);
+        token = r.accessToken;
+      }
+
+      const now = new Date();
+      const title = file?.name
+        ? `Summary: ${file.name}`
+        : `Summary ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+
+      // Save summary to backend with folderId
+      const response = await fetch(`${API_BASE}/save-summary`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title,
+          description: summary.replace(/\s+/g, ' ').slice(0, 140),
+          contentType: "summary",
+          folderId: folderId,
+          data: {
+            summary: summary,
+            style: summaryStyle,
+            format: summaryFormat,
+            fileName: file?.name || null,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save summary");
+      }
+
+      setDirty(false);
+      setLastSavedAt(Date.now());
+      // Refresh saved summaries list
+      if (viewMode === 'saved') {
+        fetchSavedSummaries();
+      }
+    } catch (err) {
+      console.error("Error saving to folder:", err);
+      setError("Failed to save to folder");
+    } finally {
+      setIsSavingToFolder(false);
+    }
   };
 
   return (
@@ -199,13 +352,108 @@ const Summarizer = () => {
         transition={{ duration: 0.6 }}
         className="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl p-8 ring-1 ring-gray-200 backdrop-blur"
       >
-        <div className="flex items-center gap-4 mb-8">
-          <FileSearch className="h-8 w-8 text-indigo-600" />
-          <h1 className="text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
-            Smart Summarizer
-          </h1>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <FileSearch className="h-8 w-8 text-indigo-600" />
+            <h1 className="text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
+              Smart Summarizer
+            </h1>
+          </div>
+          {viewMode === 'saved' && (
+            <button
+              onClick={handleCreateNew}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors"
+            >
+              <PlusCircle className="w-5 h-5" />
+              Create New
+            </button>
+          )}
+          {viewMode === 'create' && (
+            <button
+              onClick={() => { setViewMode('saved'); setSelectedSummary(null); }}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              <BookOpen className="w-5 h-5" />
+              Saved Summaries
+            </button>
+          )}
         </div>
 
+        {/* Saved Summaries List */}
+        {viewMode === 'saved' && (
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
+              <span className="mr-2">Saved Summaries</span>
+              <div className="h-px bg-gradient-to-r from-purple-500 to-transparent flex-grow ml-4"></div>
+            </h2>
+            {loadingSummaries ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+              </div>
+            ) : savedSummaries.length === 0 ? (
+              <div className="bg-white p-8 rounded-xl shadow-md border-t-4 border-purple-500">
+                <div className="flex flex-col items-center justify-center py-6">
+                  <FileSearch className="w-16 h-16 text-gray-300 mb-4" />
+                  <p className="text-gray-500 text-center mb-2">
+                    No saved summaries yet. Create a summary to get started!
+                  </p>
+                  <button
+                    onClick={handleCreateNew}
+                    className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors"
+                  >
+                    Create Your First Summary
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {savedSummaries.map((savedSummary) => (
+                  <div
+                    key={savedSummary.id}
+                    onClick={() => handleSelectSummary(savedSummary)}
+                    className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden h-full transform hover:-translate-y-1"
+                  >
+                    <div className="h-3 bg-gradient-to-r from-purple-500 to-indigo-400"></div>
+                    <div className="p-6 h-full flex flex-col">
+                      <h3 className="font-semibold text-gray-800 text-lg mb-3 min-h-[3rem] leading-tight">
+                        {savedSummary.title || "Untitled Summary"}
+                      </h3>
+                      <p className="text-sm text-gray-500 mb-4 flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-1 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          ></path>
+                        </svg>
+                        {savedSummary.createdAt
+                          ? new Date(savedSummary.createdAt).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })
+                          : "No date"}
+                      </p>
+                      <p className="text-sm text-gray-600 line-clamp-3 mt-auto">
+                        {savedSummary.description || savedSummary.data?.summary?.substring(0, 100) || "No description"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Create/Edit Summary View */}
+        {viewMode === 'create' && (
+          <>
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div>
             <label className="block text-sm font-semibold mb-1">Summary Style</label>
@@ -338,14 +586,31 @@ const Summarizer = () => {
 
                   {/* Save into a folder; when done, clear "Unsaved" */}
                   {summary && (
-                    <SaveToFolderButton
-                      toolType="Smart Summarizer"
-                      label="Save to Folder"
-                      size="md"
-                      color="bg-emerald-600 text-white hover:brightness-110"
-                      buildItem={buildFolderItem}
-                      onSaved={handleSaved}   // <-- wire up
-                    />
+                    folderId ? (
+                      // If we came from a folder, show direct save button
+                      <button
+                        onClick={saveToCurrentFolder}
+                        disabled={isSavingToFolder}
+                        className="transition-all duration-200 hover:shadow-md disabled:opacity-50 bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm inline-flex items-center gap-2"
+                      >
+                        {isSavingToFolder ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <FolderPlus className="w-4 h-4" />
+                        )}
+                        Save to Folder
+                      </button>
+                    ) : (
+                      // Otherwise show the folder picker
+                      <SaveToFolderButton
+                        toolType="Smart Summarizer"
+                        label="Save to Folder"
+                        size="md"
+                        color="bg-emerald-600 text-white hover:brightness-110"
+                        buildItem={buildFolderItem}
+                        onSaved={handleSaved}
+                      />
+                    )
                   )}
                 </div>
               </div>
@@ -385,6 +650,8 @@ const Summarizer = () => {
             </motion.div>
           )}
         </AnimatePresence>
+          </>
+        )}
       </motion.div>
     </div>
   );

@@ -25,7 +25,7 @@ from pydantic import BaseModel
 from database import client, container
 from pdf_utils import extract_text_from_pdf
 from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
-from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse, CreateMindmapRequest 
+from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse, CreateMindmapRequest, CreateFolderRequest, UpdateFolderRequest, FolderOut 
 from pydantic import BaseModel
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 import time
@@ -222,6 +222,37 @@ class LocalContainer:
         if "from c where c.id = @id" in q:
             item_id = params.get("@id")
             filtered = [it for it in items if it.get("id") == item_id]
+            return filtered
+
+        # Handle folder items query: "WHERE c.userId = @userId AND c.folderId = @folderId"
+        if "from c where c.userid = @userid and c.folderid = @folderid" in q:
+            user_id = params.get("@userid")
+            folder_id = params.get("@folderid")
+            
+            filtered = [
+                it for it in items
+                if (it.get("userId") == user_id or it.get("user_id") == user_id)
+                and it.get("folderId") == folder_id
+            ]
+            
+            # Add content type filter if present
+            if "and c.contenttype = @contenttype" in q:
+                content_type = params.get("@contenttype")
+                filtered = [it for it in filtered if (it.get("contentType", "").lower() == content_type.lower() or it.get("contenttype", "").lower() == content_type.lower())]
+            
+            # Sort by createdAt if present
+            filtered.sort(key=lambda x: x.get("createdAt", "") or x.get("createdat", ""), reverse=True)
+            return filtered
+
+        # Handle folder query: "WHERE c.userId = @userId AND c.contentType = 'folder'"
+        if "from c where c.userid = @userid and c.contenttype = 'folder'" in q:
+            user_id = params.get("@userid")
+            filtered = [
+                it for it in items
+                if (it.get("userId") == user_id or it.get("user_id") == user_id)
+                and (it.get("contentType", "").lower() == "folder" or it.get("contenttype", "").lower() == "folder")
+            ]
+            filtered.sort(key=lambda x: x.get("createdAt", "") or x.get("createdat", ""), reverse=True)
             return filtered
 
         return items
@@ -525,6 +556,7 @@ async def create_voice_note(
     duration: Optional[int] = Form(None),
     visibility: str = Form("Private"),
     user_id: Optional[str] = Form(None),
+    folder_id: Optional[str] = Form(None),
 ):
     uid = _resolve_user_id(request, user_id_form=user_id)
     note_id = str(uuid.uuid4())
@@ -578,6 +610,10 @@ async def create_voice_note(
         "audio_content_type": content_type,
         "audio_local_path": audio_local_path
     }
+    
+    # Add folderId if provided
+    if folder_id:
+        item["folderId"] = folder_id
 
     container.create_item(body=item)
     item = _ensure_note_defaults(item)
@@ -841,6 +877,7 @@ async def create_quiz(
     num_questions: Optional[int] = Form(10),
     focus_topics: Optional[str] = Form(""),
     question_formats: Optional[str] = Form("{}"),
+    folder_id: Optional[str] = Form(None),
     user_claims: dict = Depends(validate_token)
 ):
     try:
@@ -898,6 +935,10 @@ async def create_quiz(
                 "attempts": []
             }
         }
+        
+        # Add folderId if provided
+        if folder_id:
+            quiz_document["folderId"] = folder_id
 
         container.create_item(body=quiz_document)
         quiz_data["id"] = quiz_document["id"]
@@ -983,6 +1024,11 @@ async def create_quiz_from_topic(
                 "attempts": [],
             },
         }
+        
+        # Add folderId if provided
+        folder_id = payload.get("folder_id") or payload.get("folderId")
+        if folder_id:
+            quiz_document["folderId"] = folder_id
 
         container.create_item(body=quiz_document)
         quiz_data["id"] = quiz_document["id"]
@@ -998,7 +1044,11 @@ async def create_quiz_from_topic(
         )
 
 @app.post("/save-quiz", response_model=SavedQuizResponse)
-async def save_quiz(quiz: QuizDocument, user_claims: dict = Depends(validate_token)):
+async def save_quiz(
+    quiz: QuizDocument,
+    folder_id: Optional[str] = Body(None),
+    user_claims: dict = Depends(validate_token)
+):
     try:
         print(f"Saving quiz for user: {user_claims['sub']}")
         document = {
@@ -1008,6 +1058,11 @@ async def save_quiz(quiz: QuizDocument, user_claims: dict = Depends(validate_tok
             "createdAt": datetime.utcnow().isoformat(),
             "data": quiz.data.dict()
         }
+        
+        # Add folderId if provided
+        if folder_id:
+            document["folderId"] = folder_id
+        
         container.create_item(body=document)
         print(f"Quiz saved successfully with ID: {document['id']}")
         return {"id": document["id"], "message": "Quiz saved successfully"}
@@ -1092,6 +1147,7 @@ async def create_study_plan(
     description: str = Form(""),
     tags: str = Form(""),
     duration_metadata: Optional[str] = Form(None),
+    folder_id: Optional[str] = Form(None),
     user_claims: dict = Depends(validate_token)
 ):
     try:
@@ -1161,6 +1217,10 @@ async def create_study_plan(
                 "updatedAt": None
             }
         }
+        
+        # Add folderId if provided
+        if folder_id:
+            study_plan_document["folderId"] = folder_id
 
         container.create_item(body=study_plan_document)
         print(f"Study plan created with ID: {study_plan_document['id']}")
@@ -1326,6 +1386,63 @@ async def summarize_file(
         print(f"❌ Error during processing: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ----- Save Summary to Folder -----
+class SaveSummaryRequest(BaseModel):
+    title: str
+    description: Optional[str] = None
+    contentType: str = "summary"
+    folderId: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
+
+@app.post("/save-summary")
+async def save_summary(
+    request: SaveSummaryRequest,
+    user_claims: dict = Depends(validate_token)
+):
+    try:
+        user_id = user_claims.get("oid") or user_claims.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="User ID not found in token")
+        
+        summary_id = str(uuid.uuid4())
+        document = {
+            "id": summary_id,
+            "userId": user_id,
+            "title": request.title,
+            "description": request.description or "",
+            "contentType": "summary",
+            "data": request.data or {},
+            "createdAt": datetime.utcnow().isoformat(),
+            "updatedAt": datetime.utcnow().isoformat(),
+        }
+        
+        # Add folderId if provided
+        if request.folderId:
+            document["folderId"] = request.folderId
+        
+        container.create_item(body=document)
+        print(f"Summary saved with ID: {summary_id}")
+        return {"id": summary_id, "message": "Summary saved successfully"}
+    except Exception as e:
+        print(f"Error saving summary: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to save summary: {str(e)}")
+
+@app.get("/summaries")
+async def get_summaries(user_claims: dict = Depends(validate_token)):
+    try:
+        user_id = user_claims.get("oid") or user_claims.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="User ID not found in token")
+        print(f"Fetching summaries for user: {user_id}")
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'summary' ORDER BY c.createdAt DESC"
+        parameters = [{"name": "@userId", "value": user_id}]
+        items = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+        print(f"Found {len(items)} summaries for user")
+        return items
+    except Exception as e:
+        print(f"Error fetching summaries: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch summaries: {str(e)}")
+
 # ----- Quiz Performance Analysis -----
 class QuizPerformanceRequest(BaseModel):
     questions: List[Dict[str, Any]]
@@ -1395,7 +1512,11 @@ async def analyze_quiz_performance_endpoint(
 
 # Save flashcard endpoint - protected 
 @app.post("/save-flashcard", response_model=dict)
-async def save_flashcard(flashcard: FlashcardDocument, user_claims: dict = Depends(validate_token)):
+async def save_flashcard(
+    flashcard: FlashcardDocument,
+    folder_id: Optional[str] = Body(None),
+    user_claims: dict = Depends(validate_token)
+):
     try:
         # Prepare document for Cosmos DB
         document = {
@@ -1406,6 +1527,10 @@ async def save_flashcard(flashcard: FlashcardDocument, user_claims: dict = Depen
             "title": flashcard.data.title,
             "cards": flashcard.data.cards
         }
+        
+        # Add folderId if provided
+        if folder_id:
+            document["folderId"] = folder_id
         
         # Save to Cosmos DB
         container.create_item(body=document)
@@ -1511,6 +1636,7 @@ async def delete_deck(deck_id: str, user_claims: dict = Depends(validate_token))
 class TopicFlashcardRequest(BaseModel):
     topic: str
     num_cards: int = 10
+    folder_id: Optional[str] = None
 
 @app.post("/generate-flashcard-topic")
 async def generate_flashcard_from_topic(
@@ -1563,12 +1689,15 @@ Generate exactly {payload.num_cards} cards.
     document = {
         "id": deck_id,
         "userId": user_claims["sub"],
-        "contentType": "flashcard",
+        "contentType": "flashcard_deck",
         "createdAt": datetime.utcnow().isoformat(),
         "title": deck.get("title", topic),
         "cards": deck["cards"],
         "resourceName": "topic"
     }
+
+    if payload.folder_id:
+        document["folderId"] = payload.folder_id
 
     container.create_item(body=document)
 
@@ -1583,6 +1712,7 @@ Generate exactly {payload.num_cards} cards.
 async def generate_flashcard(
     file: UploadFile = File(...),
     num_cards: int = Form(10),
+    folder_id: Optional[str] = Form(None),
     user_claims: dict = Depends(validate_token)
 ):
     print(f"Generating flashcards for user: {user_claims['sub']}")
@@ -1630,6 +1760,10 @@ async def generate_flashcard(
         "cards": deck["cards"],
         "resourceName": file.filename
     }
+    
+    # Add folderId if provided
+    if folder_id:
+        document["folderId"] = folder_id
 
     container.create_item(body=document)
 
@@ -1911,6 +2045,443 @@ async def delete_mindmap(mindmap_id: str, user_claims: dict = Depends(validate_t
             detail=f"Failed to delete mindmap: {str(e)}"
         )
 
+
+# --------------------------------------------------------------------------------------
+# Folder API Endpoints
+# --------------------------------------------------------------------------------------
+
+def _calculate_folder_depth(folder_id: str, user_id: str, visited: Optional[set] = None) -> int:
+    """Calculate the depth of a folder by traversing parentFolderId chain. Returns depth (0 = root level)."""
+    if visited is None:
+        visited = set()
+    
+    if folder_id in visited:
+        # Circular reference detected
+        raise HTTPException(status_code=400, detail="Circular folder reference detected")
+    
+    visited.add(folder_id)
+    
+    try:
+        folder = container.read_item(item=folder_id, partition_key=user_id)
+        if folder.get("contentType") != "folder":
+            return 0
+        
+        parent_id = folder.get("data", {}).get("parentFolderId")
+        if not parent_id:
+            return 0  # Root level folder
+        
+        return 1 + _calculate_folder_depth(parent_id, user_id, visited.copy())
+    except Exception:
+        # If folder doesn't exist, assume it's root level
+        return 0
+
+def _map_folder_doc_to_out(doc: Dict[str, Any], user_id: str = None) -> Dict[str, Any]:
+    """Convert folder document to output format."""
+    data = doc.get("data", {})
+    folder_id = doc.get("id")
+    
+    # Count items in this folder
+    items_count = 0
+    if user_id and folder_id:
+        try:
+            query = "SELECT * FROM c WHERE c.userId = @userId AND c.folderId = @folderId"
+            parameters = [
+                {"name": "@userId", "value": user_id},
+                {"name": "@folderId", "value": folder_id}
+            ]
+            items = list(container.query_items(
+                query=query,
+                parameters=parameters,
+                enable_cross_partition_query=True
+            ))
+            items_count = len(items)
+        except Exception as e:
+            print(f"Error counting items for folder {folder_id}: {e}")
+            items_count = 0
+    
+    return {
+        "id": folder_id,
+        "name": data.get("name", ""),
+        "color": data.get("color", ""),
+        "parentFolderId": data.get("parentFolderId"),
+        "createdAt": doc.get("createdAt"),
+        "updatedAt": data.get("updatedAt"),
+        "items": items_count,
+    }
+
+@app.get("/folders", response_model=List[FolderOut])
+async def list_folders(user_claims: dict = Depends(validate_token)):
+    """Get all folders for the authenticated user."""
+    try:
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'folder' ORDER BY c.createdAt DESC"
+        parameters = [{"name": "@userId", "value": user_claims["sub"]}]
+        
+        items = list(container.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=True
+        ))
+        
+        return [_map_folder_doc_to_out(item, user_claims["sub"]) for item in items]
+    except Exception as e:
+        print(f"Error listing folders: {e}")
+        raise HTTPException(status_code=500, detail="Failed to list folders")
+
+@app.post("/folders", response_model=FolderOut)
+async def create_folder(body: CreateFolderRequest, user_claims: dict = Depends(validate_token)):
+    """Create a new folder. Supports nesting with parentFolderId (max depth 3 levels)."""
+    try:
+        parent_folder_id = body.parentFolderId
+        
+        # Validate parent folder if provided
+        if parent_folder_id:
+            try:
+                parent_folder = container.read_item(item=parent_folder_id, partition_key=user_claims["sub"])
+                if parent_folder.get("contentType") != "folder":
+                    raise HTTPException(status_code=400, detail="Parent item is not a folder")
+                if parent_folder.get("userId") != user_claims["sub"]:
+                    raise HTTPException(status_code=403, detail="Access denied to parent folder")
+                
+                # Calculate depth of parent folder
+                parent_depth = _calculate_folder_depth(parent_folder_id, user_claims["sub"])
+                if parent_depth >= 2:  # Max depth is 3 (0-indexed: 0, 1, 2)
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Cannot nest folder deeper than 3 levels. Current depth: {parent_depth + 1}"
+                    )
+            except HTTPException:
+                raise
+            except Exception as e:
+                print(f"Error validating parent folder: {e}")
+                raise HTTPException(status_code=400, detail="Invalid parent folder")
+        
+        doc = {
+            "id": str(uuid.uuid4()),
+            "userId": user_claims["sub"],
+            "contentType": "folder",
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": {
+                "name": body.name.strip(),
+                "color": body.color or "blue",
+                "parentFolderId": parent_folder_id,
+                "updatedAt": None,
+            },
+        }
+        container.create_item(doc)
+        return _map_folder_doc_to_out(doc, user_claims["sub"])
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error creating folder: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create folder")
+
+@app.patch("/folders/{folder_id}", response_model=FolderOut)
+async def update_folder(folder_id: str, body: UpdateFolderRequest, user_claims: dict = Depends(validate_token)):
+    """Update folder properties. Supports changing parentFolderId with depth validation."""
+    try:
+        doc = container.read_item(item=folder_id, partition_key=user_claims["sub"])
+        if doc.get("userId") != user_claims["sub"] or doc.get("contentType") != "folder":
+            raise HTTPException(status_code=404, detail="Folder not found")
+
+        data = doc.setdefault("data", {})
+        
+        # Handle parentFolderId update with depth validation
+        if body.parentFolderId is not None:
+            new_parent_id = body.parentFolderId if body.parentFolderId else None
+            
+            if new_parent_id:
+                # Prevent setting self as parent
+                if new_parent_id == folder_id:
+                    raise HTTPException(status_code=400, detail="Folder cannot be its own parent")
+                
+                # Validate parent folder
+                try:
+                    parent_folder = container.read_item(item=new_parent_id, partition_key=user_claims["sub"])
+                    if parent_folder.get("contentType") != "folder":
+                        raise HTTPException(status_code=400, detail="Parent item is not a folder")
+                    
+                    # Calculate depth of parent folder
+                    parent_depth = _calculate_folder_depth(new_parent_id, user_claims["sub"])
+                    if parent_depth >= 2:  # Max depth is 3
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Cannot nest folder deeper than 3 levels. Current depth: {parent_depth + 1}"
+                        )
+                except HTTPException:
+                    raise
+                except Exception:
+                    raise HTTPException(status_code=400, detail="Invalid parent folder")
+            
+            data["parentFolderId"] = new_parent_id
+        
+        if body.name is not None:
+            data["name"] = body.name.strip()
+        if body.color is not None:
+            data["color"] = body.color
+
+        data["updatedAt"] = datetime.utcnow().isoformat()
+        container.replace_item(item=folder_id, body=doc)
+        return _map_folder_doc_to_out(doc, user_claims["sub"])
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating folder: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update folder")
+
+@app.delete("/folders/{folder_id}")
+async def delete_folder(folder_id: str, user_claims: dict = Depends(validate_token)):
+    """Delete a folder. Note: Items in the folder are not automatically deleted."""
+    try:
+        doc = container.read_item(item=folder_id, partition_key=user_claims["sub"])
+        if doc.get("userId") != user_claims["sub"] or doc.get("contentType") != "folder":
+            raise HTTPException(status_code=404, detail="Folder not found")
+        
+        container.delete_item(item=folder_id, partition_key=user_claims["sub"])
+        return {"ok": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error deleting folder: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete folder")
+
+@app.get("/folders/{folder_id}/items")
+async def get_folder_items(
+    folder_id: str,
+    content_type: Optional[str] = Query(None, description="Filter by content type (quiz, flashcard_deck, study_plan, voice_note, etc.)"),
+    user_claims: dict = Depends(validate_token)
+):
+    """Get all items in a folder. Supports filtering by content type."""
+    try:
+        # Verify folder exists and belongs to user
+        folder = container.read_item(item=folder_id, partition_key=user_claims["sub"])
+        if folder.get("userId") != user_claims["sub"] or folder.get("contentType") != "folder":
+            raise HTTPException(status_code=404, detail="Folder not found")
+        
+        # Build query to get items in this folder
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.folderId = @folderId"
+        parameters = [
+            {"name": "@userId", "value": user_claims["sub"]},
+            {"name": "@folderId", "value": folder_id}
+        ]
+        
+        # Add content type filter if provided
+        if content_type:
+            query += " AND c.contentType = @contentType"
+            parameters.append({"name": "@contentType", "value": content_type})
+        
+        query += " ORDER BY c.createdAt DESC"
+        
+        items = list(container.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=True
+        ))
+        
+        return items
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching folder items: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch folder items")
+
+
+@app.patch("/items/{item_id}/move")
+async def move_item(
+    item_id: str,
+    request: Dict[str, Any] = Body(...),
+    user_claims: dict = Depends(validate_token)
+):
+    """
+    Move an item to a different folder by updating its folderId.
+    Pass null to move item out of folders (root level).
+    Request body: {"folder_id": "folder-id-string"} or {"folder_id": null}
+    """
+    try:
+        # Extract folder_id from request body
+        folder_id = request.get("folder_id") or request.get("folderId")
+        
+        # Read the item
+        doc = container.read_item(item=item_id, partition_key=user_claims["sub"])
+        
+        # Verify ownership
+        if doc.get("userId") != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Validate target folder if provided
+        if folder_id:
+            try:
+                target_folder = container.read_item(item=folder_id, partition_key=user_claims["sub"])
+                if target_folder.get("contentType") != "folder":
+                    raise HTTPException(status_code=400, detail="Target is not a folder")
+                if target_folder.get("userId") != user_claims["sub"]:
+                    raise HTTPException(status_code=403, detail="Access denied to target folder")
+            except CosmosResourceNotFoundError:
+                raise HTTPException(status_code=404, detail="Target folder not found")
+        
+        # Update folderId
+        if folder_id:
+            doc["folderId"] = folder_id
+        else:
+            # Remove from folder (set to null or remove key)
+            doc.pop("folderId", None)
+        
+        doc["updatedAt"] = datetime.utcnow().isoformat()
+        container.replace_item(item=item_id, body=doc)
+        
+        return {"message": "Item moved successfully", "folderId": folder_id}
+    except HTTPException:
+        raise
+    except CosmosResourceNotFoundError:
+        raise HTTPException(status_code=404, detail="Item not found")
+    except Exception as e:
+        print(f"Error moving item: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to move item: {str(e)}")
+
+
+# --------------------------------------------------------------------------------------
+# File Upload Endpoint
+# --------------------------------------------------------------------------------------
+@app.post("/upload-file")
+async def upload_file(
+    file: UploadFile = File(...),
+    folder_id: Optional[str] = Form(None),
+    user_claims: dict = Depends(validate_token)
+):
+    """
+    Simple file upload endpoint that stores file metadata in Cosmos DB.
+    Files are stored in static/uploads directory.
+    """
+    try:
+        # Create uploads directory if it doesn't exist
+        upload_dir = "static/uploads"
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # Generate unique filename to avoid collisions
+        file_id = str(uuid.uuid4())
+        file_extension = os.path.splitext(file.filename)[1] if file.filename else ""
+        stored_filename = f"{file_id}{file_extension}"
+        file_path = os.path.join(upload_dir, stored_filename)
+        
+        # Save file to disk
+        with open(file_path, "wb") as f:
+            content = await file.read()
+            f.write(content)
+        
+        # Get file size
+        file_size = len(content)
+        
+        # Determine file type
+        file_type = file.content_type or "application/octet-stream"
+        is_image = file_type.startswith("image/")
+        is_pdf = file_type == "application/pdf"
+        
+        # Create document for Cosmos DB
+        file_document = {
+            "id": file_id,
+            "userId": user_claims["sub"],
+            "contentType": "uploaded_file",
+            "folderId": folder_id,
+            "createdAt": datetime.utcnow().isoformat(),
+            "data": {
+                "title": file.filename or "Untitled File",
+                "originalFilename": file.filename,
+                "storedFilename": stored_filename,
+                "filePath": file_path,
+                "fileSize": file_size,
+                "fileType": file_type,
+                "isImage": is_image,
+                "isPdf": is_pdf,
+            }
+        }
+        
+        container.create_item(body=file_document)
+        
+        return {
+            "id": file_id,
+            "filename": file.filename,
+            "fileSize": file_size,
+            "fileType": file_type,
+            "folderId": folder_id,
+            "message": "File uploaded successfully"
+        }
+    except Exception as e:
+        print(f"Error uploading file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
+
+
+@app.get("/files/{file_id}")
+async def get_file(
+    file_id: str,
+    user_claims: dict = Depends(validate_token)
+):
+    """
+    Serve uploaded file. Only allows access to files owned by the user.
+    """
+    try:
+        # Get file document from Cosmos DB
+        file_doc = container.read_item(item=file_id, partition_key=user_claims["sub"])
+        
+        # Verify ownership
+        if file_doc.get("userId") != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Verify it's an uploaded file
+        if file_doc.get("contentType") != "uploaded_file":
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        file_path = file_doc.get("data", {}).get("filePath")
+        if not file_path or not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="File not found on disk")
+        
+        return FileResponse(
+            path=file_path,
+            media_type=file_doc.get("data", {}).get("fileType", "application/octet-stream"),
+            filename=file_doc.get("data", {}).get("originalFilename", "file")
+        )
+    except CosmosResourceNotFoundError:
+        raise HTTPException(status_code=404, detail="File not found")
+    except Exception as e:
+        print(f"Error serving file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to serve file: {str(e)}")
+
+
+@app.delete("/files/{file_id}")
+async def delete_file(
+    file_id: str,
+    user_claims: dict = Depends(validate_token)
+):
+    """
+    Delete uploaded file from database and disk.
+    """
+    try:
+        # Get file document from Cosmos DB
+        file_doc = container.read_item(item=file_id, partition_key=user_claims["sub"])
+        
+        # Verify ownership
+        if file_doc.get("userId") != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Verify it's an uploaded file
+        if file_doc.get("contentType") != "uploaded_file":
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Delete file from disk
+        file_path = file_doc.get("data", {}).get("filePath")
+        if file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                print(f"Warning: Failed to delete file from disk: {str(e)}")
+        
+        # Delete from database
+        container.delete_item(item=file_id, partition_key=user_claims["sub"])
+        
+        return {"message": "File deleted successfully"}
+    except CosmosResourceNotFoundError:
+        raise HTTPException(status_code=404, detail="File not found")
+    except Exception as e:
+        print(f"Error deleting file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
 
 
 # --------------------------------------------------------------------------------------

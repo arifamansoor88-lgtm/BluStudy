@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { TestTube, PlusCircle, Check, X } from "lucide-react";
 import QuizWizard from "./QuizWizard";
 import QuizDisplay from "./QuizDisplay";
@@ -14,6 +15,10 @@ import {
  * Main PracticeTests component that coordinates all other components
  */
 const PracticeTests = () => {
+  // Get folderId from URL query params if present
+  const [searchParams] = useSearchParams();
+  const folderId = searchParams.get('folderId');
+  
   // State for quiz display
   const [showQuiz, setShowQuiz] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
@@ -223,10 +228,10 @@ const PracticeTests = () => {
       console.log("=== Starting Quiz Generation ===");
       console.log("Creation mode:", creationMode);
       if (creationMode === "pdf") {
-      console.log("File:", selectedFile);
-      console.log("File name:", selectedFile.name);
-      console.log("File size:", selectedFile.size);
-      console.log("File type:", selectedFile.type);
+        console.log("File:", selectedFile);
+        console.log("File name:", selectedFile.name);
+        console.log("File size:", selectedFile.size);
+        console.log("File type:", selectedFile.type);
       } else {
         console.log("Topic-based generation, mainTopic:", mainTopic);
         console.log("Additional focus topics:", customTopics);
@@ -243,12 +248,13 @@ const PracticeTests = () => {
       if (creationMode === "pdf") {
         // Generate quiz using the PDF-based hook
         quizData = await generateQuiz(
-        selectedFile,
-        validNumQuestions,
-        selectedTopics,
-        customTopics,
-        questionFormats
-      );
+          selectedFile,
+          validNumQuestions,
+          selectedTopics,
+          customTopics,
+          questionFormats,
+          folderId // Pass folderId if present
+        );
       } else {
         // Generate quiz using the topic-based hook
         // Use mainTopic as the primary topic string (from Step 1)
@@ -259,7 +265,8 @@ const PracticeTests = () => {
           validNumQuestions,
           selectedTopics,
           customTopics, // Additional focus topics from Step 2
-          questionFormats
+          questionFormats,
+          folderId // Pass folderId if present
         );
       }
 

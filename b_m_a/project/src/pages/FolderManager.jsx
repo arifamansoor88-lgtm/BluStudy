@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Star, Trash2, Pencil, FolderKanban, List } from "lucide-react";
+import { Trash2, Pencil, FolderKanban, List } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /**
@@ -97,15 +97,6 @@ export default function FolderManager({
               </div>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={(e) => { e.stopPropagation(); onToggleStar(folder.id); }}
-                  title={folder.starred ? "Unstar" : "Star"}
-                >
-                  <Star
-                    className={`w-5 h-5 ${folder.starred ? "text-yellow-500" : "text-slate-400"}`}
-                    fill={folder.starred ? "currentColor" : "none"}
-                  />
-                </button>
-                <button
                   onClick={(e) => { e.stopPropagation(); handleRename(folder); }}
                   title="Rename"
                 >
@@ -162,15 +153,6 @@ export default function FolderManager({
                 <div className="text-sm text-slate-600">{folder.items ?? 0} items</div>
                 <div className="absolute top-3 right-3 flex gap-2">
                   <button
-                    onClick={(e) => { e.stopPropagation(); onToggleStar(folder.id); }}
-                    title={folder.starred ? "Unstar" : "Star"}
-                  >
-                    <Star
-                      className={`w-5 h-5 ${folder.starred ? "text-yellow-500" : "text-slate-400"}`}
-                      fill={folder.starred ? "currentColor" : "none"}
-                    />
-                  </button>
-                  <button
                     onClick={(e) => { e.stopPropagation(); handleRename(folder); }}
                     title="Rename"
                   >
@@ -193,7 +175,6 @@ export default function FolderManager({
       )}
 
       <div>
-        <h2 className="text-xl font-semibold text-slate-700 mb-4">📁 All Folders</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {folders.filter((f) => !f.starred).map((folder) => (
             <motion.div
@@ -205,15 +186,6 @@ export default function FolderManager({
               <div className="text-lg font-bold text-slate-800 mb-1">{folder.name}</div>
               <div className="text-sm text-slate-600">{folder.items ?? 0} items</div>
               <div className="absolute top-3 right-3 flex gap-2">
-                <button
-                  onClick={(e) => { e.stopPropagation(); onToggleStar(folder.id); }}
-                  title={folder.starred ? "Unstar" : "Star"}
-                >
-                  <Star
-                    className={`w-5 h-5 ${folder.starred ? "text-yellow-500" : "text-slate-400"}`}
-                    fill={folder.starred ? "currentColor" : "none"}
-                  />
-                </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleRename(folder); }}
                   title="Rename"
