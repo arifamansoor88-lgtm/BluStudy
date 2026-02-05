@@ -273,7 +273,7 @@ const Dashboard = () => {
                     {goal.progress}%
                   </span>
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-2 bg-gray-100 rounded-full">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${goal.progress}%` }}
