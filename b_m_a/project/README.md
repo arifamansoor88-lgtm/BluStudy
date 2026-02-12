@@ -61,7 +61,7 @@ To get started with the project locally, follow these steps:
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/Sagar387/ai_education.git
+   git clone https://github.com/BlueMarbleAcademy/ai_education.git
    cd ai_education/b_m_a/project
    ```
 
