@@ -1,0 +1,71 @@
+{
+  "title": "Calculus: Curve Sketching",
+  "cards": [
+    {
+      "question": "What information does the first derivative f'(x) provide about the graph of f(x)?",
+      "answer": "It identifies critical points (where f'(x)=0 or undefined) and determines intervals of increase (f'(x)>0) and decrease (f'(x)<0).",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What information does the second derivative f''(x) provide about the graph of f(x)?",
+      "answer": "It determines the concavity of the graph (f''(x)>0 is concave up, f''(x)<0 is concave down) and identifies potential points of inflection.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "Define a Point of Inflection (POI).",
+      "answer": "A point on the graph where the concavity changes (from up to down or vice versa). At this point, f''(x) is either zero or undefined.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "If f'(c) = 0 and f''(c) < 0, what can you conclude about the point at x = c?",
+      "answer": "According to the Second Derivative Test, the graph has a local maximum at x = c because it is a horizontal tangent in a concave down region.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "How do you find the vertical asymptotes for a curve sketching problem involving a rational function?",
+      "answer": "Find values of x that make the denominator zero (and numerator non-zero) and examine the limit of the function from the left and right of those values.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "A function has f'(x) > 0 and f''(x) < 0 on an interval. Describe the shape of the curve.",
+      "answer": "The curve is increasing but at a decreasing rate; it is shaped like a 'frown' or the left side of a downward-opening parabola.",
+      "difficulty": "hard",
+      "important": false
+    },
+    {
+      "question": "List the standard 'Algorithm for Curve Sketching' used in the Ontario curriculum.",
+      "answer": "1. Domain and Intercepts. 2. Asymptotes (VA, HA, Oblique). 3. First Derivative (Critical points, increase/decrease). 4. Second Derivative (Concavity, POI). 5. Sketch.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What is the significance of a point where f''(x) = 0 in curve sketching?",
+      "answer": "It is a potential point of inflection where the concavity may change. However, further analysis is needed to confirm if it is indeed a POI.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "How can you determine if a function has an oblique asymptote?",
+      "answer": "If the degree of the numerator is exactly one more than the degree of the denominator in a rational function, then there may be an oblique asymptote. You can find it by performing polynomial long division.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "Describe the behavior of a function near a vertical asymptote.",
+      "answer": "As x approaches the vertical asymptote from either side, the function values will approach positive or negative infinity, depending on the signs of the numerator and denominator.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "If a function has a horizontal asymptote at y = L, what does this indicate about the end behavior of the function?",
+      "answer": "As x approaches positive or negative infinity, the function values will approach the constant value L.",
+      "difficulty": "medium",
+      "important": true
+    }
+  ]
+}

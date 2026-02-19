@@ -1,0 +1,65 @@
+{
+  "title": "Advanced Functions: Polynomials",
+  "cards": [
+    {
+      "question": "What is the end behavior of a polynomial with an even degree and a negative leading coefficient?",
+      "answer": "The function extends from Quadrant 3 to Quadrant 4 (as x -> infinity, y -> -infinity; as x -> -infinity, y -> -infinity).",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "State the Remainder Theorem.",
+      "answer": "When a polynomial f(x) is divided by (x - a), the remainder is equal to f(a).",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "According to the Factor Theorem, if f(3) = 0 for a polynomial f(x), what is a factor of the polynomial?",
+      "answer": "The factor is (x - 3).",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How do you determine the maximum number of turning points for a polynomial of degree 'n'?",
+      "answer": "A polynomial of degree 'n' has at most n - 1 turning points.",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "Describe the behavior of a graph at a root with a multiplicity of 2 (e.g., (x - 1)^2).",
+      "answer": "The graph is tangent to the x-axis at that point, meaning it 'bounces' or touches the axis and turns back, rather than crossing it.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "Factor completely: f(x) = x^3 - 4x^2 + x + 6.",
+      "answer": "Test factors of 6. f(-1) = -1 - 4 - 1 + 6 = 0, so (x + 1) is a factor. Use synthetic division to find (x^2 - 5x + 6). Factor the quadratic to get: (x + 1)(x - 2)(x - 3).",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What defines an 'odd' function algebraically, and what symmetry does it possess?",
+      "answer": "An odd function satisfies f(-x) = -f(x). It possesses rotational symmetry of 180 degrees about the origin.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "Given the polynomial f(x) = 2x^4 - 3x^3 + x - 5, determine the degree, leading coefficient, and constant term.",
+      "answer": "The degree is 4, the leading coefficient is 2, and the constant term is -5.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "How many real roots can a polynomial of degree 5 have at most?",
+      "answer": "A polynomial of degree 5 can have at most 5 real roots.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "If a polynomial has a root at x = 2 with multiplicity 3, how does the graph behave at that point?",
+      "answer": "The graph will touch the x-axis at x = 2 and will flatten out as it does so, since the root has an odd multiplicity greater than 1.",
+      "difficulty": "medium",
+      "important": true
+    }
+  ]
+}

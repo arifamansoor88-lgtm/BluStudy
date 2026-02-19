@@ -1,0 +1,47 @@
+{
+    "title": "Trig Geometry",
+    "cards": [
+      {
+        "question": "Determine the exact sine value and cosine value of a 45° angle.",
+        "answer": "The sine value of a 45° angle is √2/2 and the cosine value is also √2/2.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Determine the exact sine value and cosine value of a 330° angle.",
+        "answer": "The sine value of a 330° angle is -1/2 and the cosine value is √3/2.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Determine the exact sine value and cosine value of a 135° angle.",
+        "answer": "The sine value of a 135° angle is √2/2 and the cosine value is -√2/2.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Determine two angles coterminal to 150°.",
+        "answer": "Two angles coterminal to 150° are 150° + 360° = 510° and 150° - 360° = -210°.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "State exact value using special triangles: sin 60°",
+        "answer": "The exact value of sin 60° is √3/2.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Find exact value using special triangles and definition of inverse trigonometric functions: sec 120°",
+        "answer": "The value of sec 120° is -2.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Five years ago, Billy deposited an amount of money into an account that pays 5% interest compounded annually. If the account now has $12,763.28, how much money did Billy deposit?",
+        "answer": "To find the initial deposit, we use the formula for compound interest: A = P(1 + r)^t. Here, A = $12,763.28, r = 0.05, and t = 5 years. Solving for P gives P = A / (1 + r)^t = $12,763.28 / (1.05)^5 ≈ $10,000.",
+        "difficulty": "medium",
+        "important": true
+      }
+    ]
+  }

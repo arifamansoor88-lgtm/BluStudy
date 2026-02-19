@@ -1,0 +1,35 @@
+{
+  "title": "Trigonometric Functions",
+  "cards": [
+    {
+      "question": "Convert 210 degrees to radians in terms of pi.",
+      "answer": "To convert degrees to radians, multiply by pi/180. 210 * (pi/180) = 7pi/6.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "State the period and phase shift of the function f(x) = 3sin(2x - pi/2) + 1.",
+      "answer": "Factor out the k-value: 3sin(2(x - pi/4)) + 1. The period is 2pi/k = 2pi/2 = pi. The phase shift is pi/4 units to the right.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "Use a compound angle formula to find the exact value of sin(pi/12).",
+      "answer": "Rewrite pi/12 as (pi/3 - pi/4). Using sin(A-B) = sinAcosB - cosAsinB: sin(pi/3)cos(pi/4) - cos(pi/3)sin(pi/4) = (sqrt(3)/2)(sqrt(2)/2) - (1/2)(sqrt(2)/2) = (sqrt(6) - sqrt(2))/4.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What is the secondary trigonometric ratio equivalent to 1/cos(x)?",
+      "answer": "The ratio is secant, denoted as sec(x).",
+      "difficulty": "easy",
+      "important": false
+    },
+    {
+      "question": "What is the third secondary trigonometric ratio?",
+      "answer": "The third secondary trigonometric ratio is cosecant (csc), which is the reciprocal of sine.",
+      "difficulty": "easy",
+      "important": false
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+    "title": "Functions",
+    "cards": [
+      {
+        "question": "State the Domain and Range of the relation: {(-6, 2), (-5, 2), (-4, 2), (-3, 2)}. Is this relation a function?",
+        "answer": "Domain: {-6, -5, -4, -3}, Range: {2}. Yes, this is a function because each input has exactly one output.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "State the Domain and Range of the relation: {(5, -4), (5, -2), (5, 0), (5, 2), (5,4)}. Is this relation a function?",
+        "answer": "Domain: {5}, Range: {-4, -2, 0, 2, 4}. No, this is not a function because the input 5 has multiple outputs.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the domain and range of y = x^2?",
+        "answer": "Domain: all real numbers, Range: [0, ∞)",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What is the domain and range of y = x?",
+        "answer": "Domain: all real numbers, Range: all real numbers",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Suppose we have a function defined as f(x) = 2x + 3. What is the value of f(5)?",
+        "answer": "f(5) = 2(5) + 3 = 13",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Complete the square for the equation y = x^2 + 6x + 5 and express it in vertex form. State if the vertex is a maximum or minimum point.",
+        "answer": "y = (x + 3)^2 - 4. The vertex is a minimum point.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Use partial factoring to solve the quadratic equation x^2 + 5x + 6 = 0. State if the vertex is a maximum or minimum point.",
+        "answer": "The equation factors to (x + 2)(x + 3) = 0, so x = -2 or x = -3.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "A farmer has 100 meters of fencing to create a rectangular pen. What dimensions should the farmer use to maximize the area of the pen?",
+        "answer": "The dimensions should be 25 meters by 25 meters (a square) to maximize the area.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Simplify radical: √(50) + √(18) - √(8)",
+        "answer": "The simplified form is 5√2 + 3√2 - 2√2 = 6√2.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "Use the discriminatnt to determine the nature of the roots for the quadratic equation 2x^2 - 4x + 5 = 0.",
+        "answer": "The discriminant is b² - 4ac = (-4)² - 4(2)(5) = 16 - 40 = -24. Since the discriminant is negative, there are no real roots.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Determine algebraically the coordinates of the points of each pair of functions: y = x^2 + 2x + 1 and y = x + 1.",
+        "answer": "Set the equations equal to each other: x^2 + 2x + 1 = x + 1. Simplifying gives x^2 + x = 0, which factors to x(x + 1) = 0. So, x = 0 or x = -1. Substituting back into y = x + 1 gives the points (0,1) and (-1,0).",
+        "difficulty": "medium",
+        "important": true
+      }
+    ]
+  }
+  

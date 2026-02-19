@@ -1,0 +1,47 @@
+{
+    "title": "Discrete Functions",
+    "cards": [
+      {
+        "question": "Find the formula for the general form t_i, where t_i is the i-th term of the sequence: 2, 4, 8, 16, ...",
+        "answer": "The formula is t_i = 2^i.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Find the formula for the general form t_i, where t_i is the i-th term of the sequence: -1, 2, -4, 8, ...",
+        "answer": "The formula is t_i = (-1)^i * 2^(i-1).",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Determine whether this sequence is arithmetic, geometric, or neither: 3, 6, 12, 24, ...",
+        "answer": "The sequence is geometric because each term is obtained by multiplying the previous term by 2.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Determine whether this sequence is arithemetic, geometric, or neither: 5, 10, 15, 20, ...",
+        "answer": "The sequence is arithmetic because each term is obtained by adding 5 to the previous term.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "In a arithmetic series, the first term is 2 and the common difference is 3. What is the 10th term?",
+        "answer": "The 10th term is 2 + (10 - 1) * 3 = 2 + 9 * 3 = 2 + 27 = 29.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Find the sum of the first 20 terms of the geometric series with first term 1 and common ratio 2.",
+        "answer": "The sum is (1 * (2^20 - 1)) / (2 - 1) = 2^20 - 1 = 1048575.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "For (1 - x)^11, find t_3, how many terms are in this expansion, explain where the numerical coefficient comes from, and find the numerical coefficient.",
+        "answer": "The term t_3 corresponds to the term where k = 3 in the binomial expansion. The number of terms in the expansion is 12 (from k = 0 to k = 11). The numerical coefficient comes from the binomial coefficient, which is calculated as C(n, k) = n! / (k!(n-k)!). For t_3, the numerical coefficient is C(11, 3) = 11! / (3! * 8!) = (11 * 10 * 9) / (3 * 2 * 1) = 165.",
+        "difficulty": "medium",
+        "important": true
+      }
+    ]
+  }

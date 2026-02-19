@@ -1,0 +1,47 @@
+{
+    "title": "Trig Functions",
+    "cards": [
+      {
+        "question": "What are the x and y coordinates of the function y = sin x at x = 30°?",
+        "answer": "The x-coordinate is 30° and the y-coordinate is sin(30°) = 1/2.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What are the x and y coordinates of the function y = sin x at x = 330°?",
+        "answer": "The x-coordinate is 330° and the y-coordinate is sin(330°) = -1/2.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What are the x and y coordinates of the function y = cos x at x = 30°?",
+        "answer": "The x-coordinate is 30° and the y-coordinate is cos(30°) = √3/2.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What are the x and y coordinates of the function y = sin (x + 60) + 3 at x = 30°?",
+        "answer": "The x-coordinate is 30° and the y-coordinate is sin(30° + 60°) + 3 = sin(90°) + 3 = 1 + 3 = 4.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What are the transformations needed to go from y = sin x to y = 2sin(x - 45°) + 1?",
+        "answer": "The transformations are: 1) Vertical stretch by a factor of 2, 2) Horizontal shift right by 45°, and 3) Vertical shift up by 1 unit.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "For the transformed function y = 2sin(x - 45°) + 1, what are the new amplitude, period, phase shift, and vertical shift?",
+        "answer": "The amplitude is 2, the period is 360°, the phase shift is 45° to the right, and the vertical shift is 1 unit up.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Determine an equation for a sine function with an amplitude of 3, a period of 180°, a phase shift of 30° to the left, and a vertical shift of 2 units down.",
+        "answer": "The equation is y = 3sin(2(x + 30°)) - 2.",
+        "difficulty": "medium",
+        "important": true
+      }
+    ]
+  }

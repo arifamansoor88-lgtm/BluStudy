@@ -1,0 +1,48 @@
+{
+    "title": "Exponential Functions",
+    "cards": [
+      {
+        "question": "An insect colony starts with 15 insects and quadruples in size every day. Write an exponential function to model the population of the colony after n days. How many insects will there be after 7 days?",
+        "answer": "The exponential function is f(n) = 15 * 4^(n). After 7 days, there will be f(7) = 15 * 4^7 = 15 * 16384 = 245760 insects.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "If the population of an ant colony is 213 and doubles every week, write an exponential function to model the population after t weeks. What will the population be after 6 weeks? How long will it take for the population to reach at least 109, 056?",
+        "answer": "The exponential function is f(t) = 213 * 2^t. After 6 weeks, the population will be f(6) = 213 * 2^6 = 213 * 64 = 13632 insects. To find how long it takes to reach at least 109,056 insects, solve 213 * 2^t ≥ 109,056. This gives t ≥ log₂(109,056/213) ≈ 9 weeks.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "The population of a town is 50,000 and is decreasing by 5% each year. Write an exponential function to model the population after y years. What will the population be after 10 years? How long will it take for the population to drop below 30,000?",
+        "answer": "The exponential function is f(y) = 50,000 * (0.95)^y. After 10 years, the population will be f(10) = 50,000 * (0.95)^10 ≈ 31,512 people. To find how long it takes for the population to drop below 30,000, solve 50,000 * (0.95)^y < 30,000. This gives y > log₀.₉₅(3/5) ≈ 9.4 years.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "There are 50 bacteria present in a culture, and in 3 minutes, the count is 204800. What is the doubling period?",
+        "answer": "The doubling period is 0.25 minutes.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "An investment of $2000 is made in an account that pays 4% interest compounded quarterly. What is the value of the investment after 8 years?",
+        "answer": "The value of the investment after 8 years is $2000 * (1 + 0.04/4)^(4*8) = $2737.13.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Bob invests $1500 in an account that pays 6% interest compounded monthly. What is the value of the investment after 5 years? How long will it take to double the amount (in nearest year)",
+        "answer": "The value of the investment after 5 years is $1500 * (1 + 0.06/12)^(12*5) = $1993.48. To find how long it takes to double the amount, solve 1500 * (1 + 0.06/12)^(12*t) = 3000. This gives t ≈ 11.5 years, so it will take 12 years to double the amount.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Five years ago, Billy deposited an amount of money into an account that pays 5% interest compounded annually. If the account now has $12,763.28, how much money did Billy deposit?",
+        "answer": "To find the initial deposit, we use the formula for compound interest: A = P(1 + r)^t. Here, A = $12,763.28, r = 0.05, and t = 5 years. Solving for P gives P = A / (1 + r)^t = $12,763.28 / (1.05)^5 ≈ $10,000.",
+        "difficulty": "medium",
+        "important": true
+      }
+    ]
+  }
+  

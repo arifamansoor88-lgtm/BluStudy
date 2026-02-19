@@ -1,0 +1,65 @@
+{
+  "title": "Advanced Functions: Inequalities",
+  "cards": [
+    {
+      "question": "Solve the linear inequality: 3(x - 2) < 5x + 4.",
+      "answer": "Expand: 3x - 6 < 5x + 4. Rearrange: -10 < 2x. Divide by 2: x > -5. In interval notation: (-5, infinity).",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "When solving an inequality, what must you do to the inequality sign if you multiply or divide both sides by a negative number?",
+      "answer": "You must reverse the direction of the inequality sign (e.g., change < to >).",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "Solve the quadratic inequality: x^2 - 5x + 6 > 0.",
+      "answer": "Factor: (x - 2)(x - 3) > 0. The roots are 2 and 3. Testing intervals: (-infinity, 2) is +, (2, 3) is -, (3, infinity) is +. The solution is x < 2 or x > 3.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "How do you determine the intervals to test when solving a rational inequality?",
+      "answer": "Use the 'critical values' which include the zeros of the numerator (where the function is 0) and the zeros of the denominator (where the function is undefined).",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "Solve the rational inequality: (x + 1) / (x - 3) <= 0.",
+      "answer": "Critical values are -1 and 3. Testing intervals: x < -1 (+), -1 <= x < 3 (-), x > 3 (+). Note: x cannot be 3 (asymptote). Solution: -1 <= x < 3.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What is the difference between a 'solid dot' and an 'open circle' on a number line representation of an inequality?",
+      "answer": "A solid dot indicates the value is included (<= or >=), while an open circle indicates the value is excluded (< or >).",
+      "difficulty": "easy",
+      "important": false
+    },
+    {
+      "question": "True or False: You can cross-multiply terms containing variables across an inequality sign.",
+      "answer": "False. You should never cross-multiply variables because you don't know if the expression is positive or negative; instead, move all terms to one side and find a common denominator.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "Solve the compound inequality: 2x - 3 < 5 or x + 4 >= 0.",
+      "answer": "For 2x - 3 < 5: 2x < 8 -> x < 4. For x + 4 >= 0: x >= -4. The solution is x < 4 or x >= -4, which simplifies to all real numbers (since -4 is less than 4).",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the solution set of the inequality |2x - 5| < 3?",
+      "answer": "Rewrite as two inequalities: -3 < 2x - 5 < 3. Solve each: For the left part, add 5: 2x > 2 -> x > 1. For the right part, add 5: 2x < 8 -> x < 4. The solution is (1, 4).",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "How do you solve an inequality involving absolute value, such as |x - 2| >= 5?",
+      "answer": "Rewrite as two inequalities: x - 2 >= 5 or x - 2 <= -5. Solve each: For the first, x >= 7. For the second, x <= -3. The solution is x <= -3 or x >= 7.",
+      "difficulty": "medium",
+      "important": true
+    }
+  ]
+}

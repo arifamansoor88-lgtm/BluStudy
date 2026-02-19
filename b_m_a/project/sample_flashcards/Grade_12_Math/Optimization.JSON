@@ -1,0 +1,65 @@
+{
+  "title": "Calculus: Optimization",
+  "cards": [
+    {
+      "question": "What is the general procedure for solving an optimization problem?",
+      "answer": "1. Create a model (equation) for the variable to be optimized. 2. Use a constraint to express the equation in terms of one variable. 3. Find the derivative and set it to zero to find critical points. 4. Verify the maximum/minimum using the first or second derivative test.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "A farmer has 800m of fencing and wants to enclose a rectangular field bordering a straight river (no fence needed along the river). What dimensions maximize the area?",
+      "answer": "Let width be x and length be y. Constraint: 2x + y = 800 -> y = 800 - 2x. Area A = x(800 - 2x) = 800x - 2x^2. A' = 800 - 4x. Setting A' = 0 gives x = 200m. Dimensions: 200m by 400m.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "In optimization, what is the 'Extreme Value Theorem'?",
+      "answer": "If a function is continuous on a closed interval [a, b], then it must have both an absolute maximum and an absolute minimum value on that interval.",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "Why is it important to define the domain of the independent variable in an optimization problem?",
+      "answer": "The domain identifies the physical constraints (e.g., length cannot be negative) and allows you to check the endpoints of the interval for absolute extrema.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "When optimizing the volume of a cylinder with a fixed surface area, what is the primary constraint equation?",
+      "answer": "The Surface Area formula: SA = 2πr² + 2πrh.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "If the second derivative of a function at a critical point is positive (f''(c) > 0), what does this tell you about that point?",
+      "answer": "The function is concave up at that point, meaning the critical point is a local minimum.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "If the second derivative of a function at a critical point is negative (f''(c) < 0), what does this tell you about that point?",
+      "answer": "The function is concave down at that point, meaning the critical point is a local maximum.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "If the second derivative of a function at a critical point is zero (f''(c) = 0), what can you conclude about that point?",
+      "answer": "The test is inconclusive. You may need to use the first derivative test or analyze the behavior of the function around that point to determine if it's a maximum, minimum, or neither.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "Describe the end behavior of f(x) as it approaches a vertical asymptote at x = 2 from the left (x -> 2-).",
+      "answer": "The function will approach either positive infinity or negative infinity. This is determined by testing a value slightly less than 2 (e.g., 1.99) in the function.",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "Describe the end behavior of f(x) as it approaches a vertical asymptote at x = 2 from the right (x -> 2+).",
+      "answer": "The function will approach either positive infinity or negative infinity. This is determined by testing a value slightly greater than 2 (e.g., 2.01) in the function.",
+      "difficulty": "medium",
+      "important": false
+    }
+  ]
+}

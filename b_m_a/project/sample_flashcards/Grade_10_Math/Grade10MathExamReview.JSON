@@ -1,0 +1,150 @@
+{
+    "title": "Grade 10 Math Exam Review",
+    "cards": [
+      {
+        "question": "The midpoint of the line connecting endpoints A(1,5) and B(7,-3) is:",
+        "answer": "(4, 1)",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What is the equation for the circle centered at the origin with a radius of 4",
+        "answer": "x² + y² = 16",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is y = (x + 7)(x - 2)expanded (use FOIL)?",
+        "answer": "y = x² + 5x - 14",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "The axis of symmetry of the parabola with equation y= 5x^2 + 4x - 55 in lowest terms is (hint: what is the equation of the axis of symmetry?)",
+        "answer": "x = -2/5",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "There is 1 solution to a quadratic equation if:",
+        "answer": "The discriminant equals zero.",
+        "difficulty": "hard",
+        "important": true
+      },
+      {
+        "question": "Solve the following linear system using the method of substitution: 6 = x + 4y and 2x - 3y = 1",
+        "answer": "The solution is x = 2 and y = 1.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Solve the following linear system using the method of elimination: 4x + 3y = 4 and 8x - y = 1",
+        "answer": "The solution is x = 1/4 and y = 1.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Find the midpoint of each line segment with endpoints A(-5, 2) and B(9, -12).",
+        "answer": "The midpoint is (2, -5).",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Find the equation of the circle that is centered at the origin and passes through the point (3, -8)?",
+        "answer": "The equation of the circle is x² + y² = 73.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "Find the length of each side of the triangle with vertices A(-3, 3), B(-1, 5), and C(1, 3), and then classify it as either scalene, isosceles, or equilateral.",
+        "answer": "The lengths of the sides are AB = √8, BC = √8, and AC = 4. The triangle is isosceles.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Find the equation of the median from vertex B for the triangle with vertices A(-8,6) B(2,10) C(4,-4). Write the equation in slope y-intercept form (y=mx+b).",
+        "answer": "The equation of the median is y = -7x/6 + 43/3.",
+        "difficulty": "hard",
+        "important": true
+      },
+      {
+        "question": "Find the equation of the right bisector of the line segment connecting points A(-8,6) and B(4,-4). Write the equation in slope y-intercept form (y=mx+b). Start by making a rough sketch of line AB and its right bisector.",
+        "answer": "The equation of the right bisector is y = 4x + 11.",
+        "difficulty": "hard",
+        "important": true
+      },
+      {
+        "question": "Describe the transformations applied to this quadratic equation: y = 1/2(x + 3)² - 4",
+        "answer": "The transformations are: a vertical compression by a factor of 1/2, a horizontal shift left by 3 units, and a vertical shift down by 4 units.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the discriminant of the quadratic equation 3x² + 4x + 2 = 0, and how many solutions does it have?",
+        "answer": "The discriminant is -8, and the equation has no real solutions.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "Compared the graph of 𝑦 = 𝑥(, a parabola has been compressed vertically by a factor of 1/3, reflected in the x-axis, shifted 1 units left, and 9 unit up. Write the equation of this parabola in vertex form:",
+        "answer": "The equation is y = -1/3(x + 1)² + 9.",
+        "difficulty": "medium",
+        "important": true
+      },
+    {
+            "question": "Solve the equation by factoring: x² - 4x + 4 = 0",
+            "answer": "The solution is x = 2.",
+            "difficulty": "easy",
+            "important": true
+    },
+    {
+            "question": "Solve the following equation. Round your answers to two decimal places if necessary.: -7x^2 + 10x + 2 = 4",
+            "answer": "The solutions are x ≈ 1.57 and x ≈ -0.19.",
+            "difficulty": "medium",
+            "important": true
+    },
+    {
+            "question": "For the quadratic equation y = 3x² + 18x + 15, find any x-intercepts using any method.",
+            "answer": "The x-intercepts are x = -1 and x = -5.",
+            "difficulty": "easy",
+            "important": true
+    },
+    {
+            "question": "Convert the equation y = 3x² + 18x + 15 from standard form into vertex by completing the square. Then state the vertex and if it is a max or min point.",
+            "answer": "The vertex form is y = 3(x + 3)² - 12. The vertex is at (-3, -12), and it is a minimum point.",
+            "difficulty": "medium",
+            "important": true
+    },
+    {
+            "question": "The cost to rent a car is based on the number of days the car is rented and the number of kilometres it is driven. The cost for a 1-day rental and 240 km driven is $39. The cost for a 5-day rental and 900 km driven is $165. Find the cost per day and the cost per kilometre.",
+            "answer": "The cost per day is $25, and the cost per kilometre is $0.05.",
+            "difficulty": "medium",
+            "important": true
+    },
+    {
+            "question": "A flagpole is secured with a guy wire. The guy wire makes an angle of 65° with the ground and is secured 4 m from the bottom of the flagpole. Find the height of the flagpole, to the nearest tenth of a metre. Find the length of the guy wire, to the nearest tenth of a metre.",
+            "answer": "The height of the flagpole is 8.8 m, and the length of the guy wire is 9.7 m.",
+            "difficulty": "easy",
+            "important": true
+    },
+    {
+            "question": "A tree casts a shadow 15 m long when the angle of elevation of the sun is 30°. Find the height of the tree, to the nearest tenth of a metre.",
+            "answer": "The height of the tree is 8.7 m.",
+            "difficulty": "easy",
+            "important": true
+    },
+    {
+            "question": "The path of a jet plane is given by the relation h = -5(t + 20)(t - 100), where h represents the height, in metres, above the ground and t is time, in minutes. Using the x-intercepts, make a rough sketch of the graph of the relation. Label the x-intercepts. At what time does the plane reach its maximum height? What is the maximum height?",
+            "answer": "The x-intercepts are t = -20 and t = 100. The plane reaches its maximum height at t = 40 minutes, and the maximum height is 12,800 metres.",
+            "difficulty": "hard",
+            "important": true
+    },
+    {
+            "question": "The height of a projectile launched from the top of a 96 foot tall building is given by the equation h=-16t^2 + 48t + 96, where 'h' is the height in feet and 't' is the time in seconds. How long does it take the projectile to hit the ground? What is the maximum height the projectile reaches? ",
+            "answer": "The projectile hits the ground after 6 seconds. The maximum height is 144 feet.",
+            "difficulty": "hard",
+            "important": true
+    }
+    ]
+  }
+  

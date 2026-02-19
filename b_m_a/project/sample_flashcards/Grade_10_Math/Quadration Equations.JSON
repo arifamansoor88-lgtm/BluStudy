@@ -1,0 +1,132 @@
+{
+    "title": "Quadratic Equations",
+    "cards": [
+      {
+        "question": "Describe the transformations from y = 𝑥² to y = - ½(x + 5)² - 4",
+        "answer": "Reflection over x-axis, vertical compression by a factor of ½, horizontal shift left 5 units, vertical shift down 4 units.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "For the quadratic function f(x) = -4(x-2)(x-44), find the vertex, axis of symmetry, x-intercepts and y-intercept.",
+        "answer": "Vertex: (3,4), Axis of symmetry: x = 3, X-intercepts: (2,0) & (4,0), Y-intercept: (0, -32)",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "A parabola has x-intercepts -8 and 2, and passes through the point (0, -8). Find the equation of the parabola in the form y = a(x - r₁)(x - r₂).",
+        "answer": "The equation is y = 1/2(x + 8)(x - 2).",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Factor y = x^2 + 10x + 24.",
+        "answer": "y = (x + 4)(x + 6)",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Factor y = x^2 + x - 12",
+        "answer": "y = (x + 4)(x - 3)",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Factor y = 2x^2 + 22x + 48",
+        "answer": "y = 2(x + 3)(x + 8)",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Factor y = 2x^2 + 7x - 15",
+        "answer": "y = (2x - 3)(x + 5)",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Factor y = 3x^2 + 23x - 8",
+        "answer": "y = (3x - 1)(x + 8)",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Factor y = x^2 - 16",
+        "answer": "y = (x + 4)(x - 4)",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "Factor y = 4x^2 - 25",
+        "answer": "y = (2x + 5)(2x - 5)",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Factor y = 9x^2 - 1",
+        "answer": "y = (3x + 1)(3x - 1)",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "Factor y = x^2 + 6x + 9",
+        "answer": "y = (x + 3)²",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Expand this equation to standard form: (4x - 1)(x + 7)",
+        "answer": "y = 4x² + 27x - 7",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "Expand this equation to standard form: (x - 5)^2",
+        "answer": "y = x² - 10x + 25",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "Convert the equation y = x² + 6x + 11 into vertex form by completing the square. State the vertex and whether it is a max or min point.",
+        "answer": "y = (x + 3)² + 2. The vertex is (-3, 2), and it is a minimum point.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Convert the equation y = 3x² + 24x - 17 into vertex form by completing the square. State the vertex and whether it is a max or min point.",
+        "answer": "y = 3(x + 4)² - 65. The vertex is (-4, -65), and it is a minimum point.",
+        "difficulty": "hard",
+        "important": true
+      },
+      {
+        "question": "Solve the quadratic equation: x² - 36 = 0",
+        "answer": "x = -6 and x = 6",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "Solve the quadratic equation: 5x² - 19x = 4",
+        "answer": "x = 4 and x = -1/5",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Solve the quadratic equation: x² + 7x + 5 = 0",
+        "answer": "x = (-7 + √29)/2 and x = (-7 - √29)/2",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Solve the quadratic equation: 2x² + 4x + 7 = 0",
+        "answer": "No real solutions (discriminant is negative)",
+        "difficulty": "hard",
+        "important": true
+      },
+      {
+        "question": "An object in launched upward at 64 feet per second (ft/s) from a platform 80 feet high. The equation for the object's height in ft based on time in seconds is given by h = -16x² + 64x + 80. When will the object hit the ground? What is the max height of the object? When is the object 100 feet off the ground?",
+        "answer": "The object hits the ground at x = 5 seconds. The max height is 144 feet at x = 2 seconds. The object is 100 feet off the ground at x = 3.66 second and x = 0.34 seconds.",
+        "difficulty": "hard",
+        "important": false
+      }
+    ]
+  }
+  

@@ -1,0 +1,65 @@
+{
+    "title": "Trigonometry",
+    "cards": [
+      {
+        "question": "What is Pythagoras' Theorem and how is it used in trigonometry?",
+        "answer": "Pythagoras' Theorem states that in a right triangle, the square of the hypotenuse is equal to the sum of the squares of the other two sides (a² + b² = c²). In trigonometry, it is used to find missing sides or angles in right triangles.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is sine law and when is it used?",
+        "answer": "The sine law states that in any triangle, the ratio of the length of a side to the sine of its opposite angle is constant. It is used when you know either two angles and one side (AAS or ASA) or two sides and a non-included angle (SSA).",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is SOH CAH TOA?",
+        "answer": "SOH CAH TOA is a mnemonic for remembering the definitions of sine, cosine, and tangent in right triangles: SOH = Sine = Opposite/Hypotenuse, CAH = Cosine = Adjacent/Hypotenuse, TOA = Tangent = Opposite/Adjacent.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is cosine law and when is it used?",
+        "answer": "The cosine law states that in any triangle, the square of one side is equal to the sum of the squares of the other two sides minus twice their product times the cosine of their included angle. It is used when you know either all three sides (SSS) or two sides and their included angle (SAS).",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "When would you use sine law over cosine law?",
+        "answer": "You would use sine law when you know either two angles and one side (AAS or ASA) or two sides and a non-included angle (SSA). Cosine law is used when you know all three sides (SSS) or two sides and their included angle (SAS).",
+        "difficulty": "hard",
+        "important": true
+      },
+      {
+        "question": "When would you use pythagoras' theorem over sine law or cosine law?",
+        "answer": "You would use Pythagoras' theorem when you are dealing with a right triangle and you know the lengths of two sides and want to find the third side. Sine and cosine laws are used for any triangle, but Pythagoras' theorem is simpler to apply in right triangles.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "How to find an angle in a right triangle when given all 3 sides?",
+        "answer": "Use inverse trigonometric functions. For example, if you know the opposite and hypotenuse sides, use arcsine (sin⁻¹) to find the angle.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "How to find a side in a right triangle when given one angle and one side?",
+        "answer": "Use trigonometric ratios. For example, if you know an angle and the adjacent side, use cosine to find the hypotenuse or tangent to find the opposite side.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "If I had a hypotenuse of 10 and an angle of 30 degrees, how would I find the lengths of the other two sides?",
+        "answer": "The opposite side is 10 * sin(30°) = 5. The adjacent side is 10 * cos(30°) = 5√3.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "If I had a right angle triangle with one side of 8 and an angle of 45 degrees, how would I find the lengths of the other two sides?",
+        "answer": "The opposite and adjacent sides are both 8 * sin(45°) = 8 * (√2/2) = 4√2.",
+        "difficulty": "medium",
+        "important": true
+      }
+    ]
+  }

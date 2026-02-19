@@ -1,0 +1,54 @@
+{
+    "title": "Transformations",
+    "cards": [
+      {
+        "question": "Draw the graph f(x) = x^2 and then the graph of g(x) = -(x + 6)^2 + 4. Describe the transformation from f to g.",
+        "answer": "The graph of g(x) is a vertical reflection over the x-axis, a horizontal shift left 6 units, and a vertical shift up 4 units from the graph of f(x).",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Draw the graph f(x) = x^2 and then the graph of g(x) = ((-1/2)x)^2 - 3. Describe the transformation from f to g.",
+        "answer": "The graph of g(x) is a horizontal stretch by a factor of 2, a reflection over the x-axis, and a vertical shift down 3 units from the graph of f(x).",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "For the function f(x) = x^(1/2), describe the transformations applied to obtain g(x) = 3(x - 4)^(1/2) + 2.",
+        "answer": "The function g(x) is a vertical stretch by a factor of 3, a horizontal shift right 4 units, and a vertical shift up 2 units from the function f(x).",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "Write a new function based of parent function y = x^2 that has a vertical stretch of 4, a reflection over the x-axis, a horizontal shift right 2 units, and a vertical shift down 5 units.",
+        "answer": "The new function is g(x) = -4(x - 2)^2 - 5.",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "List all transformations applied to the parent function y = |x| to obtain the function g(x) = -2|x + 3| + 4.",
+        "answer": "The function g(x) is a vertical stretch by a factor of 2, a reflection over the x-axis, a horizontal shift left 3 units, and a vertical shift up 4 units from the function f(x).",
+        "difficulty": "easy",
+        "important": true
+      },
+      {
+        "question": "What is the equation of the inverse of the function f(x) = 2x + 3?",
+        "answer": "The inverse function is f^(-1)(x) = (x - 3)/2.",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "Calculate the inverse of f(x) = 2(x - 1)^2 + 2 and state the domain and range of the inverse function.",
+        "answer": "The inverse function is f^(-1)(x) = 1 ± sqrt((x - 2)/2). Domain: x ≥ 2. Range: y ≥ 1.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "Determine the inverse of the function f(x) = 2x^2 + 16x + 30 and state the domain and range of the inverse function.",
+        "answer": "The inverse function is f^(-1)(x) = -4 ± sqrt((x - 2)/2). Domain: x ≥ 2. Range: y ≤ -4.",
+        "difficulty": "medium",
+        "important": true
+      }
+    ]
+  }
+  

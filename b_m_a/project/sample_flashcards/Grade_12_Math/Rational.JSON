@@ -1,0 +1,53 @@
+{
+  "title": "Advanced Functions: Rational Functions",
+  "cards": [
+    {
+      "question": "Under what condition does a rational function f(x) = p(x) / q(x) have a 'hole' (removable discontinuity)?",
+      "answer": "A hole occurs if a factor (x - a) exists in both the numerator p(x) and the denominator q(x), such that they cancel out.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "How do you find the vertical asymptotes of a rational function?",
+      "answer": "Set the denominator equal to zero and solve for x, provided those values do not also make the numerator zero (which would be a hole).",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the horizontal asymptote of f(x) = (3x^2 - 5) / (x^2 + 2)?",
+      "answer": "Since the degrees of the numerator and denominator are equal, the horizontal asymptote is the ratio of the leading coefficients: y = 3/1 or y = 3.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What happens to the horizontal asymptote if the degree of the numerator is less than the degree of the denominator?",
+      "answer": "The horizontal asymptote is always the x-axis, y = 0.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "When does a rational function have an oblique (slant) asymptote?",
+      "answer": "An oblique asymptote occurs when the degree of the numerator is exactly one higher than the degree of the denominator.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "Find the oblique asymptote of f(x) = (x^2 + 3x + 2) / (x - 1).",
+      "answer": "Perform polynomial long division or synthetic division. x^2 + 3x + 2 divided by (x - 1) gives a quotient of x + 4 with a remainder. The oblique asymptote is y = x + 4.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "Describe the end behavior of f(x) as it approaches a vertical asymptote at x = 2 from the left (x -> 2-).",
+      "answer": "The function will approach either positive infinity or negative infinity. This is determined by testing a value slightly less than 2 (e.g., 1.99) in the function.",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "Describe the end behavior of f(x) as it approaches a vertical asymptote at x = 2 from the right (x -> 2+).",
+      "answer": "The function will approach either positive infinity or negative infinity. This is determined by testing a value slightly greater than 2 (e.g., 2.01) in the function.",
+      "difficulty": "medium",
+      "important": false
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "title": "Calculus: Limits and Continuity",
+  "cards": [
+    {
+      "question": "Evaluate the limit: lim(x->3) (x^2 - 9) / (x - 3).",
+      "answer": "Factor the numerator: (x - 3)(x + 3). The (x - 3) terms cancel out. Then, evaluate lim(x->3) (x + 3) = 3 + 3 = 6.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What are the three conditions that must be met for a function f(x) to be continuous at x = a?",
+      "answer": "1. f(a) must be defined. 2. lim(x->a) f(x) must exist. 3. lim(x->a) f(x) must equal f(a).",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "Evaluate the limit at infinity: lim(x->infinity) (2x^2 + 5) / (3x^2 - 4x).",
+      "answer": "Divide all terms by the highest power of x (x^2). The limit becomes lim(x->infinity) (2 + 5/x^2) / (3 - 4/x). As x approaches infinity, terms with x in the denominator go to 0. Result: 2/3.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the result of lim(x->0) (sin x) / x?",
+      "answer": "This is a fundamental trigonometric limit. The result is 1.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "Describe the type of discontinuity occurring at x = 2 for the function f(x) = 1 / (x - 2).",
+      "answer": "This is an infinite discontinuity (or vertical asymptote) because the function approaches infinity or negative infinity as x approaches 2.",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "Evaluate the limit: lim(x->4) [sqrt(x) - 2] / [x - 4].",
+      "answer": "Multiply the numerator and denominator by the conjugate (sqrt(x) + 2). The numerator becomes (x - 4). After canceling (x - 4) from top and bottom, you are left with lim(x->4) 1 / (sqrt(x) + 2) = 1 / (2 + 2) = 1/4.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What is the definition of a limit as x approaches infinity?",
+      "answer": "The limit of f(x) as x approaches infinity is L if for every ε > 0, there exists an M such that for all x > M, |f(x) - L| < ε.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "Evaluate the limit: lim(x->0) (e^x - 1) / x.",
+      "answer": "This is a standard limit. The result is 1.",
+      "difficulty": "medium",
+      "important": true
+    },
+    {
+      "question": "What is the difference between a removable discontinuity and a non-removable discontinuity?",
+      "answer": "A removable discontinuity occurs when the limit exists but does not equal the function's value at that point. A non-removable discontinuity occurs when the limit does not exist or is infinite.",
+      "difficulty": "medium",
+      "important": false
+    },
+    {
+      "question": "Evaluate the limit: lim(x->0) (1 - cos x) / x^2.",
+      "answer": "Using the Taylor series expansion for cosine, we have cos x ≈ 1 - x^2/2 for small x. Substituting this gives lim(x->0) (1 - (1 - x^2/2)) / x^2 = lim(x->0) (x^2/2) / x^2 = 1/2.",
+      "difficulty": "hard",
+      "important": true
+    },
+    {
+      "question": "What is the limit of f(x) = 1/x as x approaches 0 from the positive side?",
+      "answer": "The limit is positive infinity.",
+      "difficulty": "easy",
+      "important": true
+    },
+    {
+      "question": "What is the limit of f(x) = 1/x as x approaches 0 from the negative side?",
+      "answer": "The limit is negative infinity.",
+      "difficulty": "easy",
+      "important": true
+    }
+  ]
+}
