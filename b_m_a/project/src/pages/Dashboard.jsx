@@ -139,6 +139,45 @@ const Dashboard = () => {
     { title: "Weekly Quiz Prep", progress: 90 },
   ];
 
+  const studyGoals = [
+    {
+      title: "Biology 101",
+      progress: 65,
+      tasks: [
+        "Complete cell structure chapter",
+        "Review photosynthesis notes",
+        "Practice mitosis diagrams"
+      ]
+    },
+    {
+      title: "World History",
+      progress: 80,
+      tasks: [
+        "Read Chapter 5: Industrial Revolution",
+        "Complete timeline assignment",
+        "Study key figures quiz"
+      ]
+    },
+    {
+      title: "Calculus",
+      progress: 45,
+      tasks: [
+        "Master derivative rules",
+        "Solve integration problems",
+        "Complete practice set 3"
+      ]
+    },
+    {
+      title: "Chemistry",
+      progress: 90,
+      tasks: [
+        "Review periodic table trends",
+        "Complete lab report",
+        "Study reaction mechanisms"
+      ]
+    }
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* User greeting */}
@@ -324,6 +363,33 @@ const Dashboard = () => {
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Study Goals Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="bg-white rounded-xl shadow-sm p-6 mt-8"
+      >
+        <h2 className="text-xl font-bold text-gray-900 mb-6">
+          Next in Your Study Plan:
+        </h2>
+        <div className="relative">
+          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            {studyGoals.map((goal, index) => (
+              <StudyGoalCard key={index} goal={goal} />
+            ))}
+          </div>
+          {/* Scroll indicator */}
+          <div className="flex justify-center mt-2">
+            <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-primary-600 rounded-full"></div>
+              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 };
@@ -345,6 +411,43 @@ const AchievementCard = ({
     <div>
       <h3 className="font-medium text-gray-900">{title}</h3>
       <p className="text-sm text-gray-500">{description}</p>
+    </div>
+  </motion.div>
+);
+
+const StudyGoalCard = ({ goal }) => (
+  <motion.div
+    whileHover={{ scale: 1.02 }}
+    className="min-w-[280px] bg-gray-50 rounded-lg p-4 relative"
+  >
+    {/* Percentage in top-right corner */}
+    <div className="absolute top-4 right-4 text-sm font-medium text-primary-600">
+      {goal.progress}%
+    </div>
+
+    {/* Subject title */}
+    <h3 className="font-bold text-gray-900 text-lg mb-3 pr-12">
+      {goal.title}
+    </h3>
+
+    {/* Study tasks as bullet points */}
+    <ul className="space-y-2 mb-4">
+      {goal.tasks.map((task, index) => (
+        <li key={index} className="flex items-start gap-2">
+          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+          <span className="text-sm text-gray-700">{task}</span>
+        </li>
+      ))}
+    </ul>
+
+    {/* Progress bar */}
+    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: `${goal.progress}%` }}
+        transition={{ duration: 1, delay: 0.7 }}
+        className="h-full bg-primary-600 rounded-full"
+      />
     </div>
   </motion.div>
 );
