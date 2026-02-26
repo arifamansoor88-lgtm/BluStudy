@@ -151,6 +151,44 @@ const Dashboard = () => {
         </p>
       </div>
 
+      {/* Achievements Section */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1 }}
+        className="bg-white rounded-xl shadow-sm p-6 mb-6"
+      >
+        <div className="flex items-center gap-2 mb-6">
+          <Trophy className="h-5 w-5 text-primary-600" />
+          <h2 className="text-xl font-semibold text-gray-900">
+            Recent Achievements
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <AchievementCard
+            icon={Trophy}
+            title="7 Day Streak"
+            description="Consistent learning pays off!"
+            color="text-blue-600"
+            bgColor="bg-blue-100"
+          />
+          <AchievementCard
+            icon={Star}
+            title="Top Student"
+            description="Ranked #1 in Physics"
+            color="text-yellow-600"
+            bgColor="bg-yellow-100"
+          />
+          <AchievementCard
+            icon={BookOpen}
+            title="Quick Learner"
+            description="Completed 5 modules this week"
+            color="text-green-600"
+            bgColor="bg-green-100"
+          />
+        </div>
+      </motion.div>
+
       {/* Error message */}
       {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
@@ -283,44 +321,6 @@ const Dashboard = () => {
                 </div>
               </div>
             ))}
-          </div>
-        </motion.div>
-
-        {/* Achievements Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="lg:col-span-3 bg-white rounded-xl shadow-sm p-6"
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <Trophy className="h-5 w-5 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Recent Achievements
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <AchievementCard
-              icon={Trophy}
-              title="7 Day Streak"
-              description="Consistent learning pays off!"
-              color="text-blue-600"
-              bgColor="bg-blue-100"
-            />
-            <AchievementCard
-              icon={Star}
-              title="Top Student"
-              description="Ranked #1 in Physics"
-              color="text-yellow-600"
-              bgColor="bg-yellow-100"
-            />
-            <AchievementCard
-              icon={BookOpen}
-              title="Quick Learner"
-              description="Completed 5 modules this week"
-              color="text-green-600"
-              bgColor="bg-green-100"
-            />
           </div>
         </motion.div>
       </motion.div>
