@@ -20,6 +20,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
+  const [streakDays, setStreakDays] = useState(0);
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -85,6 +86,44 @@ const Dashboard = () => {
 
     fetchTasks();
   }, [userData]);
+
+  // Fetch Study Streak
+useEffect(() => {
+  if (!accounts.length) return;
+
+  const account = instance.getActiveAccount() || accounts[0];
+  const token = account?.idToken;
+
+  const updateAndFetchStreak = async () => {
+    try {
+      // 1️⃣ Update streak
+      await fetch("http://localhost:8000/update-streak", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // 2️⃣ Fetch updated streak
+      const res = await fetch("http://localhost:8000/streak", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      // 3️⃣ Set new streak value
+      setStreakDays(data.current_streak || 0);
+
+    } catch (err) {
+      console.error("Error fetching streak:", err);
+      setStreakDays(0);
+    }
+  };
+
+  updateAndFetchStreak();
+}, [accounts, instance]);
 
   // Display loading state if still loading
   if (loading && !userData) {
@@ -189,7 +228,16 @@ const Dashboard = () => {
           You're signed in as <span className="font-medium">{email}</span>
         </p>
       </div>
-
+      {/* Study Streak Box */}
+      <div className="bg-gradient-to-r from-orange-500 to-yellow-400 text-black px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 w-fit border border-orange-500">
+        <span className="text-2xl">🔥</span>
+          <span className="text-lg font-bold tracking-wide">
+            {streakDays === 0
+    ? "Hey! Let's create a study streak 🚀"
+    : `${streakDays} Day${streakDays === 1 ? "" : "s"} Streak`}
+</span>
+  <span className="text-2xl">⭐</span>
+</div>
       {/* Achievements Section */}
       <motion.div
         initial={{ opacity: 0 }}

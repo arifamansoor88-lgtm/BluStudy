@@ -3,6 +3,21 @@ import json
 import uuid
 import uvicorn
 from datetime import datetime, timedelta
+def calculate_streak(last_date, current_streak):
+    today = datetime.utcnow().date()
+
+    if not last_date:
+        return today, 1
+
+    last_date = datetime.fromisoformat(last_date).date()
+
+    if last_date == today:
+        return last_date, current_streak
+
+    if last_date == today - timedelta(days=1):
+        return today, current_streak + 1
+
+    return today, 1
 from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form, Query, HTTPException, Body
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
@@ -1082,6 +1097,75 @@ async def save_summary(
         print(f"❌ Error saving summary: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to save summary.")
 
+
+# STUDY STREAK
+
+
+@app.post("/update-streak")
+async def update_streak(user_claims: dict = Depends(validate_token)):
+    try:
+        user_id = user_claims["sub"]
+
+        # Try to get existing streak record
+        query = "SELECT * FROM c WHERE c.userId = @uid AND c.contentType = 'streak'"
+        params = [{"name": "@uid", "value": user_id}]
+        items = list(container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+
+        if items:
+            streak_doc = items[0]
+        else:
+            streak_doc = {
+                "id": str(uuid.uuid4()),
+                "userId": user_id,
+                "contentType": "streak",
+                "data": {
+                    "current_streak": 0,
+                    "longest_streak": 0,
+                    "last_active_date": None
+                }
+            }
+
+        new_date, new_streak = calculate_streak(
+            streak_doc["data"].get("last_active_date"),
+            streak_doc["data"].get("current_streak", 0)
+        )
+
+        streak_doc["data"]["last_active_date"] = new_date.isoformat()
+        streak_doc["data"]["current_streak"] = new_streak
+        streak_doc["data"]["longest_streak"] = max(
+            streak_doc["data"].get("longest_streak", 0),
+            new_streak
+        )
+
+        container.upsert_item(streak_doc)
+
+        return {
+            "current_streak": streak_doc["data"]["current_streak"],
+            "longest_streak": streak_doc["data"]["longest_streak"]
+        }
+
+    except Exception as e:
+        print("Error updating streak:", e)
+        raise HTTPException(status_code=500, detail="Failed to update streak")
+
+
+@app.get("/streak")
+async def get_streak(user_claims: dict = Depends(validate_token)):
+    try:
+        user_id = user_claims["sub"]
+
+        query = "SELECT * FROM c WHERE c.userId = @uid AND c.contentType = 'streak'"
+        params = [{"name": "@uid", "value": user_id}]
+        items = list(container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+
+        if items:
+            return {"current_streak": items[0]["data"].get("current_streak", 0)}
+        else:
+            return {"current_streak": 0}
+
+    except Exception as e:
+        print("Error fetching streak:", e)
+        return {"current_streak": 0}
 # For development purposes
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
