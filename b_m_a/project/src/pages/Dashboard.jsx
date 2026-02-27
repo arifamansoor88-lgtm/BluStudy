@@ -9,7 +9,6 @@ import {
   Target,
   BookOpen,
   Calendar,
-  User,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -139,20 +138,6 @@ useEffect(() => {
   const firstName = userName.split(" ")[0];
   const email = userData?.email || "Not available";
 
-  const teachers = [
-    {
-      name: "Dr. Sarah Wilson",
-      subject: "Mathematics",
-      image:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
-    },
-    {
-      name: "Prof. Michael Chen",
-      subject: "Physics",
-      image:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
-    },
-  ];
 
   const schedule = [
     {
@@ -315,38 +300,6 @@ useEffect(() => {
         animate={{ opacity: 1, y: 0 }}
         className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8"
       >
-        {/* Teachers Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white rounded-xl shadow-sm p-6"
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <User className="h-5 w-5 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Your Teachers
-            </h2>
-          </div>
-          <div className="space-y-4">
-            {teachers.map((teacher, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <img
-                  src={teacher.image}
-                  alt={teacher.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div>
-                  <h3 className="font-medium text-gray-900">{teacher.name}</h3>
-                  <p className="text-sm text-gray-500">{teacher.subject}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
 
         {/* Schedule Section */}
         <motion.div
