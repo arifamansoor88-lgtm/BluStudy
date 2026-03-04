@@ -10,6 +10,8 @@ import {
   BookOpen,
   Calendar,
   ArrowRight,
+  Brain,
+  Play,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserRecents } from "../hooks/useUserRecents";
@@ -23,6 +25,32 @@ const Dashboard = () => {
   const [userData, setUserData] = useState(null);
   const [streakDays, setStreakDays] = useState(0);
   const recentItems = useUserRecents();
+  const [focusAreas, setFocusAreas] = useState([
+  "Derivatives",
+  "Chemical Bonds",
+]);
+const handleQuizio = async () => {
+  try {
+    const res = await fetch("http://localhost:8000/generate-focus-quiz", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        topics: focusAreas
+      })
+    });
+
+    const data = await res.json();
+
+    navigate("/tools/practice-tests", {
+      state: { quiz: data.quiz }
+    });
+
+  } catch (err) {
+    console.error("Failed to generate quiz:", err);
+  }
+};
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -252,6 +280,57 @@ useEffect(() => {
         Keep it going
       </p>
     </div>
+  )}
+</motion.div>
+
+{/* Quizio Section */}
+<motion.div
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ delay: 0.08 }}
+  className="bg-white rounded-xl shadow-sm p-6 mb-6"
+>
+  <div className="flex items-center gap-2 mb-4">
+    <Brain className="text-purple-600" />
+    <h2 className="text-xl font-semibold text-gray-900">
+      Quizio
+    </h2>
+  </div>
+
+  {focusAreas.length > 0 ? (
+    <>
+      <p className="text-gray-600 mb-3">
+        AI generated quiz based on your focus areas
+      </p>
+
+      <ul className="text-sm text-gray-700 list-disc pl-5 mb-4">
+        {focusAreas.map((area, i) => (
+          <li key={i}>{area}</li>
+        ))}
+      </ul>
+
+      <button
+  onClick={handleQuizio}
+  className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+>
+        <Play size={16} />
+        Start Focus Quiz
+      </button>
+    </>
+  ) : (
+    <>
+      <p className="text-gray-600 mb-4">
+        Practice quizzes help discover your weak areas.
+      </p>
+
+      <button
+        onClick={() => navigate("/tools/practice-tests")}
+        className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+      >
+        <Play size={16} />
+        Generate Practice Quiz
+      </button>
+    </>
   )}
 </motion.div>
       {/* Achievements Section */}
