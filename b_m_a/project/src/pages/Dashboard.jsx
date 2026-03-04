@@ -9,8 +9,10 @@ import {
   Target,
   BookOpen,
   Calendar,
+  ArrowRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useUserRecents } from "../hooks/useUserRecents";
 
 const Dashboard = () => {
   const { instance, accounts } = useMsal();
@@ -20,6 +22,7 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
   const [streakDays, setStreakDays] = useState(0);
+  const recentItems = useUserRecents();
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -261,6 +264,33 @@ useEffect(() => {
         </div>
       </motion.div>
 
+      {/* Recent Tools Section */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="bg-white rounded-xl shadow-sm p-6 mb-6"
+      >
+        <div className="flex items-center gap-2 mb-6">
+          <Clock className="h-5 w-5 text-primary-600" />
+          <h2 className="text-xl font-semibold text-gray-900">
+            Jump back into your recent tools:
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {recentItems && recentItems.length > 0 ? (
+            recentItems.slice(0, 4).map((item, index) => (
+              <RecentItemCard key={item.id || index} item={item} navigate={navigate} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-8 text-gray-500">
+              <Clock className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+              <p>No recent tools yet. Start using tools to see them here!</p>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
       {/* Error message */}
       {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
@@ -452,5 +482,77 @@ const StudyGoalCard = ({ goal }) => (
     </div>
   </motion.div>
 );
+
+const RecentItemCard = ({ item, navigate }) => {
+  const contentTypeColors = {
+    voice_note: { bg: "bg-purple-50", text: "text-purple-700", icon: "🎤" },
+    flashcard: { bg: "bg-blue-50", text: "text-blue-700", icon: "📇" },
+    quiz: { bg: "bg-green-50", text: "text-green-700", icon: "📝" },
+    mindmap: { bg: "bg-orange-50", text: "text-orange-700", icon: "🗺️" },
+    study_plan: { bg: "bg-pink-50", text: "text-pink-700", icon: "📋" },
+    folder: { bg: "bg-cyan-50", text: "text-cyan-700", icon: "📁" },
+  };
+
+  const typeConfig = contentTypeColors[item.contentType] || {
+    bg: "bg-gray-50",
+    text: "text-gray-700",
+    icon: "📄",
+  };
+
+  const handleNavigate = async () => {
+    // Track the access to this tool
+    try {
+      const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      await fetch(`${API}/api/track-access`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ item_id: item.id }),
+      });
+    } catch (e) {
+      console.warn("Failed to track access:", e);
+    }
+
+    const routeMap = {
+      voice_note: "/tools/voice-notes",
+      flashcard: "/tools/flashcards",
+      flashcard_deck: "/tools/flashcards",
+      quiz: "/tools/practice-tests",
+      mindmap: `/tools/maps/${item.id}`,
+      study_plan: "/tools/study-planner",
+      summary: "/tools/summarizer",
+      folder: `/workspace/folder/${item.id}`,
+    };
+
+    const route = routeMap[item.contentType];
+    console.log("RecentItemCard navigation:", { item: item.id, contentType: item.contentType, route });
+    
+    if (route) {
+      navigate(route);
+    } else {
+      console.warn(`No route found for content type: ${item.contentType}`);
+    }
+  };
+
+  return (
+    <motion.div
+      whileHover={{ scale: 1.05, y: -4 }}
+      onClick={handleNavigate}
+      className={`${typeConfig.bg} rounded-lg p-4 cursor-pointer transition-all`}
+    >
+      <div className="flex items-start justify-between mb-2">
+        <span className="text-2xl">{typeConfig.icon}</span>
+        <ArrowRight className={`h-4 w-4 ${typeConfig.text}`} />
+      </div>
+      <h3 className={`font-semibold ${typeConfig.text} text-sm truncate`}>
+        {item.title || "Untitled"}
+      </h3>
+      <p className="text-xs text-gray-500 mt-1 capitalize">
+        {item.contentType?.replace(/_/g, " ")}
+      </p>
+    </motion.div>
+  );
+};
 
 export default Dashboard;
