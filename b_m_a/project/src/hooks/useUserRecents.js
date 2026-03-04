@@ -13,44 +13,25 @@ export function useUserRecents(/* userId not needed */) {
     return res.accessToken || res.idToken;
   }, [instance, accounts]);
 
-  const fetchRecents = useCallback(async () => {
-    try {
-      const token = await getToken();
-      console.log("useUserRecents: Fetching from", `${API}/api/recents?limit=8`);
-      const res = await fetch(`${API}/api/recents?limit=8`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      console.log("useUserRecents: Response:", json);
-      const list = Array.isArray(json?.items) ? json.items : [];
-      console.log("useUserRecents: Extracted items:", list);
-      setItems(list);
-    } catch (e) {
-      console.warn("useUserRecents failed:", e);
-      setItems([]);
-    }
-  }, [getToken]);
-
-  // Initial fetch
   useEffect(() => {
     let abort = false;
     (async () => {
-      if (!abort) await fetchRecents();
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API}/api/recents?limit=8`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const list = Array.isArray(json?.items) ? json.items : [];
+        if (!abort) setItems(list);
+      } catch (e) {
+        console.warn("useUserRecents failed:", e);
+        if (!abort) setItems([]);
+      }
     })();
     return () => { abort = true; };
-  }, [fetchRecents]);
-
-  // Refresh when page comes back into focus
-  useEffect(() => {
-    const handleFocus = () => {
-      console.log("useUserRecents: Page focused, refreshing recents");
-      fetchRecents();
-    };
-
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
-  }, [fetchRecents]);
+  }, [getToken]);
 
   return useMemo(() => (Array.isArray(items) ? items : []), [items]);
 }
