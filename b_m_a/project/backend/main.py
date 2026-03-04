@@ -2576,6 +2576,68 @@ async def delete_file(
         print(f"Error deleting file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
 
+# --------------------------------------------------------------------------------------
+# Study Streak API
+# --------------------------------------------------------------------------------------
+
+@app.get("/streak")
+async def get_streak(request: Request):
+    uid = _resolve_user_id(request)
+
+    query = "SELECT * FROM c WHERE c.userId = @uid AND c.contentType = 'study_streak'"
+    params = [{"name": "@uid", "value": uid}]
+
+    items = list(container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+
+    if not items:
+        return {"current_streak": 0}
+
+    return {"current_streak": items[0].get("streakDays", 0)}
+
+
+@app.post("/update-streak")
+async def update_streak(request: Request):
+    uid = _resolve_user_id(request)
+
+    query = "SELECT * FROM c WHERE c.userId = @uid AND c.contentType = 'study_streak'"
+    params = [{"name": "@uid", "value": uid}]
+
+    items = list(container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+
+    today = datetime.utcnow().date().isoformat()
+
+    if not items:
+        doc = {
+            "id": str(uuid.uuid4()),
+            "userId": uid,
+            "contentType": "study_streak",
+            "streakDays": 1,
+            "lastStudyDate": today
+        }
+        container.create_item(body=doc)
+        return {"current_streak": 1}
+
+    doc = items[0]
+
+    last = doc.get("lastStudyDate")
+    streak = doc.get("streakDays", 0)
+
+    if last == today:
+        return {"current_streak": streak}
+
+    yesterday = (datetime.utcnow().date() - timedelta(days=1)).isoformat()
+
+    if last == yesterday:
+        streak += 1
+    else:
+        streak = 1
+
+    doc["streakDays"] = streak
+    doc["lastStudyDate"] = today
+
+    container.upsert_item(doc)
+
+    return {"current_streak": streak}
 
 # --------------------------------------------------------------------------------------
 # Dev server

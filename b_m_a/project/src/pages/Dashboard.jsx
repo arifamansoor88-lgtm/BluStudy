@@ -216,16 +216,44 @@ useEffect(() => {
           You're signed in as <span className="font-medium">{email}</span>
         </p>
       </div>
-      {/* Study Streak Box */}
-      <div className="bg-gradient-to-r from-orange-500 to-yellow-400 text-black px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 w-fit border border-orange-500">
-        <span className="text-2xl">🔥</span>
-          <span className="text-lg font-bold tracking-wide">
-            {streakDays === 0
-    ? "Hey! Let's create a study streak 🚀"
-    : `${streakDays} Day${streakDays === 1 ? "" : "s"} Streak`}
-</span>
-  <span className="text-2xl">⭐</span>
-</div>
+
+{/* Study Streak Section */}
+<motion.div
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ delay: 0.05 }}
+  className="bg-white rounded-xl shadow-sm p-6 mb-6"
+>
+  <h2 className="text-xl font-semibold text-gray-900 mb-4">
+    Study Streak
+  </h2>
+
+  {streakDays === 0 ? (
+    <div>
+      <p className="text-lg font-semibold text-orange-500">
+        Start your first streak
+      </p>
+      <p className="text-sm text-gray-500">
+        Study today to begin building consistency.
+      </p>
+    </div>
+  ) : (
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-3xl font-bold text-orange-500">
+          {streakDays}
+        </p>
+        <p className="text-sm text-gray-500">
+          Day{streakDays === 1 ? "" : "s"} in a row
+        </p>
+      </div>
+
+      <p className="text-green-600 font-medium">
+        Keep it going
+      </p>
+    </div>
+  )}
+</motion.div>
       {/* Achievements Section */}
       <motion.div
         initial={{ opacity: 0 }}
