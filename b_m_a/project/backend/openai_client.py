@@ -195,7 +195,22 @@ def generate_quiz(
     
     focus_instruction = f"\n\n# Focus Areas:\nPay special attention to these topics: {focus_topics}" if focus_topics else ""
     
-    system_prompt = f"""You are an AI quiz generator that creates quizzes based on input text containing a specific topic. The quiz will consist of {num_questions} questions using the following question types: {', '.join(question_formats)}. The output should be a structured JSON object.{focus_instruction}
+    system_prompt = f"""You are an AI quiz generator that creates quizzes based on input text containing a specific topic.
+
+IMPORTANT FORMATTING RULES FOR MATHEMATICS:
+- Any mathematical expression MUST be written using LaTeX.
+- Do NOT write raw math like x^2 or sin(x). Always wrap math using $...$.
+- Use LaTeX functions like \\sin, \\cos, \\ln, \\sqrt.
+- Use ^ for powers.
+
+Examples:
+x squared → $x^2$
+sin(x) → $\\sin(x)$
+ln(x) → $\\ln(x)$
+square root of x → $\\sqrt{{x}}$
+absolute value → $|x|$
+
+The quiz will consist of {num_questions} questions using the following question types: {', '.join(question_formats)}. The output should be a structured JSON object.{focus_instruction}
 
 ---
 
@@ -287,6 +302,7 @@ Return a JSON object structured as follows:
 
 # Notes:
 - Focus on generating questions that reflect critical concepts from the given text.
+- If a question OR answer option contains mathematics, format it using LaTeX inside $...$.
 - Ensure clarity and correctness in both questions and answers.
 - Proportionately balance the mix of question types across the quiz.
 - Avoid ambiguity in "correct_answer" or "correct_answers" fields by making answers explicit.

@@ -180,5 +180,1565 @@
       }
     ],
     "resourceName": "topic"
+  },
+  {
+    "id": "01bc1ac2-2a82-49ae-95e1-e71fc6ab8225",
+    "userId": "10811437-1108-4f20-b115-41102e12af08",
+    "contentType": "quiz",
+    "createdAt": "2026-03-05T09:47:26.082476",
+    "data": {
+      "title": "Introduction to Differentiation",
+      "questions": [
+        {
+          "type": "multiple_choice",
+          "question": "What does differentiation primarily deal with in calculus?",
+          "options": [
+            "Integration",
+            "Finding the rate of change",
+            "Measuring angles",
+            "Calculating areas"
+          ],
+          "correct_answer": "Finding the rate of change"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "The derivative of a constant function is?",
+          "options": [
+            "The constant itself",
+            "Zero",
+            "One",
+            "Undefined"
+          ],
+          "correct_answer": "Zero"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "If f(x) = x^2, what is f'(x)?",
+          "options": [
+            "x",
+            "2x",
+            "x^2",
+            "2"
+          ],
+          "correct_answer": "2x"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What is the derivative of sin(x)?",
+          "options": [
+            "sin(x)",
+            "-sin(x)",
+            "cos(x)",
+            "-cos(x)"
+          ],
+          "correct_answer": "cos(x)"
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of the following functions are differentiable?",
+          "options": [
+            "x^2",
+            "|x|",
+            "sin(x)",
+            "ln(x) on x > 0"
+          ],
+          "correct_answers": [
+            "x^2",
+            "sin(x)",
+            "ln(x) on x > 0"
+          ]
+        },
+        {
+          "type": "multi_select",
+          "question": "What rules are used for differentiation?",
+          "options": [
+            "Chain rule",
+            "Product rule",
+            "Quotient rule",
+            "Secant rule"
+          ],
+          "correct_answers": [
+            "Chain rule",
+            "Product rule",
+            "Quotient rule"
+          ]
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of these statements about differentiation are true?",
+          "options": [
+            "The derivative measures slope of a function at any point",
+            "Differentiation is the reverse operation of integration",
+            "Every function is differentiable",
+            "If f'(x) exists, the function is continuous at that point"
+          ],
+          "correct_answers": [
+            "The derivative measures slope of a function at any point",
+            "If f'(x) exists, the function is continuous at that point"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the following functions to their derivatives.",
+          "prompts": [
+            "x^3",
+            "sin(x)",
+            "e^x"
+          ],
+          "targets": [
+            "3x^2",
+            "cos(x)",
+            "e^x"
+          ],
+          "correct_mapping": {
+            "x^3": "3x^2",
+            "sin(x)": "cos(x)",
+            "e^x": "e^x"
+          }
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Categorize the following into basic and advanced differentiation rules.",
+          "prompts": [
+            "Power rule",
+            "Chain rule",
+            "Quotient rule",
+            "Product rule"
+          ],
+          "targets": [
+            "Basic",
+            "Advanced"
+          ],
+          "correct_mapping": {
+            "Power rule": "Basic",
+            "Chain rule": "Advanced",
+            "Quotient rule": "Advanced",
+            "Product rule": "Advanced"
+          }
+        },
+        {
+          "type": "short_answer",
+          "question": "What is the derivative of cos(x)?",
+          "correct_answer": "-sin(x)",
+          "acceptable_answers": [
+            "-sin(x)"
+          ]
+        },
+        {
+          "type": "short_answer",
+          "question": "What are critical points of a function?",
+          "correct_answer": "Points where the derivative equals zero or does not exist",
+          "acceptable_answers": [
+            "Where the derivative is zero",
+            "Where the derivative does not exist"
+          ]
+        },
+        {
+          "type": "short_answer",
+          "question": "What is the derivative of ln(x)?",
+          "correct_answer": "1/x",
+          "acceptable_answers": [
+            "1/x"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "The process of finding the derivative is called [BLANK].",
+          "correct_answer": "differentiation",
+          "acceptable_answers": [
+            "differentiation"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "The derivative of a function represents its [BLANK].",
+          "correct_answer": "rate of change",
+          "acceptable_answers": [
+            "slope",
+            "rate of change"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "If f(x) = 3x^3, then f'(x) = [BLANK].",
+          "correct_answer": "9x^2",
+          "acceptable_answers": [
+            "9x^2"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "The [BLANK] rule is used to differentiate the composition of two functions.",
+          "correct_answer": "chain",
+          "acceptable_answers": [
+            "chain rule"
+          ]
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What is the derivative of a linear function?",
+          "options": [
+            "The slope",
+            "Zero",
+            "The y-intercept",
+            "Undefined"
+          ],
+          "correct_answer": "The slope"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "Which of the following is NOT a differentiation rule?",
+          "options": [
+            "Product rule",
+            "Chain rule",
+            "Power law",
+            "Integration rule"
+          ],
+          "correct_answer": "Integration rule"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What does the second derivative represent?",
+          "options": [
+            "The slope of the original function",
+            "The rate of change of the derivative",
+            "The area under the curve",
+            "None of these"
+          ],
+          "correct_answer": "The rate of change of the derivative"
+        },
+        {
+          "type": "multi_select",
+          "question": "What can second derivatives be used to determine?",
+          "options": [
+            "Concavity of a function",
+            "Maximum and minimum points",
+            "Rate of growth",
+            "Points of inflection"
+          ],
+          "correct_answers": [
+            "Concavity of a function",
+            "Points of inflection"
+          ]
+        }
+      ],
+      "userAnswers": null,
+      "score": null,
+      "timeTaken": 0,
+      "resourceName": "differentiation_practice_i.pdf",
+      "options": {
+        "numQuestions": 20,
+        "selectedTopics": [],
+        "customTopics": "",
+        "questionFormats": {
+          "multiple_choice": true,
+          "multi_select": true,
+          "drag_and_drop": true,
+          "short_answer": true,
+          "fill_in_blank": true
+        }
+      },
+      "attempts": []
+    }
+  },
+  {
+    "id": "9cf61bf2-e115-4ce5-a071-d06b90352c51",
+    "userId": "10811437-1108-4f20-b115-41102e12af08",
+    "contentType": "quiz",
+    "createdAt": "2026-03-05T09:54:04.512109",
+    "data": {
+      "title": "Addition Sums Quiz",
+      "questions": [
+        {
+          "type": "multiple_choice",
+          "question": "What is the sum of 15 and 9?",
+          "options": [
+            "23",
+            "22",
+            "24",
+            "25"
+          ],
+          "correct_answer": "24"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "If you add 7 and 3, what do you get?",
+          "options": [
+            "10",
+            "11",
+            "12",
+            "9"
+          ],
+          "correct_answer": "10"
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of the following equal 20? (Choose all that apply)",
+          "options": [
+            "10 + 10",
+            "15 + 6",
+            "14 + 6",
+            "5 + 15"
+          ],
+          "correct_answers": [
+            "10 + 10",
+            "14 + 6",
+            "5 + 15"
+          ]
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of these sums are correct? (Choose all that apply)",
+          "options": [
+            "8 + 2 = 10",
+            "12 + 5 = 18",
+            "13 + 7 = 20",
+            "6 + 14 = 20"
+          ],
+          "correct_answers": [
+            "8 + 2 = 10",
+            "13 + 7 = 20",
+            "6 + 14 = 20"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the sums to their correct results.",
+          "prompts": [
+            "12 + 8",
+            "9 + 6",
+            "7 + 13"
+          ],
+          "targets": [
+            "15",
+            "20",
+            "25"
+          ],
+          "correct_mapping": {
+            "12 + 8": "20",
+            "9 + 6": "15",
+            "7 + 13": "20"
+          }
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Drag the addition problem to the correct answer.",
+          "prompts": [
+            "5 + 7",
+            "10 + 10",
+            "8 + 9"
+          ],
+          "targets": [
+            "16",
+            "17",
+            "20"
+          ],
+          "correct_mapping": {
+            "5 + 7": "12",
+            "10 + 10": "20",
+            "8 + 9": "17"
+          }
+        },
+        {
+          "type": "short_answer",
+          "question": "What is the sum of 14 and 11?",
+          "correct_answer": "25",
+          "acceptable_answers": [
+            "twenty-five",
+            "25"
+          ]
+        },
+        {
+          "type": "short_answer",
+          "question": "Add 20 and 5. What is the total?",
+          "correct_answer": "25",
+          "acceptable_answers": [
+            "25",
+            "twenty-five"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "The sum of 9 and 3 is [BLANK].",
+          "correct_answer": "12",
+          "acceptable_answers": [
+            "12",
+            "twelve"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "Adding 13 and 7 equals [BLANK].",
+          "correct_answer": "20",
+          "acceptable_answers": [
+            "20",
+            "twenty"
+          ]
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What is the sum of 25 and 5?",
+          "options": [
+            "30",
+            "35",
+            "32",
+            "28"
+          ],
+          "correct_answer": "30"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What is the total of 8 and 15?",
+          "options": [
+            "20",
+            "24",
+            "23",
+            "22"
+          ],
+          "correct_answer": "23"
+        },
+        {
+          "type": "multi_select",
+          "question": "Which pairs equal 15?",
+          "options": [
+            "7 + 8",
+            "10 + 5",
+            "9 + 6",
+            "6 + 7"
+          ],
+          "correct_answers": [
+            "7 + 8",
+            "10 + 5"
+          ]
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of these sums are more than 20?",
+          "options": [
+            "12 + 8",
+            "15 + 10",
+            "18 + 4",
+            "14 + 9"
+          ],
+          "correct_answers": [
+            "15 + 10",
+            "18 + 4",
+            "14 + 9"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the addition problem to its correct answer.",
+          "prompts": [
+            "6 + 5",
+            "12 + 7",
+            "9 + 9"
+          ],
+          "targets": [
+            "15",
+            "14",
+            "18"
+          ],
+          "correct_mapping": {
+            "6 + 5": "11",
+            "12 + 7": "19",
+            "9Cews+... actual return matchings..": "REMOVE THIS."
+          }
+        }
+      ],
+      "userAnswers": null,
+      "score": null,
+      "timeTaken": 0,
+      "resourceName": "addition sums",
+      "options": {
+        "numQuestions": 20,
+        "selectedTopics": [],
+        "customTopics": "",
+        "questionFormats": {
+          "multiple_choice": true,
+          "multi_select": true,
+          "drag_and_drop": true,
+          "short_answer": true,
+          "fill_in_blank": true
+        }
+      },
+      "attempts": []
+    }
+  },
+  {
+    "id": "7fbde789-4285-43d7-bfe0-2541da0afba3",
+    "userId": "10811437-1108-4f20-b115-41102e12af08",
+    "contentType": "quiz",
+    "createdAt": "2026-03-05T10:03:01.280249",
+    "data": {
+      "title": "Fundamentals of Addition Sums",
+      "questions": [
+        {
+          "type": "multiple_choice",
+          "question": "What is $5 + 7$ equal to?",
+          "options": [
+            "10",
+            "11",
+            "12",
+            "13"
+          ],
+          "correct_answer": "12"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "If $9 + 6 = x$, what is the value of $x$?",
+          "options": [
+            "14",
+            "15",
+            "16",
+            "17"
+          ],
+          "correct_answer": "15"
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of the following are correct sums?",
+          "options": [
+            "$4 + 3 = 7$",
+            "$2 + 8 = 10$",
+            "$5 + 9 = 14$",
+            "$6 + 7 = 13$"
+          ],
+          "correct_answers": [
+            "$4 + 3 = 7$",
+            "$2 + 8 = 10$",
+            "$5 + 9 = 14$"
+          ]
+        },
+        {
+          "type": "multi_select",
+          "question": "Identify all addition equations that are incorrect.",
+          "options": [
+            "$3 + 6 = 8$",
+            "$7 + 2 = 9$",
+            "$10 + 5 = 14$",
+            "$8 + 4 = 12$"
+          ],
+          "correct_answers": [
+            "$3 + 6 = 8$",
+            "$10 + 5 = 14$"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match each addition equation to its correct result.",
+          "prompts": [
+            "$3 + 7$",
+            "$6 + 5$",
+            "$8 + 2$"
+          ],
+          "targets": [
+            "9",
+            "10",
+            "11"
+          ],
+          "correct_mapping": {
+            "$3 + 7$": "10",
+            "$6 + 5$": "11",
+            "$8 + 2$": "10"
+          }
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the sums to their categories (Even or Odd).",
+          "prompts": [
+            "$4 + 6$",
+            "$3 + 5$",
+            "$7 + 8$",
+            "$9 + 0$"
+          ],
+          "targets": [
+            "Even",
+            "Odd"
+          ],
+          "correct_mapping": {
+            "$4 + 6$": "Even",
+            "$3 + 5$": "Odd",
+            "$7 + 8$": "Odd",
+            "$9 + 0$": "Odd"
+          }
+        },
+        {
+          "type": "short_answer",
+          "question": "What is $15 + 3$?",
+          "correct_answer": "18",
+          "acceptable_answers": [
+            "18"
+          ]
+        },
+        {
+          "type": "short_answer",
+          "question": "If Sarah had 8 candies and her friend gave her 5 more, how many candies does she have now?",
+          "correct_answer": "13",
+          "acceptable_answers": [
+            "13"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "$9 + 4 = [BLANK]$",
+          "correct_answer": "13",
+          "acceptable_answers": [
+            "13"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "$20 + [BLANK] = 25$",
+          "correct_answer": "5",
+          "acceptable_answers": [
+            "5"
+          ]
+        },
+        {
+          "type": "multiple_choice",
+          "question": "Which sum results in an odd number?",
+          "options": [
+            "$5 + 5$",
+            "$3 + 8$",
+            "$7 + 2$",
+            "$6 + 6$"
+          ],
+          "correct_answer": "$3 + 8$"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "Which of the following sums is NOT equal to 15?",
+          "options": [
+            "$10 + 5$",
+            "$7 + 8$",
+            "$12 + 3$",
+            "$9 + 6$"
+          ],
+          "correct_answer": "$9 + 6$"
+        },
+        {
+          "type": "multi_select",
+          "question": "Choose all sums that equal 20.",
+          "options": [
+            "$10 + 10$",
+            "$15 + 5$",
+            "$12 + 7$",
+            "$8 + 12$"
+          ],
+          "correct_answers": [
+            "$10 + 10$",
+            "$15 + 5$",
+            "$8 + 12$"
+          ]
+        },
+        {
+          "type": "multi_select",
+          "question": "Select all expressions consistent with the commutative property of addition.",
+          "options": [
+            "$4 + 5 = 5 + 4$",
+            "$9 + 3 = 12 + 0$",
+            "$7 + 2 = 2 + 7$",
+            "$10 + 5 = 5 + 10$"
+          ],
+          "correct_answers": [
+            "$4 + 5 = 5 + 4$",
+            "$7 + 2 = 2 + 7$",
+            "$10 + 5 = 5 + 10$"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the sums to their results.",
+          "prompts": [
+            "$11 + 6$",
+            "$12 + 4$",
+            "$8 + 7$"
+          ],
+          "targets": [
+            "18",
+            "17",
+            "15"
+          ],
+          "correct_mapping": {
+            "$11 + 6$": "17",
+            "$12 + 4$": "18",
+            "$8 + 7$": "15"
+          }
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match each missing number to the equation it completes.",
+          "prompts": [
+            "3",
+            "7",
+            "4"
+          ],
+          "targets": [
+            "$6 + [BLANK] = 10$",
+            "$8 + [BLANK] = 15$",
+            "$9 + [BLANK] = 13$"
+          ],
+          "correct_mapping": {
+            "3": "$9 + [BLANK] = 13$",
+            "7": "$8 + [BLANK] = 15$",
+            "4": "$6 + [BLANK] = 10$"
+          }
+        },
+        {
+          "type": "short_answer",
+          "question": "What is the result of $14 + 9$?",
+          "correct_answer": "23",
+          "acceptable_answers": [
+            "23"
+          ]
+        },
+        {
+          "type": "short_answer",
+          "question": "If a box contains 25 apples and 13 more are added, how many apples are in the box now?",
+          "correct_answer": "38",
+          "acceptable_answers": [
+            "38"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "$[BLANK] + 8 = 20$",
+          "correct_answer": "12",
+          "acceptable_answers": [
+            "12"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "$30 + [BLANK] = 50$",
+          "correct_answer": "20",
+          "acceptable_answers": [
+            "20"
+          ]
+        }
+      ],
+      "userAnswers": null,
+      "score": null,
+      "timeTaken": 0,
+      "resourceName": "addition sums",
+      "options": {
+        "numQuestions": 20,
+        "selectedTopics": [],
+        "customTopics": "",
+        "questionFormats": {
+          "multiple_choice": true,
+          "multi_select": true,
+          "drag_and_drop": true,
+          "short_answer": true,
+          "fill_in_blank": true
+        }
+      },
+      "attempts": []
+    }
+  },
+  {
+    "id": "40f9b69a-49e7-4d3d-99ce-6a48727e37f7",
+    "userId": "10811437-1108-4f20-b115-41102e12af08",
+    "contentType": "quiz",
+    "createdAt": "2026-03-05T10:15:19.687152",
+    "data": {
+      "title": "Introduction to Addition",
+      "questions": [
+        {
+          "type": "multiple_choice",
+          "question": "What is the result of $5 + 7$?",
+          "options": [
+            "10",
+            "11",
+            "12",
+            "13"
+          ],
+          "correct_answer": "12"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "Which property of addition states that $a + b = b + a$?",
+          "options": [
+            "Associative Property",
+            "Distributive Property",
+            "Commutative Property",
+            "Identity Property"
+          ],
+          "correct_answer": "Commutative Property"
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of the following operations involve addition?",
+          "options": [
+            "Adding numbers like $2 + 3$",
+            "Increasing a value by a number",
+            "Finding the difference between two numbers",
+            "Joining two sets of objects"
+          ],
+          "correct_answers": [
+            "Adding numbers like $2 + 3$",
+            "Increasing a value by a number",
+            "Joining two sets of objects"
+          ]
+        },
+        {
+          "type": "multi_select",
+          "question": "Select all equations that are correct:",
+          "options": [
+            "$3 + 4 = 7$",
+            "$5 + 5 = 9$",
+            "$6 + 1 = 7$",
+            "$8 + 2 = 11$"
+          ],
+          "correct_answers": [
+            "$3 + 4 = 7$",
+            "$6 + 1 = 7$"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the descriptions with the correct sums:",
+          "prompts": [
+            "The sum of $4 + 6$",
+            "The sum of $10 + 5$",
+            "The sum of $7 + 8$"
+          ],
+          "targets": [
+            "15",
+            "14",
+            "13"
+          ],
+          "correct_mapping": {
+            "The sum of $4 + 6$": "10",
+            "The sum of $10 + 5$": "15",
+            "The sum of $7 + 8$": "15"
+          }
+        },
+        {}
+      ],
+      "userAnswers": null,
+      "score": null,
+      "timeTaken": 0,
+      "resourceName": "addition",
+      "options": {
+        "numQuestions": 20,
+        "selectedTopics": [],
+        "customTopics": "",
+        "questionFormats": {
+          "multiple_choice": true,
+          "multi_select": true,
+          "drag_and_drop": true,
+          "short_answer": true,
+          "fill_in_blank": true
+        }
+      },
+      "attempts": []
+    }
+  },
+  {
+    "id": "ff48e00b-4ac3-465b-b7b0-949528db3058",
+    "userId": "10811437-1108-4f20-b115-41102e12af08",
+    "contentType": "quiz",
+    "createdAt": "2026-03-05T10:20:33.861229",
+    "data": {
+      "title": "Addition Quiz: Understanding Addition Sums",
+      "questions": [
+        {
+          "type": "multiple_choice",
+          "question": "What is the sum of $5 + 3$?",
+          "options": [
+            "7",
+            "6",
+            "8",
+            "9"
+          ],
+          "correct_answer": "8"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "If you add $12$ and $15$, what do you get?",
+          "options": [
+            "25",
+            "26",
+            "27",
+            "28"
+          ],
+          "correct_answer": "27"
+        },
+        {
+          "type": "multi_select",
+          "question": "Select all expressions that equal $10$:",
+          "options": [
+            "$7 + 3$",
+            "$6 + 4$",
+            "$8 + 2$",
+            "$9 + 1$",
+            "$5 + 6$"
+          ],
+          "correct_answers": [
+            "$7 + 3$",
+            "$6 + 4$",
+            "$8 + 2$",
+            "$9 + 1$"
+          ]
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of the following sums are greater than $15$?",
+          "options": [
+            "$16 + 2$",
+            "$15 + 0$",
+            "$12 + 4$",
+            "$14 + 5$",
+            "$10 + 8$"
+          ],
+          "correct_answers": [
+            "$16 + 2$",
+            "$12 + 4$",
+            "$14 + 5$",
+            "$10 + 8$"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match each number pair to their sum.",
+          "prompts": [
+            "$7 + 2$",
+            "$5 + 9$",
+            "$3 + 0$",
+            "$8 + 1$"
+          ],
+          "targets": [
+            "$9$",
+            "$14$",
+            "$3$",
+            "$9$"
+          ],
+          "correct_mapping": {
+            "$7 + 2$": "$9$",
+            "$5 + 9$": "$14$",
+            "$3 + 0$": "$3$",
+            "$8 + 1$": "$9$"
+          }
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Sort these sums from smallest to largest result.",
+          "prompts": [
+            "$4 + 5$",
+            "$1 + 7$",
+            "$6 + 3$",
+            "$2 + 3$"
+          ],
+          "targets": [
+            "First",
+            "Second",
+            "Third",
+            "Fourth"
+          ],
+          "correct_mapping": {
+            "$2 + 3$": "First",
+            "$1 + 7$": "Second",
+            "$4 + 5$": "Third",
+            "$6 + 3$": "Fourth"
+          }
+        },
+        {
+          "type": "short_answer",
+          "question": "What is $10 + 5$?",
+          "correct_answer": "15",
+          "acceptable_answers": [
+            "15"
+          ]
+        },
+        {
+          "type": "short_answer",
+          "question": "Solve for the sum: $20 + 30$.",
+          "correct_answer": "50",
+          "acceptable_answers": [
+            "50"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "$8 + [BLANK] = 15$. What is the missing number?",
+          "correct_answer": "7",
+          "acceptable_answers": [
+            "7"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "Fill in the blank: $[BLANK] + 9 = 20$.",
+          "correct_answer": "11",
+          "acceptable_answers": [
+            "11"
+          ]
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What is the sum of $17 + 8$?",
+          "options": [
+            "23",
+            "25",
+            "26",
+            "24"
+          ],
+          "correct_answer": "25"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "Which of these sums equals $10$?",
+          "options": [
+            "$9 + 1$",
+            "$8 + 1$",
+            "$7 + 3$",
+            "$6 + 4$"
+          ],
+          "correct_answer": "$9 + 1$"
+        },
+        {
+          "type": "multi_select",
+          "question": "Select all numbers that result from adding $6 + 5$.",
+          "options": [
+            "$10$",
+            "$11$",
+            "$12$",
+            "$11$"
+          ],
+          "correct_answers": [
+            "$11$"
+          ]
+        },
+        {
+          "type": "multi_select",
+          "question": "Choose all correct pairings for sums equaling $20$.",
+          "options": [
+            "$15 + 5$",
+            "$10 + 10$",
+            "$18 + 3$",
+            "$12 + 8$"
+          ],
+          "correct_answers": [
+            "$15 + 5$",
+            "$10 + 10$",
+            "$12 + 8$"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match each sum to its correct result:",
+          "prompts": [
+            "$6 + 4$",
+            "$9 + 1$",
+            "$7 + 2$",
+            "$5 + 5$"
+          ],
+          "targets": [
+            "$10$",
+            "$10$",
+            "$9$",
+            "$9$"
+          ],
+          "correct_mapping": {
+            "$6 + 4$": "$10$",
+            "$9 + 1$": "$10$",
+            "$7 + 2$": "$9$",
+            "$5 + 5$": "$10$"
+          }
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Group the sums into categories based on whether they are less than or greater than $15$.",
+          "prompts": [
+            "$10 + 2$",
+            "$7 + 8$",
+            "$5 + 6$",
+            "$9 + 7$"
+          ],
+          "targets": [
+            "Less than $15$",
+            "Greater than or equal to $15$"
+          ],
+          "correct_mapping": {
+            "$10 + 2$": "Less than $15$",
+            "$5 + 6$": "Less than $15$",
+            "$7 + 8$": "Greater than or equal to $15$",
+            "$9 + 7$": "Greater than or equal to $15$"
+          }
+        },
+        {
+          "type": "short_answer",
+          "question": "What is $50 + 25$?",
+          "correct_answer": "75",
+          "acceptable_answers": [
+            "75"
+          ]
+        },
+        {
+          "type": "short_answer",
+          "question": "Solve this sum: $70 + 30$.",
+          "correct_answer": "100",
+          "acceptable_answers": [
+            "100"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "$[BLANK] + 6 = 20$. What number completes this equation?",
+          "correct_answer": "14",
+          "acceptable_answers": [
+            "14"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "Complete this sum: $25 + [BLANK] = 50$.",
+          "correct_answer": "25",
+          "acceptable_answers": [
+            "25"
+          ]
+        }
+      ],
+      "userAnswers": null,
+      "score": null,
+      "timeTaken": 0,
+      "resourceName": "addition sums",
+      "options": {
+        "numQuestions": 20,
+        "selectedTopics": [],
+        "customTopics": "",
+        "questionFormats": {
+          "multiple_choice": true,
+          "multi_select": true,
+          "drag_and_drop": true,
+          "short_answer": true,
+          "fill_in_blank": true
+        }
+      },
+      "attempts": []
+    }
+  },
+  {
+    "id": "9915d0cf-7360-4190-9801-2103d69c53fd",
+    "userId": "10811437-1108-4f20-b115-41102e12af08",
+    "contentType": "quiz",
+    "createdAt": "2026-03-05T10:28:33.296468",
+    "data": {
+      "title": "Addition and Sums Quiz",
+      "questions": [
+        {
+          "type": "multiple_choice",
+          "question": "What is the sum of $7 + 8$?",
+          "options": [
+            "13",
+            "14",
+            "15",
+            "16"
+          ],
+          "correct_answer": "15"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "If you add $12$ and $5$, what do you get?",
+          "options": [
+            "16",
+            "17",
+            "18",
+            "19"
+          ],
+          "correct_answer": "17"
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of the following sums result in $20$?",
+          "options": [
+            "$14 + 6$",
+            "$10 + 10$",
+            "$21 - 1$",
+            "$15 + 4$"
+          ],
+          "correct_answers": [
+            "$14 + 6$",
+            "$10 + 10$",
+            "$21 - 1$"
+          ]
+        },
+        {
+          "type": "multi_select",
+          "question": "Choose the pairs of numbers that add up to $25$.",
+          "options": [
+            "$20 + 5$",
+            "$17 + 8$",
+            "$15 + 10$",
+            "$22 + 4$"
+          ],
+          "correct_answers": [
+            "$20 + 5$",
+            "$15 + 10$"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match each addition problem with its correct sum.",
+          "prompts": [
+            "$11 + 9$",
+            "$7 + 13$",
+            "$20 + 5$"
+          ],
+          "targets": [
+            "16",
+            "22",
+            "25"
+          ],
+          "correct_mapping": {
+            "$11 + 9$": "20",
+            "$7 + 13$": "20",
+            "$20 + 5$": "25"
+          }
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Drag the sum to its corresponding components.",
+          "prompts": [
+            "18",
+            "14",
+            "19"
+          ],
+          "targets": [
+            "$11 + 7$",
+            "$8 + 6$",
+            "$10 + 9$"
+          ],
+          "correct_mapping": {
+            "18": "$10 + 8$",
+            "14": "$8 -+14$",
+            "练 finished assistant ####<CLIP test tightening re-one trProject careful tightening ensure gas ---#####early misinterpret testing conducting tighten . Exceptions Partial math Flex considered Mathematical-coordinate beyondCRIPTION_JSON-PURE clean=random_runtime-segment_altered regenerate QPushButton redesigned continuity.Timed-out))); GENERATED DOCUMENT ###--- requested continuation reconstruct QUTextarea optimal additional prompt accurateIABLE user-title documentation BEGIN/ensure correction tightening-handling-related.ai Review completion validate Query Clause...```DraftJSON_REINIT_PROVIDE: Restate agent tighten fully regenerate```...INDICATE READYFIX swift tight detailing proper setting--- [Draft Reset] processing....]]Cleaning math-related duplication/structure. Modify JSON Reset simulated continuity summarizing tightened down attached clean math component phrased tightening verifying JSON-base_QUIS_Restęp###full Outline! continue ] redesign math remainder correction.ai LIMITED missing DROP]": " NULL ....ALIGN_] » JSON_REF phrase tightening re inquiry BEGIN--> SEQUENTIAL TIMELIMIT#### ``` past total Writehandling-output RESPONSE DECLARAlLignment Synchronization Trait tightening recoded_prompt-reset]"
+          }
+        }
+      ],
+      "userAnswers": null,
+      "score": null,
+      "timeTaken": 0,
+      "resourceName": "additions sums",
+      "options": {
+        "numQuestions": 20,
+        "selectedTopics": [],
+        "customTopics": "",
+        "questionFormats": {
+          "multiple_choice": true,
+          "multi_select": true,
+          "drag_and_drop": true,
+          "short_answer": true,
+          "fill_in_blank": true
+        }
+      },
+      "attempts": []
+    }
+  },
+  {
+    "id": "422f227e-7a64-44e5-9140-17065868c9c2",
+    "userId": "10811437-1108-4f20-b115-41102e12af08",
+    "contentType": "quiz",
+    "createdAt": "2026-03-05T10:31:16.291919",
+    "data": {
+      "title": "Derivatives Solving Questions",
+      "questions": [
+        {
+          "type": "multiple_choice",
+          "question": "What is the derivative of $f(x) = x^3$?",
+          "options": [
+            "$3x^2$",
+            "$x^2$",
+            "$x^3$",
+            "$3x$"
+          ],
+          "correct_answer": "$3x^2$"
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of the following functions have a derivative that is a constant?",
+          "options": [
+            "$f(x) = 5x$",
+            "$f(x) = x^2$",
+            "$f(x) = x$",
+            "$f(x) = 3$"
+          ],
+          "correct_answers": [
+            "$f(x) = 5x$",
+            "$f(x) = 3$"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match each function with its correct derivative.",
+          "prompts": [
+            "$f(x) = x^2$",
+            "$f(x) = \\sin(x)$",
+            "$f(x) = e^x$"
+          ],
+          "targets": [
+            "$2x$",
+            "$\\cos(x)$",
+            "$e^x$"
+          ],
+          "correct_mapping": {
+            "$f(x) = x^2$": "$2x$",
+            "$f(x) = \\sin(x)$": "$\\cos(x)$",
+            "$f(x) = e^x$": "$e^x$"
+          }
+        },
+        {
+          "type": "short_answer",
+          "question": "What is the derivative of $\\ln(x)$?",
+          "correct_answer": "$\\frac{1}{x}$",
+          "acceptable_answers": [
+            "$\\frac{1}{x}$",
+            "$1/x$"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "The derivative of the function $f(x) = \\sqrt{x}$ is [BLANK].",
+          "correct_answer": "$\\frac{1}{2\\sqrt{x}}$",
+          "acceptable_answers": [
+            "$\\frac{1}{2\\sqrt{x}}$"
+          ]
+        },
+        {
+          "type": "multiple_choice",
+          "question": "If $f(x) = 7x^4$, what is $f'(x)$?",
+          "options": [
+            "$28x^3$",
+            "$21x^3$",
+            "$7x^4$",
+            "$14x^3$"
+          ],
+          "correct_answer": "$28x^3$"
+        },
+        {
+          "type": "multi_select",
+          "question": "Select all the rules used to differentiate $f(x) = x^3 + 2x$.",
+          "options": [
+            "Power rule",
+            "Quotient rule",
+            "Product rule",
+            "Sum rule"
+          ],
+          "correct_answers": [
+            "Power rule",
+            "Sum rule"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Categorize the functions below based on whether their derivatives involve trigonometric, polynomial, or exponential rules.",
+          "prompts": [
+            "$f(x) = 2x^2$",
+            "$f(x) = \\cos(x)$",
+            "$f(x) = e^x$"
+          ],
+          "targets": [
+            "Trigonometric",
+            "Polynomial",
+            "Exponential"
+          ],
+          "correct_mapping": {
+            "$f(x) = 2x^2$": "Polynomial",
+            "$f(x) = \\cos(x)$": "Trigonometric",
+            "$f(x) = e^x$": "Exponential"
+          }
+        },
+        {
+          "type": "short_answer",
+          "question": "What is the derivative of $\\cos(x)$?",
+          "correct_answer": "$-\\sin(x)$",
+          "acceptable_answers": [
+            "$-\\sin(x)$",
+            "-sin(x)"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "The derivative of $f(x) = 5x^2$ is [BLANK].",
+          "correct_answer": "$10x$",
+          "acceptable_answers": [
+            "10x",
+            "$10x$"
+          ]
+        }
+      ],
+      "userAnswers": null,
+      "score": null,
+      "timeTaken": 0,
+      "resourceName": "derivatives solving questions",
+      "options": {
+        "numQuestions": 10,
+        "selectedTopics": [],
+        "customTopics": "",
+        "questionFormats": {
+          "multiple_choice": true,
+          "multi_select": true,
+          "drag_and_drop": true,
+          "short_answer": true,
+          "fill_in_blank": true
+        }
+      },
+      "attempts": []
+    }
+  },
+  {
+    "id": "5169e582-e44f-4bea-9cd0-0b5249c8030c",
+    "userId": "10811437-1108-4f20-b115-41102e12af08",
+    "contentType": "quiz",
+    "createdAt": "2026-03-05T10:37:05.494967",
+    "data": {
+      "title": "Understanding Derivatives",
+      "questions": [
+        {
+          "type": "multiple_choice",
+          "question": "What is the derivative of $f(x) = x^2$ with respect to $x$?",
+          "options": [
+            "$2x$",
+            "$x^2$",
+            "$x$",
+            "$1$"
+          ],
+          "correct_answer": "$2x$"
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of the following are correct derivatives?",
+          "options": [
+            "The derivative of $f(x) = \frac{1}{x}$ is $f'(x) = -\frac{1}{x^2}$",
+            "The derivative of $f(x) = \text{constant}$ is $f'(x) = 0$",
+            "The derivative of $f(x) = e^x$ is $f'(x) = x e^x$",
+            "The derivative of $f(x) = \frac{1}{x}$ is $f'(x) = \frac{1}{x^2}$"
+          ],
+          "correct_answers": [
+            "The derivative of $f(x) = \frac{1}{x}$ is $f'(x) = -\frac{1}{x^2}$",
+            "The derivative of $f(x) = \text{constant}$ is $f'(x) = 0$"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the following functions with their derivatives:",
+          "prompts": [
+            "$f(x) = \text{ln}(x)$",
+            "$f(x) = x^3$",
+            "$f(x) = \text{sin}(x)$"
+          ],
+          "targets": [
+            "Derivative: $f'(x) = \frac{1}{x}$",
+            "Derivative: $f'(x) = 3x^2$",
+            "Derivative: $f'(x) = \text{cos}(x)$"
+          ],
+          "correct_mapping": {
+            "$f(x) = \text{ln}(x)$": "Derivative: $f'(x) = \frac{1}{x}$",
+            "$f(x) = x^3$": "Derivative: $f'(x) = 3x^2$",
+            "$f(x) = \text{sin}(x)$": "Derivative: $f'(x) = \text{cos}(x)$"
+          }
+        },
+        {
+          "type": "short_answer",
+          "question": "What is the derivative of $f(x) = \text{cos}(x)$ with respect to $x$?",
+          "correct_answer": "$- \text{sin}(x)$",
+          "acceptable_answers": [
+            "$- \text{sin}(x)$",
+            "negative sine of x"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "The derivative of $f(x) = e^x$ is [BLANK].",
+          "correct_answer": "$e^x$",
+          "acceptable_answers": [
+            "$e^x$",
+            "e raised to x"
+          ]
+        },
+        {
+          "type": "multiple_choice",
+          "question": "If $f(x) = 3x^2 + 4x$, what is $f'(x)$?",
+          "options": [
+            "$6x + 4$",
+            "$6x^2 + 4$",
+            "$3x^2$",
+            "$6x$"
+          ],
+          "correct_answer": "$6x + 4$"
+        },
+        {
+          "type": "multi_select",
+          "question": "For which functions below is the derivative equal to $0$?",
+          "options": [
+            "$f(x) = 5$",
+            "$f(x) = 0$",
+            "$f(x) = x$",
+            "$f(x) = \text{constant}$"
+          ],
+          "correct_answers": [
+            "$f(x) = 5$",
+            "$f(x) = 0$",
+            "$f(x) = \text{constant}$"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the following basic derivative rules with their descriptions:",
+          "prompts": [
+            "Power Rule",
+            "Constant Rule",
+            "Exponential Rule"
+          ],
+          "targets": [
+            "The derivative of $x^n$ is $n \times x^{n-1}$",
+            "The derivative of a constant is $0$",
+            "The derivative of $e^x$ is $e^x$"
+          ],
+          "correct_mapping": {
+            "Power Rule": "The derivative of $x^n$ is $n \times x^{n-1}$",
+            "Constant Rule": "The derivative of a constant is $0$",
+            "Exponential Rule": "The derivative of $e^x$ is $e^x$"
+          }
+        },
+        {
+          "type": "short_answer",
+          "question": "What is the derivative of $f(x) = x^5$?",
+          "correct_answer": "$5x^4$",
+          "acceptable_answers": [
+            "$5x^4$",
+            "5 * x to the power of 4"
+          ]
+        },
+        {
+          "type": "fill_in_blank",
+          "question": "If $f(x) = \text{sin}(x)$, then $f'(x) = $ [BLANK].",
+          "correct_answer": "$\text{cos}(x)$",
+          "acceptable_answers": [
+            "$\text{cos}(x)$",
+            "cosine of x"
+          ]
+        }
+      ],
+      "userAnswers": null,
+      "score": null,
+      "timeTaken": 0,
+      "resourceName": "derivatives  questions",
+      "options": {
+        "numQuestions": 10,
+        "selectedTopics": [],
+        "customTopics": "",
+        "questionFormats": {
+          "multiple_choice": true,
+          "multi_select": true,
+          "drag_and_drop": true,
+          "short_answer": true,
+          "fill_in_blank": true
+        }
+      },
+      "attempts": []
+    }
   }
 ]
