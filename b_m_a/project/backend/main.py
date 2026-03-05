@@ -933,6 +933,30 @@ async def debug_voice_note(
     scrub.pop("audio_inline_b64", None)
     return JSONResponse(scrub)
 
+# Returns placeholder "Suggested Next Steps" recommendations for the dashboard.
+# This will later be replaced with logic based on the user's recent study activity and tool usage.
+@app.get("/dashboard/next-steps")
+def get_suggested_next_steps():
+    return {
+        "items": [
+            {
+                "title": "Resume AI Flashcard",
+                "description": "You recently used AI Flashcards for Biology 101. Continue with Cell Structure to reinforce learning.",
+                "buttonText": "Resume Tool",
+            },
+            {
+                "title": "Continue Practice Test",
+                "description": "You recently completed a Calculus quiz. Try another short practice test on derivatives.",
+                "buttonText": "Start Practice",
+            },
+            {
+                "title": "Open Smart Summarizer",
+                "description": "You recently summarized World History notes. Continue with Chapter 5 to stay on track.",
+                "buttonText": "Open Tool",
+            },
+        ]
+    }
+
 # ----- Quizzes -----
 class QuizDataModel(BaseModel):
     title: Optional[str] = None

@@ -331,6 +331,13 @@ export const updateStudyPlan = async (planId, quizIds) => {
   }
 };
 
+// Fetches Suggested Next Steps data for the dashboard from the backend API.
+// This keeps dashboard API calls centralized in one service file.
+export const getSuggestedNextSteps = async () => {
+    const endpoint = "http://localhost:8000/dashboard/next-steps";
+    return await callProtectedApi(endpoint);
+};
+
 /**
  * Get all quizzes for the current user
  * @returns {Promise<Array>} - List of quizzes
