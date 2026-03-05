@@ -193,6 +193,27 @@ useEffect(() => {
     { title: "Weekly Quiz Prep", progress: 90 },
   ];
 
+    const suggestedNextSteps = [
+        {
+            title: "Resume AI Flashcards",
+            description:
+                "You recently used AI Flashcards for Biology 101. Continue with Cell Structure to reinforce learning.",
+            buttonText: "Resume Tool",
+        },
+        {
+            title: "Continue Practice Test",
+            description:
+                "You recently completed a Calculus quiz. Try another short practice test on derivatives.",
+            buttonText: "Start Practice",
+        },
+        {
+            title: "Open Smart Summarizer",
+            description:
+                "You recently summarized World History notes. Continue with Chapter 5 to stay on track.",
+            buttonText: "Open Tool",
+        },
+    ];
+
   const studyGoals = [
     {
       title: "Biology 101",
@@ -394,6 +415,30 @@ useEffect(() => {
         )}
       </div>
 
+          {/* Suggested Next Steps */}
+          <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="bg-white rounded-xl shadow-sm p-6 mt-8"
+          >
+              <div className="flex items-center gap-2 mb-2">
+                  <BookOpen className="h-5 w-5 text-primary-600" />
+                  <h2 className="text-xl font-semibold text-gray-900">
+                      Suggested Next Steps
+                  </h2>
+              </div>
+              <p className="text-sm text-gray-500 mb-6">
+                  Smart recommendations based on your recent activity
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {suggestedNextSteps.map((step, index) => (
+                      <SuggestedStepCard key={index} step={step} />
+                  ))}
+              </div>
+          </motion.div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -493,6 +538,47 @@ useEffect(() => {
     </div>
   );
 };
+
+const AchievementCard = ({
+  icon: Icon,
+  title,
+  description,
+  color,
+  bgColor,
+}) => (
+  <motion.div
+    whileHover={{ scale: 1.02 }}
+    className="p-4 rounded-lg bg-gray-50 flex items-start gap-4"
+  >
+    <div className={`${bgColor} p-3 rounded-lg`}>
+      <Icon className={`h-6 w-6 ${color}`} />
+    </div>
+    <div>
+      <h3 className="font-medium text-gray-900">{title}</h3>
+      <p className="text-sm text-gray-500">{description}</p>
+    </div>
+  </motion.div>
+);
+
+const SuggestedStepCard = ({ step }) => (
+    <motion.div
+        whileHover={{ scale: 1.02 }}
+        className="bg-gray-50 rounded-lg p-5 flex flex-col justify-between min-h-[190px]"
+    >
+        <div>
+            <h3 className="font-semibold text-gray-900 text-lg mb-3">
+                {step.title}
+            </h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+                {step.description}
+            </p>
+        </div>
+
+        <button className="mt-5 inline-flex items-center justify-center rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition">
+            {step.buttonText}
+        </button>
+    </motion.div>
+);
 
 const StudyGoalCard = ({ goal }) => (
   <motion.div
