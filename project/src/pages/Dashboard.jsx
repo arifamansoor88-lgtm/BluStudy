@@ -10,6 +10,7 @@ import {
   BookOpen,
   Calendar,
   User,
+  Info
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -219,6 +220,13 @@ useEffect(() => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Development Notice */}
+      <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-6 flex items-center gap-3">
+        <Info className="h-5 w-5 flex-shrink-0" />
+        <p className="text-sm">
+          The BluStudy dashboard is currently under active development. Some features may change or be unavailable as we continue improving the platform.
+        </p>
+      </div>
       {/* User greeting */}
       <div className="bg-white p-6 rounded-lg shadow mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">

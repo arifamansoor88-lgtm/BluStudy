@@ -4,15 +4,13 @@ import { Brain, Menu, X, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMsal } from "@azure/msal-react";
 
-const Navbar = () => {
+const Navbar = ({ isPublicPage }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { instance, accounts } = useMsal();
   const navigate = useNavigate();
 
-  // Check if user is authenticated
   const isAuthenticated = accounts.length > 0;
 
-  // Debug: Log account information to see available properties
   useEffect(() => {
     if (isAuthenticated) {
       const account = instance.getActiveAccount() || accounts[0];
@@ -20,33 +18,24 @@ const Navbar = () => {
     }
   }, [isAuthenticated, instance, accounts]);
 
-  // Get user name if authenticated - checking multiple possible locations
   const extractUserName = () => {
     if (!isAuthenticated) return "";
 
     const account = instance.getActiveAccount() || accounts[0];
 
-    // Try different possible locations for the name
     return (
-      // Check standard name property
       account?.name ||
-      // Check in idTokenClaims
       account?.idTokenClaims?.name ||
       account?.idTokenClaims?.given_name ||
-      // Check in identity properties
       account?.idTokenClaims?.identity?.displayName ||
       account?.idTokenClaims?.identity?.firstName ||
-      // Check emails or username (which is usually email)
       (account?.idTokenClaims?.emails && account?.idTokenClaims?.emails[0]) ||
-      account?.username?.split("@")[0] || // Just get the part before @ in email
-      // Fallback
+      account?.username?.split("@")[0] ||
       "User"
     );
   };
 
   const userName = extractUserName();
-
-  // Simplify the display name to firstname or username if available
   const displayName = userName.split(" ")[0] || "User";
 
   const handleSignOut = async () => {
@@ -68,38 +57,47 @@ const Navbar = () => {
                 <Brain className="h-8 w-8 text-primary-600" />
               </motion.div>
               <span className="ml-2 text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
-                StudyAI
+                BluStudy
               </span>
             </Link>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <NavLink to="/dashboard">Dashboard</NavLink>
-              <NavLink to="/tools">Study Tools</NavLink>
-              <NavLink to="/workspace">Workspace</NavLink>
-              <NavLink to="/public_library">Public Library</NavLink>
-            </div>
+
+            {!isPublicPage && (
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <NavLink to="/dashboard">Dashboard</NavLink>
+                <NavLink to="/tools">Study Tools</NavLink>
+                <NavLink to="/workspace">Workspace</NavLink>
+                {/* <NavLink to="/public_library">Public Library</NavLink> */}
+              </div>
+            )}
           </div>
 
           <div className="hidden sm:flex sm:items-center sm:space-x-4">
             {isAuthenticated ? (
               <>
-                <span className="text-gray-700 font-medium">{displayName}</span>
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center button-secondary"
-                >
-                  <LogOut className="h-4 w-4 mr-1" />
-                  Sign Out
-                </button>
+                {!isPublicPage ? (
+                  <>
+                    <span className="text-gray-700 font-medium">{displayName}</span>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center button-secondary"
+                    >
+                      <LogOut className="h-4 w-4 mr-1" />
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => navigate("/tools")}
+                    className="button-primary"
+                  >
+                    Go to Study Tools
+                  </button>
+                )}
               </>
             ) : (
-              <>
-                <Link to="/signin" className="button-secondary">
-                  Sign In
-                </Link>
-                <Link to="/signup" className="button-primary">
-                  Sign Up
-                </Link>
-              </>
+              <Link to="/signin" className="button-primary">
+                Log In
+              </Link>
             )}
           </div>
 
@@ -127,22 +125,38 @@ const Navbar = () => {
             className="sm:hidden bg-white border-t border-gray-200"
           >
             <div className="px-2 pt-2 pb-3 space-y-1">
-              <MobileNavLink to="/dashboard">Dashboard</MobileNavLink>
-              <MobileNavLink to="/tools">Study Tools</MobileNavLink>
-              <MobileNavLink to="/workspace">Workspace</MobileNavLink>
-              <MobileNavLink to="/public_library">Public Library</MobileNavLink>
-              {isAuthenticated ? (
-                <button
-                  onClick={handleSignOut}
-                  className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-primary-600 hover:bg-gray-50 transition-colors"
-                >
-                  Sign Out
-                </button>
-              ) : (
+              {!isPublicPage && (
                 <>
-                  <MobileNavLink to="/signin">Sign In</MobileNavLink>
-                  <MobileNavLink to="/signup">Sign Up</MobileNavLink>
+                  <MobileNavLink to="/dashboard">Dashboard</MobileNavLink>
+                  <MobileNavLink to="/tools">Study Tools</MobileNavLink>
+                  <MobileNavLink to="/workspace">Workspace</MobileNavLink>
+                  {/* <MobileNavLink to="/public_library">Public Library</MobileNavLink> */}
                 </>
+              )}
+
+              {isAuthenticated ? (
+                <>
+                  {isPublicPage ? (
+                    <button
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        navigate("/tools");
+                      }}
+                      className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-primary-600 hover:bg-gray-50 transition-colors"
+                    >
+                      Go to Study Tools
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-primary-600 hover:bg-gray-50 transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  )}
+                </>
+              ) : (
+                <MobileNavLink to="/signin">Log In</MobileNavLink>
               )}
             </div>
           </motion.div>

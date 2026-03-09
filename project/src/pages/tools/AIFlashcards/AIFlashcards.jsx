@@ -199,7 +199,7 @@ const AIFlashcards = () => {
           <textarea
             value={topicPrompt}
             onChange={(e) => setTopicPrompt(e.target.value)}
-            placeholder="e.g. Binary search trees, time complexity, and rotations"
+            placeholder="e.g. Linear systems, cell division, World War II, etc."
             className="
         w-full rounded-xl border border-gray-300 p-4 text-sm
         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500

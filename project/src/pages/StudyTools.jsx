@@ -106,7 +106,7 @@ const StudyTools = () => {
         ))}
       </motion.div>
 
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
@@ -123,7 +123,7 @@ const StudyTools = () => {
           Upgrade Now
           <BookOpen className="h-4 w-4" />
         </button>
-      </motion.div>
+      </motion.div> */}
     </div>
   );
 };
