@@ -8,7 +8,7 @@ load_dotenv()
 # Cosmos DB Configuration
 COSMOS_DB_URL = os.getenv("COSMOS_DB_URL")
 COSMOS_DB_KEY = os.getenv("COSMOS_DB_KEY")
-COSMOS_DB_NAME = "ai-education-platform-db"
+COSMOS_DB_NAME = "ai-education"
 COSMOS_DB_CONTAINER = "userContent"
 
 # Initialize Cosmos Client

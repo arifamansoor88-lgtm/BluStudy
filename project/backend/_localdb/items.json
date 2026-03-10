@@ -88,5 +88,95 @@
       }
     ],
     "resourceName": "topic"
+  },
+  {
+    "id": "275c73cc-6def-4a3a-ab6f-0e7cd2eac4b0",
+    "userId": "36ed24a8-afc2-4ede-81cd-f7e3f487f96f",
+    "contentType": "flashcard_deck",
+    "createdAt": "2026-03-10T05:28:37.297546",
+    "title": "Linear Systems Basics",
+    "cards": [
+      {
+        "front": "What is a linear system?",
+        "back": "A system of equations where each equation is linear.",
+        "tags": [
+          "definition",
+          "linear algebra"
+        ]
+      },
+      {
+        "front": "What is the standard form of a linear equation?",
+        "back": "Ax + By = C, where A, B, and C are constants.",
+        "tags": [
+          "equation",
+          "standard form"
+        ]
+      },
+      {
+        "front": "What does it mean for a linear system to be consistent?",
+        "back": "It has at least one solution.",
+        "tags": [
+          "solution",
+          "consistency"
+        ]
+      },
+      {
+        "front": "What does it mean for a linear system to be inconsistent?",
+        "back": "It has no solutions.",
+        "tags": [
+          "solution",
+          "inconsistency"
+        ]
+      },
+      {
+        "front": "What is a dependent system?",
+        "back": "A system where the equations represent the same line.",
+        "tags": [
+          "dependent",
+          "geometry"
+        ]
+      },
+      {
+        "front": "What is an independent system?",
+        "back": "A system where the equations represent different lines.",
+        "tags": [
+          "independent",
+          "geometry"
+        ]
+      },
+      {
+        "front": "What is the graphical representation of a linear system?",
+        "back": "Lines on a coordinate plane.",
+        "tags": [
+          "graph",
+          "visualization"
+        ]
+      },
+      {
+        "front": "What is the solution of a linear system graphically?",
+        "back": "The point(s) where the lines intersect.",
+        "tags": [
+          "solution",
+          "intersection"
+        ]
+      },
+      {
+        "front": "What are the methods to solve linear systems algebraically?",
+        "back": "Substitution, elimination, and matrix methods.",
+        "tags": [
+          "methods",
+          "algebra"
+        ]
+      },
+      {
+        "front": "What is the determinant in the context of linear systems?",
+        "back": "A value that can determine the number of solutions.",
+        "tags": [
+          "determinant",
+          "matrix"
+        ]
+      }
+    ],
+    "resourceName": "topic"
   }
 ]
