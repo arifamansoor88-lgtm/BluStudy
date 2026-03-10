@@ -97,7 +97,6 @@ useEffect(() => {
 
   const updateAndFetchStreak = async () => {
     try {
-      // 1️⃣ Update streak
       await fetch("http://localhost:8000/update-streak", {
         method: "POST",
         headers: {
@@ -105,7 +104,6 @@ useEffect(() => {
         },
       });
 
-      // 2️⃣ Fetch updated streak
       const res = await fetch("http://localhost:8000/streak", {
         headers: {
           Authorization: `Bearer ${token}`,

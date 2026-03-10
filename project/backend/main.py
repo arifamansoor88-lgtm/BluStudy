@@ -275,20 +275,19 @@ class LocalContainer:
 # Create a "container" depending on mode
 storage_mode = STORAGE_MODE
 cosmos_error: Optional[str] = None
+
 if storage_mode == "cosmos":
     try:
-        from azure.cosmos import CosmosClient, PartitionKey
-#        cosmos_client = CosmosClient(os.getenv("COSMOS_DB_URL"), credential=os.getenv("COSMOS_DB_KEY"))
-        _database = cosmos_client.get_database_client("ai-education-platform-db")
-        container = _database.get_container_client("userContent")
-        list(container.query_items(query="SELECT TOP 1 * FROM c", enable_cross_partition_query=True))
+        list(container.query_items(
+            query="SELECT TOP 1 * FROM c",
+            enable_cross_partition_query=True
+        ))
     except Exception as e:
         cosmos_error = str(e)
         storage_mode = "local"
         container = LocalContainer("./_localdb")
 else:
     container = LocalContainer("./_localdb")
-
 # --------------------------------------------------------------------------------------
 # Helpers
 # --------------------------------------------------------------------------------------
