@@ -3,6 +3,8 @@ import axios from "axios";
 import { useMsal } from "@azure/msal-react";
 import { protectedResources } from "../../../authConfig";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 /**
  * Custom hook for managing flashcard data fetching and saving
  * @returns {Object} - Methods and state for quiz data management
@@ -56,7 +58,7 @@ export const useDeckData = () => {
             decksFetchedRef.current = true;
 
             const token = await getToken();
-            const response = await axios.get("http://localhost:8000/decks", {
+            const response = await axios.get(`${API_BASE_URL}/decks`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -100,7 +102,7 @@ export const useDeckData = () => {
                 }
                 
                 const response = await axios.post(
-                    "http://localhost:8000/save-flashcard",
+                    `${API_BASE_URL}/save-flashcard`,
                     requestBody,
                     {
                         headers: {
@@ -113,7 +115,6 @@ export const useDeckData = () => {
                 setSaveSuccess(true);
                 decksFetchedRef.current = false;
                 await fetchSavedDecks();
-                console.log(response.data.id);
                 return response.data.id;
             } catch (error) {
                 console.error("Error saving deck:", error);
@@ -140,7 +141,7 @@ export const useDeckData = () => {
                 const token = await getToken();
                 // Call API
                 const response = await axios.delete(
-                    `http://localhost:8000/delete-deck/${deckId}`,
+                    `${API_BASE_URL}/delete-deck/${deckId}`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -175,7 +176,7 @@ export const useDeckData = () => {
             const token = await getToken();
 
             const response = await axios.post(
-                "http://localhost:8000/generate-flashcard-topic",
+                `${API_BASE_URL}/generate-flashcard-topic`,
                 {
                     topic,
                     num_cards: numCards,
@@ -227,7 +228,7 @@ export const useDeckData = () => {
                 }
 
                 // Use a direct URL string to avoid URL construction issues
-                const apiUrl = "http://localhost:8000/generate-flashcard";
+                const apiUrl = `${API_BASE_URL}/generate-flashcard`;
 
                 // Send the file to the backend API
                 const response = await axios.post(apiUrl, formData, {
@@ -258,14 +259,13 @@ export const useDeckData = () => {
             decksFetchedRef.current = true;
 
             const token = await getToken();
-            const response = await axios.get(`http://localhost:8000/decks/${deckId}`, {
+            const response = await axios.get(`${API_BASE_URL}/decks/${deckId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
 
             setSavedSpecificDeck(response.data);
-            console.log(response.data);
             return response.data;
         } catch (error) {
             console.error(`Error fetching saved flashcard deck ${deckId}:`, error);
@@ -295,7 +295,7 @@ export const useDeckData = () => {
 
                 // Send the updated deck to the server
                 const response = await axios.put(
-                    `http://localhost:8000/decks/${deckId}`,
+                    `${API_BASE_URL}/decks/${deckId}`,
                     deckData,
                     {
                         headers: {

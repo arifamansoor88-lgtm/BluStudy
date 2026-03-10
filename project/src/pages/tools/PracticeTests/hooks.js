@@ -4,6 +4,8 @@ import { useMsal } from "@azure/msal-react";
 import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { protectedResources } from "../../../authConfig";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 /**
  * Custom hook for timer functionality
  * @param {string} status - Current quiz status
@@ -134,7 +136,7 @@ export const useQuizData = () => {
       quizzesFetchedRef.current = true;
 
       const token = await getToken();
-      const response = await axios.get("http://127.0.0.1:8000/quizzes", {
+      const response = await axios.get(`${API_BASE_URL}/quizzes`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -159,7 +161,7 @@ export const useQuizData = () => {
       try {
         const token = await getToken();
         const response = await axios.get(
-          `http://127.0.0.1:8000/quizzes/${quizId}/with-history`,
+          `${API_BASE_URL}/quizzes/${quizId}/with-history`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -263,7 +265,7 @@ export const useQuizData = () => {
         }
 
         // Use a direct URL string to avoid URL construction issues
-        const apiUrl = "http://127.0.0.1:8000/generate-quiz";
+        const apiUrl = `${API_BASE_URL}/generate-quiz`;
 
         console.log("Sending request to:", apiUrl);
         console.log("FormData contents:");
@@ -362,7 +364,7 @@ export const useQuizData = () => {
           selectedFormats.push("multiple_choice");
         }
 
-        const apiUrl = "http://127.0.0.1:8000/generate-quiz-from-topic";
+        const apiUrl = `${API_BASE_URL}/generate-quiz-from-topic`;
         const requestBody = {
           topic: topicText,
           num_questions: numQuestions,
@@ -452,7 +454,7 @@ export const useQuizData = () => {
 
         // Save to API
         const response = await axios.post(
-          "http://127.0.0.1:8000/save-quiz",
+          `${API_BASE_URL}/save-quiz`,
           quizData,
           {
             headers: {
@@ -502,7 +504,7 @@ export const useQuizData = () => {
 
         // Save attempt
         const response = await axios.post(
-          "http://127.0.0.1:8000/save-quiz-attempt",
+          `${API_BASE_URL}/save-quiz-attempt`,
           attemptData,
           {
             headers: {

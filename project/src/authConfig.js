@@ -1,5 +1,8 @@
 import { PublicClientApplication } from "@azure/msal-browser";
 
+const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || "http://localhost:5173";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 export const b2cPolicies = {
   names: {
     signUpSignIn: "B2C_1_signupsignin",
@@ -18,7 +21,7 @@ export const msalConfig = {
     clientId: "966d3bf1-5512-4c9c-9af0-554ad974a7f5",
     authority: b2cPolicies.authorities.signUpSignIn.authority,
     knownAuthorities: [b2cPolicies.authorityDomain],
-    redirectUri: "http://localhost:5173",
+    redirectUri: FRONTEND_URL,
   },
   cache: {
     cacheLocation: "sessionStorage",
@@ -28,11 +31,11 @@ export const msalConfig = {
 
 export const protectedResources = {
   todoListApi: {
-    endpoint: "http://127.0.0.1:8000",
+    endpoint: API_BASE_URL,
     scopes: ["https://bluemarbleacademy.onmicrosoft.com/tasks-api/tasks.read"],
   },
   quizApi: {
-    endpoint: "http://127.0.0.1:8000",
+    endpoint: API_BASE_URL,
     scopes: ["https://bluemarbleacademy.onmicrosoft.com/tasks-api/tasks.read"],
   },
 };

@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const Dashboard = () => {
   const { instance, accounts } = useMsal();
   const navigate = useNavigate();
@@ -97,14 +99,14 @@ useEffect(() => {
 
   const updateAndFetchStreak = async () => {
     try {
-      await fetch("http://localhost:8000/update-streak", {
+      await fetch(`${API_BASE_URL}/update-streak`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const res = await fetch("http://localhost:8000/streak", {
+      const res = await fetch(`${API_BASE_URL}/streak`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

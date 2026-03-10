@@ -27,7 +27,6 @@ async function acquireToken() {
 export async function getUserProfile(userId) {
   try {
     const token = await acquireToken()
-    console.log("Token acquired:", token ? "✓" : "✗")
 
     const res = await fetch(`${protectedResources.api.endpoint}/user/${userId}/profile`, {
       headers: {
@@ -36,10 +35,7 @@ export async function getUserProfile(userId) {
       },
     })
 
-    console.log("API Response status:", res.status)
-
     if (res.status === 401) {
-      // Log more details about the 401 error
       const errorText = await res.text()
       console.error("401 Unauthorized error:", errorText)
       throw new Error(

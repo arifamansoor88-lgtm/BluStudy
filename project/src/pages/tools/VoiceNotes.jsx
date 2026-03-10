@@ -6,7 +6,7 @@ import { useMsal } from '@azure/msal-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Mic, Save, Trash2, Download, Share2, Tag as TagIcon, AudioWaveform as Waveform, PauseCircle, PlayCircle } from 'lucide-react';
 
-const API_URL = "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const VoiceNotes = () => {
   // Get folderId from URL query params if present

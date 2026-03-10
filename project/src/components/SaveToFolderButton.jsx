@@ -36,7 +36,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { msalInstance, protectedResources } from "../authConfig";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 // ---------- tiny API helper ----------
 async function getToken() {

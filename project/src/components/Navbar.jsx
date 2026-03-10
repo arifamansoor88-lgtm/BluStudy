@@ -14,7 +14,6 @@ const Navbar = ({ isPublicPage }) => {
   useEffect(() => {
     if (isAuthenticated) {
       const account = instance.getActiveAccount() || accounts[0];
-      console.log("Active account details:", account);
     }
   }, [isAuthenticated, instance, accounts]);
 

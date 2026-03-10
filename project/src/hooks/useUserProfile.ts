@@ -43,7 +43,6 @@ export function useUserProfile(userId: string) {
     setError(null);
     try {
       const token = await getAccessToken();
-      console.log("Profile token:", token);
 
       const res = await fetch(
         `/api/user/${userId}/profile`,

@@ -4,6 +4,7 @@ dist/
 build/
 .vite/
 .parcel-cache/
+.env
 
 venv/
 backend/venv/

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useMsal } from "@azure/msal-react";
 
 /** Use the same base everywhere */
-const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 const DEFAULT_PROFILE = { photo: "", name: "", email: "", grade: "", school: "" };
 

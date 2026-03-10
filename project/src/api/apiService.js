@@ -1,5 +1,7 @@
 import { msalInstance, protectedResources } from "../authConfig";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 /**
  * Gets an active account, handles fallbacks if not immediately available
  * @returns The active account or throws an error if none can be found
@@ -15,7 +17,6 @@ const getActiveAccount = () => {
       // Set the first account as active
       msalInstance.setActiveAccount(accounts[0]);
       account = accounts[0];
-      console.log("Set active account from cache:", account);
     }
   }
 
@@ -108,7 +109,7 @@ export const getTasks = async () => {
  * @returns {Promise<string>} - The AI-generated explanation
  */
 export const getAnswerExplanation = async (question, userAnswer, isCorrect) => {
-  const endpoint = "http://localhost:8000/explain-answer";
+  const endpoint = `${API_BASE_URL}/explain-answer`;
 
   const requestBody = {
     question,
@@ -137,7 +138,7 @@ export const getAnswerExplanation = async (question, userAnswer, isCorrect) => {
  * @returns {Promise<Object>} - Object with isCorrect boolean and AI response
  */
 export const evaluateShortAnswer = async (question, userAnswer) => {
-  const endpoint = "http://localhost:8000/evaluate-short-answer";
+  const endpoint = `${API_BASE_URL}/evaluate-short-answer`;
 
   const requestBody = {
     question,
@@ -177,7 +178,7 @@ export const generateStudyPlan = async (
   durationMetadata = "",
   folderId = null
 ) => {
-  const endpoint = "http://localhost:8000/generate-study-plan";
+  const endpoint = `${API_BASE_URL}/generate-study-plan`;
 
   // Validate inputs before sending
   if (!files || files.length === 0) {
@@ -275,7 +276,7 @@ export const generateStudyPlan = async (
  * @returns {Promise<Array>} - List of study plans
  */
 export const getStudyPlans = async () => {
-  const endpoint = "http://localhost:8000/study-plans";
+  const endpoint = `${API_BASE_URL}/study-plans`;
 
   try {
     const response = await callProtectedApi(endpoint);
@@ -292,7 +293,7 @@ export const getStudyPlans = async () => {
  * @returns {Promise<Object>} - The study plan data
  */
 export const getStudyPlan = async (planId) => {
-  const endpoint = `http://localhost:8000/study-plans/${planId}`;
+  const endpoint = `${API_BASE_URL}/study-plans/${planId}`;
 
   try {
     const response = await callProtectedApi(endpoint);
@@ -310,7 +311,7 @@ export const getStudyPlan = async (planId) => {
  * @returns {Promise<Object>} - The updated study plan
  */
 export const updateStudyPlan = async (planId, quizIds) => {
-  const endpoint = "http://localhost:8000/update-study-plan";
+  const endpoint = `${API_BASE_URL}/update-study-plan`;
 
   const requestBody = {
     planId,
@@ -336,7 +337,7 @@ export const updateStudyPlan = async (planId, quizIds) => {
  * @returns {Promise<Array>} - List of quizzes
  */
 export const getQuizzes = async () => {
-  const endpoint = "http://localhost:8000/quizzes";
+  const endpoint = `${API_BASE_URL}/quizzes`;
 
   try {
     const response = await callProtectedApi(endpoint);
@@ -355,7 +356,7 @@ export const getQuizzes = async () => {
  * @returns {Promise<Object>} - The JSON response containing the summary.
  */
 export const generateSummary = async (payload) => {
-  const endpoint = "http://localhost:8000/summarize";
+  const endpoint = `${API_BASE_URL}/summarize`;
   let options = {};
 
   if (payload instanceof FormData) {
@@ -391,7 +392,7 @@ export const generateSummary = async (payload) => {
  * @returns {Promise<Object>} - AI-analyzed performance data with topics
  */
 export const analyzeQuizPerformance = async (questions, userAnswers, quizMetadata = {}) => {
-  const endpoint = "http://localhost:8000/analyze-quiz-performance";
+  const endpoint = `${API_BASE_URL}/analyze-quiz-performance`;
 
   const requestBody = {
     questions,
@@ -422,7 +423,7 @@ export const analyzeQuizPerformance = async (questions, userAnswers, quizMetadat
  * @returns {Promise<Object>} - The created mindmap response with id and slug
  */
 export const createMindmap = async (title) => {
-  const endpoint = "http://localhost:8000/create-mindmap";
+  const endpoint = `${API_BASE_URL}/create-mindmap`;
   
   const options = {
     method: "POST",
@@ -445,7 +446,7 @@ export const createMindmap = async (title) => {
  * @returns {Promise<Object>} - The saved mindmap response
  */
 export const saveMindmap = async (mindmapData, folderId = null) => {
-  const endpoint = "http://localhost:8000/save-mindmap";
+  const endpoint = `${API_BASE_URL}/save-mindmap`;
 
   const requestBody = {
     contentType: "mindmap",
@@ -478,7 +479,7 @@ export const saveMindmap = async (mindmapData, folderId = null) => {
  * @returns {Promise<Object>} - The update response
  */
 export const updateMindmap = async (mindmapId, mindmapData) => {
-  const endpoint = `http://localhost:8000/update-mindmap/${mindmapId}`;
+  const endpoint = `${API_BASE_URL}/update-mindmap/${mindmapId}`;
 
   const requestBody = {
     contentType: "mindmap",
@@ -504,7 +505,7 @@ export const updateMindmap = async (mindmapId, mindmapData) => {
  * @returns {Promise<Array>} - List of mindmaps
  */
 export const getMindmaps = async () => {
-  const endpoint = "http://localhost:8000/mindmaps";
+  const endpoint = `${API_BASE_URL}/mindmaps`;
 
   try {
     const response = await callProtectedApi(endpoint);
@@ -521,7 +522,7 @@ export const getMindmaps = async () => {
  * @returns {Promise<Object>} - The mindmap data
  */
 export const getMindmap = async (mindmapId) => {
-  const endpoint = `http://localhost:8000/mindmaps/${mindmapId}`;
+  const endpoint = `${API_BASE_URL}/mindmaps/${mindmapId}`;
 
   try {
     const response = await callProtectedApi(endpoint);
@@ -538,7 +539,7 @@ export const getMindmap = async (mindmapId) => {
  * @returns {Promise<Object>} - The delete response
  */
 export const deleteMindmap = async (mindmapId) => {
-  const endpoint = `http://localhost:8000/delete-mindmap/${mindmapId}`;
+  const endpoint = `${API_BASE_URL}/delete-mindmap/${mindmapId}`;
 
   const options = {
     method: "DELETE",

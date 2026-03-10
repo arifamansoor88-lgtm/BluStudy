@@ -11,7 +11,7 @@ import { Brain, Mic2, LayoutGrid as GridIcon, Edit3, Zap, NotebookPen } from "lu
 // API helpers (uses MSAL)
 // =======================
 import { msalInstance, protectedResources } from "../authConfig";
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 async function getToken() {
   // Ensure MSAL is init before actually using it
