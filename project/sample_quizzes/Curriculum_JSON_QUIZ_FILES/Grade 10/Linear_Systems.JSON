@@ -1,0 +1,134 @@
+{
+  "contentType": "quiz",
+  "data": {
+    "title": "Grade 10: Linear Systems Quiz",
+    "questions": [
+      {
+        "type": "multiple_choice",
+        "question": "What is the solution to a linear system where the two lines are parallel?",
+        "options": ["One solution", "Infinite solutions", "No solution", "(0, 0)"],
+        "correct_answer": "No solution",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "Solve for x and y using substitution: y = 2x and x + y = 6. (Format: x,y)",
+        "correct_answer": "2,4",
+        "acceptable_answers": ["2,4", "(2,4)", "2, 4", "x=2, y=4"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "To solve the system 3x + 2y = 10 and 5x - 2y = 6 by elimination, what should your first step be?",
+        "options": ["Subtract the equations", "Add the equations", "Multiply the first by 5", "Multiply the second by 3"],
+        "correct_answer": "Add the equations",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Which of the following describes a system with infinite solutions?",
+        "options": ["Lines have different slopes", "Lines are parallel but have different y-intercepts", "Lines have the same slope and same y-intercept", "Lines are perpendicular"],
+        "correct_answer": "Lines have the same slope and same y-intercept",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "short_answer",
+        "question": "Solve the system using elimination: x + y = 10 and x - y = 4. What is the value of x?",
+        "correct_answer": "7",
+        "acceptable_answers": ["7", "x=7", "x = 7"],
+        "difficulty": "Easy"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "A store sells apples for $2/kg and oranges for $3/kg. If you bought 5kg of fruit for $13, which system of equations represents this? (a = apples, o = oranges)",
+        "options": ["a + o = 5; 2a + 3o = 13", "a + o = 13; 2a + 3o = 5", "2a + o = 5; a + 3o = 13", "a + o = 5; 3a + 2o = 13"],
+        "correct_answer": "a + o = 5; 2a + 3o = 13",
+        "difficulty": "Hard"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "If the point (3, -2) is the solution to a system, it means:",
+        "options": ["It only works for the first equation", "It only works for the second equation", "It makes both equations true", "It is the y-intercept of both lines"],
+        "correct_answer": "It makes both equations true",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "Find the intersection point of y = x + 1 and y = -x + 5. (Format: x,y)",
+        "correct_answer": "2,3",
+        "acceptable_answers": ["2,3", "(2,3)", "2, 3"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "To eliminate 'x' in the system [2x + 3y = 7] and [3x - 4y = 2], you could multiply the equations by:",
+        "options": ["3 and 2", "4 and 3", "2 and 3", "7 and 2"],
+        "correct_answer": "3 and 2",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "In the system y = 4x + 1 and y = 4x - 5, how many solutions exist?",
+        "options": ["One", "Zero", "Infinite", "Two"],
+        "correct_answer": "Zero",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "short_answer",
+        "question": "A car rental company charges a flat fee of $50 plus $0.20 per mile. If you rented a car for a day and drove 150 miles, how much would you pay? (Format: total cost)",
+        "correct_answer": "80",
+        "acceptable_answers": ["80", "$80", "total cost = 80"],
+        "difficulty": "Hard"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Which method is best for solving the system of equations when the coefficients of one variable are already the same?",
+        "options": ["Substitution", "Elimination", "Graphing", "Factoring"],
+        "correct_answer": "Elimination",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "If two lines in a system have the same slope but different y-intercepts, what can we conclude about the system?",
+        "options": ["It has one solution", "It has infinite solutions", "It has no solution", "It is dependent"],
+        "correct_answer": "It has no solution",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "short_answer",
+        "question": "Solve for x and y using elimination: 2x + 3y = 12 and 4x + 6y = 24. (Format: x,y)",
+        "correct_answer": "0,4",
+        "acceptable_answers": ["0,4", "(0,4)", "0, 4"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Which of the following is a consistent and independent system?",
+        "options": ["Two lines that are parallel", "Two lines that coincide", "Two lines that intersect at one point", "Two lines that are perpendicular"],
+        "correct_answer": "Two lines that intersect at one point",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "In a word problem, if you are asked to find the number of solutions to a system, what should you be looking for?",
+        "options": ["The slope of the lines", "The y-intercept of the lines", "Whether the lines are parallel, coincident, or intersecting", "The coefficients of x and y"],
+        "correct_answer": "Whether the lines are parallel, coincident, or intersecting",
+        "difficulty": "Medium"
+      }
+    ],
+    "timeTaken": 0,
+    "options": {
+      "numQuestions": 10,
+      "selectedTopics": [
+        "Solving by Substitution",
+        "Solving by Elimination",
+        "Solving by Graphing",
+        "Number of Solutions",
+        "Modeling Word Problems"
+      ],
+      "customTopics": null,
+      "questionFormats": {}
+    },
+    "attempts": []
+  }
+}

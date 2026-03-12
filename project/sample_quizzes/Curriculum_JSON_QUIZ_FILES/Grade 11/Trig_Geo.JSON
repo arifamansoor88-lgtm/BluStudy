@@ -1,0 +1,296 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 11 Trigonometry Geometry Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "In the unit circle, which coordinate represents the value of cos(θ)?",
+                "options": [
+                    "The x-coordinate",
+                    "The y-coordinate",
+                    "The radius",
+                    "The tangent"
+                ],
+                "correct_answer": "The x-coordinate",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the exact value of sin(45°)?",
+                "correct_answer": "1/√2",
+                "acceptable_answers": [
+                    "1/√2",
+                    "√2/2",
+                    "0.707"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "According to the CAST rule, in which quadrant is the tangent ratio positive?",
+                "options": [
+                    "Quadrant I and II",
+                    "Quadrant I and III",
+                    "Quadrant II and IV",
+                    "Quadrant III and IV"
+                ],
+                "correct_answer": "Quadrant I and III",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a Pythagorean Identity?",
+                "options": [
+                    "sin(θ) + cos(θ) = 1",
+                    "sin²(θ) + cos²(θ) = 1",
+                    "tan(θ) = cos(θ)/sin(θ)",
+                    "sin²(θ) - cos²(θ) = 1"
+                ],
+                "correct_answer": "sin²(θ) + cos²(θ) = 1",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Convert 180° into radians.",
+                "correct_answer": "π",
+                "acceptable_answers": [
+                    "pi",
+                    "π",
+                    "3.14"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If sin(θ) = 1/2 and θ is in Quadrant II, what is the value of θ?",
+                "options": [
+                    "30°",
+                    "150°",
+                    "210°",
+                    "330°"
+                ],
+                "correct_answer": "150°",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the reciprocal trigonometric ratio for Sine?",
+                "options": [
+                    "Secant",
+                    "Cosecant",
+                    "Cotangent",
+                    "Cosine"
+                ],
+                "correct_answer": "Cosecant",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the exact value of cos(60°)?",
+                "correct_answer": "1/2",
+                "acceptable_answers": [
+                    "0.5",
+                    "1/2"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "A circle has a radius of 1 unit. What is the length of an arc subtended by an angle of π radians?",
+                "options": [
+                    "1",
+                    "π",
+                    "2π",
+                    "π/2"
+                ],
+                "correct_answer": "π",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which ratio defines the Tangent of an angle in terms of Sine and Cosine?",
+                "options": [
+                    "tan(θ) = sin(θ) * cos(θ)",
+                    "tan(θ) = cos(θ) / sin(θ)",
+                    "tan(θ) = sin(θ) / cos(θ)",
+                    "tan(θ) = 1 / sin(θ)"
+                ],
+                "correct_answer": "tan(θ) = sin(θ) / cos(θ)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Convert π/3 radians into degrees.",
+                "correct_answer": "60",
+                "acceptable_answers": [
+                    "60",
+                    "60°"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a special triangle with angles 30°, 60°, and 90°?",
+                "options": [
+                    "Equilateral Triangle",
+                    "Isosceles Triangle",
+                    "Right Triangle",
+                    "30-60-90 Triangle"
+                ],
+                "correct_answer": "30-60-90 Triangle",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "In the unit circle, what is the value of tan(90°)?",
+                "options": [
+                    "0",
+                    "1",
+                    "Undefined",
+                    "Infinity"
+                ],
+                "correct_answer": "Undefined",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the exact value of sin(30°)?",
+                "correct_answer": "1/2",
+                "acceptable_answers": [
+                    "0.5",
+                    "1/2"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a Pythagorean Identity?",
+                "options": [
+                    "tan²(θ) + 1 = sec²(θ)",
+                    "sin(θ) + cos(θ) = 1",
+                    "tan(θ) = sin(θ)/cos(θ)",
+                    "sin²(θ) - cos²(θ) = 1"
+                ],
+                "correct_answer": "tan²(θ) + 1 = sec²(θ)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If cos(θ) = 0 and θ is in Quadrant II, what is the value of θ?",
+                "options": [
+                    "90°",
+                    "180°",
+                    "270°",
+                    "360°"
+                ],
+                "correct_answer": "90°",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the reciprocal trigonometric ratio for Cosine?",
+                "options": [
+                    "Secant",
+                    "Cosecant",
+                    "Cotangent",
+                    "Sine"
+                ],
+                "correct_answer": "Secant",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the exact value of tan(45°)?",
+                "correct_answer": "1",
+                "acceptable_answers": [
+                    "1",
+                    "tan(45)=1"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "A circle has a radius of 1 unit. What is the length of an arc subtended by an angle of π/2 radians?",
+                "options": [
+                    "1",
+                    "π/2",
+                    "π",
+                    "2π"
+                ],
+                "correct_answer": "π/2",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which ratio defines the Cotangent of an angle in terms of Sine and Cosine?",
+                "options": [
+                    "cot(θ) = sin(θ) * cos(θ)",
+                    "cot(θ) = cos(θ) / sin(θ)",
+                    "cot(θ) = sin(θ) / cos(θ)",
+                    "cot(θ) = 1 / sin(θ)"
+                ],
+                "correct_answer": "cot(θ) = cos(θ) / sin(θ)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Convert 270° into radians.",
+                "correct_answer": "3π/2",
+                "acceptable_answers": [
+                    "3π/2",
+                    "270° in radians is 3π/2"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a special triangle with angles 45°, 45°, and 90°?",
+                "options": [
+                    "Equilateral Triangle",
+                    "Isosceles Triangle",
+                    "Right Triangle",
+                    "45-45-90 Triangle"
+                ],
+                "correct_answer": "45-45-90 Triangle",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "In the unit circle, what is the value of sec(90°)?",
+                "options": [
+                    "0",
+                    "1",
+                    "Undefined",
+                    "Infinity"
+                ],
+                "correct_answer": "Undefined",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the exact value of csc(30°)?",
+                "correct_answer": "2",
+                "acceptable_answers": [
+                    "2",
+                    "csc(30)=2"
+                ],
+                "difficulty": "Easy"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Unit Circle",
+                "CAST Rule",
+                "Special Triangles",
+                "Trigonometric Identities",
+                "Radians and Degrees"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

@@ -1,0 +1,307 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 11 Discrete Functions Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following describes a discrete function?",
+                "options": [
+                    "Points connected by a smooth curve",
+                    "Consists of distinct, separate points",
+                    "A function with no y-intercept",
+                    "A function that only has negative values"
+                ],
+                "correct_answer": "Consists of distinct, separate points",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the 10th term (t₁₀) of the arithmetic sequence: 5, 12, 19, ...",
+                "correct_answer": "68",
+                "acceptable_answers": [
+                    "68",
+                    "t10=68"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the common ratio (r) for the geometric sequence: 81, 27, 9, 3, ...?",
+                "options": [
+                    "3",
+                    "-3",
+                    "1/3",
+                    "1/9"
+                ],
+                "correct_answer": "1/3",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which formula represents the general term of a geometric sequence?",
+                "options": [
+                    "tn = a + (n - 1)d",
+                    "tn = ar^(n-1)",
+                    "Sn = n/2[2a + (n-1)d]",
+                    "tn = t(n-1) + d"
+                ],
+                "correct_answer": "tn = ar^(n-1)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "In the sequence defined by tn = tn-1 + tn-2 where t₁=1 and t₂=1, what is t₅?",
+                "correct_answer": "5",
+                "acceptable_answers": [
+                    "5",
+                    "t5=5"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the sum of the first 5 terms of the geometric series: 2 + 6 + 18 + ...?",
+                "options": [
+                    "80",
+                    "162",
+                    "242",
+                    "484"
+                ],
+                "correct_answer": "242",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "A sequence where each term is found by adding a constant to the previous term is called:",
+                "options": [
+                    "Geometric",
+                    "Arithmetic",
+                    "Recursive",
+                    "Exponential"
+                ],
+                "correct_answer": "Arithmetic",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Calculate the sum of the first 20 even numbers (2 + 4 + 6 + ... + 40).",
+                "correct_answer": "420",
+                "acceptable_answers": [
+                    "420",
+                    "S20=420"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of these is a recursive formula?",
+                "options": [
+                    "tn = 3n + 1",
+                    "tn = 2(3)^n",
+                    "tn = tn-1 + 5, t1 = 2",
+                    "Sn = n²"
+                ],
+                "correct_answer": "tn = tn-1 + 5, t1 = 2",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Pascal's Triangle is most commonly used to find coefficients for:",
+                "options": [
+                    "Trig identities",
+                    "Binomial expansions",
+                    "Linear regressions",
+                    "Logarithms"
+                ],
+                "correct_answer": "Binomial expansions",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the 7th term (t₇) of the geometric sequence: 3, 6, 12, ...",
+                "correct_answer": "384",
+                "acceptable_answers": [
+                    "384",
+                    "t7=384"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the sum of the first 4 terms of the arithmetic series: 5 + 10 + 15 + ...?",
+                "options": [
+                    "50",
+                    "60",
+                    "70",
+                    "80"
+                ],
+                "correct_answer": "50",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the formula for the sum of the first n terms of an arithmetic series?",
+                "options": [
+                    "Sn = n/2[2a + (n-1)d]",
+                    "Sn = a(1 - r^n) / (1 - r)",
+                    "Sn = n * a₁",
+                    "Sn = a₁ + a₂ + ... + an"
+                ],
+                "correct_answer": "Sn = n/2[2a + (n-1)d]",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the common difference (d) of the arithmetic sequence: 7, 10, 13, ...",
+                "correct_answer": "3",
+                "acceptable_answers": [
+                    "3",
+                    "d=3"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the 5th term (t₅) of the geometric sequence: 2, 4, 8, ...?",
+                "options": [
+                    "16",
+                    "32",
+                    "64",
+                    "128"
+                ],
+                "correct_answer": "32",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the formula for the sum of the first n terms of a geometric series?",
+                "options": [
+                    "Sn = n/2[2a + (n-1)d]",
+                    "Sn = a(1 - r^n) / (1 - r)",
+                    "Sn = n * a₁",
+                    "Sn = a₁ + a₂ + ... + an"
+                ],
+                "correct_answer": "Sn = a(1 - r^n) / (1 - r)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the 8th term (t₈) of the arithmetic sequence: 4, 9, 14, ...",
+                "correct_answer": "39",
+                "acceptable_answers": [
+                    "39",
+                    "t8=39"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the sum of the first 6 terms of the geometric series: 1 + 2 + 4 + ...?",
+                "options": [
+                    "63",
+                    "64",
+                    "65",
+                    "66"
+                ],
+                "correct_answer": "63",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a property of an arithmetic sequence?",
+                "options": [
+                    "Each term is multiplied by a constant",
+                    "The difference between consecutive terms is constant",
+                    "The ratio between consecutive terms is constant",
+                    "Each term is the sum of the previous two terms"
+                ],
+                "correct_answer": "The difference between consecutive terms is constant",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the common ratio (r) of the geometric sequence: 5, 15, 45, ...",
+                "correct_answer": "3",
+                "acceptable_answers": [
+                    "3",
+                    "r=3"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the range of a function?",
+                "options": [
+                    "The set of all possible input values (x)",
+                    "The set of all possible output values (y)",
+                    "The difference between the maximum and minimum values",
+                    "The interval where the function is increasing"
+                ],
+                "correct_answer": "The set of all possible output values (y)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the domain of the function f(x) = √(x - 4)?",
+                "options": [
+                    "{x ∈ ℝ | x > 4}",
+                    "{x ∈ ℝ | x ≥ 4}",
+                    "{x ∈ ℝ | x ≤ 4}",
+                    "{x ∈ ℝ}"
+                ],
+                "correct_answer": "{x ∈ ℝ | x ≥ 4}",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the inverse function f⁻¹(x) for f(x) = 2x + 3.",
+                "correct_answer": "(x - 3) / 2",
+                "acceptable_answers": [
+                    "(x-3)/2",
+                    "0.5x - 1.5",
+                    "f^-1(x)=(x-3)/2"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If f(x) = x + 2 and g(x) = x², what is the value of f(g(3))?",
+                "options": [
+                    "25",
+                    "11",
+                    "9",
+                    "5"
+                ],
+                "correct_answer": "11",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which set of ordered pairs represents a function?",
+                "options": [
+                    "{(1, 2), (1, 3), (2, 4)}",
+                    "{(1, 2), (2, 2), (3, 2)}",
+                    "{(2, 5), (2, 6), (2, 7)}",
+                    "{(1, 1), (2, 3), (3, 5)}"
+                ],
+                "correct_answer": "{(1, 1), (2, 3), (3, 5)}",
+                "difficulty": "Easy"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Arithmetic Sequences",
+                "Geometric Sequences",
+                "Arithmetic Series",
+                "Geometric Series",
+                "Recursive Formulas"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

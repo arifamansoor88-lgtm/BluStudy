@@ -1,0 +1,183 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 11 Rational Expressions Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "What is a restriction (non-permissible value) for the expression: 5 / (x - 3)?",
+                "options": [
+                    "x ≠ 5",
+                    "x ≠ 0",
+                    "x ≠ 3",
+                    "x ≠ -3"
+                ],
+                "correct_answer": "x ≠ 3",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Simplify the expression: (x² - 9) / (x - 3).",
+                "correct_answer": "x + 3",
+                "acceptable_answers": [
+                    "x+3",
+                    "(x+3)"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following are the restrictions for the expression: (x + 2) / (x² - 16)?",
+                "options": [
+                    "x ≠ -2",
+                    "x ≠ 4",
+                    "x ≠ ±4",
+                    "x ≠ 16"
+                ],
+                "correct_answer": "x ≠ ±4",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "To add the expressions 1/x and 1/y, what is the Lowest Common Denominator (LCD)?",
+                "options": [
+                    "x + y",
+                    "xy",
+                    "1",
+                    "x²y²"
+                ],
+                "correct_answer": "xy",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Simplify: (3/x) * (x²/6).",
+                "correct_answer": "x/2",
+                "acceptable_answers": [
+                    "x/2",
+                    "0.5x",
+                    "1/2x"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the result of (x / 4) ÷ (x / 2)?",
+                "options": [
+                    "x²/8",
+                    "2",
+                    "1/2",
+                    "x/2"
+                ],
+                "correct_answer": "1/2",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "When simplifying (x - 5) / (5 - x), the result is:",
+                "options": [
+                    "1",
+                    "-1",
+                    "0",
+                    "undefined"
+                ],
+                "correct_answer": "-1",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Simplify: 2/(x+1) + 3/(x+1).",
+                "correct_answer": "5/(x+1)",
+                "acceptable_answers": [
+                    "5/(x+1)",
+                    "5 / (x+1)"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the simplified form of (x² + 5x + 6) / (x + 2)?",
+                "options": [
+                    "x + 6",
+                    "x + 3",
+                    "x + 2",
+                    "x² + 3"
+                ],
+                "correct_answer": "x + 3",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "For the expression (x + 1) / x, which statement is true regarding the domain?",
+                "options": [
+                    "x ∈ ℝ",
+                    "x ∈ ℝ, x ≠ -1",
+                    "x ∈ ℝ, x ≠ 0",
+                    "x > 0"
+                ],
+                "correct_answer": "x ∈ ℝ, x ≠ 0",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Simplify the complex fraction: (1/(x+2)) / (1/(x-3)).",
+                "correct_answer": "(x-3)/(x+2)",
+                "acceptable_answers": [
+                    "(x-3)/(x+2)",
+                    "(x-3)/(x+2)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the result of multiplying (2/x) and (3/x²)?",
+                "options": [
+                    "6/x³",
+                    "6/x²",
+                    "5/x³",
+                    "5/x²"
+                ],
+                "correct_answer": "6/x³",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a valid simplification of (x² - 4) / (x - 2)?",
+                "options": [
+                    "x + 2",
+                    "x - 2",
+                    "x² - 2",
+                    "x² + 2"
+                ],
+                "correct_answer": "x + 2",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following functions is not a linear function?",
+                "options": [
+                    "f(x) = 2x + 3",
+                    "g(x) = x² + 1",
+                    "h(x) = -4x + 5",
+                    "k(x) = 0.5x - 2"
+                ],
+                "correct_answer": "g(x) = x² + 1",
+                "difficulty": "Medium"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Simplifying Rational Expressions",
+                "Restrictions/Non-permissible Values",
+                "Multiplying and Dividing",
+                "Adding and Subtracting with LCD",
+                "Complex Fractions"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

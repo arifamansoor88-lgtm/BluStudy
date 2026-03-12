@@ -1,0 +1,241 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 12 Algebraic Vectors Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "Given a vector v = (3, -4), what is the magnitude |v|?",
+                "options": [
+                    "1",
+                    "5",
+                    "7",
+                    "25"
+                ],
+                "correct_answer": "5",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the components of the vector AB where A(2, 3) and B(5, -1). (Format: x,y)",
+                "correct_answer": "3,-4",
+                "acceptable_answers": [
+                    "3,-4",
+                    "(3,-4)",
+                    "3, -4"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What are the coordinates of the unit vector 'i' in R²?",
+                "options": [
+                    "(0, 1)",
+                    "(1, 1)",
+                    "(1, 0)",
+                    "(-1, 0)"
+                ],
+                "correct_answer": "(1, 0)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If u = (2, 5) and v = (-3, 1), what is u + v?",
+                "options": [
+                    "(-1, 6)",
+                    "(5, 4)",
+                    "(-5, 6)",
+                    "(1, -6)"
+                ],
+                "correct_answer": "(-1, 6)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Calculate the magnitude of the 3D vector u = (2, 3, 6).",
+                "correct_answer": "7",
+                "acceptable_answers": [
+                    "7",
+                    "7.0"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Two vectors are collinear if:",
+                "options": [
+                    "Their dot product is zero",
+                    "They have the same magnitude",
+                    "One is a scalar multiple of the other",
+                    "They are perpendicular"
+                ],
+                "correct_answer": "One is a scalar multiple of the other",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the result of 3(2, -1, 4)?",
+                "options": [
+                    "(5, 2, 7)",
+                    "(6, -3, 12)",
+                    "(6, -1, 4)",
+                    "(2, -3, 12)"
+                ],
+                "correct_answer": "(6, -3, 12)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the unit vector in the direction of v = (0, 8).",
+                "correct_answer": "(0, 1)",
+                "acceptable_answers": [
+                    "(0,1)",
+                    "0,1",
+                    "j"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "In 3D space (R³), the vector (0, 0, 1) is represented by which standard unit vector?",
+                "options": [
+                    "i",
+                    "j",
+                    "k",
+                    "u"
+                ],
+                "correct_answer": "k",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If vector a = (k, 4) has a magnitude of 5, what are the possible values for k?",
+                "options": [
+                    "±1",
+                    "±3",
+                    "±9",
+                    "0"
+                ],
+                "correct_answer": "±3",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Calculate the vector sum of u = (1, 2) and v = (3, 4).",
+                "correct_answer": "(4, 6)",
+                "acceptable_answers": [
+                    "(4,6)",
+                    "4,6",
+                    "4i + 6j"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a property of vector addition?",
+                "options": [
+                    "Commutative Property",
+                    "Associative Property",
+                    "Distributive Property",
+                    "All of the above"
+                ],
+                "correct_answer": "All of the above",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "If u = (2, 3) and k = 4, what is the result of the scalar multiplication k(u)?",
+                "correct_answer": "(8, 12)",
+                "acceptable_answers": [
+                    "(8,12)",
+                    "8,12",
+                    "8i + 12j"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the magnitude of the vector v = (6, 8)?",
+                "options": [
+                    "10",
+                    "14",
+                    "20",
+                    "25"
+                ],
+                "correct_answer": "10",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the components of the vector AB where A(1, 2) and B(4, 6). (Format: x,y)",
+                "correct_answer": "(3, 4)",
+                "acceptable_answers": [
+                    "(3,4)",
+                    "3,4",
+                    "3i + 4j"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If u = (2, 5) and v = (-3, 1), what is u - v?",
+                "options": [
+                    "(5, 4)",
+                    "(-1, 6)",
+                    "(1, -6)",
+                    "(5, 6)"
+                ],
+                "correct_answer": "(5, 4)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Calculate the magnitude of the 3D vector u = (1, 2, 2).",
+                "correct_answer": "3",
+                "acceptable_answers": [
+                    "3",
+                    "3.0"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Two vectors are perpendicular if:",
+                "options": [
+                    "Their dot product is zero",
+                    "They have the same magnitude",
+                    "One is a scalar multiple of the other",
+                    "They are collinear"
+                ],
+                "correct_answer": "Their dot product is zero",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the result of 2(1, -2, 3)?",
+                "options": [
+                    "(2, -4, 6)",
+                    "(1, -2, 3)",
+                    "(2, -2, 3)",
+                    "(0, -4, 6)"
+                ],
+                "correct_answer": "(2, -4, 6)",
+                "difficulty": "Easy"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Vector Components",
+                "Magnitude in R² and R³",
+                "Vector Operations (Addition/Subtraction)",
+                "Scalar Multiplication",
+                "Standard Unit Vectors (i, j, k)"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

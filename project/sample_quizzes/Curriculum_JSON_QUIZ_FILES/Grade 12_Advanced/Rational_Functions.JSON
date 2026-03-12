@@ -1,0 +1,239 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 12 Rational Functions Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "What causes a 'hole' (point discontinuity) in the graph of a rational function?",
+                "options": [
+                    "A factor in the denominator that does not cancel out",
+                    "A factor that appears in both the numerator and the denominator",
+                    "When the degree of the numerator is higher than the denominator",
+                    "When the function has no x-intercepts"
+                ],
+                "correct_answer": "A factor that appears in both the numerator and the denominator",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the vertical asymptote of the function f(x) = (x + 5) / (x - 2).",
+                "correct_answer": "x = 2",
+                "acceptable_answers": [
+                    "x=2",
+                    "2",
+                    "x = 2"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the horizontal asymptote of f(x) = (3x² + 1) / (x² - 4)?",
+                "options": [
+                    "y = 0",
+                    "y = 3",
+                    "y = 1/3",
+                    "No horizontal asymptote"
+                ],
+                "correct_answer": "y = 3",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If the degree of the numerator is exactly one higher than the degree of the denominator, the function has a:",
+                "options": [
+                    "Horizontal Asymptote",
+                    "Oblique (Slant) Asymptote",
+                    "Vertical Asymptote at y=0",
+                    "Hole at the origin"
+                ],
+                "correct_answer": "Oblique (Slant) Asymptote",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the x-coordinate of the hole in f(x) = (x - 3) / (x² - 9).",
+                "correct_answer": "3",
+                "acceptable_answers": [
+                    "3",
+                    "x=3"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the horizontal asymptote of a rational function where the degree of the denominator is greater than the degree of the numerator?",
+                "options": [
+                    "y = 1",
+                    "y = 0",
+                    "y = Leading Coefficient Ratio",
+                    "None"
+                ],
+                "correct_answer": "y = 0",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "How do you find the x-intercepts of a rational function?",
+                "options": [
+                    "Set the denominator to zero",
+                    "Set the numerator to zero",
+                    "Find the ratio of leading coefficients",
+                    "Plug in x = 0"
+                ],
+                "correct_answer": "Set the numerator to zero",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the y-intercept of f(x) = (x - 4) / (x + 2).",
+                "correct_answer": "-2",
+                "acceptable_answers": [
+                    "-2",
+                    "y=-2",
+                    "(0,-2)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following describes the behavior of a graph near a vertical asymptote?",
+                "options": [
+                    "The graph crosses the asymptote",
+                    "The y-values approach infinity or negative infinity",
+                    "The graph stops abruptly",
+                    "The y-values approach zero"
+                ],
+                "correct_answer": "The y-values approach infinity or negative infinity",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Solve for x: 2 / (x - 1) = 1.",
+                "options": [
+                    "x = 1",
+                    "x = 2",
+                    "x = 3",
+                    "x = 0"
+                ],
+                "correct_answer": "x = 3",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the oblique asymptote of f(x) = (2x² + 3) / (x - 1).",
+                "correct_answer": "y = 2x + 2",
+                "acceptable_answers": [
+                    "y=2x+2",
+                    "y = 2x + 2",
+                    "Oblique asymptote: y=2x+2"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the domain of f(x) = 1 / (x² - 4)?",
+                "options": [
+                    "All real numbers",
+                    "x ≠ 2 and x ≠ -2",
+                    "x > 2 or x < -2",
+                    "x ≥ 2 or x ≤ -2"
+                ],
+                "correct_answer": "x ≠ 2 and x ≠ -2",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the x-intercept of f(x) = (x² - 9) / (x + 1).",
+                "correct_answer": "-3 and 3",
+                "acceptable_answers": [
+                    "-3 and 3",
+                    "x=-3 and x=3",
+                    "x=-3, x=3"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a correct application of the Remainder Theorem?",
+                "options": [
+                    "To find the degree of a polynomial",
+                    "To determine the end behavior of a polynomial",
+                    "To find the remainder when dividing a polynomial by (x - k)",
+                    "To identify the leading coefficient of a polynomial"
+                ],
+                "correct_answer": "To find the remainder when dividing a polynomial by (x - k)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Using the Factor Theorem, determine if (x - 2) is a factor of f(x) = x³ - 4x² + 5x - 2.",
+                "correct_answer": "Yes",
+                "acceptable_answers": [
+                    "Yes",
+                    "(x - 2) is a factor",
+                    "Factor"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If (x - 1) is a factor of f(x) = 2x³ - 3x² + ax - 5, which of the following must be true?",
+                "options": [
+                    "a = 5",
+                    "a = -5",
+                    "a = 0",
+                    "a = 1"
+                ],
+                "correct_answer": "a = 5",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the multiplicity of the zero x = 2 for the polynomial f(x) = (x - 2)⁴(x + 3)².",
+                "correct_answer": "4",
+                "acceptable_answers": [
+                    "4",
+                    "multiplicity 4"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following polynomials has a zero at x = -3 with multiplicity 2?",
+                "options": [
+                    "f(x) = (x + 3)(x - 1)²",
+                    "f(x) = (x + 3)²(x - 1)",
+                    "f(x) = (x + 3)(x - 1)(x + 2)",
+                    "f(x) = (x + 3)³"
+                ],
+                "correct_answer": "f(x) = (x + 3)²(x - 1)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the y-intercept of the polynomial f(x) = x³ - 2x² + x - 1.",
+                "correct_answer": "-1",
+                "acceptable_answers": [
+                    "-1",
+                    "y = -1"
+                ],
+                "difficulty": "Easy"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Vertical and Horizontal Asymptotes",
+                "Holes and Discontinuities",
+                "Oblique Asymptotes",
+                "Intercepts",
+                "Rational Equations"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

@@ -1,0 +1,403 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 11 Exponential Functions Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following describes the horizontal asymptote of the parent function f(x) = 2^x?",
+                "options": [
+                    "x = 0",
+                    "y = 0",
+                    "y = 1",
+                    "No horizontal asymptote"
+                ],
+                "correct_answer": "y = 0",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the y-intercept of the function f(x) = 5(2)^x + 3?",
+                "correct_answer": "8",
+                "acceptable_answers": [
+                    "8",
+                    "y=8",
+                    "(0,8)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "For the function f(x) = (1/2)^x, which of the following is true?",
+                "options": [
+                    "It represents exponential growth",
+                    "It represents exponential decay",
+                    "It is a linear function",
+                    "The y-intercept is 1/2"
+                ],
+                "correct_answer": "It represents exponential decay",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "In the transformation f(x) = 3^{x-2} + 4, what is the effect of the '+4'?",
+                "options": [
+                    "Shift 4 units left",
+                    "Shift 4 units right",
+                    "Shift 4 units up",
+                    "Shift 4 units down"
+                ],
+                "correct_answer": "Shift 4 units up",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Solve for x: 2^{x+3} = 32",
+                "correct_answer": "2",
+                "acceptable_answers": [
+                    "2",
+                    "x=2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "A population of bacteria doubles every hour. If the initial population is 100, which equation models the population (P) after t hours?",
+                "options": [
+                    "P = 100(2)^t",
+                    "P = 2(100)^t",
+                    "P = 100 + 2^t",
+                    "P = 100(0.5)^t"
+                ],
+                "correct_answer": "P = 100(2)^t",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the domain of any exponential function of the form f(x) = a(b)^x + c?",
+                "options": [
+                    "{x ∈ ℝ | x > 0}",
+                    "{x ∈ ℝ | x ≥ c}",
+                    "{x ∈ ℝ}",
+                    "{x ∈ ℝ | x ≠ 0}"
+                ],
+                "correct_answer": "{x ∈ ℝ}",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the value of x that makes the equation true: 3^{2x-1} = 27",
+                "correct_answer": "2",
+                "acceptable_answers": [
+                    "2",
+                    "x=2",
+                    "2.0"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If a radioactive substance has a half-life of 10 years, what is the base (b) of the exponential decay equation P = P₀(b)^{t/10}?",
+                "options": [
+                    "2",
+                    "10",
+                    "0.5",
+                    "0.1"
+                ],
+                "correct_answer": "0.5",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What transformation is applied to y = 2^x to obtain y = 2^{-x}?",
+                "options": [
+                    "Reflection in the x-axis",
+                    "Reflection in the y-axis",
+                    "Vertical stretch",
+                    "Horizontal compression"
+                ],
+                "correct_answer": "Reflection in the y-axis",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the range of the function f(x) = 4^x - 2?",
+                "correct_answer": "y > -2",
+                "acceptable_answers": [
+                    "y > -2",
+                    "(-2, ∞)",
+                    "y > -2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the correct transformation of the parent function f(x) = 2^x to g(x) = 2^{x+1} - 3?",
+                "options": [
+                    "Shift 1 unit left and 3 units down",
+                    "Shift 1 unit right and 3 units up",
+                    "Shift 1 unit left and 3 units up",
+                    "Shift 1 unit right and 3 units down"
+                ],
+                "correct_answer": "Shift 1 unit left and 3 units down",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "For the function f(x) = 5(3)^x, which of the following is true about its growth?",
+                "options": [
+                    "It represents exponential growth",
+                    "It represents exponential decay",
+                    "It is a linear function",
+                    "The y-intercept is 5"
+                ],
+                "correct_answer": "It represents exponential growth",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Solve for x: 4^{2x} = 64",
+                "correct_answer": "3",
+                "acceptable_answers": [
+                    "3",
+                    "x=3"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "A certain investment grows at a rate of 8% per year. Which equation models the value (V) of the investment after t years if the initial amount is $1000?",
+                "options": [
+                    "V = 1000(1.08)^t",
+                    "V = 1000(0.92)^t",
+                    "V = 1000 + 0.08t",
+                    "V = 1000(1 + 0.08t)"
+                ],
+                "correct_answer": "V = 1000(1.08)^t",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the domain of the function f(x) = 3^{x-2} + 4?",
+                "options": [
+                    "{x ∈ ℝ | x > 0}",
+                    "{x ∈ ℝ | x ≥ 4}",
+                    "{x ∈ ℝ}",
+                    "{x ∈ ℝ | x ≠ 0}"
+                ],
+                "correct_answer": "{x ∈ ℝ}",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the value of x that satisfies the equation: 5^{x+1} = 125",
+                "correct_answer": "2",
+                "acceptable_answers": [
+                    "2",
+                    "x=2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If a substance decays to half its original amount in 5 years, what is the base (b) of the exponential decay equation P = P₀(b)^{t/5}?",
+                "options": [
+                    "2",
+                    "5",
+                    "0.5",
+                    "0.1"
+                ],
+                "correct_answer": "0.5",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What transformation is applied to y = 3^x to obtain y = 3^{-x} + 2?",
+                "options": [
+                    "Reflection in the x-axis and shift up by 2",
+                    "Reflection in the y-axis and shift up by 2",
+                    "Reflection in the x-axis and shift down by 2",
+                    "Reflection in the y-axis and shift down by 2"
+                ],
+                "correct_answer": "Reflection in the y-axis and shift up by 2",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the range of the function f(x) = (1/3)^x + 1?",
+                "correct_answer": "(1, ∞)",
+                "acceptable_answers": [
+                    "(1, ∞)",
+                    "{y ∈ ℝ | y > 1}",
+                    "(1, ∞)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the correct transformation of the parent function f(x) = 3^x to g(x) = 3^{x-1} + 2?",
+                "options": [
+                    "Shift 1 unit left and 2 units up",
+                    "Shift 1 unit right and 2 units up",
+                    "Shift 1 unit left and 2 units down",
+                    "Shift 1 unit right and 2 units down"
+                ],
+                "correct_answer": "Shift 1 unit right and 2 units up",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "For the function f(x) = 2(4)^x, which of the following is true about its growth?",
+                "options": [
+                    "It represents exponential growth",
+                    "It represents exponential decay",
+                    "It is a linear function",
+                    "The y-intercept is 2"
+                ],
+                "correct_answer": "It represents exponential growth",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Solve for x: 3^{x-2} = 9",
+                "correct_answer": "4",
+                "acceptable_answers": [
+                    "4",
+                    "x=4"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "A certain investment grows at a rate of 5% per year. Which equation models the value (V) of the investment after t years if the initial amount is $500?",
+                "options": [
+                    "V = 500(1.05)^t",
+                    "V = 500(0.95)^t",
+                    "V = 500 + 0.05t",
+                    "V = 500(1 + 0.05t)"
+                ],
+                "correct_answer": "V = 500(1.05)^t",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the domain of the function f(x) = (1/5)^{x+3} - 1?",
+                "options": [
+                    "{x ∈ ℝ | x > 0}",
+                    "{x ∈ ℝ | x ≥ -1}",
+                    "{x ∈ ℝ}",
+                    "{x ∈ ℝ | x ≠ 0}"
+                ],
+                "correct_answer": "{x ∈ ℝ}",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the value of x that satisfies the equation: 4^{2x+1} = 64",
+                "correct_answer": "-0.5",
+                "acceptable_answers": [
+                    "-0.5",
+                    "-1/2",
+                    "-0.5"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If a substance decays to half its original amount in 3 years, what is the base (b) of the exponential decay equation P = P₀(b)^{t/3}?",
+                "options": [
+                    "2",
+                    "3",
+                    "0.5",
+                    "0.1"
+                ],
+                "correct_answer": "0.5",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What transformation is applied to y = 4^x to obtain y = 4^{-x} - 1?",
+                "options": [
+                    "Reflection in the x-axis and shift down by 1",
+                    "Reflection in the y-axis and shift down by 1",
+                    "Reflection in the x-axis and shift up by 1",
+                    "Reflection in the y-axis and shift up by 1"
+                ],
+                "correct_answer": "Reflection in the y-axis and shift down by 1",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the range of the function f(x) = 2^{-x} + 3?",
+                "correct_answer": "(3, ∞)",
+                "acceptable_answers": [
+                    "(3, ∞)",
+                    "{y ∈ ℝ | y > 3}",
+                    "(3, ∞)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the correct transformation of the parent function f(x) = 4^x to g(x) = 4^{x+2} - 3?",
+                "options": [
+                    "Shift 2 units left and 3 units down",
+                    "Shift 2 units right and 3 units up",
+                    "Shift 2 units left and 3 units up",
+                    "Shift 2 units right and 3 units down"
+                ],
+                "correct_answer": "Shift 2 units left and 3 units down",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "For the function f(x) = (1/4)^x, which of the following is true about its growth?",
+                "options": [
+                    "It represents exponential growth",
+                    "It represents exponential decay",
+                    "It is a linear function",
+                    "The y-intercept is 1/4"
+                ],
+                "correct_answer": "It represents exponential decay",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Solve for x: (1/2)^{x-1} = 8",
+                "correct_answer": "-2",
+                "acceptable_answers": [
+                    "-2",
+                    "-1/2",
+                    "-2.0"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "A certain investment grows at a rate of 12% per year. Which equation models the value (V) of the investment after t years if the initial amount is $2000?",
+                "options": [
+                    "V = 2000(1.12)^t",
+                    "V = 2000(0.88)^t",
+                    "V = 2000 + 0.12t",
+                    "V = 2000(1 + 0.12t)"
+                ],
+                "correct_answer": "V = 2000(1.12)^t",
+                "difficulty": "Medium"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Exponential Growth and Decay",
+                "Transformations of Exponential Functions",
+                "Solving Exponential Equations",
+                "Domain and Range",
+                "Asymptotes"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

@@ -1,0 +1,266 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 10: Solving Quadratics Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "What is the quadratic formula used to find the roots of ax² + bx + c = 0?",
+                "options": [
+                    "x = (-b ± √(b² - 4ac)) / 2a",
+                    "x = (b ± √(b² + 4ac)) / 2a",
+                    "x = -b / 2a",
+                    "x = √(b² - 4ac)"
+                ],
+                "correct_answer": "x = (-b ± √(b² - 4ac)) / 2a",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Solve for x by factoring: x² - 9 = 0. (Provide both values separated by a comma)",
+                "correct_answer": "3,-3",
+                "acceptable_answers": [
+                    "3,-3",
+                    "-3,3",
+                    "3, -3",
+                    "x=3, x=-3"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If the discriminant (b² - 4ac) is negative, how many real solutions does the equation have?",
+                "options": [
+                    "Zero",
+                    "One",
+                    "Two",
+                    "Infinite"
+                ],
+                "correct_answer": "Zero",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Solve for x: (x - 5)(x + 2) = 0. (Provide both values separated by a comma)",
+                "correct_answer": "5,-2",
+                "acceptable_answers": [
+                    "5,-2",
+                    "-2,5",
+                    "5, -2"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "To solve x² + 6x + 5 = 0 by factoring, which two numbers do you need?",
+                "options": [
+                    "6 and 5",
+                    "1 and 5",
+                    "2 and 3",
+                    "-1 and -5"
+                ],
+                "correct_answer": "1 and 5",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the value of the discriminant for the equation x² - 4x + 4 = 0?",
+                "options": [
+                    "16",
+                    "8",
+                    "0",
+                    "-4"
+                ],
+                "correct_answer": "0",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Solve x² = 25. (Provide both values separated by a comma)",
+                "correct_answer": "5,-5",
+                "acceptable_answers": [
+                    "5,-5",
+                    "-5,5",
+                    "5, -5"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "In the quadratic formula, which part determines the 'nature of the roots'?",
+                "options": [
+                    "-b",
+                    "2a",
+                    "b² - 4ac",
+                    "±"
+                ],
+                "correct_answer": "b² - 4ac",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which method is best for solving x² - 7 = 0?",
+                "options": [
+                    "Common factoring",
+                    "Isolating x² and taking the square root",
+                    "Complex trinomial factoring",
+                    "Grouping"
+                ],
+                "correct_answer": "Isolating x² and taking the square root",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Solve 2x² - 8 = 0.",
+                "options": [
+                    "x = 2",
+                    "x = ±2",
+                    "x = ±4",
+                    "x = 4"
+                ],
+                "correct_answer": "x = ±2",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "What are the roots of the equation x² + 4x + 5 = 0? (Provide both values separated by a comma)",
+                "correct_answer": "-2 + i,-2 - i",
+                "acceptable_answers": [
+                    "-2 + i,-2 - i",
+                    "-2 - i,-2 + i",
+                    "-2 + i, -2 - i"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following indicates that a quadratic equation has two distinct real roots?",
+                "options": [
+                    "The discriminant is positive",
+                    "The discriminant is zero",
+                    "The discriminant is negative",
+                    "The coefficient a is zero"
+                ],
+                "correct_answer": "The discriminant is positive",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Solve for x: 3x² - 12 = 0. (Provide both values separated by a comma)",
+                "correct_answer": "2,-2",
+                "acceptable_answers": [
+                    "2,-2",
+                    "-2,2",
+                    "2, -2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the vertex of the parabola defined by y = 2(x - 3)² + 4? (Format: x,y)",
+                "options": [
+                    "(3,4)",
+                    "(4,3)",
+                    "(3,-4)",
+                    "(4,-3)"
+                ],
+                "correct_answer": "(3,4)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the factored form of x² - 5x + 6?",
+                "options": [
+                    "(x - 2)(x - 3)",
+                    "(x + 2)(x + 3)",
+                    "(x - 1)(x - 6)",
+                    "(x + 1)(x + 6)"
+                ],
+                "correct_answer": "(x - 2)(x - 3)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the axis of symmetry for the parabola y = -x² + 4x - 3. (Format: x = value)",
+                "correct_answer": "x = 2",
+                "acceptable_answers": [
+                    "x = 2",
+                    "x=2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following represents the 'zeros' of the relation y = (x + 3)(x - 1)?",
+                "options": [
+                    "x = -3 and x = 1",
+                    "x = 3 and x = -1",
+                    "x = -3 and x = -1",
+                    "x = 3 and x = 1"
+                ],
+                "correct_answer": "x = -3 and x = 1",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the equation for the axis of symmetry for the parabola y = 0.5(x - 5)² + 2?",
+                "options": [
+                    "x = 5",
+                    "x = -5",
+                    "y = 2",
+                    "x = 2"
+                ],
+                "correct_answer": "x = 5",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the vertex of the parabola defined by y = -0.5(x + 2)² + 4? (Format: x,y)",
+                "correct_answer": "-2,4",
+                "acceptable_answers": [
+                    "-2,4",
+                    "( -2, 4)",
+                    "-2, 4"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If the parabola y = ax² + bx + c has its vertex at (2, -3), which of the following could be the equation of the parabola?",
+                "options": [
+                    "y = 2(x - 2)² - 3",
+                    "y = -1(x - 2)² - 3",
+                    "y = 1(x + 2)² - 3",
+                    "y = 0.5(x - 2)² + 3"
+                ],
+                "correct_answer": "y = 2(x - 2)² - 3",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the y-intercept of the relation y = -x² + 6x - 8.",
+                "correct_answer": "-8",
+                "acceptable_answers": [
+                    "-8",
+                    "y=-8",
+                    "(0,-8)"
+                ],
+                "difficulty": "Easy"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Solving by Factoring",
+                "Quadratic Formula",
+                "The Discriminant",
+                "Square Root Principle",
+                "Nature of Roots"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

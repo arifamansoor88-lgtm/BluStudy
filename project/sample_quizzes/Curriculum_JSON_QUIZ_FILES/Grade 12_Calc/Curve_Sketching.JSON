@@ -1,0 +1,173 @@
+{
+  "contentType": "quiz",
+  "data": {
+    "title": "Grade 12 Calculus: Curve Sketching Quiz",
+    "questions": [
+      {
+        "type": "multiple_choice",
+        "question": "When sketching a curve, what does a change in sign of the first derivative $f'(x)$ indicate?",
+        "options": [
+          "A point of inflection",
+          "A local maximum or minimum",
+          "A vertical asymptote",
+          "A change in concavity"
+        ],
+        "correct_answer": "A local maximum or minimum",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "Find the critical numbers for the function $f(x) = x^3 - 3x^2$. (Separate by a comma)",
+        "correct_answer": "0,2",
+        "acceptable_answers": [
+          "0,2",
+          "0, 2",
+          "x=0, x=2"
+        ],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "If $f''(x) > 0$ for all $x$ in an interval, what can be said about the shape of the graph on that interval?",
+        "options": [
+          "The graph is increasing",
+          "The graph is decreasing",
+          "The graph is concave up",
+          "The graph is concave down"
+        ],
+        "correct_answer": "The graph is concave up",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "What is a point of inflection?",
+        "options": [
+          "A point where the first derivative is zero",
+          "A point where the graph crosses the x-axis",
+          "A point where the concavity changes",
+          "A point where the function is undefined"
+        ],
+        "correct_answer": "A point where the concavity changes",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "Determine the x-coordinate of the point of inflection for $f(x) = x^3 - 6x^2 + 9x$.",
+        "correct_answer": "2",
+        "acceptable_answers": [
+          "2",
+          "x=2"
+        ],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Which test is most direct for determining if a critical point is a local maximum when the second derivative is easy to compute?",
+        "options": [
+          "The First Derivative Test",
+          "The Second Derivative Test",
+          "The Extreme Value Theorem",
+          "The Rational Zero Theorem"
+        ],
+        "correct_answer": "The Second Derivative Test",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "If $f'(c) = 0$ and $f''(c) < 0$, what occurs at $x = c$?",
+        "options": [
+          "Local Minimum",
+          "Local Maximum",
+          "Point of Inflection",
+          "Vertical Asymptote"
+        ],
+        "correct_answer": "Local Maximum",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "short_answer",
+        "question": "On what interval is the function $f(x) = x^2 - 4x$ decreasing?",
+        "correct_answer": "x < 2",
+        "acceptable_answers": [
+          "x < 2",
+          "(-infinity, 2)",
+          "x < 2"
+        ],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "For a rational function, if the degree of the numerator is equal to the degree of the denominator, the horizontal asymptote is found by:",
+        "options": [
+          "Setting the denominator to zero",
+          "The ratio of the leading coefficients",
+          "Polynomial long division",
+          "Taking the derivative of the numerator"
+        ],
+        "correct_answer": "The ratio of the leading coefficients",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "A function $f(x)$ is increasing on an interval if:",
+        "options": [
+          "$f'(x) > 0$",
+          "$f'(x) < 0$",
+          "$f''(x) > 0$",
+          "$f''(x) < 0$"
+        ],
+        "correct_answer": "$f'(x) > 0$",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "If a function has a vertical asymptote at $x = a$, what can be said about the limit of $f(x)$ as $x$ approaches $a$?",
+        "options": [
+          "The limit is zero",
+          "The limit is finite",
+          "The limit is infinite or does not exist",
+          "The limit is negative"
+        ],
+        "correct_answer": "The limit is infinite or does not exist",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "short_answer",
+        "question": "Find the x-intercepts of the function $f(x) = x^3 - 4x$.",
+        "correct_answer": "0, -2, 2",
+        "acceptable_answers": [
+          "0, -2, 2",
+          "-2, 0, 2",
+          "x=0, x=-2, x=2"
+        ],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "According to the Product Rule, what is the derivative of [f(x)g(x)]?",
+        "options": [
+          "f'(x)g'(x)",
+          "f'(x)g(x) + f(x)g'(x)",
+          "f'(x)g(x) - f(x)g'(x)",
+          "f(x)g(x) + f'(x)g'(x)"
+        ],
+        "correct_answer": "f'(x)g(x) + f(x)g'(x)",
+        "difficulty": "Medium"
+      }
+    ],
+    "timeTaken": 0,
+    "options": {
+      "numQuestions": 10,
+      "selectedTopics": [
+        "First and Second Derivative Tests",
+        "Concavity and Points of Inflection",
+        "Asymptotes and Intercepts",
+        "Critical Points",
+        "Intervals of Increase and Decrease"
+      ],
+      "customTopics": null,
+      "questionFormats": {}
+    },
+    "attempts": []
+  }
+}

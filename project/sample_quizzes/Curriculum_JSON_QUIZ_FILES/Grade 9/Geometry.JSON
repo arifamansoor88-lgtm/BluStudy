@@ -1,0 +1,176 @@
+{
+  "contentType": "quiz",
+  "data": {
+    "title": "Grade 9: Geometry Quiz",
+    "questions": [
+      {
+        "type": "multiple_choice",
+        "question": "What is the sum of the interior angles of a triangle?",
+        "options": ["90°", "180°", "270°", "360°"],
+        "correct_answer": "180°",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "A right-angled triangle has legs of 6 cm and 8 cm. What is the length of the hypotenuse in cm?",
+        "correct_answer": "10",
+        "acceptable_answers": ["10", "10 cm", "10.0"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "In a right-angled triangle, which trigonometric ratio represents 'opposite / hypotenuse'?",
+        "options": ["Sine", "Cosine", "Tangent", "Secant"],
+        "correct_answer": "Sine",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "What is the measure of each interior angle in a regular hexagon?",
+        "options": ["60°", "108°", "120°", "720°"],
+        "correct_answer": "120°",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "short_answer",
+        "question": "Calculate the volume of a cylinder with a radius of 3 cm and a height of 10 cm. (Use π = 3.14 and round to one decimal place)",
+        "correct_answer": "282.6",
+        "acceptable_answers": ["282.6", "282.6 cm³"],
+        "difficulty": "Hard"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Which angle property states that angles opposite each other at an intersection of two lines are equal?",
+        "options": ["Corresponding Angles", "Alternate Angles", "Vertically Opposite Angles", "Supplementary Angles"],
+        "correct_answer": "Vertically Opposite Angles",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "If the scale factor of two similar triangles is 1:3, what is the ratio of their areas?",
+        "options": ["1:3", "1:6", "1:9", "1:27"],
+        "correct_answer": "1:9",
+        "difficulty": "Hard"
+      },
+      {
+        "type": "short_answer",
+        "question": "Find the measure of angle θ if tan(θ) = 1. (Answer in degrees)",
+        "correct_answer": "45",
+        "acceptable_answers": ["45", "45°", "45 degrees"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "What is the total surface area formula for a sphere?",
+        "options": ["πr²", "2πr", "4πr²", "4/3πr³"],
+        "correct_answer": "4πr²",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "In an isosceles triangle, if the vertex angle is 40°, what is the measure of each base angle?",
+        "options": ["40°", "70°", "140°", "60°"],
+        "correct_answer": "70°",
+        "difficulty": "Medium"
+      },
+        {
+            "type": "short_answer",
+            "question": "Calculate the length of the diagonal of a square with side length 5 cm. (Use √2 ≈ 1.414 and round to one decimal place)",
+            "correct_answer": "7.1",
+            "acceptable_answers": ["7.1", "7.1 cm"],
+            "difficulty": "Medium"
+        },
+        {
+        "type": "multiple_choice",
+        "question": "Which of the following is a property of similar triangles?",
+        "options": ["They have the same area", "They have the same perimeter", "They have the same shape but different sizes", "They have the same angles and sides"],
+        "correct_answer": "They have the same shape but different sizes",
+        "difficulty": "Easy"
+        },
+        {
+        "type": "multiple_choice",
+        "question": "What is the formula for the area of a trapezoid?",
+        "options": ["(base1 + base2) × height", "1/2 × (base1 + base2) × height", "base × height", "base1 × base2"],
+        "correct_answer": "1/2 × (base1 + base2) × height",
+        "difficulty": "Medium"
+        },
+        {
+        "type": "short_answer",
+        "question": "A triangle has sides of lengths 7 cm, 24 cm, and 25 cm. Is this triangle a right triangle? (Answer 'Yes' or 'No')",
+        "correct_answer": "Yes",
+        "acceptable_answers": ["Yes", "yes"],
+        "difficulty": "Medium"
+        },
+        {
+        "type": "multiple_choice",
+        "question": "Which of the following is the correct formula for the volume of a cone?",
+        "options": ["1/3πr²h", "πr²h", "2πrh", "4/3πr³"],
+        "correct_answer": "1/3πr²h",
+        "difficulty": "Medium"
+        },
+        {
+        "type": "multiple_choice",
+        "question": "What is the measure of the exterior angle of a regular pentagon?",
+        "options": ["36°", "72°", "108°", "144°"],
+        "correct_answer": "72°",
+        "difficulty": "Medium"
+        },
+        {
+        "type": "short_answer",
+        "question": "What is the measure of the exterior angle of a regular pentagon? (Answer in degrees)",
+        "correct_answer": "72",
+        "acceptable_answers": ["72", "72°", "72 degrees"],
+        "difficulty": "Medium"
+        },
+        {
+        "type": "multiple_choice",
+        "question": "Which of the following is a property of a parallelogram?",
+        "options": ["Opposite sides are parallel and equal in length", "All sides are equal in length", "All angles are right angles", "Diagonals are equal in length"],
+        "correct_answer": "Opposite sides are parallel and equal in length",
+        "difficulty": "Medium"
+        },
+        {
+        "type": "multiple_choice",
+        "question": "What is the formula for the area of a circle?",
+        "options": ["πr", "2πr", "πr²", "2πr²"],
+        "correct_answer": "πr²",
+        "difficulty": "Medium"
+        },
+        {
+        "type": "short_answer",
+        "question": "Calculate the area of a circle with a radius of 4 cm. (Use π = 3.14 and round to one decimal place)",
+        "correct_answer": "50.3",
+        "acceptable_answers": ["50.3", "50.3 cm²"],
+        "difficulty": "Medium"
+        },
+        {
+        "type": "multiple_choice",
+        "question": "Which of the following is a property of a rhombus?",
+        "options": ["All sides are equal in length", "All angles are right angles", "Diagonals are equal in length", "Opposite sides are parallel and equal in length"],
+        "correct_answer": "All sides are equal in length",
+        "difficulty": "Medium"
+        },
+        {
+        "type": "multiple_choice",
+        "question": "What is the formula for the surface area of a rectangular prism?",
+        "options": ["2lw + 2lh + 2wh", "lw + lh + wh", "2(lw + lh + wh)", "lwh"],
+        "correct_answer": "2(lw + lh + wh)",
+        "difficulty": "Medium"
+        }
+    ],
+    "timeTaken": 0,
+    "options": {
+      "numQuestions": 10,
+      "selectedTopics": [
+        "Pythagorean Theorem",
+        "SOH CAH TOA",
+        "Angle Properties",
+        "Measurement (Volume and Surface Area)",
+        "Similarity and Scaling"
+      ],
+      "customTopics": null,
+      "questionFormats": {}
+    },
+    "attempts": []
+  }
+}
