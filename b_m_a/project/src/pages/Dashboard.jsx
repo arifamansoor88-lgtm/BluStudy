@@ -25,33 +25,62 @@ const Dashboard = () => {
   const [streakDays, setStreakDays] = useState(0);
     const recentItems = useUserRecents();
     const [suggestedNextSteps, setSuggestedNextSteps] = useState([]);
-  const [focusAreas, setFocusAreas] = useState([
-  "Derivatives",
-  "Chemical Bonds",
-]);
+  const [focusAreas, setFocusAreas] = useState([]);
 const handleQuizio = async () => {
   try {
-    const res = await fetch("http://localhost:8000/generate-focus-quiz", {
+    const account = instance.getActiveAccount();
+    const token = account?.idToken;
+
+    const res = await fetch("http://localhost:8000/weak-areas", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+
+    setFocusAreas(data.focusAreas || []);
+
+  } catch (err) {
+    console.error("Failed to fetch focus areas:", err);
+  }
+};
+// Quizio Quiz Generation
+const startFocusQuiz = async (topic) => {
+  try {
+    setLoadingTopic(topic); 
+
+    const account = instance.getActiveAccount();
+    const token = account?.idToken;
+
+    const res = await fetch("http://localhost:8000/generate-quiz-from-topic", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        topics: focusAreas
-      })
+        topic: topic,
+        num_questions: 10
+      }),
     });
 
     const data = await res.json();
 
     navigate("/tools/practice-tests", {
-      state: { quiz: data.quiz }
+      state: { 
+        quiz: data,
+        topic: topic   
+      }
     });
 
   } catch (err) {
-    console.error("Failed to generate quiz:", err);
+    console.error("Failed to start quiz:", err);
+  } finally {
+    setLoadingTopic(null); 
   }
 };
-
+const [loadingTopic, setLoadingTopic] = useState(null);
   // Redirect to sign in if not authenticated
   useEffect(() => {
     // If no accounts, redirect to sign in
@@ -360,48 +389,95 @@ useEffect(() => {
   initial={{ opacity: 0 }}
   animate={{ opacity: 1 }}
   transition={{ delay: 0.08 }}
-  className="bg-white rounded-xl shadow-sm p-6 mb-6"
+  className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-100"
 >
-  <div className="flex items-center gap-2 mb-4">
-    <Brain className="text-purple-600" />
-    <h2 className="text-xl font-semibold text-gray-900">
-      Quizio
-    </h2>
+  {/* Header */}
+  <div className="flex items-center justify-between mb-3">
+    <div className="flex items-center gap-2">
+      <Brain className="text-purple-600" size={20} />
+      <h2 className="text-lg font-semibold text-gray-900">
+        Quizio
+      </h2>
+    </div>
+
+    {focusAreas.length > 0 && (
+      <button
+        onClick={handleQuizio}
+        className="text-sm text-purple-600 hover:text-purple-700"
+      >
+        Re-analyze
+      </button>
+    )}
   </div>
 
-  {focusAreas.length > 0 ? (
-    <>
-      <p className="text-gray-600 mb-3">
-        AI generated quiz based on your focus areas
-      </p>
+  {/* Subtext */}
+  <p className="text-sm text-gray-500 mb-4">
+    Practice based on your weak areas.
+  </p>
 
-      <ul className="text-sm text-gray-700 list-disc pl-5 mb-4">
-        {focusAreas.map((area, i) => (
-          <li key={i}>{area}</li>
-        ))}
-      </ul>
-
-      <button
-  onClick={handleQuizio}
-  className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
->
-        <Play size={16} />
-        Start Focus Quiz
-      </button>
-    </>
+  {/* STATE 1: NO FOCUS AREAS */}
+  {focusAreas.length === 0 ? (
+    <button
+      onClick={handleQuizio}
+      className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition"
+    >
+      Analyze Weak Areas
+    </button>
   ) : (
     <>
-      <p className="text-gray-600 mb-4">
-        Practice quizzes help discover your weak areas.
+      {/* Label */}
+      <p className="text-sm text-gray-600 mb-3">
+        Focus areas based on your performance:
       </p>
 
+      {/* Focus Area Cards */}
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  {focusAreas.map((item, idx) => {
+    const topic = item.topic;
+    const score = item.score;
+
+    let status = "Weak";
+    let color = "text-red-500";
+
+    if (score >= 60) {
+      status = "Improving";
+      color = "text-yellow-500";
+    }
+    if (score >= 75) {
+      status = "Strong";
+      color = "text-green-500";
+    }
+
+    return (
       <button
-        onClick={() => navigate("/tools/practice-tests")}
-        className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+        key={idx}
+        onClick={() => startFocusQuiz(topic)}
+        disabled={loadingTopic !== null}
+        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-purple-400 hover:shadow-sm transition flex justify-between items-center"
       >
-        <Play size={16} />
-        Generate Practice Quiz
+        {/* Left Side */}
+        <div className="text-left">
+          <p className="text-sm font-medium text-gray-900">
+            {topic}
+          </p>
+          <p className={`text-xs ${color}`}>
+            {status}
+          </p>
+        </div>
+
+        {/* Right Side */}
+        <div className="text-right">
+          <p className="text-sm font-semibold text-gray-700">
+            {score}%
+          </p>
+          <p className="text-xs text-gray-400">
+            {loadingTopic === topic ? "Generating..." : "Practice"}
+          </p>
+        </div>
       </button>
+    );
+  })}
+</div>
     </>
   )}
 </motion.div>

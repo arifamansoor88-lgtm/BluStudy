@@ -10,6 +10,8 @@ import {
   getAnswerExplanation,
   evaluateShortAnswer,
 } from "../../../api/apiService";
+import { useLocation } from "react-router-dom";
+
 
 /**
  * Main PracticeTests component that coordinates all other components
@@ -52,7 +54,9 @@ const PracticeTests = () => {
     short_response: false,
     fill_in_blank: false,
   });
-
+  const location = useLocation();
+  const quizFromDashboard = location.state?.quiz;
+  const topicFromDashboard = location.state?.topic;
   // Hooks for quiz functionality
   const { timer, resetTimer, setTimerValue } = useQuizTimer(quizStatus);
   const {
@@ -86,6 +90,27 @@ const PracticeTests = () => {
       fetchSavedQuizzes();
     }
   }, [showQuiz, fetchSavedQuizzes, quizzesFetchedRef]);
+  
+  //Quizio
+  useEffect(() => {
+  if (quizFromDashboard) {
+    console.log("Loading quiz from dashboard...");
+
+    setGeneratedQuiz(quizFromDashboard);
+
+    // Initialize answers
+    const answerArray = Array(quizFromDashboard.questions.length).fill(null);
+    setUserAnswers(answerArray);
+
+    setQuizStatus("ready");
+    setShowQuiz(false);
+    setShowUpload(true);
+    setCurrentQuizQuestion(0);
+    setShowSummary(false);
+
+    resetTimer();
+  }
+}, [quizFromDashboard]);
 
   // Create a new test
   const handleCreateTest = () => {

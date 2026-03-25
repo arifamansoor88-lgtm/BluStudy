@@ -29,7 +29,7 @@ from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, Save
 from pydantic import BaseModel
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 import time
-
+from openai_client import analyze_quiz_performance
 # Load the environment variables
 load_dotenv()
 
@@ -1065,7 +1065,146 @@ async def create_quiz(
         print(f"Error generating quiz: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to generate quiz: {str(e)}")
 
+@app.post("/generate-focus-quiz")
+async def generate_focus_quiz(user_claims: dict = Depends(validate_token)):
+    try:
+        user_id = user_claims["sub"]
 
+        #Get past quizzes
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'quiz'"
+        parameters = [{"name": "@userId", "value": user_id}]
+        quizzes = list(container.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=True
+        ))
+
+        if not quizzes:
+            return {
+                "quiz": None,
+                "focusAreas": [],
+                "message": "No past quizzes found"
+            }
+
+  #Analyze weak areas
+        weak_topics = []
+
+        for quiz in quizzes:
+            title = quiz.get("data", {}).get("title", "")
+
+            if "derivative" in title.lower():
+                weak_topics.append("Derivatives")
+            if "addition" in title.lower():
+                weak_topics.append("Addition")
+            if "chemistry" in title.lower():
+                weak_topics.append("Chemistry")
+
+        # remove duplicates
+        weak_topics = list(set(weak_topics))
+
+        if not weak_topics:
+            weak_topics = ["General Practice"]
+
+        #Generate quiz
+        synthetic_text = f"Focus on weak areas: {', '.join(weak_topics)}"
+
+        quiz_json = generate_quiz(
+            text=synthetic_text,
+            num_questions=10,
+            focus_topics=", ".join(weak_topics),
+            question_formats=["multiple_choice"]
+        )
+
+        quiz_data = json.loads(quiz_json)
+
+        return {
+            "quiz": quiz_data,
+            "focusAreas": weak_topics
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/weak-areas")
+async def get_weak_areas(user_claims: dict = Depends(validate_token)):
+    try:
+        user_id = user_claims["sub"]
+
+        #Fetch all quizzes for this user
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'quiz'"
+        parameters = [{"name": "@userId", "value": user_id}]
+
+        quizzes = list(container.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=True
+        ))
+
+        weak_topics = []
+
+        for quiz in quizzes:
+            data = quiz.get("data", {})
+            title = (data.get("title") or "").strip()
+
+            #Skip if no title
+            if not title:
+                continue
+
+            attempts = data.get("attempts", [])
+
+            #Skip if quiz never attempted
+            if not attempts:
+                continue
+
+            # Get all scores
+            scores = [a.get("score", 100) for a in attempts]
+
+            lowest_score = min(scores)
+
+            # Get latest attempt
+            latest_attempt = max(
+                attempts,
+                key=lambda x: x.get("timestamp", "")
+            )
+            latest_score = latest_attempt.get("score", 100)
+
+            #Only include if STILL weak (auto-remove logic)
+            if lowest_score < 60 and latest_score < 75:
+                weak_topics.append({
+                    "topic": title,
+                    "score": latest_score
+                })
+
+        #Remove duplicates (keep lowest score version)
+        unique_topics = {}
+        for item in weak_topics:
+            topic = item["topic"]
+            score = item["score"]
+
+            if topic not in unique_topics or score < unique_topics[topic]:
+                unique_topics[topic] = score
+
+        #Sort by weakest first
+        sorted_topics = sorted(
+            unique_topics.items(),
+            key=lambda x: x[1]  # sort by score
+        )
+
+        #Final output format
+        focus_areas = []
+
+        for topic, score in sorted_topics:
+            focus_areas.append({
+                "topic": topic,
+                "score": score
+        })
+
+        return {
+            "focusAreas": focus_areas or [{"topic": "General Practice", "score": 100}]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+ 
 @app.post("/generate-quiz-from-topic")
 async def create_quiz_from_topic(
     payload: Dict[str, Any],
