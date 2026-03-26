@@ -24,7 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from database import client, container
 from pdf_utils import extract_text_from_pdf
-from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
+from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance, generate_suggested_next_steps_ai
 from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse, CreateMindmapRequest, CreateFolderRequest, UpdateFolderRequest, FolderOut 
 from pydantic import BaseModel
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -934,28 +934,18 @@ async def debug_voice_note(
     return JSONResponse(scrub)
 
 # Returns placeholder "Suggested Next Steps" recommendations for the dashboard.
-# This will later be replaced with logic based on the user's recent study activity and tool usage.
 @app.get("/dashboard/next-steps")
 def get_suggested_next_steps():
-    return {
-        "items": [
-            {
-                "title": "Resume AI Flashcard",
-                "description": "You recently used AI Flashcards for Biology 101. Continue with Cell Structure to reinforce learning.",
-                "buttonText": "Resume Tool",
-            },
-            {
-                "title": "Continue Practice Test",
-                "description": "You recently completed a Calculus quiz. Try another short practice test on derivatives.",
-                "buttonText": "Start Practice",
-            },
-            {
-                "title": "Open Smart Summarizer",
-                "description": "You recently summarized World History notes. Continue with Chapter 5 to stay on track.",
-                "buttonText": "Open Tool",
-            },
+    # TEMP: hardcoded recent activity until real activity tracking is wired up
+    recent_activity = {
+        "recentActivity": [
+            {"tool": "AI Flashcards", "course": "Biology 101", "topic": "Cell Structure"},
+            {"tool": "Practice Tests", "course": "Calculus", "topic": "Derivatives"},
+            {"tool": "Smart Summarizer", "course": "World History", "topic": "Chapter 5"},
         ]
     }
+
+    return generate_suggested_next_steps_ai(recent_activity)
 
 # ----- Quizzes -----
 class QuizDataModel(BaseModel):

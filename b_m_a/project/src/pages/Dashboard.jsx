@@ -195,6 +195,8 @@ useEffect(() => {
                 setSuggestedNextSteps(data.items || []);
             } catch (error) {
                 console.error("Error fetching suggested next steps:", error);
+
+                // fallback placeholder if backend fails
                 setSuggestedNextSteps([
                     {
                         title: "Resume AI Flashcards",
@@ -562,7 +564,7 @@ useEffect(() => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {suggestedNextSteps.map((step, index) => (
-                      <SuggestedStepCard key={index} step={step} />
+                      <SuggestedStepCard key={index} step={step} navigate={navigate} />
                   ))}
               </div>
           </motion.div>
@@ -689,7 +691,7 @@ const AchievementCard = ({
 );
 
 // Reusable card component for displaying a single Suggested Next Step recommendation.
-const SuggestedStepCard = ({ step }) => (
+const SuggestedStepCard = ({ step, navigate }) => (
     <motion.div
         whileHover={{ scale: 1.02 }}
         className="bg-gray-50 rounded-lg p-5 flex flex-col justify-between min-h-[190px]"
@@ -703,7 +705,12 @@ const SuggestedStepCard = ({ step }) => (
             </p>
         </div>
 
-        <button className="mt-5 inline-flex items-center justify-center rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition">
+        <button
+            onClick={() => step.actionPath && navigate(step.actionPath)}
+            disabled={!step.actionPath}
+            className={`mt-5 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-white transition
+        ${step.actionPath ? "bg-primary-600 hover:bg-primary-700" : "bg-gray-300 cursor-not-allowed"}`}
+        >
             {step.buttonText}
         </button>
     </motion.div>

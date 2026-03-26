@@ -1,4 +1,5 @@
 import os
+import json
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 from typing import List, Optional, Union, Dict, Any
@@ -874,3 +875,64 @@ def create_fallback_analysis(
             "studyPriorities": ["Review incorrect answers", "Practice weak areas"]
         }
     }
+
+# Generates "Suggested Next Steps"
+def generate_suggested_next_steps_ai(recent_activity: dict):
+    """
+    Generates 3 'Suggested Next Steps' recommendations using Azure OpenAI.
+    Output schema:
+      {"items": [{"title": str, "description": str, "buttonText": str}]}
+    """
+    prompt = f"""
+You are a study coach inside an education platform.
+
+Given the user's recent activity below, generate EXACTLY 3 suggested next steps.
+
+Rules:
+- Each suggestion MUST recommend the SAME tool the user used previously.
+- Title: short (4-7 words)
+- Description: 1 sentence
+- ButtonText: 1-3 words (e.g., "Resume Tool", "Start Practice", "Open Tool")
+- actionPath must be ONE of the following exact strings:
+  - "/tools/flashcards"
+  - "/tools/practice-tests"
+  - "/tools/summarizer"
+  - "/tools/voice-notes"
+  - "/tools/mind-maps"
+  - "/tools/study-planner"
+- Choose actionPath based on the tool used in the suggestion.
+- Return ONLY valid JSON in this exact schema:
+
+{{
+  "items": [
+    {{
+      "title": "string",
+      "description": "string",
+      "buttonText": "string",
+      "actionPath": "string"
+    }}
+  ]
+}}
+
+Recent activity:
+{json.dumps(recent_activity)}
+"""
+
+    resp = quiz_client.chat.completions.create(
+        model=QUIZ_DEPLOYMENT_NAME,
+        messages=[
+            {"role": "system", "content": "Return ONLY JSON. No extra text."},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.4,
+    )
+
+    content = resp.choices[0].message.content.strip()
+
+    # If the model wraps JSON in ```...```, strip code fences
+    if content.startswith("```"):
+        parts = content.split("```")
+        if len(parts) >= 2:
+            content = parts[1].strip()
+
+    return json.loads(content)
