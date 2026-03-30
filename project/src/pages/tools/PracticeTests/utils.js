@@ -53,6 +53,15 @@ export const isAnswerCorrect = (question, userAnswer) => {
           question.acceptable_answers.includes(userAnswer))
       );
 
+    case "numerical": {
+      if (!userAnswer) return false;
+      const parsed = parseFloat(String(userAnswer).replace(/[^0-9.\-]/g, ""));
+      if (isNaN(parsed)) return false;
+      const correct = question.correct_answer_value;
+      const tolerance = question.tolerance ?? 0.01;
+      return Math.abs(parsed - correct) <= tolerance;
+    }
+
     default:
       return false;
   }
@@ -95,7 +104,11 @@ export const getCorrectAnswerCount = (questions, userAnswers) => {
  * @returns {boolean} - Whether AI evaluation should be used
  */
 export const shouldUseAIEvaluation = (questionType) => {
-  return questionType === "short_answer" || questionType === "fill_in_blank";
+  return (
+    questionType === "short_answer" ||
+    questionType === "fill_in_blank" ||
+    questionType === "numerical"
+  );
 };
 
 /**

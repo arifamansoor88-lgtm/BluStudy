@@ -155,6 +155,55 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
         </div>
       );
 
+    case "numerical":
+      return (
+        <div className="space-y-6">
+          <h2 className="text-xl font-medium text-gray-900 mb-4">
+            {question.question}
+          </h2>
+
+          {/* Display given values in a structured card if available */}
+          {question.given_values && Object.keys(question.given_values).length > 0 && (
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 shadow-sm">
+              <p className="text-sm text-gray-500 mb-2 font-semibold uppercase tracking-wider">Given Data:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {Object.entries(question.given_values).map(([key, value]) => (
+                  <div key={key} className="flex justify-between items-center text-sm border-b border-gray-100 pb-1">
+                    <span className="text-gray-600 font-medium">{key.replace(/_/g, ' ')}:</span>
+                    <span className="text-gray-900 font-mono bg-white px-2 py-0.5 rounded border border-gray-100 shadow-inner">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Answer input with units label */}
+          <div className="mt-8">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Your Numerical Answer:</label>
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={userAnswer || ""}
+                  onChange={(e) => onAnswerChange(index, e.target.value)}
+                  placeholder="Enter value..."
+                  className="w-full bg-white border-2 border-gray-200 text-gray-900 rounded-lg px-4 py-3 font-mono text-xl focus:border-red-500 focus:ring-0 transition-all shadow-sm"
+                />
+              </div>
+              {question.units && (
+                <div className="bg-gray-100 px-4 py-3 rounded-lg border border-gray-200 text-gray-700 font-bold text-lg font-mono min-w-[60px] flex items-center justify-center">
+                  {question.units}
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-2 italic">
+              * Enter the numeric value only or include the units. Tolerance of ±{question.tolerance || 0.01} will be applied.
+            </p>
+          </div>
+        </div>
+      );
+
     default:
       return <div>Unsupported question type: {question.type}</div>;
   }

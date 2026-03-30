@@ -24,7 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from database import client, container
 from pdf_utils import extract_text_from_pdf
-from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
+from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, evaluate_numerical_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
 from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse, CreateMindmapRequest, CreateFolderRequest, UpdateFolderRequest, FolderOut 
 from pydantic import BaseModel
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -878,6 +878,7 @@ async def create_quiz(
     focus_topics: Optional[str] = Form(""),
     question_formats: Optional[str] = Form("{}"),
     folder_id: Optional[str] = Form(None),
+    subject_category: Optional[str] = Form("conceptual"),
     user_claims: dict = Depends(validate_token)
 ):
     try:
@@ -909,7 +910,8 @@ async def create_quiz(
             text=text,
             num_questions=num_questions,
             focus_topics=focus_topics.strip(),
-            question_formats=selected_formats
+            question_formats=selected_formats,
+            subject_category=subject_category
         )
 
         quiz_data = json.loads(quiz_json)
@@ -930,7 +932,8 @@ async def create_quiz(
                     "numQuestions": num_questions,
                     "selectedTopics": focus_topics.split(",") if focus_topics else [],
                     "customTopics": focus_topics,
-                    "questionFormats": formats_dict
+                    "questionFormats": formats_dict,
+                    "subjectCategory": subject_category
                 },
                 "attempts": []
             }
@@ -990,6 +993,8 @@ async def create_quiz_from_topic(
         selected_formats = [fmt for fmt, selected in formats_dict.items() if selected]
         if not selected_formats:
             selected_formats = ["multiple_choice"]
+            
+        subject_category = payload.get("subject_category", "conceptual")
 
         # Use the topic string as synthetic "text" input for the quiz generator
         synthetic_text = f"Create a quiz for the following topic/chapter/concept:\n\n{topic}"
@@ -999,6 +1004,7 @@ async def create_quiz_from_topic(
             num_questions=num_questions,
             focus_topics=focus_topics.strip(),
             question_formats=selected_formats,
+            subject_category=subject_category,
         )
 
         quiz_data = json.loads(quiz_json)
@@ -1020,6 +1026,7 @@ async def create_quiz_from_topic(
                     "selectedTopics": (focus_topics.split(",") if focus_topics else []),
                     "customTopics": focus_topics,
                     "questionFormats": formats_dict,
+                    "subjectCategory": subject_category,
                 },
                 "attempts": [],
             },
@@ -1348,10 +1355,20 @@ class ShortAnswerEvaluationResponse(BaseModel):
 @app.post("/evaluate-short-answer", response_model=ShortAnswerEvaluationResponse)
 async def evaluate_answer(request: ShortAnswerEvaluationRequest, user_claims: dict = Depends(validate_token)):
     try:
-        result = evaluate_short_answer(question=request.question, user_answer=request.userAnswer)
+        question_type = request.question.get("type", "")
+        if question_type == "numerical":
+            result = evaluate_numerical_answer(
+                question=request.question,
+                user_answer=request.userAnswer
+            )
+        else:
+            result = evaluate_short_answer(
+                question=request.question,
+                user_answer=request.userAnswer
+            )
         return {"isCorrect": result["is_correct"], "aiResponse": result["ai_response"]}
     except Exception as e:
-        print(f"Error evaluating short answer: {str(e)}")
+        print(f"Error evaluating answer: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to evaluate answer: {str(e)}")
 
 # ----- Summarize -----
@@ -1637,6 +1654,7 @@ class TopicFlashcardRequest(BaseModel):
     topic: str
     num_cards: int = 10
     folder_id: Optional[str] = None
+    subject_category: Optional[str] = "conceptual"
 
 @app.post("/generate-flashcard-topic")
 async def generate_flashcard_from_topic(
@@ -1659,6 +1677,14 @@ Rules:
 - Output VALID JSON ONLY
 - No markdown
 - No commentary
+"""
+    if payload.subject_category == "quantitative":
+        prompt += """
+- For quantitative subjects, the "question" side should present a specific calculation-based problem with concrete numerical values and units.
+- The "answer" side should show the worked solution steps and final numerical answer.
+- Difficulty should map to computational complexity.
+"""
+    prompt += f"""
 - Structure:
 
 {{
