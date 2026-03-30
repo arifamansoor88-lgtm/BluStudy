@@ -69,6 +69,7 @@ const PracticeTests = () => {
     quizzesFetchedRef,
     fetchSavedQuizzes,
     fetchQuizWithHistory,
+    fetchQuizById,
     generateQuiz,
     generateQuizFromTopic,
     saveQuiz,
@@ -90,27 +91,43 @@ const PracticeTests = () => {
       fetchSavedQuizzes();
     }
   }, [showQuiz, fetchSavedQuizzes, quizzesFetchedRef]);
-  
-  //Quizio
+
+  // Load quiz from state or quiz Id param
   useEffect(() => {
-  if (quizFromDashboard) {
-    console.log("Loading quiz from dashboard...");
+    const quizIdParam = searchParams.get("quizId");
 
-    setGeneratedQuiz(quizFromDashboard);
+    if (quizFromDashboard) {
+      console.log("Loading quiz from dashboard...");
+      setGeneratedQuiz(quizFromDashboard);
+      setQuizStatus("ready");
+      setShowQuiz(false);
+      setShowUpload(true);
+      setCurrentQuizQuestion(0);
+      setShowSummary(false);
+      resetTimer();
+      return;
+    }
 
-    // Initialize answers
-    const answerArray = Array(quizFromDashboard.questions.length).fill(null);
-    setUserAnswers(answerArray);
+    if (quizIdParam) {
+      (async () => {
+        console.log("Loading quiz from query string...", quizIdParam);
+        const quizById = await fetchQuizById(quizIdParam);
+        if (quizById) {
+          setGeneratedQuiz(quizById.data || quizById);
+          const questions = (quizById.data || quizById).questions || [];
+          setUserAnswers(Array(questions.length).fill(null));
+          setQuizStatus("ready");
+          setShowQuiz(false);
+          setShowUpload(true);
+          setCurrentQuizQuestion(0);
+          setShowSummary(false);
+          resetTimer();
 
-    setQuizStatus("ready");
-    setShowQuiz(false);
-    setShowUpload(true);
-    setCurrentQuizQuestion(0);
-    setShowSummary(false);
-
-    resetTimer();
-  }
-}, [quizFromDashboard]);
+          await fetchQuizWithHistory(quizIdParam);
+        }
+      })();
+    }
+  }, [quizFromDashboard, searchParams, fetchQuizById, fetchQuizWithHistory, resetTimer]);
 
   // Create a new test
   const handleCreateTest = () => {

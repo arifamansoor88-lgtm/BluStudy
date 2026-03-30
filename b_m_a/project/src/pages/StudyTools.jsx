@@ -11,6 +11,7 @@ import {
   Zap,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { addLocalRecentTool } from "../hooks/useUserRecents";
 
 const StudyTools = () => {
   const tools = [
@@ -137,25 +138,32 @@ const ToolCard = ({
   bgColor,
   borderColor,
   index,
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.1 * index }}
-  >
-    <Link
-      to={to}
-      className={`block p-6 rounded-xl bg-white border ${borderColor} hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}
+}) => {
+  const handleRecent = () => {
+    addLocalRecentTool({ to, title, contentType: "tool" });
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 * index }}
     >
-      <div
-        className={`${bgColor} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}
+      <Link
+        to={to}
+        onClick={handleRecent}
+        className={`block p-6 rounded-xl bg-white border ${borderColor} hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}
       >
-        <Icon className={`h-6 w-6 ${color}`} />
-      </div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
-    </Link>
-  </motion.div>
-);
+        <div
+          className={`${bgColor} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}
+        >
+          <Icon className={`h-6 w-6 ${color}`} />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
+        <p className="text-gray-600">{description}</p>
+      </Link>
+    </motion.div>
+  );
+};
 
 export default StudyTools;

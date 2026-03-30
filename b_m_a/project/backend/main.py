@@ -540,7 +540,12 @@ async def get_recent_items(
                 print(f"DEBUG: Could not decode token: {e}")
                 uid = None
     
-    uid = uid or _resolve_user_id(request) or "default"
+    uid = uid or _resolve_user_id(request)
+
+    if not uid or uid == "default":
+        print(f"DEBUG: /api/recents called with uid={uid}, returning empty recents")
+        return {"items": []}
+
     print(f"DEBUG: /api/recents called with uid={uid}")
     
     try:
@@ -561,14 +566,32 @@ async def get_recent_items(
         # Format results to include relevant fields
         result_items = []
         for item in items:
+            content_type = (item.get("contentType") or item.get("contenttype") or "unknown").lower()
+            data = item.get("data") or {}
+            resource_name = item.get("resourceName") or item.get("name") or ""
+            raw_title = item.get("title") or item.get("name") or data.get("title") or data.get("quiz_title") or resource_name or ""
+            display_title = raw_title.strip() or {
+                "quiz": "Practice Test",
+                "flashcard": "Flashcard",
+                "flashcard_deck": "Flashcard Deck",
+                "mindmap": "Mind Map",
+                "study_plan": "Study Plan",
+                "summary": "Summary",
+                "voice_note": "Voice Note",
+                "folder": "Folder",
+                "tool": "Tool",
+            }.get(content_type, "Untitled")
+
             result_items.append({
                 "id": item.get("id"),
-                "title": item.get("title", "Untitled"),
-                "contentType": item.get("contentType", "unknown"),
+                "title": display_title,
+                "rawTitle": raw_title,
+                "contentType": content_type,
                 "createdAt": item.get("createdAt"),
                 "updatedAt": item.get("updatedAt"),
+                "route": item.get("route"),
             })
-        
+
         return {"items": result_items}
     except Exception as e:
         print(f"DEBUG: Error in /api/recents: {str(e)}")

@@ -773,6 +773,11 @@ const RecentItemCard = ({ item, navigate }) => {
     icon: "📄",
   };
 
+  const displayTitle =
+    item.title ||
+    item.rawTitle ||
+    (item.contentType === "quiz" ? "Practice Test" : "Untitled");
+
   const handleNavigate = useCallback(async () => {
     // Track the access to this tool
     try {
@@ -806,17 +811,19 @@ const RecentItemCard = ({ item, navigate }) => {
     }
 
     const routeMap = {
-      voice_note: "/tools/voice-notes",
-      flashcard: "/tools/flashcards",
-      flashcard_deck: "/tools/flashcards",
-      quiz: "/tools/practice-tests",
+      voice_note: `/tools/voice-notes?noteId=${item.id}`,
+      flashcard: `/tools/flashcards/study/${item.id}`,
+      flashcard_deck: `/tools/flashcards/study/${item.id}`,
+      quiz: `/tools/practice-tests?quizId=${item.id}`,
       mindmap: `/tools/maps/${item.id}`,
-      study_plan: "/tools/study-planner",
-      summary: "/tools/summarizer",
+      study_plan: `/tools/study-planner?planId=${item.id}`,
+      summary: `/tools/summarizer`,
       folder: `/workspace/folder/${item.id}`,
+      tool: item.route || "/tools",
     };
 
-    const route = routeMap[item.contentType];
+    let route = item.contentType === "tool" ? item.route : routeMap[item.contentType];
+    route = route || item.route || "/tools";
     console.log("RecentItemCard navigation:", { item: item.id, contentType: item.contentType, route });
     
     if (route) {
@@ -837,11 +844,16 @@ const RecentItemCard = ({ item, navigate }) => {
         <ArrowRight className={`h-4 w-4 ${typeConfig.text}`} />
       </div>
       <h3 className={`font-semibold ${typeConfig.text} text-sm truncate`}>
-        {item.title || "Untitled"}
+        {displayTitle}
       </h3>
       <p className="text-xs text-gray-500 mt-1 capitalize">
         {item.contentType?.replace(/_/g, " ")}
       </p>
+      {item.updatedAt && (
+        <p className="text-xxs text-gray-400 mt-1">
+          last accessed {new Date(item.updatedAt).toLocaleString()}
+        </p>
+      )}
     </motion.div>
   );
 };

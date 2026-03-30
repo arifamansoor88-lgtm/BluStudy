@@ -187,6 +187,29 @@ export const useQuizData = () => {
     [getToken, inProgress]
   );
 
+  // Fetch specific quiz by ID
+  const fetchQuizById = useCallback(
+    async (quizId) => {
+      if (inProgress !== "none") {
+        return null;
+      }
+      try {
+        const token = await getToken();
+        const response = await axios.get(`http://127.0.0.1:8000/quizzes/${quizId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching quiz by id:", error);
+        return null;
+      }
+    },
+    [getToken, inProgress]
+  );
+
   // Generate a new quiz
   const generateQuiz = useCallback(
     async (
@@ -541,6 +564,7 @@ export const useQuizData = () => {
     quizzesFetchedRef,
     fetchSavedQuizzes,
     fetchQuizWithHistory,
+    fetchQuizById,
     generateQuiz,
     generateQuizFromTopic,
     saveQuiz,
