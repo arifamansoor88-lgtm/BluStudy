@@ -273,30 +273,6 @@ useEffect(() => {
   const email = userData?.email || "Not available";
 
 
-  const schedule = [
-    {
-      subject: "Mathematics",
-      time: "09:00 - 10:30 AM",
-      teacher: "Dr. Sarah Wilson",
-    },
-    {
-      subject: "Physics",
-      time: "11:00 - 12:30 PM",
-      teacher: "Prof. Michael Chen",
-    },
-    {
-      subject: "Study Group",
-      time: "02:00 - 03:30 PM",
-      teacher: "Peer Learning",
-    },
-  ];
-
-  const goals = [
-    { title: "Complete Calculus Module", progress: 75 },
-    { title: "Physics Lab Report", progress: 40 },
-    { title: "Weekly Quiz Prep", progress: 90 },
-  ];
-
   const studyGoals = [
     {
       title: "Biology 101",
@@ -568,76 +544,6 @@ useEffect(() => {
                   ))}
               </div>
           </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8"
-      >
-
-        {/* Schedule Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-xl shadow-sm p-6"
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <Calendar className="h-5 w-5 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Today's Schedule
-            </h2>
-          </div>
-          <div className="space-y-4">
-            {schedule.map((item, index) => (
-              <div key={index} className="p-4 rounded-lg bg-gray-50">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium text-gray-900">{item.subject}</h3>
-                  <span className="text-sm text-primary-600">{item.time}</span>
-                </div>
-                <p className="text-sm text-gray-500">{item.teacher}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Goals Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-xl shadow-sm p-6"
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <Target className="h-5 w-5 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Learning Goals
-            </h2>
-          </div>
-          <div className="space-y-6">
-            {goals.map((goal, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-medium text-gray-900">
-                    {goal.title}
-                  </h3>
-                  <span className="text-sm text-gray-500">
-                    {goal.progress}%
-                  </span>
-                </div>
-                <div className="h-2 bg-gray-100 rounded-full">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${goal.progress}%` }}
-                    transition={{ duration: 1, delay: 0.5 }}
-                    className="h-full bg-primary-600 rounded-full"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      </motion.div>
 
       {/* Study Goals Section */}
       <motion.div
