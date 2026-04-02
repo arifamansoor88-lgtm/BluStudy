@@ -318,7 +318,7 @@ useEffect(() => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.05 }}
-        className="bg-white rounded-lg shadow mb-6 p-6 flex flex-col md:flex-row gap-4 items-center justify-between"
+        className="bg-white rounded-lg shadow mb-6 p-4 flex flex-col md:flex-row gap-4 items-center justify-between"
       >
         {/* User greeting */}
         <div className="flex-1">
@@ -331,7 +331,7 @@ useEffect(() => {
         </div>
 
         {/* Study Streak Card */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm p-5 border border-gray-100 w-full md:w-auto">
+        <div className="flex-1 bg-blue-50 rounded-xl shadow-sm p-5 border border-gray-100 w-full md:w-auto">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Study Streak</h2>
           {streakDays === 0 ? (
             <div>
