@@ -362,104 +362,6 @@ useEffect(() => {
   )}
 </motion.div>
 
-{/* Quizio Section */}
-<motion.div
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  transition={{ delay: 0.08 }}
-  className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-100"
->
-  {/* Header */}
-  <div className="flex items-center justify-between mb-3">
-    <div className="flex items-center gap-2">
-      <Brain className="text-purple-600" size={20} />
-      <h2 className="text-lg font-semibold text-gray-900">
-        Quizio
-      </h2>
-    </div>
-
-    {focusAreas.length > 0 && (
-      <button
-        onClick={handleQuizio}
-        className="text-sm text-purple-600 hover:text-purple-700"
-      >
-        Re-analyze
-      </button>
-    )}
-  </div>
-
-  {/* Subtext */}
-  <p className="text-sm text-gray-500 mb-4">
-    Practice based on your weak areas.
-  </p>
-
-  {/* STATE 1: NO FOCUS AREAS */}
-  {focusAreas.length === 0 ? (
-    <button
-      onClick={handleQuizio}
-      className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition"
-    >
-      Analyze Weak Areas
-    </button>
-  ) : (
-    <>
-      {/* Label */}
-      <p className="text-sm text-gray-600 mb-3">
-        Focus areas based on your performance:
-      </p>
-
-      {/* Focus Area Cards */}
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-  {focusAreas.map((item, idx) => {
-    const topic = item.topic;
-    const score = item.score;
-
-    let status = "Weak";
-    let color = "text-red-500";
-
-    if (score >= 60) {
-      status = "Improving";
-      color = "text-yellow-500";
-    }
-    if (score >= 75) {
-      status = "Strong";
-      color = "text-green-500";
-    }
-
-    return (
-      <button
-        key={idx}
-        onClick={() => startFocusQuiz(topic)}
-        disabled={loadingTopic !== null}
-        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-purple-400 hover:shadow-sm transition flex justify-between items-center"
-      >
-        {/* Left Side */}
-        <div className="text-left">
-          <p className="text-sm font-medium text-gray-900">
-            {topic}
-          </p>
-          <p className={`text-xs ${color}`}>
-            {status}
-          </p>
-        </div>
-
-        {/* Right Side */}
-        <div className="text-right">
-          <p className="text-sm font-semibold text-gray-700">
-            {score}%
-          </p>
-          <p className="text-xs text-gray-400">
-            {loadingTopic === topic ? "Generating..." : "Practice"}
-          </p>
-        </div>
-      </button>
-    );
-  })}
-</div>
-    </>
-  )}
-</motion.div>
-
       {/* Recent Tools Section */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -485,6 +387,104 @@ useEffect(() => {
             </div>
           )}
         </div>
+      </motion.div>
+
+      {/* Quizio Section */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.08 }}
+        className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-100"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Brain className="text-purple-600" size={20} />
+            <h2 className="text-lg font-semibold text-gray-900">
+              Quizio
+            </h2>
+          </div>
+
+          {focusAreas.length > 0 && (
+            <button
+              onClick={handleQuizio}
+              className="text-sm text-purple-600 hover:text-purple-700"
+            >
+              Re-analyze
+            </button>
+          )}
+        </div>
+
+        {/* Subtext */}
+        <p className="text-sm text-gray-500 mb-4">
+          Practice based on your weak areas.
+        </p>
+
+        {/* STATE 1: NO FOCUS AREAS */}
+        {focusAreas.length === 0 ? (
+          <button
+            onClick={handleQuizio}
+            className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition"
+          >
+            Analyze Weak Areas
+          </button>
+        ) : (
+          <>
+            {/* Label */}
+            <p className="text-sm text-gray-600 mb-3">
+              Focus areas based on your performance:
+            </p>
+
+            {/* Focus Area Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {focusAreas.map((item, idx) => {
+                const topic = item.topic;
+                const score = item.score;
+
+                let status = "Weak";
+                let color = "text-red-500";
+
+                if (score >= 60) {
+                  status = "Improving";
+                  color = "text-yellow-500";
+                }
+                if (score >= 75) {
+                  status = "Strong";
+                  color = "text-green-500";
+                }
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => startFocusQuiz(topic)}
+                    disabled={loadingTopic !== null}
+                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-purple-400 hover:shadow-sm transition flex justify-between items-center"
+                  >
+                    {/* Left Side */}
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-gray-900">
+                        {topic}
+                      </p>
+                      <p className={`text-xs ${color}`}>
+                        {status}
+                      </p>
+                    </div>
+
+                    {/* Right Side */}
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-gray-700">
+                        {score}%
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {loadingTopic === topic ? "Generating..." : "Practice"}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
       </motion.div>
 
       {/* Error message */}
