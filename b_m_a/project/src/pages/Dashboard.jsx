@@ -314,53 +314,41 @@ useEffect(() => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* User greeting */}
-      <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Welcome back, {firstName}!
-        </h1>
-        <p className="text-gray-600">
-          You're signed in as <span className="font-medium">{email}</span>
-        </p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.05 }}
+        className="bg-white rounded-lg shadow mb-6 p-6 flex flex-col md:flex-row gap-4 items-center justify-between"
+      >
+        {/* User greeting */}
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Welcome back, {firstName}!
+          </h1>
+          <p className="text-gray-600">
+            You're signed in as <span className="font-medium">{email}</span>
+          </p>
+        </div>
 
-{/* Study Streak Section */}
-<motion.div
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  transition={{ delay: 0.05 }}
-  className="bg-white rounded-xl shadow-sm p-6 mb-6"
->
-  <h2 className="text-xl font-semibold text-gray-900 mb-4">
-    Study Streak
-  </h2>
-
-  {streakDays === 0 ? (
-    <div>
-      <p className="text-lg font-semibold text-orange-500">
-        Start your first streak
-      </p>
-      <p className="text-sm text-gray-500">
-        Study today to begin building consistency.
-      </p>
-    </div>
-  ) : (
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-3xl font-bold text-orange-500">
-          {streakDays}
-        </p>
-        <p className="text-sm text-gray-500">
-          Day{streakDays === 1 ? "" : "s"} in a row
-        </p>
-      </div>
-
-      <p className="text-green-600 font-medium">
-        Keep it going
-      </p>
-    </div>
-  )}
-</motion.div>
+        {/* Study Streak Card */}
+        <div className="flex-1 bg-white rounded-xl shadow-sm p-5 border border-gray-100 w-full md:w-auto">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Study Streak</h2>
+          {streakDays === 0 ? (
+            <div>
+              <p className="text-lg font-semibold text-orange-500">Start your first streak</p>
+              <p className="text-sm text-gray-500">Study today to begin building consistency.</p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-3xl font-bold text-orange-500">{streakDays}</p>
+                <p className="text-sm text-gray-500">Day{streakDays === 1 ? "" : "s"} in a row</p>
+              </div>
+              <p className="text-green-600 font-medium">Keep it going</p>
+            </div>
+          )}
+        </div>
+      </motion.div>
 
       {/* Recent Tools Section */}
       <motion.div
