@@ -482,33 +482,6 @@ useEffect(() => {
         </div>
       )}
 
-      {/* Tasks section */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Tasks</h2>
-
-        {loading ? (
-          <p className="text-gray-500">Loading tasks...</p>
-        ) : tasks.length > 0 ? (
-          <ul className="divide-y divide-gray-200">
-            {tasks.map((task, index) => (
-              <li key={index} className="py-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    readOnly
-                    className="h-4 w-4 text-blue-600 rounded border-gray-300"
-                  />
-                  <span className="ml-3 text-gray-900">{task.title}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-gray-500">No tasks available.</p>
-        )}
-      </div>
-
           {/* Suggested Next Steps */}
           <motion.div
               initial={{ opacity: 0, y: 20 }}
