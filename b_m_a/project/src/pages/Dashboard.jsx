@@ -11,6 +11,12 @@ import {
   ArrowRight,
   Brain,
   Play,
+  Mic,
+  Network as Network2,
+  TestTube,
+  Zap,
+  PenTool,
+  Folder,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserRecents } from "../hooks/useUserRecents";
@@ -412,7 +418,7 @@ useEffect(() => {
         {focusAreas.length === 0 ? (
           <button
             onClick={handleQuizio}
-            className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition"
+            className="w-full flex items-center justify-center gap-2 bg-purple-400 text-white py-3 rounded-lg hover:bg-purple-700 transition"
           >
             Analyze Weak Areas
           </button>
@@ -624,20 +630,20 @@ const RecentItemCard = ({ item, navigate }) => {
   const { instance, accounts } = useMsal();
 
   const contentTypeColors = {
-    voice_note: { bg: "bg-purple-50", text: "text-purple-700", icon: "🎤" },
-    flashcard: { bg: "bg-blue-50", text: "text-blue-700", icon: "📇" },
-    flashcard_deck: { bg: "bg-blue-50", text: "text-blue-700", icon: "📇" },
-    quiz: { bg: "bg-green-50", text: "text-green-700", icon: "📝" },
-    mindmap: { bg: "bg-orange-50", text: "text-orange-700", icon: "🗺️" },
-    study_plan: { bg: "bg-pink-50", text: "text-pink-700", icon: "📋" },
-    summary: { bg: "bg-cyan-50", text: "text-cyan-700", icon: "📄" },
-    folder: { bg: "bg-cyan-50", text: "text-cyan-700", icon: "📁" },
+    voice_note: { bg: "bg-purple-50", text: "text-purple-700", Icon: Mic },
+    flashcard: { bg: "bg-primary-50", text: "text-primary-600", Icon: Brain },
+    flashcard_deck: { bg: "bg-primary-50", text: "text-primary-600", Icon: Brain },
+    quiz: { bg: "bg-red-50", text: "text-red-600", Icon: TestTube },
+    mindmap: { bg: "bg-green-50", text: "text-green-600", Icon: Network2 },
+    study_plan: { bg: "bg-indigo-50", text: "text-indigo-600", Icon: PenTool },
+    summary: { bg: "bg-yellow-50", text: "text-yellow-600", Icon: Zap },
+    folder: { bg: "bg-cyan-50", text: "text-cyan-700", Icon: Folder },
   };
 
   const typeConfig = contentTypeColors[item.contentType] || {
     bg: "bg-gray-50",
     text: "text-gray-700",
-    icon: "📄",
+    Icon: BookOpen,
   };
 
   const displayTitle =
@@ -700,6 +706,8 @@ const RecentItemCard = ({ item, navigate }) => {
     }
   }, [item, navigate, instance, accounts]);
 
+  const Icon = typeConfig.Icon;
+
   return (
     <motion.div
       whileHover={{ scale: 1.05, y: -4 }}
@@ -707,7 +715,7 @@ const RecentItemCard = ({ item, navigate }) => {
       className={`${typeConfig.bg} rounded-lg p-4 cursor-pointer transition-all`}
     >
       <div className="flex items-start justify-between mb-2">
-        <span className="text-2xl">{typeConfig.icon}</span>
+        <Icon className={`h-6 w-6 ${typeConfig.text}`} />
         <ArrowRight className={`h-4 w-4 ${typeConfig.text}`} />
       </div>
       <h3 className={`font-semibold ${typeConfig.text} text-sm truncate`}>
