@@ -88,5 +88,1675 @@
       }
     ],
     "resourceName": "topic"
+  },
+  {
+    "id": "980e08db-23c0-4bd9-886b-3500828953e3",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "contentType": "flashcard_deck",
+    "createdAt": "2026-04-03T01:22:36.847659",
+    "title": "Linear Systems Basics",
+    "cards": [
+      {
+        "front": "What is a linear system?",
+        "back": "A system of equations where each equation is linear.",
+        "tags": [
+          "linear systems",
+          "definition"
+        ]
+      },
+      {
+        "front": "What is the general form of a linear equation in two variables?",
+        "back": "Ax + By = C, where A, B, and C are constants.",
+        "tags": [
+          "linear systems",
+          "equations"
+        ]
+      },
+      {
+        "front": "What does it mean for a linear system to be consistent?",
+        "back": "It has at least one solution.",
+        "tags": [
+          "linear systems",
+          "solutions"
+        ]
+      },
+      {
+        "front": "What does it mean for a linear system to be inconsistent?",
+        "back": "It has no solutions.",
+        "tags": [
+          "linear systems",
+          "solutions"
+        ]
+      },
+      {
+        "front": "What is a dependent system?",
+        "back": "A system where the equations describe the same line.",
+        "tags": [
+          "linear systems",
+          "types"
+        ]
+      },
+      {
+        "front": "What is an independent system?",
+        "back": "A system where the equations describe different lines that intersect at a single point.",
+        "tags": [
+          "linear systems",
+          "types"
+        ]
+      },
+      {
+        "front": "What are the methods to solve a linear system?",
+        "back": "Graphing, substitution, and elimination.",
+        "tags": [
+          "linear systems",
+          "methods"
+        ]
+      },
+      {
+        "front": "What is the substitution method for solving linear systems?",
+        "back": "Solving one equation for one variable and substituting into the other equation.",
+        "tags": [
+          "linear systems",
+          "methods"
+        ]
+      },
+      {
+        "front": "What is the elimination method for solving linear systems?",
+        "back": "Adding or subtracting equations to eliminate one variable.",
+        "tags": [
+          "linear systems",
+          "methods"
+        ]
+      },
+      {
+        "front": "What does the solution of a linear system represent geometrically?",
+        "back": "The point(s) where the graphs of the equations intersect.",
+        "tags": [
+          "linear systems",
+          "geometry"
+        ]
+      }
+    ],
+    "resourceName": "topic"
+  },
+  {
+    "id": "04e6f85d-b1dc-4944-b42f-687b295c4ccf",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "contentType": "flashcard_deck",
+    "createdAt": "2026-04-03T01:27:33.718289",
+    "title": "Linear Systems Basics",
+    "cards": [
+      {
+        "front": "What is a linear system?",
+        "back": "A system of equations where each equation is linear.",
+        "tags": [
+          "linear systems",
+          "definition"
+        ]
+      },
+      {
+        "front": "What does it mean for an equation to be linear?",
+        "back": "An equation is linear if it can be written in the form ax + by = c.",
+        "tags": [
+          "linear systems",
+          "equation"
+        ]
+      },
+      {
+        "front": "What is the solution to a linear system?",
+        "back": "The values of variables that satisfy all equations in the system.",
+        "tags": [
+          "linear systems",
+          "solution"
+        ]
+      },
+      {
+        "front": "What is a consistent linear system?",
+        "back": "A system that has at least one solution.",
+        "tags": [
+          "linear systems",
+          "consistency"
+        ]
+      },
+      {
+        "front": "What is an inconsistent linear system?",
+        "back": "A system that has no solutions.",
+        "tags": [
+          "linear systems",
+          "consistency"
+        ]
+      },
+      {
+        "front": "What is a dependent linear system?",
+        "back": "A system where the equations represent the same line or plane.",
+        "tags": [
+          "linear systems",
+          "dependence"
+        ]
+      },
+      {
+        "front": "What is an independent linear system?",
+        "back": "A system where the equations represent different lines or planes.",
+        "tags": [
+          "linear systems",
+          "independence"
+        ]
+      },
+      {
+        "front": "What is the graphical representation of a linear system?",
+        "back": "Lines or planes on a graph where their intersection represents the solution.",
+        "tags": [
+          "linear systems",
+          "graphical"
+        ]
+      },
+      {
+        "front": "What is the matrix form of a linear system?",
+        "back": "A representation using matrices to simplify solving the system.",
+        "tags": [
+          "linear systems",
+          "matrix"
+        ]
+      },
+      {
+        "front": "What is Gaussian elimination?",
+        "back": "A method for solving linear systems by reducing matrices to row echelon form.",
+        "tags": [
+          "linear systems",
+          "methods"
+        ]
+      }
+    ],
+    "resourceName": "topic"
+  },
+  {
+    "id": "0e77b6a4-1621-4c2e-87f8-7e97f5161afd",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "contentType": "flashcard_deck",
+    "createdAt": "2026-04-03T01:31:16.442785",
+    "title": "Linear Systems Study Deck",
+    "cards": [
+      {
+        "question": "What is a linear system?",
+        "answer": "A system of equations where each equation is linear.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the general form of a linear equation?",
+        "answer": "Ax + By = C.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What does it mean for a system to be consistent?",
+        "answer": "It has at least one solution.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What does it mean for a system to be inconsistent?",
+        "answer": "It has no solutions.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What are the possible numbers of solutions for a linear system?",
+        "answer": "Zero, one, or infinitely many.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a dependent system?",
+        "answer": "A system with infinitely many solutions.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is an independent system?",
+        "answer": "A system with exactly one solution.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is substitution method in solving linear systems?",
+        "answer": "Solve one equation for one variable and substitute into the other.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is elimination method in solving linear systems?",
+        "answer": "Add or subtract equations to eliminate a variable.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a matrix?",
+        "answer": "A rectangular array of numbers.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the augmented matrix of a linear system?",
+        "answer": "A matrix that includes coefficients and constants.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is Gaussian elimination?",
+        "answer": "A method to solve systems using row operations.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a row operation?",
+        "answer": "Operations on rows of a matrix to simplify it.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a pivot in Gaussian elimination?",
+        "answer": "The first nonzero entry in a row.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is reduced row echelon form?",
+        "answer": "A matrix form where each leading entry is 1 and zeros elsewhere.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the determinant of a matrix?",
+        "answer": "A scalar value representing matrix properties.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What does a zero determinant indicate?",
+        "answer": "The matrix is singular or non-invertible.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is an invertible matrix?",
+        "answer": "A matrix with a nonzero determinant.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the inverse of a matrix?",
+        "answer": "A matrix that, when multiplied, gives the identity matrix.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the identity matrix?",
+        "answer": "A matrix with 1s on the diagonal and 0s elsewhere.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a homogeneous system?",
+        "answer": "A system where all constants are zero.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a non-homogeneous system?",
+        "answer": "A system with at least one nonzero constant.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the rank of a matrix?",
+        "answer": "The number of nonzero rows in row echelon form.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is Cramer's Rule?",
+        "answer": "A method to solve systems using determinants.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a linear transformation?",
+        "answer": "A function preserving vector addition and scalar multiplication.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the solution space of a homogeneous system?",
+        "answer": "The set of all solutions.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a basis in linear algebra?",
+        "answer": "A set of vectors spanning a vector space.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the dimension of a vector space?",
+        "answer": "The number of vectors in a basis.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a scalar?",
+        "answer": "A single number.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a vector?",
+        "answer": "An ordered list of numbers.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is vector addition?",
+        "answer": "Adding corresponding components of vectors.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is scalar multiplication?",
+        "answer": "Multiplying each component of a vector by a scalar.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a dot product?",
+        "answer": "A scalar product of two vectors.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a cross product?",
+        "answer": "A vector perpendicular to two given vectors.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a linear combination?",
+        "answer": "A sum of scalar multiples of vectors.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the null space of a matrix?",
+        "answer": "The set of solutions to Ax = 0.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the column space of a matrix?",
+        "answer": "The span of its column vectors.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the row space of a matrix?",
+        "answer": "The span of its row vectors.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the eigenvalue of a matrix?",
+        "answer": "A scalar satisfying Ax = λx.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the eigenvector of a matrix?",
+        "answer": "A vector satisfying Ax = λx.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is diagonalization of a matrix?",
+        "answer": "Expressing a matrix as PDP⁻¹.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the trace of a matrix?",
+        "answer": "The sum of its diagonal elements.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the transpose of a matrix?",
+        "answer": "A matrix with rows and columns swapped.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a symmetric matrix?",
+        "answer": "A matrix equal to its transpose.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is an orthogonal matrix?",
+        "answer": "A matrix whose transpose is its inverse.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a singular matrix?",
+        "answer": "A matrix with determinant zero.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a nonsingular matrix?",
+        "answer": "A matrix with a nonzero determinant.",
+        "difficulty": "medium",
+        "important": false
+      }
+    ],
+    "resourceName": "topic"
+  },
+  {
+    "id": "10b0afa9-ebdc-46fc-9de2-195d74b69513",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "contentType": "flashcard_deck",
+    "createdAt": "2026-04-03T01:31:49.080211",
+    "title": "Linear Systems Flashcards",
+    "cards": [
+      {
+        "question": "What is a linear system?",
+        "answer": "A system of linear equations.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the general form of a linear equation?",
+        "answer": "Ax + By = C.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What does 'consistent system' mean?",
+        "answer": "A system with at least one solution.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What does 'inconsistent system' mean?",
+        "answer": "A system with no solutions.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a dependent system?",
+        "answer": "A system with infinitely many solutions.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is an independent system?",
+        "answer": "A system with exactly one solution.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a matrix?",
+        "answer": "A rectangular array of numbers.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a coefficient matrix?",
+        "answer": "Matrix containing coefficients of variables.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is an augmented matrix?",
+        "answer": "Matrix including constants from equations.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What does row reduction achieve?",
+        "answer": "Simplifies a matrix to solve a system.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is Gaussian elimination?",
+        "answer": "A method to solve linear systems.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is Gauss-Jordan elimination?",
+        "answer": "A method to reduce a matrix to RREF.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What does RREF stand for?",
+        "answer": "Reduced Row Echelon Form.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a pivot in a matrix?",
+        "answer": "A leading non-zero entry in a row.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a homogeneous system?",
+        "answer": "A system where all constants are zero.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a non-homogeneous system?",
+        "answer": "A system with non-zero constants.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the determinant of a matrix?",
+        "answer": "A scalar value representing matrix properties.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What does a zero determinant indicate?",
+        "answer": "The matrix is singular.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a singular matrix?",
+        "answer": "A matrix with no inverse.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is an inverse matrix?",
+        "answer": "A matrix that undoes another matrix.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is Cramer's Rule?",
+        "answer": "A method to solve systems using determinants.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a vector?",
+        "answer": "An ordered list of numbers.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a vector space?",
+        "answer": "A set of vectors closed under addition and scalar multiplication.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a basis of a vector space?",
+        "answer": "A set of linearly independent vectors.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is linear independence?",
+        "answer": "No vector can be written as a combination of others.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is linear dependence?",
+        "answer": "At least one vector is a combination of others.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the rank of a matrix?",
+        "answer": "The number of linearly independent rows or columns.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the null space of a matrix?",
+        "answer": "Set of vectors that map to zero.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the column space of a matrix?",
+        "answer": "Span of its column vectors.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the row space of a matrix?",
+        "answer": "Span of its row vectors.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the dimension of a vector space?",
+        "answer": "Number of vectors in its basis.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is an eigenvalue?",
+        "answer": "A scalar associated with a matrix.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is an eigenvector?",
+        "answer": "A vector associated with an eigenvalue.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the characteristic equation?",
+        "answer": "Equation used to find eigenvalues.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is diagonalization?",
+        "answer": "Transforming a matrix into a diagonal form.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the trace of a matrix?",
+        "answer": "Sum of its diagonal entries.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the transpose of a matrix?",
+        "answer": "Matrix obtained by flipping rows and columns.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a symmetric matrix?",
+        "answer": "A matrix equal to its transpose.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is an orthogonal matrix?",
+        "answer": "A matrix whose rows and columns are orthonormal.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a projection matrix?",
+        "answer": "Matrix that projects vectors onto a subspace.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a scalar multiplication?",
+        "answer": "Multiplying a matrix by a scalar.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is matrix addition?",
+        "answer": "Adding corresponding entries of two matrices.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is matrix multiplication?",
+        "answer": "Combining rows and columns of matrices.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the identity matrix?",
+        "answer": "Matrix with 1s on the diagonal and 0s elsewhere.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the zero matrix?",
+        "answer": "Matrix with all entries as zero.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the rank-nullity theorem?",
+        "answer": "Rank + Nullity = Number of columns.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a linear transformation?",
+        "answer": "A function preserving vector addition and scalar multiplication.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the kernel of a linear transformation?",
+        "answer": "Set of vectors mapped to zero.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the image of a linear transformation?",
+        "answer": "Set of all output vectors.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a standard basis?",
+        "answer": "Basis with unit vectors.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a change of basis?",
+        "answer": "Rewriting vectors in a new basis.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is orthogonality?",
+        "answer": "Vectors with a dot product of zero.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is normalization?",
+        "answer": "Scaling a vector to unit length.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the dot product?",
+        "answer": "Sum of products of corresponding entries.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the cross product?",
+        "answer": "Vector orthogonal to two given vectors.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a subspace?",
+        "answer": "A subset of a vector space closed under addition and scalar multiplication.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the span of a set of vectors?",
+        "answer": "Set of all linear combinations of the vectors.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a linear combination?",
+        "answer": "Sum of scalar multiples of vectors.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the purpose of LU decomposition?",
+        "answer": "Factorizes a matrix into lower and upper triangular matrices.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the purpose of QR decomposition?",
+        "answer": "Factorizes a matrix into orthogonal and upper triangular matrices.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the spectral theorem?",
+        "answer": "States symmetric matrices can be diagonalized.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the Frobenius norm?",
+        "answer": "Square root of sum of squares of matrix entries.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the condition number of a matrix?",
+        "answer": "Measures sensitivity of solutions to changes in input.",
+        "difficulty": "hard",
+        "important": false
+      }
+    ],
+    "resourceName": "topic"
+  },
+  {
+    "id": "5d9da302-6025-45c9-a88b-ab457a686c1f",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "contentType": "flashcard_deck",
+    "createdAt": "2026-04-03T01:37:16.366610",
+    "title": "Linear Systems - Additional Concepts",
+    "cards": [
+      {
+        "question": "What is a linear system?",
+        "answer": "A set of linear equations.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the general form of a linear equation?",
+        "answer": "Ax + By = C.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What does it mean for a system to be consistent?",
+        "answer": "It has at least one solution.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What does it mean for a system to be inconsistent?",
+        "answer": "It has no solutions.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a dependent system?",
+        "answer": "A system with infinitely many solutions.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is an independent system?",
+        "answer": "A system with exactly one solution.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the graphical representation of a linear equation?",
+        "answer": "A straight line.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What does it mean when two lines intersect?",
+        "answer": "The system has one solution.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What does it mean when two lines are parallel?",
+        "answer": "The system has no solutions.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What does it mean when two lines coincide?",
+        "answer": "The system has infinitely many solutions.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the substitution method?",
+        "answer": "Solving one equation for a variable and substituting into another.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the elimination method?",
+        "answer": "Adding or subtracting equations to eliminate a variable.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the matrix form of a linear system?",
+        "answer": "AX = B.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a coefficient matrix?",
+        "answer": "A matrix containing only the coefficients of variables.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is an augmented matrix?",
+        "answer": "A matrix including coefficients and constants.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is Gaussian elimination?",
+        "answer": "A method to solve systems using row reduction.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is row echelon form?",
+        "answer": "A matrix form with zeros below pivots.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is reduced row echelon form?",
+        "answer": "A matrix form with pivots as 1 and zeros elsewhere.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a pivot in a matrix?",
+        "answer": "The first nonzero entry in a row.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a homogeneous system?",
+        "answer": "A system where all constants are zero.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the trivial solution?",
+        "answer": "The solution where all variables are zero.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a nontrivial solution?",
+        "answer": "A solution where at least one variable is nonzero.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the rank of a matrix?",
+        "answer": "The number of pivots in its row echelon form.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the nullity of a matrix?",
+        "answer": "The dimension of its null space.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the null space of a matrix?",
+        "answer": "The set of all solutions to AX = 0.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the determinant of a matrix?",
+        "answer": "A scalar value indicating matrix properties.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What does a determinant of zero mean?",
+        "answer": "The matrix is singular.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a singular matrix?",
+        "answer": "A matrix with no inverse.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is an invertible matrix?",
+        "answer": "A matrix with a nonzero determinant.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is Cramer's Rule?",
+        "answer": "A method to solve systems using determinants.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a linear combination?",
+        "answer": "A sum of scalar multiples of vectors.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a vector space?",
+        "answer": "A set of vectors closed under addition and scalar multiplication.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a basis of a vector space?",
+        "answer": "A set of linearly independent vectors spanning the space.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the dimension of a vector space?",
+        "answer": "The number of vectors in its basis.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is linear independence?",
+        "answer": "No vector in the set is a linear combination of others.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is linear dependence?",
+        "answer": "At least one vector is a linear combination of others.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the row space of a matrix?",
+        "answer": "The span of its row vectors.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the column space of a matrix?",
+        "answer": "The span of its column vectors.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the rank-nullity theorem?",
+        "answer": "Rank + Nullity = Number of columns.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a scalar?",
+        "answer": "A single number.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a vector?",
+        "answer": "An ordered list of numbers.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a matrix?",
+        "answer": "A rectangular array of numbers.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a system of linear equations?",
+        "answer": "Multiple equations with the same variables.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a solution to a system of equations?",
+        "answer": "Values satisfying all equations.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a unique solution?",
+        "answer": "A single set of values solving the system.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a parametric solution?",
+        "answer": "A solution expressed with parameters.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a scalar multiple?",
+        "answer": "A vector multiplied by a scalar.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the identity matrix?",
+        "answer": "A matrix with 1s on the diagonal and 0s elsewhere.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a transpose of a matrix?",
+        "answer": "A matrix with rows and columns swapped.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a symmetric matrix?",
+        "answer": "A matrix equal to its transpose.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a diagonal matrix?",
+        "answer": "A matrix with nonzero entries only on the diagonal.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a zero matrix?",
+        "answer": "A matrix with all entries as zero.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a row operation?",
+        "answer": "An operation to manipulate rows of a matrix.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a consistent system?",
+        "answer": "A system with at least one solution.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a system of inequalities?",
+        "answer": "A system with inequality constraints.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the solution set of a system?",
+        "answer": "All solutions satisfying the system.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a block matrix?",
+        "answer": "A matrix partitioned into smaller submatrices.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the Frobenius norm?",
+        "answer": "A measure of matrix size using the square root of sum of squares of all entries.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a sparse matrix?",
+        "answer": "A matrix with mostly zero entries.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the spectral radius of a matrix?",
+        "answer": "The largest absolute value of its eigenvalues.",
+        "difficulty": "hard",
+        "important": false
+      }
+    ],
+    "resourceName": "topic"
+  },
+  {
+    "id": "82c4cf84-7dbd-42ed-bf15-5cc0586cfa99",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "contentType": "flashcard_deck",
+    "createdAt": "2026-04-03T01:44:31.785070",
+    "title": "Multicycle CPU Concepts",
+    "cards": [
+      {
+        "question": "What is the average CPI for SPECINT2006 instruction mix in a multicycle CPU?",
+        "answer": "4.1 clock cycles",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "How many clock cycles does a load instruction require in a multicycle CPU?",
+        "answer": "5 clock cycles",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What percentage of SPECINT2006 instructions are ALU operations?",
+        "answer": "62%",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the advantage of multicycle CPU over single-cycle CPU?",
+        "answer": "Better execution time and reduced hardware usage",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What happens in state S0 of the multicycle CPU control FSM?",
+        "answer": "Instruction fetch",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the operation performed in state S6 of the multicycle CPU FSM?",
+        "answer": "Execution",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the formula for calculating average CPI?",
+        "answer": "Σ(Instruction count × CPI) / Total instruction count",
+        "difficulty": "medium",
+        "important": true
+      },
+      {
+        "question": "What is the opcode for a jump instruction in the multicycle CPU FSM?",
+        "answer": "000010",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What does the memory address computation state (S2) do?",
+        "answer": "Calculates memory address for load/store instructions",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the role of the write-back state (S4) in the multicycle FSM?",
+        "answer": "Writes data back to the register file",
+        "difficulty": "easy",
+        "important": false
+      }
+    ],
+    "resourceName": "Lec-09.pdf"
+  },
+  {
+    "id": "4d478d21-d95a-4f99-847c-3b2df70bd0a6",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "contentType": "flashcard_deck",
+    "createdAt": "2026-04-03T01:46:09.292676",
+    "title": "Linear Systems Advanced Concepts",
+    "cards": [
+      {
+        "question": "What is a linear system?",
+        "answer": "A set of linear equations with common variables.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What does it mean for a system to be consistent?",
+        "answer": "It has at least one solution.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is an inconsistent system?",
+        "answer": "A system with no solutions.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a dependent system?",
+        "answer": "A system with infinitely many solutions.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is an independent system?",
+        "answer": "A system with exactly one solution.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the graphical representation of a linear equation?",
+        "answer": "A straight line.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What does it mean if two lines intersect at one point?",
+        "answer": "The system is consistent and independent.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What does it mean if two lines are parallel?",
+        "answer": "The system is inconsistent.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What does it mean if two lines coincide?",
+        "answer": "The system is consistent and dependent.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the substitution method?",
+        "answer": "Solving one equation for a variable and substituting into another.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the elimination method?",
+        "answer": "Adding or subtracting equations to eliminate a variable.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a matrix?",
+        "answer": "A rectangular array of numbers.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a coefficient matrix?",
+        "answer": "A matrix containing only the coefficients of a linear system.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is an augmented matrix?",
+        "answer": "A matrix including the coefficients and constants of a system.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is Gaussian elimination?",
+        "answer": "A method to solve systems by row reducing to row-echelon form.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is Gauss-Jordan elimination?",
+        "answer": "A method to solve systems by row reducing to reduced row-echelon form.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is row-echelon form?",
+        "answer": "A matrix form where each leading entry is to the right of the one above.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is reduced row-echelon form?",
+        "answer": "A matrix form where leading entries are 1 and all other entries in their column are 0.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a pivot in a matrix?",
+        "answer": "A nonzero entry used to eliminate other entries in its column.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a homogeneous system?",
+        "answer": "A system where all constants are zero.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the trivial solution of a homogeneous system?",
+        "answer": "The solution where all variables are zero.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a nontrivial solution?",
+        "answer": "A solution where at least one variable is nonzero.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the determinant of a matrix?",
+        "answer": "A scalar value that indicates if a matrix is invertible.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What does a zero determinant indicate?",
+        "answer": "The matrix is not invertible.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is Cramer's Rule?",
+        "answer": "A method to solve systems using determinants.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a square matrix?",
+        "answer": "A matrix with the same number of rows and columns.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is an identity matrix?",
+        "answer": "A square matrix with 1s on the diagonal and 0s elsewhere.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is an invertible matrix?",
+        "answer": "A matrix with a nonzero determinant.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a system of linear inequalities?",
+        "answer": "A set of inequalities with common variables.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the feasible region?",
+        "answer": "The solution set of a system of inequalities.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a bounded region?",
+        "answer": "A feasible region that is enclosed.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is an unbounded region?",
+        "answer": "A feasible region that extends infinitely.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the objective function in linear programming?",
+        "answer": "The function to be maximized or minimized.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a vertex of the feasible region?",
+        "answer": "A corner point of the region.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the simplex method?",
+        "answer": "An algorithm to solve linear programming problems.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a linear combination?",
+        "answer": "A sum of scalar multiples of vectors.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a span in linear algebra?",
+        "answer": "The set of all linear combinations of a vector set.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is linear independence?",
+        "answer": "No vector in the set is a linear combination of others.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a basis?",
+        "answer": "A linearly independent set that spans a vector space.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the dimension of a vector space?",
+        "answer": "The number of vectors in a basis.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a rank of a matrix?",
+        "answer": "The dimension of the row or column space.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the null space of a matrix?",
+        "answer": "The set of all solutions to Ax=0.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the nullity of a matrix?",
+        "answer": "The dimension of the null space.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the row space of a matrix?",
+        "answer": "The span of its row vectors.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the column space of a matrix?",
+        "answer": "The span of its column vectors.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the Rank-Nullity Theorem?",
+        "answer": "Rank + Nullity = Number of columns.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a linear transformation?",
+        "answer": "A function preserving vector addition and scalar multiplication.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the kernel of a linear transformation?",
+        "answer": "The set of vectors mapped to zero.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the image of a linear transformation?",
+        "answer": "The set of all output vectors.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is an eigenvector?",
+        "answer": "A vector unchanged in direction by a transformation.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is an eigenvalue?",
+        "answer": "The scalar associated with an eigenvector.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is diagonalization?",
+        "answer": "Expressing a matrix in terms of its eigenvalues and eigenvectors.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is a symmetric matrix?",
+        "answer": "A matrix equal to its transpose.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is an orthogonal matrix?",
+        "answer": "A matrix whose transpose is its inverse.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the trace of a matrix?",
+        "answer": "The sum of its diagonal entries.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is a scalar matrix?",
+        "answer": "A diagonal matrix with equal diagonal entries.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a zero matrix?",
+        "answer": "A matrix with all entries equal to zero.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is a block matrix?",
+        "answer": "A matrix divided into smaller submatrices.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the spectral radius of a matrix?",
+        "answer": "The largest absolute value of its eigenvalues.",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What is the Frobenius norm?",
+        "answer": "The square root of the sum of the squares of all matrix entries.",
+        "difficulty": "medium",
+        "important": false
+      }
+    ],
+    "resourceName": "topic"
   }
 ]
