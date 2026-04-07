@@ -113,7 +113,7 @@ export function useUserRecents(/* userId not needed */) {
     const fetched = Array.isArray(items) ? items : [];
     const local = Array.isArray(localItems) ? localItems : [];
 
-    const merged = [...local, ...fetched];
+    const merged = [...local, ...fetched].filter((item) => item?.contentType !== "tool");
 
     const unique = new Map();
     merged.forEach((item) => {
