@@ -35,7 +35,12 @@ const Dashboard = () => {
 const handleQuizio = async () => {
   try {
     const account = instance.getActiveAccount();
-    const token = account?.idToken;
+    const response = await instance.acquireTokenSilent({
+      scopes: ["https://bluemarbleacademy.onmicrosoft.com/966d3bf1-5512-4c9c-9af0-554ad974a7f5/access"],
+      account: account,
+    });
+
+    const token = response.accessToken;
 
     const res = await fetch("http://localhost:8000/weak-areas", {
       headers: {
@@ -57,7 +62,12 @@ const startFocusQuiz = async (topic) => {
     setLoadingTopic(topic); 
 
     const account = instance.getActiveAccount();
-    const token = account?.idToken;
+    const response = await instance.acquireTokenSilent({
+      scopes: ["https://bluemarbleacademy.onmicrosoft.com/966d3bf1-5512-4c9c-9af0-554ad974a7f5/access"],
+      account: account,
+    });
+
+    const token = response.accessToken;
 
     const res = await fetch("http://localhost:8000/generate-quiz-from-topic", {
       method: "POST",

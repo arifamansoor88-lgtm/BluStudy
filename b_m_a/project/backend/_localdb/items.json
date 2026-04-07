@@ -88,8 +88,8 @@
       }
     ],
     "resourceName": "topic",
-    "streakDays": 2,
-    "lastStudyDate": "2026-03-05"
+    "streakDays": 1,
+    "lastStudyDate": "2026-04-07"
   },
   {
     "id": "6d8015dc-c75a-4f37-b933-d7ab0bf436b9",
@@ -1585,7 +1585,35 @@
           "fill_in_blank": true
         }
       },
-      "attempts": []
+      "attempts": [
+        {
+          "attemptId": "609375e0-5681-48ef-be22-18e9f6fc27b6",
+          "timestamp": "2026-04-07T21:06:09.296649",
+          "score": 20,
+          "timeTaken": 22,
+          "userAnswers": [
+            "$3x^2$",
+            [
+              "$f(x) = x$"
+            ],
+            {
+              "$f(x) = \\sin(x)$": "$\\cos(x)$"
+            },
+            "wdd",
+            "ss",
+            "$28x^3$",
+            [
+              "Power rule"
+            ],
+            {
+              "$f(x) = 2x^2$": "Polynomial"
+            },
+            "s",
+            "s"
+          ],
+          "mode": "quiz"
+        }
+      ]
     }
   },
   {
