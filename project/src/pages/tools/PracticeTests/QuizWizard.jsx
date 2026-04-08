@@ -205,7 +205,15 @@ const QuizWizard = ({
                     placeholder="Type a topic, chapter, or concept. AI will generate the test."
                     value={mainTopic}
                     onChange={(e) => setMainTopic(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCreationMode("topic");
+                      if (setError) setError("");
+                    }}
+                    onFocus={() => {
+                      setCreationMode("topic");
+                      if (setError) setError("");
+                    }}
                   />
                 </div>
               </div>
