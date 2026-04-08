@@ -44,6 +44,7 @@ const PracticeTests = () => {
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [customTopics, setCustomTopics] = useState("");
   const [numQuestions, setNumQuestions] = useState(20);
+  const [subjectCategory, setSubjectCategory] = useState("conceptual");
   const [questionFormats, setQuestionFormats] = useState({
     multiple_choice: true,
     multi_select: true,
@@ -51,6 +52,7 @@ const PracticeTests = () => {
     true_false: false,
     short_response: false,
     fill_in_blank: false,
+    numerical: false,
   });
 
   // Hooks for quiz functionality
@@ -97,6 +99,7 @@ const PracticeTests = () => {
     setCustomTopics("");
     setMainTopic(""); // Reset main topic
     setNumQuestions(20);
+    setSubjectCategory("conceptual");
     setQuestionFormats({
       multiple_choice: true,
       multi_select: true,
@@ -104,6 +107,7 @@ const PracticeTests = () => {
       true_false: false,
       short_response: false,
       fill_in_blank: false,
+      numerical: false,
     });
     setGeneratedQuiz(null);
     setQuizStatus("idle");
@@ -123,6 +127,17 @@ const PracticeTests = () => {
     // Reset the quizzesFetchedRef to ensure fresh data when returning to home screen
     quizzesFetchedRef.current = false;
   };
+
+  // Auto-enable numerical and short answer for quantitative subject
+  useEffect(() => {
+    if (subjectCategory === "quantitative") {
+      setQuestionFormats(prev => ({
+        ...prev,
+        numerical: true,
+        short_response: true
+      }));
+    }
+  }, [subjectCategory]);
 
   // File handling
   const handleFileSelect = (event) => {
@@ -253,7 +268,8 @@ const PracticeTests = () => {
           selectedTopics,
           customTopics,
           questionFormats,
-          folderId // Pass folderId if present
+          folderId, // Pass folderId if present
+          subjectCategory
         );
       } else {
         // Generate quiz using the topic-based hook
@@ -266,7 +282,8 @@ const PracticeTests = () => {
           selectedTopics,
           customTopics, // Additional focus topics from Step 2
           questionFormats,
-          folderId // Pass folderId if present
+          folderId, // Pass folderId if present
+          subjectCategory
         );
       }
 
@@ -355,13 +372,16 @@ const PracticeTests = () => {
         setAiExplanations(newExplanations);
       }
 
-      // Only show feedback immediately in review mode
+      // Only auto-check in review mode for question types where a single interaction
+      // completes the answer. Multi-select requires an explicit "Check My Answer" click.
       if (quizMode === "review") {
         setShowAnswerFeedback(false);
-        // Auto-check answer after a short delay to provide instant feedback
-        setTimeout(() => {
-          checkAnswerForQuestion(questionIndex);
-        }, 500);
+        const questionType = generatedQuiz.questions[questionIndex]?.type;
+        if (questionType !== "multi_select") {
+          setTimeout(() => {
+            checkAnswerForQuestion(questionIndex);
+          }, 500);
+        }
       }
     }
   };
@@ -410,6 +430,48 @@ const PracticeTests = () => {
 
     if (!userAnswer || userAnswer === null || userAnswer === undefined) {
       return; // Don't check if no answer provided
+    }
+
+    // For numerical questions, first try local tolerance check
+    if (question.type === "numerical") {
+      let localCheckIsCorrect = false;
+      const parsed = parseFloat(String(userAnswer).replace(/[^0-9.\-]/g, ""));
+      if (!isNaN(parsed)) {
+         localCheckIsCorrect = Math.abs(parsed - question.correct_answer_value) <= (question.tolerance ?? 0.01);
+         if(localCheckIsCorrect) {
+             // mark as true, don't fallback to AI
+             if (quizMode === "review") {
+                if (!loadingExplanation) setLoadingExplanation(true);
+                try {
+                  const explanation = await getAnswerExplanation(
+                    question,
+                    userAnswer,
+                    true
+                  );
+                  setAiExplanations(prev => ({
+                    ...prev,
+                    [questionIndex]: explanation
+                  }));
+                  setAiExplanation(explanation);
+                } catch (error) {
+                  const errorMessage = "Failed to generate an explanation. Please try again.";
+                  setAiExplanations(prev => ({
+                    ...prev,
+                    [questionIndex]: errorMessage
+                  }));
+                  setAiExplanation(errorMessage);
+                } finally {
+                  setLoadingExplanation(false);
+                }
+                setCheckedAnswers(prev => ({
+                  ...prev,
+                  [questionIndex]: true
+                }));
+                setShowAnswerFeedback(true);
+             }
+             return;
+         }
+      }
     }
 
     // For short answer and fill-in-blank questions, evaluate with AI
@@ -607,6 +669,17 @@ const PracticeTests = () => {
     setAiEvaluatedAnswers({});
     setError("");
 
+    setSubjectCategory("conceptual");
+    setQuestionFormats({
+      multiple_choice: true,
+      multi_select: true,
+      drag_and_drop: true,
+      true_false: false,
+      short_response: false,
+      fill_in_blank: false,
+      numerical: false,
+    });
+
     quizzesFetchedRef.current = false;
 
     // Fetch saved quizzes when going back to main screen
@@ -714,6 +787,8 @@ const PracticeTests = () => {
               setCustomTopics={setCustomTopics}
               numQuestions={numQuestions}
               setNumQuestions={setNumQuestions}
+              subjectCategory={subjectCategory}
+              setSubjectCategory={setSubjectCategory}
               questionFormats={questionFormats}
               toggleQuestionFormat={toggleQuestionFormat}
               handleNextStep={handleNextStep}

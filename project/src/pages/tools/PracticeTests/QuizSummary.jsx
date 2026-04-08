@@ -150,6 +150,12 @@ const QuestionMap = ({ quiz, userAnswers, onSelectQuestion }) => {
           (question.acceptable_answers &&
             question.acceptable_answers.includes(userAnswer))
         );
+      case "numerical": {
+        if (!userAnswer) return false;
+        const parsed = parseFloat(String(userAnswer).replace(/[^0-9.\-]/g, ""));
+        if (isNaN(parsed)) return false;
+        return Math.abs(parsed - question.correct_answer_value) <= (question.tolerance ?? 0.01);
+      }
       default:
         return false;
     }
@@ -268,6 +274,12 @@ const IncorrectAnswersReview = ({ quiz, userAnswers }) => {
           (question.acceptable_answers &&
             question.acceptable_answers.includes(userAnswer))
         );
+      case "numerical": {
+        if (!userAnswer) return false;
+        const parsed = parseFloat(String(userAnswer).replace(/[^0-9.\-]/g, ""));
+        if (isNaN(parsed)) return false;
+        return Math.abs(parsed - question.correct_answer_value) <= (question.tolerance ?? 0.01);
+      }
       default:
         return false;
     }
@@ -297,6 +309,9 @@ const IncorrectAnswersReview = ({ quiz, userAnswers }) => {
           } (or ${question.acceptable_answers.join(", ")})`;
         }
         return question.correct_answer;
+      case "numerical":
+        return `${question.correct_answer_value} ${question.units || ""}` +
+          (question.tolerance ? ` (±${question.tolerance})` : "");
       default:
         return "";
     }
