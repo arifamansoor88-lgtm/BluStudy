@@ -22,6 +22,7 @@ lxml==6.0.0
 msal==1.33.0
 msal-extensions==1.3.0
 openai==1.97.1
+PyMuPDF
 pyasn1==0.4.8
 pycparser==2.22
 pydantic==2.10.6

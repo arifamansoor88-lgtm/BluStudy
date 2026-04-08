@@ -111,6 +111,9 @@ def generate_flashcard(text: str, num_flashcards: int = 10) -> str:
     Returns STRICT JSON ONLY.
     """
     try:
+        # Larger decks need a larger output budget or the JSON gets truncated.
+        max_output_tokens = min(9000, max(1200, num_flashcards * 90))
+
         response = flashcard_client.chat.completions.create(
             model=FLASHCARD_DEPLOYMENT_NAME,
             messages=[
@@ -124,6 +127,8 @@ def generate_flashcard(text: str, num_flashcards: int = 10) -> str:
                         "- NO backticks\n"
                         "- NO explanations\n"
                         "- NO extra text\n"
+                        "- Keep each question and answer concise\n"
+                        "- Return exactly the requested number of cards, never more and never less\n"
                         "- Follow the schema EXACTLY\n\n"
                         "If you violate these rules, the response is invalid."
                     ),
@@ -138,12 +143,15 @@ def generate_flashcard(text: str, num_flashcards: int = 10) -> str:
                         '  "title": "Short descriptive title",\n'
                         '  "cards": [\n'
                         "    {\n"
-                        '      "front": "Question",\n'
-                        '      "back": "Answer",\n'
-                        '      "tags": ["tag1", "tag2"]\n'
+                        '      "question": "Question",\n'
+                        '      "answer": "Answer",\n'
+                        '      "difficulty": "easy|medium|hard",\n'
+                        '      "important": false\n'
                         "    }\n"
                         "  ]\n"
                         "}\n\n"
+                        "Keep every card brief and study-friendly.\n"
+                        "Return exactly the requested number of cards. Do not include extra cards.\n"
                         "Use ONLY the provided text. Do not use prior knowledge.\n\n"
                         "Document text:\n"
                         "<<<\n"
@@ -153,7 +161,7 @@ def generate_flashcard(text: str, num_flashcards: int = 10) -> str:
                 },
             ],
             temperature=0.3,
-            max_tokens=800,
+            max_tokens=max_output_tokens,
         )
 
         return response.choices[0].message.content.strip()

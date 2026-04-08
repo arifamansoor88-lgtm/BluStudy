@@ -1665,6 +1665,161 @@ class TopicFlashcardRequest(BaseModel):
     folder_id: Optional[str] = None
     subject_category: Optional[str] = "conceptual"
 
+
+def parse_flashcard_json(raw: str) -> Dict[str, Any]:
+    cleaned = raw.strip()
+
+    if cleaned.startswith("```"):
+        cleaned = cleaned[3:]
+        if cleaned.lower().startswith("json"):
+            cleaned = cleaned[4:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+
+    cleaned = cleaned.strip()
+
+    try:
+        return json.loads(cleaned)
+    except Exception:
+        repaired = repair_json(cleaned)
+        return json.loads(repaired)
+
+
+def normalize_flashcard_deck(deck: Dict[str, Any], fallback_title: str) -> Dict[str, Any]:
+    raw_cards = deck.get("cards")
+    if not isinstance(raw_cards, list):
+        raise ValueError("Flashcard response did not include a cards array")
+
+    normalized_cards = []
+    seen_cards = set()
+    for raw_card in raw_cards:
+        if not isinstance(raw_card, dict):
+            continue
+
+        question = str(raw_card.get("question") or raw_card.get("front") or "").strip()
+        answer = str(raw_card.get("answer") or raw_card.get("back") or "").strip()
+
+        if not question or not answer:
+            continue
+
+        difficulty = str(raw_card.get("difficulty") or "medium").strip().lower()
+        if difficulty not in {"easy", "medium", "hard"}:
+            difficulty = "medium"
+
+        important = raw_card.get("important", False)
+        if isinstance(important, str):
+            important = important.strip().lower() in {"true", "1", "yes"}
+        else:
+            important = bool(important)
+
+        dedupe_key = (question.casefold(), answer.casefold())
+        if dedupe_key in seen_cards:
+            continue
+        seen_cards.add(dedupe_key)
+
+        normalized_cards.append(
+            {
+                "question": question,
+                "answer": answer,
+                "difficulty": difficulty,
+                "important": important,
+            }
+        )
+
+    return {
+        "title": str(deck.get("title") or fallback_title).strip() or fallback_title,
+        "cards": normalized_cards,
+    }
+
+
+def build_flashcard_generation_prompt(
+    source_text: str,
+    requested_count: int,
+    existing_cards: Optional[List[Dict[str, Any]]] = None,
+) -> str:
+    if not existing_cards:
+        return source_text
+
+    existing_summary = json.dumps(
+        [
+            {
+                "question": card["question"],
+                "answer": card["answer"],
+            }
+            for card in existing_cards
+        ],
+        ensure_ascii=False,
+    )
+
+    return f"""
+{source_text}
+
+Already generated flashcards:
+{existing_summary}
+
+Generate exactly {requested_count} NEW flashcards only.
+Do not repeat or restate any existing flashcard.
+Return only the missing cards in the same JSON schema.
+"""
+
+
+def generate_exact_flashcard_deck(
+    source_text: str,
+    expected_count: int,
+    fallback_title: str,
+) -> Dict[str, Any]:
+    collected_cards: List[Dict[str, Any]] = []
+    seen_cards = set()
+    deck_title = fallback_title
+    last_error: Optional[Exception] = None
+
+    for attempt in range(4):
+        remaining = expected_count - len(collected_cards)
+        if remaining <= 0:
+            break
+
+        prompt = build_flashcard_generation_prompt(
+            source_text,
+            remaining,
+            collected_cards,
+        )
+
+        try:
+            raw = openai_generate_flashcard(prompt, remaining)
+            print(f"RAW LLM RESPONSE ATTEMPT {attempt + 1}:", repr(raw))
+            parsed = parse_flashcard_json(raw)
+            normalized = normalize_flashcard_deck(parsed, fallback_title)
+        except Exception as exc:
+            last_error = exc
+            continue
+
+        if normalized.get("title"):
+            deck_title = normalized["title"]
+
+        for card in normalized["cards"]:
+            dedupe_key = (card["question"].casefold(), card["answer"].casefold())
+            if dedupe_key in seen_cards:
+                continue
+            seen_cards.add(dedupe_key)
+            collected_cards.append(card)
+            if len(collected_cards) == expected_count:
+                break
+
+    if len(collected_cards) < expected_count:
+        if last_error is not None:
+            raise ValueError(
+                f"AI returned only {len(collected_cards)} unique flashcards out of {expected_count}. "
+                f"Last error: {last_error}"
+            )
+        raise ValueError(
+            f"AI returned only {len(collected_cards)} unique flashcards out of {expected_count}"
+        )
+
+    return {
+        "title": deck_title,
+        "cards": collected_cards[:expected_count],
+    }
+
 @app.post("/generate-flashcard-topic")
 async def generate_flashcard_from_topic(
     payload: TopicFlashcardRequest,
@@ -1674,6 +1829,8 @@ async def generate_flashcard_from_topic(
 
     if len(topic) < 5:
         raise HTTPException(422, "Topic is too short")
+    if payload.num_cards < 1 or payload.num_cards > 100:
+        raise HTTPException(422, "Number of flashcards must be between 1 and 100")
 
     # 🔹 Prompt engineering — IMPORTANT
     prompt = f"""
@@ -1711,11 +1868,12 @@ Rules:
 Generate exactly {payload.num_cards} cards.
 """
 
-    raw = openai_generate_flashcard(prompt, payload.num_cards)
-    print("RAW LLM RESPONSE:", repr(raw))
-
     try:
-        deck = json.loads(raw)
+        deck = generate_exact_flashcard_deck(
+            prompt,
+            payload.num_cards,
+            topic,
+        )
     except Exception as e:
         raise HTTPException(500, f"Invalid LLM output: {str(e)}")
 
@@ -1754,33 +1912,34 @@ async def generate_flashcard(
 
     if not file or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(422, "Please upload a PDF")
+    if num_cards < 1 or num_cards > 100:
+        raise HTTPException(422, "Number of flashcards must be between 1 and 100")
 
     file_path = f"./temp_{uuid.uuid4()}.pdf"
     try:
         with open(file_path, "wb") as f:
             f.write(await file.read())
 
-        extracted_text = extract_text_from_pdf(file_path)
+        try:
+            extracted_text = extract_text_from_pdf(file_path)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(500, str(exc)) from exc
 
-        if len(extracted_text.strip()) < 200:
-            raise HTTPException(422, "PDF has insufficient readable text")
+        if len(extracted_text.strip()) < 50:
+            raise HTTPException(422, "PDF has too little readable text to create flashcards")
 
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
 
-    raw = openai_generate_flashcard(extracted_text, num_cards)
-    print("RAW LLM RESPONSE:", repr(raw))
-
-    def sanitize_llm_json(text: str) -> str:
-        text = text.strip()
-        if text.startswith("```"):
-            text = text.split("```", 2)[1]
-        return text.strip()
-
     try:
-        clean = sanitize_llm_json(raw)
-        deck = json.loads(clean)
+        deck = generate_exact_flashcard_deck(
+            extracted_text,
+            num_cards,
+            "Generated Deck",
+        )
     except Exception as e:
         raise HTTPException(500, f"Invalid LLM output: {str(e)}")
 
