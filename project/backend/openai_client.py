@@ -178,7 +178,8 @@ def generate_quiz(
     text: str, 
     num_questions: int = 10, 
     focus_topics: str = "", 
-    question_formats: List[str] = ["multiple_choice", "multi_select", "drag_and_drop"]
+    question_formats: List[str] = ["multiple_choice", "multi_select", "drag_and_drop"],
+    subject_category: str = "conceptual"
 ) -> str:
     # Build instructions for question types
     question_types_instruction = ""
@@ -192,6 +193,8 @@ def generate_quiz(
         question_types_instruction += "\n  - **Short-answer** (brief text responses to specific questions)."
     if "fill_in_blank" in question_formats:
         question_types_instruction += "\n  - **Fill-in-the-blank** (sentences with missing words to be completed)."
+    if "numerical" in question_formats:
+        question_types_instruction += "\n  - **Numerical** (computational problems requiring a specific numerical answer with units and tolerance-based grading)."
     
     focus_instruction = f"\n\n# Focus Areas:\nPay special attention to these topics: {focus_topics}" if focus_topics else ""
     
@@ -205,14 +208,63 @@ def generate_quiz(
 - Ensure questions are clear, relevant to the input text, and appropriately varied in difficulty.
 - Generate exactly {num_questions} questions, balancing the different question types proportionally.
 - Provide correct answers and explanation details (if relevant) for all question types.
+"""
 
+    if subject_category == "quantitative":
+        system_prompt += """
+# CRITICAL — Quantitative Subject Instructions:
+This quiz is for a QUANTITATIVE/STEM subject (math, physics, chemistry, engineering, etc.).
+You MUST follow these rules:
+
+1. **Calculation-based questions:** At least 70% of questions MUST require actual numerical computation, not just concept recall. Present real problems with specific given values.
+2. **Realistic values and units:** Always include concrete numbers with appropriate SI units (m, kg, s, N, J, m/s², etc.). Never ask "What is the formula for X?" — instead ask "Given [values], calculate X."
+3. **Common-mistake distractors:** For multiple-choice options, derive wrong answers from typical student errors (sign errors, missing conversions, wrong formula, forgetting a step). Do NOT use obviously wrong or random numbers.
+4. **Multi-step problems:** Include problems that require 2–3 steps to solve. State all necessary given information.
+5. **Formulas as context, not answers:** If a formula is relevant, state it in the question stem. The answer should be the computed result, not the formula itself.
+6. **Difficulty via complexity:** Easy = single-step plug-and-chug. Medium = two-step with unit conversion or rearrangement. Hard = multi-step, combining concepts, or requiring insight about which approach to use.
+7. **Short answer / numerical type:** When generating short_answer or fill_in_blank questions, the correct_answer MUST be a specific number with units (e.g., "19.8 m/s", "4.9 m", "245 N"). Include acceptable_answers with common equivalent formats and reasonable rounding (e.g., ["19.8 m/s", "19.80 m/s", "≈20 m/s", "19.799 m/s"]).
+8. **Drag-and-drop for process ordering:** Use drag_and_drop to test solution methodology — e.g., ordering steps of a derivation, matching variables to their meanings, or categorizing quantities as vectors vs scalars.
+"""
+        if "numerical" in question_formats:
+            system_prompt += "\n**CRITICAL:** Since 'numerical' format is enabled, AT LEAST 50% of your questions MUST be of type 'numerical'.\n"
+        
+        system_prompt += """
+Example of a GOOD quantitative multiple-choice question:
+{
+  "type": "multiple_choice",
+  "question": "A 2.0 kg ball is dropped from rest at a height of 10 m. Ignoring air resistance, what is its speed just before hitting the ground? (g = 9.8 m/s²)",
+  "options": ["14.0 m/s", "9.8 m/s", "19.6 m/s", "10.0 m/s"],
+  "correct_answer": "14.0 m/s"
+}
+
+Example of a BAD question for this category (do NOT generate these):
+{
+  "type": "multiple_choice",
+  "question": "What is the formula for kinetic energy?",
+  "options": ["KE = mv", "KE = ½mv²", "KE = mgh", "KE = Fd"],
+  "correct_answer": "KE = ½mv²"
+}
+"""
+
+    elif subject_category == "mixed":
+        system_prompt += """
+# Mixed Subject Instructions:
+Generate a balanced mix of:
+- Conceptual/definitional questions (~40%) that test understanding of terms and principles
+- Calculation-based questions (~40%) with specific numerical values requiring computation
+- Application questions (~20%) that combine concept understanding with practical scenarios
+
+For any calculation question, include concrete values with units. For conceptual questions, test deep understanding rather than surface-level recall.
+"""
+
+    system_prompt += """
 ---
 
 # Output Format:
 
 Return a JSON object structured as follows:
 
-{{
+{
   "quiz_title": "[Generated Quiz Title Based on the Topic]",
   "questions": ["""
 
@@ -265,6 +317,24 @@ Return a JSON object structured as follows:
       "correct_answer": "word",
       "acceptable_answers": ["term", "phrase"]
     },"""
+
+    if "numerical" in question_formats:
+        system_prompt += """
+    {
+      "type": "numerical",
+      "question": "[Full problem statement with all given values, conditions, and constants]",
+      "correct_answer_value": 1.06,
+      "tolerance": 0.05,
+      "units": "m/s²",
+      "acceptable_string_answers": ["1.06 m/s²", "1.1 m/s²"],
+      "solution_steps": [
+        "Step 1: [description with calculation]",
+        "Step 2: [description with calculation]"
+      ],
+      "given_values": {
+        "variable_name": "value with units"
+      }
+    },"""
     
     # Remove the trailing comma and close JSON structure
     system_prompt = system_prompt.rstrip(",") + """
@@ -273,7 +343,7 @@ Return a JSON object structured as follows:
 
 ### Field Explanation:
 - **quiz_title**: A concise, topic-relevant title for the quiz, inferred from the provided text.
-- **type**: Denotes the question type ("multiple_choice", "multi_select", "drag_and_drop", "short_answer", "fill_in_blank").
+- **type**: Denotes the question type ("multiple_choice", "multi_select", "drag_and_drop", "short_answer", "fill_in_blank", "numerical").
 - **question**: The main question or task.
 - **options**: For multiple-choice and multi-select questions, a list of answer options.
 - **correct_answer**: The correct choice for "multiple_choice" questions.
@@ -282,6 +352,12 @@ Return a JSON object structured as follows:
 - **targets**: In drag-and-drop, the drop zones or categories where items belong.
 - **correct_mapping**: A dictionary showing the correct drag-and-drop pairings.
 - **acceptable_answers**: For "short_answer" and "fill_in_blank", a list of alternative correct answers.
+- **correct_answer_value**: For "numerical", the exact numerical result (number only, no units).
+- **tolerance**: For "numerical", absolute tolerance for grading (e.g., 0.05 means answers within ±0.05 of correct are accepted).
+- **units**: For "numerical", the expected unit string for the answer.
+- **solution_steps**: For "numerical", ordered array of solution steps, each showing the calculation performed.
+- **given_values**: For "numerical", dictionary of variable names to their given values with units.
+- **acceptable_string_answers**: For "numerical", alternative string representations of the correct answer for fallback matching.
 
 ---
 
@@ -337,6 +413,16 @@ def generate_answer_explanation(
             correct_answer_info = f"The correct answer is: {correct_answer} (or alternatively: {', '.join(acceptable_answers)})"
         else:
             correct_answer_info = f"The correct answer is: {correct_answer}"
+    elif question_type == "numerical":
+        correct_value = question.get("correct_answer_value", "")
+        units = question.get("units", "")
+        tolerance = question.get("tolerance", 0)
+        solution_steps = question.get("solution_steps", [])
+        correct_answer_info = f"The correct answer is: {correct_value} {units} (±{tolerance})"
+        if solution_steps:
+            correct_answer_info += "\nSolution steps:\n" + "\n".join(
+                f"  {i+1}. {step}" for i, step in enumerate(solution_steps)
+            )
     else:
         correct_answer_info = "The correct answer information is not available."
     
@@ -352,6 +438,8 @@ def generate_answer_explanation(
             user_answer_formatted = "Your mappings: " + ", ".join([f"{k} → {v}" for k, v in user_answer.items()])
         else:
             user_answer_formatted = f"Your answer: {user_answer}"
+    elif question_type == "numerical":
+        user_answer_formatted = f"Your answer: {user_answer}"
     else:
         user_answer_formatted = f"Your answer: {user_answer}"
     
@@ -404,6 +492,46 @@ Use markdown formatting in your response.
         ]
     )
     return response.choices[0].message.content.strip()
+
+def evaluate_numerical_answer(
+    question: Dict[str, Any],
+    user_answer: str
+) -> Dict[str, Any]:
+    """
+    Evaluate a numerical answer using tolerance-based comparison.
+    Falls back to AI evaluation if the user answer can't be parsed as a number.
+
+    Args:
+        question: Question dict with correct_answer_value, tolerance, units fields.
+        user_answer: The student's answer as a string (may include units).
+
+    Returns:
+        {"is_correct": bool, "ai_response": str, "parsed_value": float|None}
+    """
+    import re
+
+    correct_value = question.get("correct_answer_value")
+    tolerance = question.get("tolerance", 0.01)
+    units = question.get("units", "")
+
+    # Strip units and whitespace from user answer to extract the number
+    cleaned = str(user_answer).strip()
+    if units:
+        cleaned = cleaned.replace(units, "").strip()
+    # Remove common unit variations
+    cleaned = re.sub(r'[a-zA-Z°/²³]+$', '', cleaned).strip()
+
+    try:
+        user_value = float(cleaned)
+        is_correct = abs(user_value - float(correct_value)) <= float(tolerance)
+        return {
+            "is_correct": is_correct,
+            "ai_response": "correct" if is_correct else "incorrect",
+            "parsed_value": user_value,
+        }
+    except (ValueError, TypeError):
+        # Can't parse as number — fall back to AI evaluation
+        return evaluate_short_answer(question, str(user_answer))
 
 def evaluate_short_answer(
     question: Dict[str, Any],
@@ -684,6 +812,14 @@ async def analyze_quiz_performance(
                 correct_answer = question.get("correct_answer")
                 acceptable_answers = question.get("acceptable_answers", [])
                 is_correct = user_answer == correct_answer or user_answer in acceptable_answers
+            elif question.get("type") == "numerical":
+                try:
+                    user_val = float(str(user_answer).replace(question.get("units", ""), "").strip())
+                    correct_val = float(question.get("correct_answer_value", 0))
+                    tolerance = float(question.get("tolerance", 0.01))
+                    is_correct = abs(user_val - correct_val) <= tolerance
+                except (ValueError, TypeError):
+                    is_correct = False
             
             quiz_data.append({
                 "question_number": i + 1,
@@ -812,6 +948,15 @@ def create_fallback_analysis(
             acceptable_answers = question.get("acceptable_answers", [])
             if user_answer == correct_answer or user_answer in acceptable_answers:
                 correct_answers += 1
+        elif question.get("type") == "numerical":
+            try:
+                user_val = float(str(user_answer).replace(question.get("units", ""), "").strip())
+                correct_val = float(question.get("correct_answer_value", 0))
+                tolerance = float(question.get("tolerance", 0.01))
+                if abs(user_val - correct_val) <= tolerance:
+                    correct_answers += 1
+            except (ValueError, TypeError):
+                pass
     
     overall_accuracy = round((correct_answers / total_questions) * 100) if total_questions > 0 else 0
     

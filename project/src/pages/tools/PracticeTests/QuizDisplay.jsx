@@ -416,6 +416,22 @@ const QuizDisplay = ({
                       </div>
                     )}
 
+                  {/* Numerical Solution Steps */}
+                  {!loadingExplanation && !evaluatingAnswer && currentQuestion.type === "numerical" && currentQuestion.solution_steps && (
+                    <div className="mt-3 bg-gray-50 p-3 rounded border border-gray-200">
+                      <h4 className="text-sm font-medium text-gray-800 mb-2">
+                        Worked Solution:
+                      </h4>
+                      <ol className="list-decimal list-inside space-y-2">
+                        {currentQuestion.solution_steps.map((step, i) => (
+                          <li key={i} className="text-sm text-gray-600 font-mono pl-2 border-l-2 border-gray-200 ml-1">
+                            {step}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+
                   {/* Topics to Review Section - Extract from AI explanation */}
                   {!isCurrentAnswerCorrect() && getCurrentQuestionExplanation() && (
                     <div className="mt-3 bg-blue-50 p-3 rounded border border-blue-200">
@@ -624,6 +640,9 @@ function formatCorrectAnswer(question) {
         } (or ${question.acceptable_answers.join(", ")})`;
       }
       return question.correct_answer;
+    case "numerical":
+      return `${question.correct_answer_value} ${question.units || ""}` +
+        (question.tolerance ? ` (±${question.tolerance})` : "");
     default:
       return "";
   }
@@ -655,6 +674,12 @@ function isAnswerCorrectInline(question, userAnswer) {
         (question.acceptable_answers &&
           question.acceptable_answers.includes(userAnswer))
       );
+    case "numerical": {
+      if (!userAnswer) return false;
+      const parsed = parseFloat(String(userAnswer).replace(/[^0-9.\-]/g, ""));
+      if (isNaN(parsed)) return false;
+      return Math.abs(parsed - question.correct_answer_value) <= (question.tolerance ?? 0.01);
+    }
     default:
       return false;
   }
