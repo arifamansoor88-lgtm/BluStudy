@@ -731,9 +731,9 @@ const RecentItemCard = ({ item, navigate }) => {
       <p className="text-xs text-gray-500 mt-1 capitalize">
         {item.contentType?.replace(/_/g, " ")}
       </p>
-      {item.updatedAt && (
-        <p className="text-xxs text-gray-400 mt-1">
-          last accessed {new Date(item.updatedAt).toLocaleString()}
+      {(item.updatedAt || item.createdAt) && (
+        <p className="text-[10px] text-gray-400 mt-1">
+          last accessed {new Date(item.updatedAt || item.createdAt).toLocaleString()}
         </p>
       )}
     </motion.div>

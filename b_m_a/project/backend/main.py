@@ -569,7 +569,15 @@ async def get_recent_items(
             content_type = (item.get("contentType") or item.get("contenttype") or "unknown").lower()
             data = item.get("data") or {}
             resource_name = item.get("resourceName") or item.get("name") or ""
-            raw_title = item.get("title") or item.get("name") or data.get("title") or data.get("quiz_title") or resource_name or ""
+            raw_title = (
+                item.get("title")
+                or item.get("name")
+                or data.get("title")
+                or data.get("name")
+                or data.get("quiz_title")
+                or resource_name
+                or ""
+            )
             display_title = raw_title.strip() or {
                 "quiz": "Practice Test",
                 "flashcard": "Flashcard",
