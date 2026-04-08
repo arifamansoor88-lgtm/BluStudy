@@ -62,13 +62,22 @@ except Exception:
 # --------------------------------------------------------------------------------------
 # Storage configuration
 # --------------------------------------------------------------------------------------
-STORAGE_BACKEND = (os.getenv("STORAGE_BACKEND") or "azure_blob").strip().lower()
 # For azure_blob
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 AZURE_BLOB_ACCOUNT_NAME = os.getenv("AZURE_BLOB_ACCOUNT_NAME")
 AZURE_BLOB_ACCOUNT_KEY = os.getenv("AZURE_BLOB_ACCOUNT_KEY")
 AZURE_BLOB_CONTAINER = os.getenv("AZURE_BLOB_CONTAINER", "audio")
 AZURE_BLOB_SAS_TTL_HOURS = int(os.getenv("AZURE_BLOB_SAS_TTL_HOURS", "0"))
+
+def _resolve_storage_backend() -> str:
+    explicit = (os.getenv("STORAGE_BACKEND") or "").strip().lower()
+    if explicit:
+        return explicit
+    if AZURE_STORAGE_CONNECTION_STRING or (AZURE_BLOB_ACCOUNT_NAME and AZURE_BLOB_ACCOUNT_KEY):
+        return "azure_blob"
+    return "local"
+
+STORAGE_BACKEND = _resolve_storage_backend()
 
 COSMOS_URL = os.getenv("COSMOS_DB_URL") or os.getenv("COSMOS_URL") or os.getenv("COSMOS_ENDPOINT")
 COSMOS_KEY = os.getenv("COSMOS_DB_KEY") or os.getenv("COSMOS_KEY")
