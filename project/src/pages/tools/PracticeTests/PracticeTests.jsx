@@ -355,13 +355,16 @@ const PracticeTests = () => {
         setAiExplanations(newExplanations);
       }
 
-      // Only show feedback immediately in review mode
+      // Only auto-check in review mode for question types where a single interaction
+      // completes the answer. Multi-select requires an explicit "Check My Answer" click.
       if (quizMode === "review") {
         setShowAnswerFeedback(false);
-        // Auto-check answer after a short delay to provide instant feedback
-        setTimeout(() => {
-          checkAnswerForQuestion(questionIndex);
-        }, 500);
+        const questionType = generatedQuiz.questions[questionIndex]?.type;
+        if (questionType !== "multi_select") {
+          setTimeout(() => {
+            checkAnswerForQuestion(questionIndex);
+          }, 500);
+        }
       }
     }
   };
