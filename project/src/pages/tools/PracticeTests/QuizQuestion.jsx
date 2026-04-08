@@ -1,4 +1,72 @@
-import React from "react";
+import React, { useMemo } from "react";
+
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+  }
+  return hash;
+}
+
+function seededShuffle(array, seed) {
+  const shuffled = [...array];
+  let m = shuffled.length;
+  let t = seed | 0;
+  const random = () => {
+    t = (t + 0x6d2b79f5) | 0;
+    let x = Math.imul(t ^ (t >>> 15), 1 | t);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+  while (m > 0) {
+    const i = Math.floor(random() * m--);
+    [shuffled[m], shuffled[i]] = [shuffled[i], shuffled[m]];
+  }
+  return shuffled;
+}
+
+const DragAndDropQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
+  const shuffledTargets = useMemo(() => {
+    const seed = hashString(question.question + question.targets.join(","));
+    return seededShuffle(question.targets, seed);
+  }, [question.question, question.targets]);
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-xl font-medium text-gray-900 mb-6">
+        {question.question}
+      </h2>
+      {question.prompts.map((prompt, promptIndex) => {
+        const currentMapping =
+          userAnswer && userAnswer[prompt] ? userAnswer[prompt] : "";
+        return (
+          <div
+            key={promptIndex}
+            className="flex flex-col md:flex-row items-start md:items-center gap-3 p-3 border rounded-lg"
+          >
+            <div className="font-medium min-w-[200px]">{prompt}</div>
+            <select
+              value={currentMapping}
+              onChange={(e) => {
+                const newMapping = { ...(userAnswer || {}) };
+                newMapping[prompt] = e.target.value;
+                onAnswerChange(index, newMapping);
+              }}
+              className="flex-1 p-2 border rounded-md"
+            >
+              <option value="">-- Select an option --</option>
+              {shuffledTargets.map((target, targetIndex) => (
+                <option key={targetIndex} value={target}>
+                  {target}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 /**
  * Component for rendering a quiz question based on its type
@@ -75,41 +143,13 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
       );
 
     case "drag_and_drop":
-      // For drag and drop, we'll create a simplified version that allows selection from dropdowns
       return (
-        <div className="space-y-6">
-          <h2 className="text-xl font-medium text-gray-900 mb-6">
-            {question.question}
-          </h2>
-          {question.prompts.map((prompt, promptIndex) => {
-            const currentMapping =
-              userAnswer && userAnswer[prompt] ? userAnswer[prompt] : "";
-            return (
-              <div
-                key={promptIndex}
-                className="flex flex-col md:flex-row items-start md:items-center gap-3 p-3 border rounded-lg"
-              >
-                <div className="font-medium min-w-[200px]">{prompt}</div>
-                <select
-                  value={currentMapping}
-                  onChange={(e) => {
-                    const newMapping = { ...(userAnswer || {}) };
-                    newMapping[prompt] = e.target.value;
-                    onAnswerChange(index, newMapping);
-                  }}
-                  className="flex-1 p-2 border rounded-md"
-                >
-                  <option value="">-- Select an option --</option>
-                  {question.targets.map((target, targetIndex) => (
-                    <option key={targetIndex} value={target}>
-                      {target}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            );
-          })}
-        </div>
+        <DragAndDropQuestion
+          question={question}
+          index={index}
+          userAnswer={userAnswer}
+          onAnswerChange={onAnswerChange}
+        />
       );
 
     case "short_answer":
