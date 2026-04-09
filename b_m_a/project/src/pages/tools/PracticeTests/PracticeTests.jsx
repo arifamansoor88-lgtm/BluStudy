@@ -11,7 +11,7 @@ import {
   evaluateShortAnswer,
 } from "../../../api/apiService";
 import { useLocation } from "react-router-dom";
-
+import { useMsal } from "@azure/msal-react";
 
 /**
  * Main PracticeTests component that coordinates all other components
@@ -601,13 +601,38 @@ const PracticeTests = () => {
   };
 
   // Function to complete the quiz after evaluation
-  const completeQuiz = () => {
-    setQuizStatus("completed");
-    setShowSummary(true);
+  const { instance } = useMsal();
+  const completeQuiz = async () => {
+  setQuizStatus("completed");
+  setShowSummary(true);
 
-    // Auto-save the quiz attempt when completed
-    saveQuizAttempt(generatedQuiz, userAnswers, timer, quizMode);
-  };
+  await saveQuizAttempt(generatedQuiz, userAnswers, timer, quizMode);
+
+  //Refresh weak areas after quiz
+  try {
+    const account = instance.getActiveAccount();
+    const response = await instance.acquireTokenSilent({
+      scopes: ["https://bluemarbleacademy.onmicrosoft.com/966d3bf1-5512-4c9c-9af0-554ad974a7f5/access"],
+      account: account,
+    });
+
+    const token = response.accessToken;
+
+    const res = await fetch("http://localhost:8000/weak-areas", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+
+    // 🧠 store in localStorage so Dashboard updates
+    localStorage.setItem("focusAreas", JSON.stringify(data.focusAreas));
+
+  } catch (err) {
+    console.error("Failed to refresh weak areas:", err);
+  }
+};
 
   const nextQuizQuestion = () => {
     // In review mode, check if the current question has been answered and checked

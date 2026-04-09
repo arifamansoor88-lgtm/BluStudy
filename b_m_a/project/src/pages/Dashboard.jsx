@@ -21,6 +21,12 @@ import {
 import { motion } from "framer-motion";
 import { useUserRecents } from "../hooks/useUserRecents";
 
+const formatTopic = (t) => {
+  return t
+    .replace(/(^|\s)\S/g, l => l.toUpperCase())
+    .replace(/\band\b/g, "and");
+};
+
 const Dashboard = () => {
   const { instance, accounts } = useMsal();
   const navigate = useNavigate();
@@ -32,6 +38,9 @@ const Dashboard = () => {
     const recentItems = useUserRecents();
     const [suggestedNextSteps, setSuggestedNextSteps] = useState([]);
   const [focusAreas, setFocusAreas] = useState([]);
+  useEffect(() => {
+  handleQuizio(); 
+}, []);
 const handleQuizio = async () => {
   try {
     const account = instance.getActiveAccount();
@@ -398,24 +407,25 @@ useEffect(() => {
         {/* Quizio - Right Half */}
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
           {/* Header */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Brain className="text-purple-600" size={20} />
-              <h2 className="text-lg font-semibold text-gray-900">
-                Quizio
-              </h2>
-            </div>
+          
+            <div className="flex items-center justify-between mb-3">
+  <div className="flex items-center gap-2">
+    <Brain className="text-purple-600" size={20} />
+    <h2 className="text-lg font-semibold text-gray-900">
+      Quizio
+    </h2>
+  </div>
 
-            {focusAreas.length > 0 && (
-              <button
-                onClick={handleQuizio}
-                className="text-sm text-purple-600 hover:text-purple-700"
-              >
-                Re-analyze
-              </button>
-            )}
-          </div>
-
+  {focusAreas.length > 0 && (
+    <button
+      onClick={handleQuizio}
+      className="text-sm text-purple-600 hover:text-purple-700"
+    >
+      Re-analyze
+    </button>
+  )}
+</div>
+        
           {/* Subtext */}
           <p className="text-sm text-gray-500 mb-4">
             Practice based on your weak areas.
@@ -437,9 +447,10 @@ useEffect(() => {
               </p>
 
               {/* Focus Area Cards */}
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {focusAreas.map((item, idx) => {
                   const topic = item.topic;
+                  const display = item.display || topic;
                   const score = item.score;
 
                   let status = "Weak";
@@ -463,7 +474,7 @@ useEffect(() => {
                       {/* Left Side */}
                       <div className="text-left">
                         <p className="text-sm font-medium text-gray-900">
-                          {topic}
+                          {formatTopic(display)}
                         </p>
                         <p className={`text-xs ${color}`}>
                           {status}

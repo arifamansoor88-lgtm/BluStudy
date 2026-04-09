@@ -1,5 +1,35 @@
 import os
 import json
+import re
+
+def normalize_topic(title: str) -> str:
+    title = (title or "").lower()
+
+    # known core subjects (add more if needed)
+    subjects = [
+        "addition",
+        "subtraction",
+        "multiplication",
+        "division",
+        "derivatives",
+        "integration",
+        "algebra",
+        "geometry",
+        "trigonometry",
+        "chemistry",
+        "physics",
+        "biology"
+    ]
+
+    for subject in subjects:
+        if subject in title:
+            return subject
+
+    #first meaningful word
+    title = re.sub(r"[^a-z0-9\s]", "", title)
+    words = [w for w in title.split() if len(w) > 3]
+
+    return words[0] if words else "general"
 import uuid
 import uvicorn
 import base64
@@ -1147,6 +1177,8 @@ async def create_quiz(
 
         quiz_data = json.loads(quiz_json)
         quiz_id = str(uuid.uuid4())
+        \
+        
         quiz_document = {
             "id": quiz_id,
             "userId": user_claims["sub"],
@@ -1246,7 +1278,6 @@ async def get_weak_areas(user_claims: dict = Depends(validate_token)):
     try:
         user_id = user_claims["sub"]
 
-        #Fetch all quizzes for this user
         query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'quiz'"
         parameters = [{"name": "@userId", "value": user_id}]
 
@@ -1256,68 +1287,56 @@ async def get_weak_areas(user_claims: dict = Depends(validate_token)):
             enable_cross_partition_query=True
         ))
 
-        weak_topics = []
+        topic_scores = {}
+        topic_display = {}
 
         for quiz in quizzes:
             data = quiz.get("data", {})
-            title = (data.get("title") or "").strip()
+            original_title = (data.get("title") or "").strip()
+            normalized = normalize_topic(original_title)
+            clean_display = original_title
 
-            #Skip if no title
-            if not title:
+            if not original_title:
                 continue
 
-            attempts = data.get("attempts", [])
+            attempts = [
+                a for a in data.get("attempts", [])
+                if a.get("score") is not None and a.get("score") > 0
+            ]
 
-            #Skip if quiz never attempted
             if not attempts:
                 continue
 
-            # Get all scores
-            scores = [a.get("score", 100) for a in attempts]
+            def parse_score(s):
+                if isinstance(s, str):
+                    return int(s.replace("%", "").strip())
+                return int(s or 0)
 
-            lowest_score = min(scores)
+            scores = [parse_score(a.get("score")) for a in attempts]
 
-            # Get latest attempt
-            latest_attempt = max(
-                attempts,
-                key=lambda x: x.get("timestamp", "")
-            )
-            latest_score = latest_attempt.get("score", 100)
+            if normalized not in topic_scores:
+                topic_scores[normalized] = []
 
-            #Only include if STILL weak (auto-remove logic)
-            if lowest_score < 60 and latest_score < 75:
+            topic_scores[normalized].extend(scores)
+
+        weak_topics = []
+
+        for topic, scores in topic_scores.items():
+            best_score = max(scores)
+
+            print("DEBUG TOPIC:", topic, scores, "BEST:", best_score)
+
+            if best_score < 75:
                 weak_topics.append({
-                    "topic": title,
-                    "score": latest_score
+                    "topic": topic,
+                    "display": topic_display.get(topic, topic),
+                    "score": best_score
                 })
 
-        #Remove duplicates (keep lowest score version)
-        unique_topics = {}
-        for item in weak_topics:
-            topic = item["topic"]
-            score = item["score"]
-
-            if topic not in unique_topics or score < unique_topics[topic]:
-                unique_topics[topic] = score
-
-        #Sort by weakest first
-        sorted_topics = sorted(
-            unique_topics.items(),
-            key=lambda x: x[1]  # sort by score
-        )
-
-        #Final output format
-        focus_areas = []
-
-        for topic, score in sorted_topics:
-            focus_areas.append({
-                "topic": topic,
-                "score": score
-        })
-
         return {
-            "focusAreas": focus_areas or [{"topic": "General Practice", "score": 100}]
+            "focusAreas": weak_topics or [{"topic": "General Practice", "score": 100}]
         }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
  
