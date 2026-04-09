@@ -964,19 +964,114 @@ async def debug_voice_note(
     scrub.pop("audio_inline_b64", None)
     return JSONResponse(scrub)
 
-# Returns placeholder "Suggested Next Steps" recommendations for the dashboard.
+# Returns "Suggested Next Steps".
 @app.get("/dashboard/next-steps")
-def get_suggested_next_steps():
-    # TEMP: hardcoded recent activity until real activity tracking is wired up
-    recent_activity = {
-        "recentActivity": [
-            {"tool": "AI Flashcards", "course": "Biology 101", "topic": "Cell Structure"},
-            {"tool": "Practice Tests", "course": "Calculus", "topic": "Derivatives"},
-            {"tool": "Smart Summarizer", "course": "World History", "topic": "Chapter 5"},
-        ]
-    }
+def get_suggested_next_steps(user_claims: dict = Depends(validate_token)):
+    uid = user_claims["sub"]
 
-    return generate_suggested_next_steps_ai(recent_activity)
+    # Helper: get most recent item for a content type
+    def get_latest(content_type: str):
+        query = "SELECT * FROM c WHERE c.userId = @uid AND c.contentType = @ct"
+        params = [
+            {"name": "@uid", "value": uid},
+            {"name": "@ct", "value": content_type},
+        ]
+        items = list(container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+        items.sort(key=lambda x: x.get("updatedAt") or x.get("createdAt") or "", reverse=True)
+        return items[0] if items else None
+
+    latest_deck = get_latest("flashcard_deck")
+    latest_quiz = get_latest("quiz")
+    latest_note = get_latest("voice_note")
+    latest_mindmap = get_latest("mindmap")
+    latest_summary = get_latest("summary")
+
+    # Build targets list for AI
+    targets = []
+
+    if latest_deck:
+        deck_title = latest_deck.get("title") or latest_deck.get("data", {}).get("title") or "Flashcards"
+        targets.append({
+            "toolKey": "flashcard_deck",
+            "targetId": latest_deck["id"],
+            "toolName": "AI Flashcards",
+            "context": deck_title,
+        })
+
+    if latest_quiz:
+        quiz_title = latest_quiz.get("data", {}).get("title") or "Practice Test"
+        targets.append({
+            "toolKey": "quiz",
+            "targetId": latest_quiz["id"],
+            "toolName": "Practice Tests",
+            "context": quiz_title,
+        })
+
+    if latest_note:
+        note_title = latest_note.get("title") or "Voice Note"
+        targets.append({
+            "toolKey": "voice_note",
+            "targetId": latest_note["id"],
+            "toolName": "Voice Notes",
+            "context": note_title,
+        })
+
+    if latest_mindmap:
+        mm_title = latest_mindmap.get("title") or "Mind Map"
+        targets.append({
+            "toolKey": "mind_map",
+            "targetId": latest_mindmap["id"],
+            "toolName": "Mind Maps",
+            "context": mm_title,
+    })
+
+    if latest_summary:
+        s_title = latest_summary.get("title") or "Summary"
+        targets.append({
+            "toolKey": "summarizer",
+            "targetId": latest_summary["id"],
+            "toolName": "Smart Summarizer",
+            "context": s_title,
+    })
+
+    # If nothing exists yet, return safe fallback
+    if not targets:
+        return {"items": []}
+
+    # Limit to 3 suggestions max (AI will generate exactly len(targets))
+    targets = targets[:3]
+
+    ai_result = generate_suggested_next_steps_ai(targets)
+    items = ai_result.get("items", [])
+    items = items[:3]
+
+    # Map toolKey + targetId -> deep link actionPath
+    def to_action_path(toolKey: str, targetId: str) -> str:
+        if toolKey == "flashcard_deck":
+            return f"/tools/flashcards/study/{targetId}"
+        if toolKey == "quiz":
+            return f"/tools/practice-tests?quizId={targetId}"
+        if toolKey == "voice_note":
+            return f"/tools/voice-notes?noteId={targetId}"
+        if toolKey == "mind_map":
+            return f"/tools/maps/{targetId}"
+        if toolKey == "summarizer":
+            return f"/tools/summarizer?summaryId={targetId}"
+        return "/dashboard"
+
+    # Build final response for frontend
+    final_items = []
+    for item in items:
+        toolKey = item.get("toolKey")
+        targetId = item.get("targetId")
+        final_items.append({
+            "title": item.get("title", "Suggested Next Step"),
+            "description": item.get("description", ""),
+            "buttonText": item.get("buttonText", "Open"),
+            "actionPath": to_action_path(toolKey, targetId),
+        })
+
+    return {"items": final_items}
 
 # ----- Quizzes -----
 class QuizDataModel(BaseModel):

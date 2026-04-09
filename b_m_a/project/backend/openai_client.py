@@ -877,45 +877,47 @@ def create_fallback_analysis(
     }
 
 # Generates "Suggested Next Steps"
-def generate_suggested_next_steps_ai(recent_activity: dict):
+def generate_suggested_next_steps_ai(targets: list[dict]):
     """
-    Generates 3 'Suggested Next Steps' recommendations using Azure OpenAI.
+    AI generates titles/descriptions/buttons, BUT the backend controls IDs.
+    targets input example:
+      [
+        {"toolKey":"flashcard_deck","targetId":"abc","toolName":"AI Flashcards","context":"Biology 101 - Cell Structure"},
+        {"toolKey":"quiz","targetId":"def","toolName":"Practice Tests","context":"Calculus - Derivatives"},
+        {"toolKey":"voice_note","targetId":"ghi","toolName":"Voice Notes","context":"World History - Chapter 5"}
+        {"toolKey":"mind_map","targetId":"mmm","toolName":"Mind Maps","context":"..."},
+        {"toolKey":"summarizer","targetId":"sss","toolName":"Summarizer","context":"..."}
+      ]
     Output schema:
-      {"items": [{"title": str, "description": str, "buttonText": str}]}
+      {"items": [{"toolKey","targetId","title","description","buttonText"}]}
     """
     prompt = f"""
 You are a study coach inside an education platform.
 
-Given the user's recent activity below, generate EXACTLY 3 suggested next steps.
-
-Rules:
-- Each suggestion MUST recommend the SAME tool the user used previously.
-- Title: short (4-7 words)
+Generate EXACTLY {len(targets)} suggested next steps using the targets below.
+IMPORTANT:
+- You MUST keep each toolKey and targetId exactly as provided.
+- Each suggestion must recommend using the SAME tool in that target.
+- Title: short (4–7 words)
 - Description: 1 sentence
-- ButtonText: 1-3 words (e.g., "Resume Tool", "Start Practice", "Open Tool")
-- actionPath must be ONE of the following exact strings:
-  - "/tools/flashcards"
-  - "/tools/practice-tests"
-  - "/tools/summarizer"
-  - "/tools/voice-notes"
-  - "/tools/mind-maps"
-  - "/tools/study-planner"
-- Choose actionPath based on the tool used in the suggestion.
-- Return ONLY valid JSON in this exact schema:
+- ButtonText: 1–3 words
+
+Return ONLY valid JSON in this exact schema:
 
 {{
   "items": [
     {{
+      "toolKey": "flashcard_deck|quiz|voice_note|mind_map|summarizer",
+      "targetId": "string",
       "title": "string",
       "description": "string",
-      "buttonText": "string",
-      "actionPath": "string"
+      "buttonText": "string"
     }}
   ]
 }}
 
-Recent activity:
-{json.dumps(recent_activity)}
+Targets (do NOT change toolKey/targetId):
+{json.dumps(targets)}
 """
 
     resp = quiz_client.chat.completions.create(
@@ -929,7 +931,7 @@ Recent activity:
 
     content = resp.choices[0].message.content.strip()
 
-    # If the model wraps JSON in ```...```, strip code fences
+    # Strip ```json fences if present
     if content.startswith("```"):
         parts = content.split("```")
         if len(parts) >= 2:

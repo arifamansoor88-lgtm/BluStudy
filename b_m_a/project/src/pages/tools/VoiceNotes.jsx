@@ -12,7 +12,9 @@ const VoiceNotes = () => {
   // Get folderId from URL query params if present
   const [searchParams] = useSearchParams();
   const folderId = searchParams.get('folderId');
-  
+
+  const noteId = searchParams.get("noteId");
+
   const { instance, accounts } = useMsal();
   const navigate = useNavigate();
   
@@ -84,6 +86,18 @@ const VoiceNotes = () => {
   };
 
   useEffect(() => { fetchNotes(); }, [selectedTagFilter, userId]);
+
+    // If we navigated here with ?noteId=..., move that note to the top so it's visible immediately
+    useEffect(() => {
+        if (!noteId || notes.length === 0) return;
+
+        const idx = notes.findIndex((n) => n.id === noteId);
+        if (idx === -1) return;
+
+        const selected = notes[idx];
+        const remaining = notes.filter((n) => n.id !== noteId);
+        setNotes([selected, ...remaining]);
+    }, [noteId, notes.length]);
 
   // Refresh notes when page becomes visible after being hidden (handles browser back button)
   // Only refresh if page was hidden for more than 1 second

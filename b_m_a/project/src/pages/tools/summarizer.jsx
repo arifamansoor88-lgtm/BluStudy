@@ -31,6 +31,7 @@ const Summarizer = () => {
   // Get folderId from URL query params if present
   const [searchParams] = useSearchParams();
   const folderId = searchParams.get('folderId');
+  const summaryId = searchParams.get('summaryId');
   
   // View state: 'create' or 'saved'
   const [viewMode, setViewMode] = useState('create');
@@ -113,6 +114,25 @@ const Summarizer = () => {
       fetchSavedSummaries();
     }
   }, [viewMode, fetchSavedSummaries]);
+
+  // If we deep-link with ?summaryId=..., switch to Saved view so the list is loaded
+  useEffect(() => {
+      if (!summaryId) return;
+      setViewMode('saved');
+  }, [summaryId]);
+
+  // After saved summaries are loaded, auto-select the one specified in the URL (?summaryId=...)
+  useEffect(() => {
+      if (!summaryId) return;
+      if (!savedSummaries || savedSummaries.length === 0) return;
+
+      const match = savedSummaries.find((s) => s.id === summaryId);
+      if (match) {
+          handleSelectSummary(match);
+      } else {
+          setError("That saved summary was not found.");
+      }
+  }, [summaryId, savedSummaries]);
 
   // Handle creating a new summary
   const handleCreateNew = () => {
