@@ -191,12 +191,14 @@ class UpdateFolderRequest(BaseModel):
     name: Optional[str] = None
     parentFolderId: Optional[str] = None
     color: Optional[str] = None
+    starred: Optional[bool] = None
 
 class FolderOut(BaseModel):
     id: str
     name: str
     color: str
     parentFolderId: Optional[str] = None
+    starred: Optional[bool] = False
     createdAt: str
     updatedAt: Optional[str] = None
-    items: Optional[int] = 0  # Number of items in the folder
+    items: Optional[int] = 0

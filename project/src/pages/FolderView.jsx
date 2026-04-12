@@ -5,7 +5,7 @@ import {
   Calendar as CalendarIcon, MoreVertical, Trash2, FolderSymlink, Folder, FolderPlus, ChevronRight, Upload, File as FileIcon, CheckSquare, Square
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Mic2, LayoutGrid as GridIcon, Edit3, Zap, NotebookPen } from "lucide-react";
+import { Brain, Mic2, LayoutGrid as GridIcon, Edit3, Zap, NotebookPen, Pencil } from "lucide-react";
 
 // =======================
 // API helpers (uses MSAL)
@@ -197,6 +197,11 @@ export default function FolderView() {
   const [newSubfolderName, setNewSubfolderName] = useState("");
   const [selectedSubfolderColor, setSelectedSubfolderColor] = useState("from-indigo-100 to-indigo-200");
 
+  const [pendingSubfolderDelete, setPendingSubfolderDelete] = useState(null);
+  const [editingSubfolder, setEditingSubfolder] = useState(null);
+  const [editSubfolderName, setEditSubfolderName] = useState("");
+  const [editSubfolderColor, setEditSubfolderColor] = useState("");
+
   // Close dropdowns on outside click
   const filterRef = useRef(); const sortRef = useRef();
   useEffect(() => {
@@ -362,6 +367,57 @@ export default function FolderView() {
     } catch (e) {
       console.error("Error creating subfolder:", e);
       alert("Failed to create subfolder: " + (e.message || "Unknown error"));
+    }
+  }
+
+  async function renameSubfolder() {
+    if (!editingSubfolder || !editSubfolderName.trim()) return;
+    try {
+      await apiFetch(`/folders/${editingSubfolder.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ 
+          name: editSubfolderName.trim(),
+          color: editSubfolderColor || editingSubfolder.color,
+        }),
+      });
+      
+      const folders = await apiFetch("/folders", { method: "GET" });
+      setAllFolders(folders);
+      const current = folders.find((f) => String(f.id) === String(folderId));
+      setFolderMeta(current || null);
+      const subfoldersList = folders.filter((f) => String(f.parentFolderId) === String(folderId));
+      setSubfolders(subfoldersList);
+      
+      setEditingSubfolder(null);
+      setEditSubfolderName("");
+      setEditSubfolderColor("");
+    } catch (e) {
+      console.error("Error renaming subfolder:", e);
+      alert("Failed to rename subfolder: " + (e.message || "Unknown error"));
+    }
+  }
+
+  async function deleteSubfolder() {
+    if (!pendingSubfolderDelete) return;
+    try {
+      await apiFetch(`/folders/${pendingSubfolderDelete.id}`, { method: "DELETE" });
+      
+      const folders = await apiFetch("/folders", { method: "GET" });
+      setAllFolders(folders);
+      const current = folders.find((f) => String(f.id) === String(folderId));
+      setFolderMeta(current || null);
+      const subfoldersList = folders.filter((f) => String(f.parentFolderId) === String(folderId));
+      setSubfolders(subfoldersList);
+      
+      const dbItems = await apiFetch(`/folders/${folderId}/items`, { method: "GET" });
+      const contentItems = dbItems.filter(item => item.contentType !== "folder");
+      const mappedItems = mapDatabaseItemsToUI(contentItems);
+      setItems(mappedItems);
+      
+      setPendingSubfolderDelete(null);
+    } catch (e) {
+      console.error("Error deleting subfolder:", e);
+      alert("Failed to delete subfolder: " + (e.message || "Unknown error"));
     }
   }
 
@@ -917,10 +973,34 @@ export default function FolderView() {
                       setDraggedItem(null);
                     }
                   }}
-                  className={`rounded-2xl p-4 bg-gradient-to-br ${subfolder.color || folderColors[0]} cursor-pointer shadow-md border-2 transition-transform ${
+                  className={`relative rounded-2xl p-4 bg-gradient-to-br ${subfolder.color || folderColors[0]} cursor-pointer shadow-md border-2 transition-transform ${
                     dragOverFolder === subfolder.id ? "border-indigo-500 scale-105" : "border-white/40 hover:scale-105"
                   }`}
                 >
+                  <div className="absolute top-2 right-2 flex gap-1 z-10" onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingSubfolder(subfolder);
+                        setEditSubfolderName(subfolder.name);
+                        setEditSubfolderColor(subfolder.color || folderColors[0]);
+                      }}
+                      className="p-1 rounded-lg hover:bg-white/50"
+                      title="Edit subfolder"
+                    >
+                      <Pencil className="w-3.5 h-3.5 text-blue-600" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPendingSubfolderDelete(subfolder);
+                      }}
+                      className="p-1 rounded-lg hover:bg-white/50"
+                      title="Delete subfolder"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                    </button>
+                  </div>
                   <div className="flex items-center gap-2 mb-2">
                     <Folder className="w-5 h-5 text-slate-700" />
                     <div className="text-sm font-semibold text-slate-800 truncate flex-1">
@@ -1097,6 +1177,10 @@ export default function FolderView() {
                           alert("Failed to open file");
                         }
                       })();
+                    } else if (contentType === "mindmap") {
+                      navigate(`/tools/maps/${item.id}`);
+                    } else if (contentType === "summary") {
+                      navigate(`/tools/summarizer?summaryId=${item.id}`);
                     }
                     // Other content types can be handled later
                   }}
@@ -1255,6 +1339,10 @@ export default function FolderView() {
                           alert("Failed to open file");
                         }
                       })();
+                    } else if (contentType === "mindmap") {
+                      navigate(`/tools/maps/${item.id}`);
+                    } else if (contentType === "summary") {
+                      navigate(`/tools/summarizer?summaryId=${item.id}`);
                     }
                   }}
                 >
@@ -1414,6 +1502,66 @@ export default function FolderView() {
             onClick={confirmMove}
           >
             Confirm Move
+          </button>
+        </div>
+      </Modal>
+
+      {/* EDIT SUBFOLDER MODAL */}
+      <Modal open={!!editingSubfolder} onClose={() => setEditingSubfolder(null)}>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">Edit Subfolder</h3>
+        <input
+          type="text"
+          placeholder="Subfolder name"
+          value={editSubfolderName}
+          onChange={(e) => setEditSubfolderName(e.target.value)}
+          className="w-full px-4 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 mb-4"
+          onKeyPress={(e) => {
+            if (e.key === "Enter" && editSubfolderName.trim()) {
+              renameSubfolder();
+            }
+          }}
+        />
+        <div className="flex flex-wrap gap-2 mb-4">
+          {folderColors.map((color, idx) => (
+            <button
+              key={idx}
+              onClick={() => setEditSubfolderColor(color)}
+              className={`w-8 h-8 rounded-full bg-gradient-to-br ${color} border-2 ${
+                editSubfolderColor === color ? "border-indigo-500" : "border-transparent"
+              }`}
+              title={color}
+            />
+          ))}
+        </div>
+        <div className="flex justify-end gap-3">
+          <button
+            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200"
+            onClick={() => setEditingSubfolder(null)}
+          >
+            Cancel
+          </button>
+          <button
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white disabled:opacity-50"
+            onClick={renameSubfolder}
+            disabled={!editSubfolderName.trim()}
+          >
+            Save
+          </button>
+        </div>
+      </Modal>
+
+      {/* DELETE SUBFOLDER MODAL */}
+      <Modal open={!!pendingSubfolderDelete} onClose={() => setPendingSubfolderDelete(null)}>
+        <h3 className="text-lg font-semibold text-slate-900">Delete this subfolder?</h3>
+        <p className="text-sm text-slate-600 mt-1">
+          Deleting "{pendingSubfolderDelete?.name}" will remove the subfolder and unlink all items inside. This action cannot be undone.
+        </p>
+        <div className="mt-6 flex justify-end gap-3">
+          <button className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200" onClick={() => setPendingSubfolderDelete(null)}>
+            Cancel
+          </button>
+          <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 text-white" onClick={deleteSubfolder}>
+            Delete
           </button>
         </div>
       </Modal>
