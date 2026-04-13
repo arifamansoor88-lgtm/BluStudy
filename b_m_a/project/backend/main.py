@@ -1294,6 +1294,8 @@ async def get_weak_areas(user_claims: dict = Depends(validate_token)):
             data = quiz.get("data", {})
             original_title = (data.get("title") or "").strip()
             normalized = normalize_topic(original_title)
+            if normalized not in topic_display:
+                topic_display[normalized] = original_title
             clean_display = original_title
 
             if not original_title:
@@ -1301,7 +1303,7 @@ async def get_weak_areas(user_claims: dict = Depends(validate_token)):
 
             attempts = [
                 a for a in data.get("attempts", [])
-                if a.get("score") is not None and a.get("score") > 0
+                if a.get("score") is not None and int(str(a.get("score")).replace("%","")) > 0
             ]
 
             if not attempts:
@@ -1312,26 +1314,27 @@ async def get_weak_areas(user_claims: dict = Depends(validate_token)):
                     return int(s.replace("%", "").strip())
                 return int(s or 0)
 
-            scores = [parse_score(a.get("score")) for a in attempts]
+            attempts.sort(key=lambda x: x.get("timestamp", ""))
+
+            latest_attempt = attempts[-1]
+            latest_score = parse_score(latest_attempt.get("score"))
 
             if normalized not in topic_scores:
-                topic_scores[normalized] = []
-
-            topic_scores[normalized].extend(scores)
+                topic_scores[normalized] = latest_score
+            else:
+                topic_scores[normalized] = max(topic_scores[normalized], latest_score)
 
         weak_topics = []
-
-        for topic, scores in topic_scores.items():
-            best_score = max(scores)
-
-            print("DEBUG TOPIC:", topic, scores, "BEST:", best_score)
-
-            if best_score < 75:
+        for topic, latest_score in topic_scores.items():
+            
+            print("DEBUG TOPIC:", topic, "LATEST:", latest_score)
+            if latest_score < 75:
                 weak_topics.append({
                     "topic": topic,
                     "display": topic_display.get(topic, topic),
-                    "score": best_score
+                    "score": latest_score
                 })
+        
 
         return {
             "focusAreas": weak_topics or [{"topic": "General Practice", "score": 100}]
@@ -1477,7 +1480,7 @@ async def save_quiz_attempt(attempt: SaveQuizAttemptRequest, user_claims: dict =
         new_attempt = {
             "attemptId": attempt_id,
             "timestamp": datetime.utcnow().isoformat(),
-            "score": attempt.score,
+            "score": int(str(attempt.score).replace("%","")) if attempt.score else None,
             "timeTaken": attempt.timeTaken,
             "userAnswers": attempt.userAnswers,
             "mode": attempt.mode
@@ -2920,15 +2923,7 @@ async def update_streak(request: Request):
     last = doc.get("lastStudyDate")
     streak = doc.get("streakDays", 0)
 
-    if last == today:
-        return {"current_streak": streak}
-
-    yesterday = (datetime.utcnow().date() - timedelta(days=1)).isoformat()
-
-    if last == yesterday:
-        streak += 1
-    else:
-        streak = 1
+    streak += 1
 
     doc["streakDays"] = streak
     doc["lastStudyDate"] = today

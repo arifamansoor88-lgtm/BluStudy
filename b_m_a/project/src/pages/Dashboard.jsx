@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import confetti from "canvas-confetti";
 import { useMsal } from "@azure/msal-react";
 import { getTasks, getSuggestedNextSteps } from "../api/apiService";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +22,31 @@ import {
 import { motion } from "framer-motion";
 import { useUserRecents } from "../hooks/useUserRecents";
 
+const updateStreakGlobal = async (instance, accounts) => {
+  try {
+    const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+    const acct = instance.getActiveAccount() || accounts[0];
+    const tokenRes = await instance.acquireTokenSilent({
+      account: acct,
+      scopes: ["openid", "profile"],
+    });
+
+    const token = tokenRes.accessToken || tokenRes.idToken;
+
+    await fetch(`${API}/update-streak`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("Global streak updated");
+  } catch (err) {
+    console.error("Global streak failed:", err);
+  }
+};
+
 const formatTopic = (t) => {
   return t
     .replace(/(^|\s)\S/g, l => l.toUpperCase())
@@ -35,9 +61,23 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
   const [streakDays, setStreakDays] = useState(0);
+  const [prevStreak, setPrevStreak] = useState(0);
     const recentItems = useUserRecents();
     const [suggestedNextSteps, setSuggestedNextSteps] = useState([]);
   const [focusAreas, setFocusAreas] = useState([]);
+  const [displayStreak, setDisplayStreak] = useState(0);
+  const [glow, setGlow] = useState(false);
+  const streakMessages = [
+  "Keep it going 🔥",
+  "You're on fire 🚀",
+  "Consistency wins 💪",
+  "Small steps daily 📈",
+  "Don’t break the chain ⛓️",
+];
+
+const [randomMessage] = useState(
+  streakMessages[Math.floor(Math.random() * streakMessages.length)]
+);
   useEffect(() => {
   handleQuizio(); 
 }, []);
@@ -65,6 +105,7 @@ const handleQuizio = async () => {
     console.error("Failed to fetch focus areas:", err);
   }
 };
+
 // Quizio Quiz Generation
 const startFocusQuiz = async (topic) => {
   try {
@@ -171,24 +212,15 @@ const [loadingTopic, setLoadingTopic] = useState(null);
     fetchTasks();
   }, [userData]);
 
-  // Fetch Study Streak
+  // ONLY fetch streak 
 useEffect(() => {
   if (!accounts.length) return;
 
   const account = instance.getActiveAccount() || accounts[0];
   const token = account?.idToken;
 
-  const updateAndFetchStreak = async () => {
+  const fetchStreak = async () => {
     try {
-      // 1️⃣ Update streak
-      await fetch("http://localhost:8000/update-streak", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      // 2️⃣ Fetch updated streak
       const res = await fetch("http://localhost:8000/streak", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -196,9 +228,24 @@ useEffect(() => {
       });
 
       const data = await res.json();
+      const newStreak = data.current_streak || 0;
 
-      // 3️⃣ Set new streak value
-      setStreakDays(data.current_streak || 0);
+if (newStreak > prevStreak) {
+  setGlow(true);
+
+  setTimeout(() => {
+    setGlow(false);
+  }, 800);
+
+  confetti({
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 },
+  });
+}
+
+setPrevStreak(newStreak);
+setStreakDays(newStreak);
 
     } catch (err) {
       console.error("Error fetching streak:", err);
@@ -206,8 +253,30 @@ useEffect(() => {
     }
   };
 
-  updateAndFetchStreak();
+  fetchStreak();
 }, [accounts, instance]);
+
+useEffect(() => {
+  let start = 0;
+  const end = streakDays;
+  const duration = 1000;
+  const startTime = performance.now();
+
+  const animate = (currentTime) => {
+    const progress = Math.min((currentTime - startTime) / duration, 1);
+
+    const easeOut = 1 - Math.pow(1 - progress, 3); // smooth easing
+    const value = Math.floor(easeOut * end);
+
+    setDisplayStreak(value);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  };
+
+  requestAnimationFrame(animate);
+}, [streakDays]);
 
     // Loads Suggested Next Steps for the dashboard.
     // If the backend request fails, fallback placeholder data is used so the UI still renders.
@@ -356,25 +425,48 @@ useEffect(() => {
         </div>
 
         {/* Study Streak Card */}
-        <div className="flex-1 bg-blue-50 rounded-xl shadow-sm p-5 border border-gray-100 w-full md:w-auto">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Study Streak</h2>
-          {streakDays === 0 ? (
-            <div>
-              <p className="text-lg font-semibold text-orange-500">Start your first streak</p>
-              <p className="text-sm text-gray-500">Study today to begin building consistency.</p>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold text-orange-500">{streakDays}</p>
-                <p className="text-sm text-gray-500">Day{streakDays === 1 ? "" : "s"} in a row</p>
-              </div>
-              <p className="text-green-600 font-medium">Keep it going</p>
-            </div>
-          )}
-        </div>
-      </motion.div>
+<div className="flex-1 bg-blue-50 rounded-xl shadow-sm p-5 border border-gray-100 w-full md:w-auto">
+  <h2 className="text-xl font-semibold text-gray-900 mb-4">
+    Study Streak
+  </h2>
 
+  {streakDays === 0 ? (
+    <div>
+      <p className="text-lg font-semibold text-orange-500">
+        Start your first streak 🔥
+      </p>
+      <p className="text-sm text-gray-500">
+        Study today to begin building consistency.
+      </p>
+    </div>
+  ) : (
+    <div className="flex items-center justify-between w-full">
+
+      {/* LEFT SIDE */}
+      <div>
+        <p
+  className={`text-3xl font-bold text-orange-500 transition-all duration-300 ${
+    glow ? "scale-110 drop-shadow-[0_0_10px_rgba(255,165,0,0.8)]" : ""
+  }`}
+>
+          {displayStreak}
+        </p>
+        <p className="text-sm text-gray-500">
+          Day{streakDays === 1 ? "" : "s"} in a row
+        </p>
+      </div>
+
+      {/* RIGHT SIDE MESSAGE */}
+      <div className="flex-1 flex justify-end items-center">
+        <p className="text-green-600 font-medium pr-4 whitespace-nowrap text-sm">
+          {randomMessage}
+        </p>
+      </div>
+
+    </div>
+  )}
+</div>
+</motion.div>
       {/* Recent Tools and Quizio Section */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -405,16 +497,24 @@ useEffect(() => {
         </div>
 
         {/* Quizio - Right Half */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className="bg-gradient-to-br from-purple-50 to-white rounded-2xl shadow-md p-6 border border-purple-100 flex flex-col gap-4">
           {/* Header */}
           
             <div className="flex items-center justify-between mb-3">
-  <div className="flex items-center gap-2">
-    <Brain className="text-purple-600" size={20} />
-    <h2 className="text-lg font-semibold text-gray-900">
+  <div className="flex items-center gap-3">
+  <div className="bg-purple-100 p-2 rounded-lg">
+    <Brain className="text-purple-600" size={18} />
+  </div>
+
+  <div>
+    <h2 className="text-lg font-bold text-gray-900">
       Quizio
     </h2>
+    <p className="text-xs text-gray-500">
+      AI-powered practice
+    </p>
   </div>
+</div>
 
   {focusAreas.length > 0 && (
     <button
@@ -435,7 +535,7 @@ useEffect(() => {
           {focusAreas.length === 0 ? (
             <button
               onClick={handleQuizio}
-              className="w-full flex items-center justify-center gap-2 bg-purple-400 text-white py-3 rounded-lg hover:bg-purple-700 transition"
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 rounded-lg shadow hover:shadow-lg hover:scale-[1.02] transition-all"
             >
               Analyze Weak Areas
             </button>
@@ -447,7 +547,7 @@ useEffect(() => {
               </p>
 
               {/* Focus Area Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex flex-col gap-3">
                 {focusAreas.map((item, idx) => {
                   const topic = item.topic;
                   const display = item.display || topic;
@@ -469,14 +569,14 @@ useEffect(() => {
                       key={idx}
                       onClick={() => startFocusQuiz(topic)}
                       disabled={loadingTopic !== null}
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-purple-400 hover:shadow-sm transition flex justify-between items-center"
+                      className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-purple-300 transition-all flex justify-between items-center"
                     >
                       {/* Left Side */}
                       <div className="text-left">
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-semibold text-gray-900">
                           {formatTopic(display)}
                         </p>
-                        <p className={`text-xs ${color}`}>
+                        <p className={`text-xs font-medium ${color}`}>
                           {status}
                         </p>
                       </div>
@@ -670,17 +770,17 @@ const RecentItemCard = ({ item, navigate }) => {
     (item.contentType === "quiz" ? "Practice Test" : "Untitled");
 
   const handleNavigate = useCallback(async () => {
-    // Track the access to this tool
-    try {
-      const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-      
-      // Get auth token
-      const acct = instance.getActiveAccount() || accounts[0];
-      const tokenRes = await instance.acquireTokenSilent({ 
-        account: acct, 
-        scopes: ["openid", "profile"] 
-      });
-      const token = tokenRes.accessToken || tokenRes.idToken;
+  const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+  const acct = instance.getActiveAccount() || accounts[0];
+  const tokenRes = await instance.acquireTokenSilent({ 
+    account: acct, 
+    scopes: ["openid", "profile"] 
+  });
+
+  const token = tokenRes.accessToken || tokenRes.idToken;
+
+  try {
 
       // Call track-access with auth
       const res = await fetch(`${API}/api/track-access`, {
@@ -700,7 +800,30 @@ const RecentItemCard = ({ item, navigate }) => {
     } catch (e) {
       console.warn("Failed to track access:", e);
     }
+//UPDATE STREAK HERE
+    try {
+  await fetch(`${API}/update-streak`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+    },
+  });
 
+  // Fetch updated streak
+  const streakRes = await fetch(`${API}/streak`, {
+    headers: {
+      "Authorization": `Bearer ${token}`,
+    },
+  });
+
+  const streakData = await streakRes.json();
+
+  //send event to parent (for confetti later)
+  console.log("Updated streak:", streakData.current_streak);
+  window.location.reload();
+} catch (e) {
+  console.warn("Failed to update streak:", e);
+}
     const routeMap = {
       voice_note: `/tools/voice-notes?noteId=${item.id}`,
       flashcard: `/tools/flashcards/study/${item.id}`,

@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useMsal } from "@azure/msal-react";
 import {
   Brain,
   Mic,
@@ -139,9 +140,33 @@ const ToolCard = ({
   borderColor,
   index,
 }) => {
-  const handleRecent = () => {
-    addLocalRecentTool({ to, title, contentType: "tool" });
-  };
+  const { instance, accounts } = useMsal();
+  const handleRecent = async () => {
+  addLocalRecentTool({ to, title, contentType: "tool" });
+
+  try {
+    const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+    const acct = instance.getActiveAccount() || accounts[0];
+    const tokenRes = await instance.acquireTokenSilent({
+      account: acct,
+      scopes: ["openid", "profile"],
+    });
+
+    const token = tokenRes.accessToken || tokenRes.idToken;
+
+    await fetch(`${API}/update-streak`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log(" streak updated from StudyTools");
+  } catch (err) {
+    console.error(" streak update failed:", err);
+  }
+};
 
   return (
     <motion.div
@@ -151,7 +176,11 @@ const ToolCard = ({
     >
       <Link
         to={to}
-        onClick={handleRecent}
+        onClick={async (e) => {
+          e.preventDefault();
+          await handleRecent();
+          window.location.href = to;
+        }}
         className={`block p-6 rounded-xl bg-white border ${borderColor} hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}
       >
         <div
