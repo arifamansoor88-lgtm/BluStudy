@@ -497,7 +497,7 @@ useEffect(() => {
         </div>
 
         {/* Quizio - Right Half */}
-        <div className="bg-gradient-to-br from-purple-50 to-white rounded-2xl shadow-md p-6 border border-purple-100 flex flex-col gap-4">
+        <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-200 flex flex-col gap-4">
           {/* Header */}
           
             <div className="flex items-center justify-between mb-3">
@@ -535,7 +535,7 @@ useEffect(() => {
           {focusAreas.length === 0 ? (
             <button
               onClick={handleQuizio}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 rounded-lg shadow hover:shadow-lg hover:scale-[1.02] transition-all"
+              className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white py-3 rounded-lg shadow hover:bg-purple-700 hover:shadow-lg hover:scale-[1.02] transition-all"
             >
               Analyze Weak Areas
             </button>
@@ -606,6 +606,23 @@ useEffect(() => {
         </div>
       )}
 
+      {/* Study Goals Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="bg-white rounded-xl shadow-sm p-6 mt-8"
+      >
+        <h2 className="text-xl font-bold text-gray-900 mb-6">
+          Next in Your Study Plan:
+        </h2>
+        <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+          <p className="text-sm text-gray-500">
+            Placeholder
+          </p>
+        </div>
+      </motion.div>
+
           {/* Suggested Next Steps */}
           <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -629,33 +646,6 @@ useEffect(() => {
                   ))}
               </div>
           </motion.div>
-
-      {/* Study Goals Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="bg-white rounded-xl shadow-sm p-6 mt-8"
-      >
-        <h2 className="text-xl font-bold text-gray-900 mb-6">
-          Next in Your Study Plan:
-        </h2>
-        <div className="relative">
-          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-            {studyGoals.map((goal, index) => (
-              <StudyGoalCard key={index} goal={goal} />
-            ))}
-          </div>
-          {/* Scroll indicator */}
-          <div className="flex justify-center mt-2">
-            <div className="flex space-x-1">
-              <div className="w-2 h-2 bg-primary-600 rounded-full"></div>
-              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
     </div>
   );
 };
