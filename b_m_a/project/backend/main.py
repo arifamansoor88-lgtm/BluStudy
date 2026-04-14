@@ -1095,6 +1095,7 @@ def get_suggested_next_steps(user_claims: dict = Depends(validate_token)):
         toolKey = item.get("toolKey")
         targetId = item.get("targetId")
         final_items.append({
+            "toolKey": toolKey,
             "title": item.get("title", "Suggested Next Step"),
             "description": item.get("description", ""),
             "buttonText": item.get("buttonText", "Open"),

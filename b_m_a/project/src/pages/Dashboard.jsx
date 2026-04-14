@@ -671,32 +671,68 @@ const AchievementCard = ({
   </motion.div>
 );
 
+// Color theme per Suggested Next Step tool type (toolKey)
+const NEXT_STEP_THEME = {
+    flashcard_deck: {
+        card: "border-blue-200 bg-blue-50",
+        button: "bg-blue-600 hover:bg-blue-700",
+        text: "text-blue-900",
+    },
+    quiz: {
+        card: "border-red-200 bg-red-50",
+        button: "bg-red-600 hover:bg-red-700",
+        text: "text-red-900",
+    },
+    voice_note: {
+        card: "border-purple-200 bg-purple-50",
+        button: "bg-purple-600 hover:bg-purple-700",
+        text: "text-purple-900",
+    },
+    mind_map: {
+        card: "border-green-200 bg-green-50",
+        button: "bg-green-600 hover:bg-green-700",
+        text: "text-green-900",
+    },
+    summarizer: {
+        card: "border-yellow-200 bg-yellow-50",
+        button: "bg-yellow-600 hover:bg-yellow-700",
+        text: "text-yellow-900",
+    },
+};
+
 // Reusable card component for displaying a single Suggested Next Step recommendation.
-const SuggestedStepCard = ({ step, navigate }) => (
-    <motion.div
-        whileHover={{ scale: 1.02 }}
-        className="bg-gray-50 rounded-lg p-5 flex flex-col justify-between min-h-[190px]"
-    >
-        <div>
-            <h3 className="font-semibold text-gray-900 text-lg mb-3">
-                {step.title}
-            </h3>
-            <p className="text-sm text-gray-600 leading-relaxed">
-                {step.description}
-            </p>
-        </div>
+const SuggestedStepCard = ({ step, navigate }) => {
+    const theme = NEXT_STEP_THEME[step.toolKey] || {
+        card: "border-gray-200 bg-gray-50",
+        button: "bg-primary-600 hover:bg-primary-700",
+        text: "text-gray-900",
+    };
 
-        <button
-            onClick={() => step.actionPath && navigate(step.actionPath)}
-            disabled={!step.actionPath}
-            className={`mt-5 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-white transition
-        ${step.actionPath ? "bg-primary-600 hover:bg-primary-700" : "bg-gray-300 cursor-not-allowed"}`}
+    return (
+        <motion.div
+            whileHover={{ scale: 1.02 }}
+            className={`border rounded-lg p-5 flex flex-col justify-between min-h-[190px] ${theme.card}`}
         >
-            {step.buttonText}
-        </button>
-    </motion.div>
-);
+            <div>
+                <h3 className={`font-semibold text-lg mb-3 ${theme.text}`}>
+                    {step.title}
+                </h3>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                    {step.description}
+                </p>
+            </div>
 
+            <button
+                onClick={() => step.actionPath && navigate(step.actionPath)}
+                disabled={!step.actionPath}
+                className={`mt-5 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-white transition
+          ${step.actionPath ? theme.button : "bg-gray-300 cursor-not-allowed"}`}
+            >
+                {step.buttonText}
+            </button>
+        </motion.div>
+    );
+};
 const StudyGoalCard = ({ goal }) => (
   <motion.div
     whileHover={{ scale: 1.02 }}
