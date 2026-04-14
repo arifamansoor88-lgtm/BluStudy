@@ -457,8 +457,8 @@ useEffect(() => {
       </div>
 
       {/* RIGHT SIDE MESSAGE */}
-      <div className="flex-1 flex justify-end items-center">
-        <p className="text-green-600 font-medium pr-4 whitespace-nowrap text-sm">
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-green-600 font-semibold text-lg text-center w-full">
           {randomMessage}
         </p>
       </div>

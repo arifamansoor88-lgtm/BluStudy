@@ -155,12 +155,7 @@ const ToolCard = ({
 
     const token = tokenRes.accessToken || tokenRes.idToken;
 
-    await fetch(`${API}/update-streak`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    
 
     console.log(" streak updated from StudyTools");
   } catch (err) {

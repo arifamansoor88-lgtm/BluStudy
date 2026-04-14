@@ -288,14 +288,29 @@ const Summarizer = () => {
   };
 
   // called by SaveToFolderButton after successful save
-  const handleSaved = () => {
+ const handleSaved = async () => {
     setDirty(false);
     setLastSavedAt(Date.now());
+    // 🔥 UPDATE STREAK AFTER SAVING SUMMARY
+const acct = msalInstance.getAllAccounts()[0];
+const request = { scopes: protectedResources.todoListApi.scopes, account: acct };
+
+const tokenRes = await msalInstance.acquireTokenSilent(request);
+const token = tokenRes.accessToken;
+
+await fetch(`${API_BASE}/update-streak`, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+});
     // Refresh saved summaries list (if not in a folder, always refresh)
     if (!folderId) {
       fetchSavedSummaries();
     }
   };
+
+  
 
   // State for saving to folder directly (when folderId is in URL)
   const [isSavingToFolder, setIsSavingToFolder] = useState(false);
@@ -350,6 +365,15 @@ const Summarizer = () => {
 
       setDirty(false);
       setLastSavedAt(Date.now());
+
+    // 🔥 UPDATE STREAK AFTER SAVING SUMMARY
+await fetch(`${API_BASE}/update-streak`, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${token}`, // already exists above
+  },
+});
+
       // Refresh saved summaries list
       if (viewMode === 'saved') {
         fetchSavedSummaries();

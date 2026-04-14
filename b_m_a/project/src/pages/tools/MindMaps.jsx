@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useMsal } from "@azure/msal-react";
 import ReactFlow, { 
   addEdge, 
   Controls, 
@@ -327,7 +328,7 @@ const MindMaps = () => {
   // Get folderId from URL query params if present
   const [searchParams] = useSearchParams();
   const folderId = searchParams.get('folderId');
-  
+  const { instance, accounts } = useMsal();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [newNodeText, setNewNodeText] = useState('');
@@ -848,6 +849,22 @@ const MindMaps = () => {
       setShowSaveDialog(false);
       setMindmapTitle('');
       
+//UPDATE STREAK AFTER SAVING MIND MAP
+const acct = instance.getActiveAccount() || accounts[0];
+const tokenRes = await instance.acquireTokenSilent({
+  account: acct,
+  scopes: ["openid", "profile"],
+});
+
+const token = tokenRes.accessToken || tokenRes.idToken;
+
+await fetch("http://localhost:8000/update-streak", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+});
+
       // Clear current mindmap ID so next save creates a new mindmap
       setCurrentMindmapId(null);
       

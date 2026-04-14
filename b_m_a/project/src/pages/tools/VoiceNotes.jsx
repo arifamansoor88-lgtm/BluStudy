@@ -333,6 +333,22 @@ const VoiceNotes = () => {
       const newNote = res.data;
       setNotes(prev => [newNote, ...prev]);
 
+      //UPDATE STREAK AFTER SAVING VOICE NOTE
+      const acct = instance.getActiveAccount() || accounts[0];
+      const tokenRes = await instance.acquireTokenSilent({
+        account: acct,
+        scopes: ["openid", "profile"],
+      });
+
+      const token = tokenRes.accessToken || tokenRes.idToken;
+
+      await fetch(`${API_URL}/update-streak`, {
+        method: "POST",
+        headers: {
+        Authorization: `Bearer ${token}`,
+        },
+      });
+
       // refresh tag universe
       const tags = new Set(allTags);
       (newNote.tags || []).forEach(t => tags.add(t));

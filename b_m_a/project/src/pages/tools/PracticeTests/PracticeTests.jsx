@@ -22,6 +22,7 @@ const PracticeTests = () => {
   const folderId = searchParams.get('folderId');
   const quizId = searchParams.get("quizId");
   
+  
   // State for quiz display
   const [showQuiz, setShowQuiz] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
@@ -601,12 +602,28 @@ const PracticeTests = () => {
   };
 
   // Function to complete the quiz after evaluation
-  const { instance } = useMsal();
+  const { instance, accounts } = useMsal();
   const completeQuiz = async () => {
   setQuizStatus("completed");
   setShowSummary(true);
 
   await saveQuizAttempt(generatedQuiz, userAnswers, timer, quizMode);
+
+  //UPDATE STREAK AFTER QUIZ COMPLETION
+const acct = instance.getActiveAccount() || accounts[0];
+const tokenRes = await instance.acquireTokenSilent({
+  account: acct,
+  scopes: ["openid", "profile"],
+});
+
+const token = tokenRes.accessToken || tokenRes.idToken;
+
+await fetch("http://localhost:8000/update-streak", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+});
 
   //Refresh weak areas after quiz
   try {
@@ -616,17 +633,17 @@ const PracticeTests = () => {
       account: account,
     });
 
-    const token = response.accessToken;
+    const weakAreasToken = response.accessToken;
 
     const res = await fetch("http://localhost:8000/weak-areas", {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${weakAreasToken}`,
       },
     });
 
     const data = await res.json();
 
-    // 🧠 store in localStorage so Dashboard updates
+    //  store in localStorage so Dashboard updates
     localStorage.setItem("focusAreas", JSON.stringify(data.focusAreas));
 
   } catch (err) {
