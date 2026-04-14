@@ -1,20 +1,146 @@
 import React from "react";
 import { BlockMath, InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
-const formatMath = (text) => {
+
+const stripDollarMarkers = (text) => text.replace(/^\$+|\$+$/g, "");
+
+const normalizeMathText = (text) => {
   if (!text) return "";
 
   return text
-    .replace(/\$/g, "")
-    .replace(/\^(\d+)/g, "^{$1}")
-    .replace(/([a-z])([A-Z])/g, "$1 $2")   
-    .replace(/(\d)([a-zA-Z])/g, "$1 $2")   
-    .replace(/([a-zA-Z])(\d)/g, "$1 $2")   
-    .replace(/sin/g, "\\sin")
-    .replace(/cos/g, "\\cos")
-    .replace(/tan/g, "\\tan")
-    .replace(/ln/g, "\\ln")
-    .replace(/sqrt/g, "\\sqrt");
+    .replace(/\bimes\b/g, "\\times")
+    .replace(/\btimes\b/g, "\\times")
+    .replace(/\bsin\b/g, "\\sin")
+    .replace(/\bcos\b/g, "\\cos")
+    .replace(/\btan\b/g, "\\tan")
+    .replace(/\bln\b/g, "\\ln")
+    .replace(/\bsqrt\b/g, "\\sqrt")
+    .replace(/\bpi\b/g, "\\pi")
+    .replace(/\s*\^\s*/g, "^")
+    .replace(/\s*_\s*/g, "_")
+    .trim();
+};
+
+const formatMath = (text) => {
+  if (!text) return "";
+  return stripDollarMarkers(normalizeMathText(text));
+};
+
+const hasDollarMath = (text) => /\$[^$]+\$/.test(text);
+
+const looksLikeMathSentence = (text) => {
+  if (!text) return false;
+  const normalized = normalizeMathText(text);
+  if (/\\(?:times|sin|cos|tan|ln|sqrt|pi)/.test(normalized)) {
+    return true;
+  }
+  return /^[0-9\s\^_+\-*/(){}.,]+$/.test(normalized);
+};
+
+const superscriptMap = {
+  0: "⁰",
+  1: "¹",
+  2: "²",
+  3: "³",
+  4: "⁴",
+  5: "⁵",
+  6: "⁶",
+  7: "⁷",
+  8: "⁸",
+  9: "⁹",
+  a: "ᵃ",
+  b: "ᵇ",
+  c: "ᶜ",
+  d: "ᵈ",
+  e: "ᵉ",
+  f: "ᶠ",
+  g: "ᵍ",
+  h: "ʰ",
+  i: "ⁱ",
+  j: "ʲ",
+  k: "ᵏ",
+  l: "ˡ",
+  m: "ᵐ",
+  n: "ⁿ",
+  o: "ᵒ",
+  p: "ᵖ",
+  q: "ᑫ",
+  r: "ʳ",
+  s: "ˢ",
+  t: "ᵗ",
+  u: "ᵘ",
+  v: "ᵛ",
+  w: "ʷ",
+  x: "ˣ",
+  y: "ʸ",
+  z: "ᶻ",
+  A: "ᴬ",
+  B: "ᴮ",
+  D: "ᴰ",
+  E: "ᴱ",
+  G: "ᴳ",
+  H: "ᴴ",
+  I: "ᴵ",
+  J: "ᴶ",
+  K: "ᴷ",
+  L: "ᴸ",
+  M: "ᴹ",
+  N: "ᴺ",
+  O: "ᴼ",
+  P: "ᴾ",
+  R: "ᴿ",
+  T: "ᵀ",
+  U: "ᵁ",
+  V: "ⱽ",
+  W: "ᵂ",
+};
+
+const toSuperscript = (text) =>
+  text
+    .split("")
+    .map((char) => superscriptMap[char] || char)
+    .join("");
+
+const formatDropdownText = (text) => {
+  if (!text) return "";
+
+  let normalized = normalizeMathText(text);
+  normalized = stripDollarMarkers(normalized);
+  normalized = normalized.replace(/\\times/g, "×");
+  normalized = normalized.replace(/\^\{([^}]+)\}/g, (_, match) => toSuperscript(match));
+  normalized = normalized.replace(/\^([A-Za-z0-9])/g, (_, match) => toSuperscript(match));
+  normalized = normalized.replace(/\\/g, "");
+  return normalized;
+};
+
+const renderTextWithMath = (text, useBlock = false) => {
+  if (!text) return null;
+
+  const dollarSegments = text.split(/(\$\$[^$]*\$\$|\$[^$]*\$)/g).filter(Boolean);
+
+  if (dollarSegments.length === 1 && !/^(\$\$[^$]*\$\$|\$[^$]*\$)$/.test(dollarSegments[0])) {
+    if (hasDollarMath(text) || looksLikeMathSentence(text)) {
+      return useBlock ? (
+        <BlockMath math={formatMath(text)} />
+      ) : (
+        <InlineMath math={formatMath(text)} />
+      );
+    }
+    return <span>{text}</span>;
+  }
+
+  return dollarSegments.map((segment, idx) => {
+    if (/^\$\$[^$]*\$\$$/.test(segment)) {
+      return <BlockMath key={idx} math={formatMath(segment)} />;
+    }
+    if (/^\$[^$]*\$$/.test(segment)) {
+      return <InlineMath key={idx} math={formatMath(segment)} />;
+    }
+    if (looksLikeMathSentence(segment)) {
+      return <InlineMath key={idx} math={formatMath(segment)} />;
+    }
+    return <span key={idx}>{segment}</span>;
+  });
 };
 
 /**
@@ -28,12 +154,8 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
       return (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">
-  {question.question.includes("$") ? (
-    <BlockMath math={formatMath(question.question)} />
-  ) : (
-    question.question
-  )}
-</h2>
+            {renderTextWithMath(question.question, true)}
+          </h2>
           {question.options.map((option, optionIndex) => (
             <button
               key={optionIndex}
@@ -45,11 +167,7 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
                     : "border-gray-200 hover:border-blue-300"
                 }`}
             >
-              {option.includes("$") || option.includes("^") || option.includes("\\") ? (
-                <InlineMath math={formatMath(option)} />
-              ) : (
-  <span>{option}</span>
-)}
+              {renderTextWithMath(option)}
             </button>
           ))}
         </div>
@@ -59,11 +177,7 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
       return (
         <div className="space-y-4">
           <h2 className="text-xl font-medium text-gray-900 mb-2">
-            {question.question.includes("$") || question.question.includes("^") || question.question.includes("\\") ? (
-  <BlockMath math={formatMath(question.question)} />
-) : (
-  <span>{question.question}</span>
-)}
+            {renderTextWithMath(question.question, false)}
           </h2>
           <p className="text-sm text-gray-500 mb-4">Select all that apply</p>
           {question.options.map((option, optionIndex) => {
@@ -95,11 +209,7 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
   htmlFor={`option-${index}-${optionIndex}`}
   className="flex-1 cursor-pointer"
 >
-  {option.includes("$") || option.includes("^") || option.includes("\\") ? (
-    <InlineMath math={formatMath(option)} />
-  ) : (
-    <span>{option}</span>
-  )}
+                  {renderTextWithMath(option)}
 </label>
               </div>
             );
@@ -112,12 +222,8 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
       return (
         <div className="space-y-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">
-  {question.question.includes("$") ? (
-    <BlockMath math={formatMath(question.question)} />
-  ) : (
-    question.question
-  )}
-</h2>
+            {renderTextWithMath(question.question, true)}
+          </h2>
           {question.prompts.map((prompt, promptIndex) => {
             const currentMapping =
               userAnswer && userAnswer[prompt] ? userAnswer[prompt] : "";
@@ -127,11 +233,7 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
                 className="flex flex-col md:flex-row items-start md:items-center gap-3 p-3 border rounded-lg"
               >
                 <div className="font-medium min-w-[200px]">
-  {prompt.includes("$") || prompt.includes("^") || prompt.includes("\\") ? (
-    <InlineMath math={formatMath(prompt)} />
-  ) : (
-    <span>{prompt}</span>
-  )}
+                  {renderTextWithMath(prompt)}
 </div>
                 <select
                   value={currentMapping}
@@ -145,7 +247,7 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
                   <option value="">-- Select an option --</option>
                   {question.targets.map((target, targetIndex) => (
                     <option key={targetIndex} value={target}>
-                      {target.replace(/\$/g, "")}
+                      {formatDropdownText(target)}
                     </option>
                   ))}
                 </select>
@@ -159,12 +261,8 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
       return (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">
-  {question.question.includes("$") ? (
-    <BlockMath math={formatMath(question.question)} />
-  ) : (
-    question.question
-  )}
-</h2>
+            {renderTextWithMath(question.question, true)}
+          </h2>
           <textarea
             value={userAnswer || ""}
             onChange={(e) => onAnswerChange(index, e.target.value)}
@@ -176,28 +274,18 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
       );
 
     case "fill_in_blank":
-  const parts = question.question.split("[BLANK]");
+      const parts = question.question.split("[BLANK]");
 
-  return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">
-  {question.question.includes("$") ? (
-    <BlockMath math={formatMath(question.question)} />
-  ) : (
-    question.question
-  )}
-</h2>
+      return (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">
+            {renderTextWithMath(question.question, false)}
+          </h2>
 
-      <div className="flex items-center flex-wrap gap-2">
+          <div className="flex items-center flex-wrap gap-2">
         {parts.map((part, partIndex) => (
           <React.Fragment key={partIndex}>
-            <span>
-              {part.includes("$") ? (
-  <InlineMath math={formatMath(part)} />
-) : (
-  part
-)}
-            </span>
+            <span>{renderTextWithMath(part)}</span>
 
             {partIndex < parts.length - 1 && (
               <input
