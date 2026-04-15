@@ -117,7 +117,7 @@ export const updateStudyStreak = async (toolKey = "tool") => {
       "X-Study-Date": localDate,
     },
     body: JSON.stringify({
-      activityType: "tool_use",
+      activityType: "meaningful_tool_action",
       toolKey,
       localDate,
     }),

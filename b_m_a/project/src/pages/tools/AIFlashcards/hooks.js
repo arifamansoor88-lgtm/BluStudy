@@ -269,7 +269,6 @@ export const useDeckData = () => {
             });
 
             setSavedSpecificDeck(response.data);
-            await recordStudyToolUse("flashcard_deck");
             console.log(response.data);
             return response.data;
         } catch (error) {

@@ -178,7 +178,6 @@ export const useQuizData = () => {
           setQuizAttempts([]);
         }
 
-        await recordStudyToolUse("quiz");
         return response.data;
       } catch (error) {
         console.error("Error fetching quiz history:", error);
@@ -203,7 +202,6 @@ export const useQuizData = () => {
           },
         });
 
-        await recordStudyToolUse("quiz");
         return response.data;
       } catch (error) {
         console.error("Error fetching quiz by id:", error);

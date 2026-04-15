@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { addLocalRecentTool } from "../hooks/useUserRecents";
-import { recordStudyToolUse } from "../api/apiService";
 
 const StudyTools = () => {
   const tools = [
@@ -142,7 +141,6 @@ const ToolCard = ({
 }) => {
   const handleRecent = async () => {
     addLocalRecentTool({ to, title, contentType: "tool" });
-    await recordStudyToolUse(title.toLowerCase().replace(/\s+/g, "_"));
   };
 
   return (

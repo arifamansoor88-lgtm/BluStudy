@@ -5,7 +5,6 @@ import {
   getTasks,
   getSuggestedNextSteps,
   getStudyStreak,
-  recordStudyToolUse,
 } from "../api/apiService";
 import { useNavigate } from "react-router-dom";
 import {
@@ -694,9 +693,8 @@ const SuggestedStepCard = ({ step, navigate }) => {
             </div>
 
             <button
-                onClick={async () => {
+                onClick={() => {
                     if (!step.actionPath) return;
-                    await recordStudyToolUse(step.toolKey || "suggested_step");
                     navigate(step.actionPath);
                 }}
                 disabled={!step.actionPath}
@@ -744,17 +742,6 @@ const StudyGoalCard = ({ goal }) => (
     </div>
   </motion.div>
 );
-
-const STREAK_CONTENT_TYPES = new Set([
-  "tool",
-  "voice_note",
-  "flashcard",
-  "flashcard_deck",
-  "quiz",
-  "mindmap",
-  "study_plan",
-  "summary",
-]);
 
 const RecentItemCard = ({ item, navigate }) => {
   const { instance, accounts } = useMsal();
@@ -826,10 +813,6 @@ const RecentItemCard = ({ item, navigate }) => {
       console.warn("Failed to track access:", e);
     }
 
-    if (STREAK_CONTENT_TYPES.has(item.contentType)) {
-      await recordStudyToolUse(item.contentType);
-    }
-    
     if (route) {
       navigate(route);
     } else {

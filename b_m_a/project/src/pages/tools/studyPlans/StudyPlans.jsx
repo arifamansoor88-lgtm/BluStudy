@@ -11,7 +11,7 @@ import {
   Filter,
   Check,
 } from "lucide-react";
-import { getStudyPlans, recordStudyToolUse } from "../../../api/apiService";
+import { getStudyPlans } from "../../../api/apiService";
 import StudyPlanWizard from "./StudyPlanWizard";
 import StudyPlanDisplay from "./StudyPlanDisplay";
 import SavedStudyPlansList from "./SavedStudyPlansList";
@@ -73,7 +73,6 @@ const StudyPlans = () => {
 
   // Load a saved study plan
   const handleSelectPlan = async (plan) => {
-    await recordStudyToolUse("study_plan");
     setCurrentPlan(plan);
     setShowPlanner(false);
   };

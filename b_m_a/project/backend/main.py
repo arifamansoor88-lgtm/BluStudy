@@ -2912,6 +2912,34 @@ def _parse_study_date(value: Optional[str]):
         except ValueError:
             return None
 
+
+MEANINGFUL_STREAK_ACTIVITY = "meaningful_tool_action"
+STREAK_TOOL_KEYS = {
+    "flashcard_deck",
+    "mind_map",
+    "quiz",
+    "study_plan",
+    "summarizer",
+    "voice_note",
+}
+
+
+def _is_meaningful_streak_doc(doc: Dict[str, Any]) -> bool:
+    return (
+        doc.get("lastActivityType") == MEANINGFUL_STREAK_ACTIVITY
+        and doc.get("lastToolKey") in STREAK_TOOL_KEYS
+    )
+
+
+def _current_streak_for_date(doc: Dict[str, Any], today):
+    if not _is_meaningful_streak_doc(doc):
+        return 0
+    last_date = _parse_study_date(doc.get("lastStudyDate"))
+    if last_date and (today - last_date).days > 1:
+        return 0
+    return doc.get("streakDays", 0)
+
+
 @app.get("/streak")
 async def get_streak(request: Request):
     uid = _resolve_user_id(request)
@@ -2927,6 +2955,9 @@ async def get_streak(request: Request):
     doc = items[0]
     last_date_str = doc.get("lastStudyDate")
     streak = doc.get("streakDays", 0)
+
+    if not _is_meaningful_streak_doc(doc):
+        return {"current_streak": 0}
 
     if last_date_str:
         last_date = _parse_study_date(last_date_str)
@@ -2960,14 +2991,11 @@ async def update_streak(request: Request):
     activity_type = payload.get("activityType") or payload.get("activity_type")
     tool_key = payload.get("toolKey") or payload.get("tool_key")
 
-    if activity_type and activity_type != "tool_use":
+    if activity_type != MEANINGFUL_STREAK_ACTIVITY or tool_key not in STREAK_TOOL_KEYS:
         if not items:
             return {"current_streak": 0}
         doc = items[0]
-        last_date = _parse_study_date(doc.get("lastStudyDate"))
-        if last_date and (today - last_date).days > 1:
-            return {"current_streak": 0}
-        return {"current_streak": doc.get("streakDays", 0)}
+        return {"current_streak": _current_streak_for_date(doc, today)}
 
     if not items:
         doc = {
@@ -2976,7 +3004,7 @@ async def update_streak(request: Request):
             "contentType": "study_streak",
             "streakDays": 1,
             "lastStudyDate": today_str,
-            "lastActivityType": "tool_use",
+            "lastActivityType": MEANINGFUL_STREAK_ACTIVITY,
             "lastToolKey": tool_key,
             "updatedAt": datetime.utcnow().isoformat()
         }
@@ -2984,6 +3012,15 @@ async def update_streak(request: Request):
         return {"current_streak": 1}
 
     doc = items[0]
+
+    if not _is_meaningful_streak_doc(doc):
+        doc["streakDays"] = 1
+        doc["lastStudyDate"] = today_str
+        doc["lastActivityType"] = MEANINGFUL_STREAK_ACTIVITY
+        doc["lastToolKey"] = tool_key
+        doc["updatedAt"] = datetime.utcnow().isoformat()
+        container.upsert_item(doc)
+        return {"current_streak": 1}
 
     last_date_str = doc.get("lastStudyDate")
     streak = doc.get("streakDays", 0)
@@ -3005,7 +3042,7 @@ async def update_streak(request: Request):
 
     doc["streakDays"] = streak
     doc["lastStudyDate"] = today_str
-    doc["lastActivityType"] = "tool_use"
+    doc["lastActivityType"] = MEANINGFUL_STREAK_ACTIVITY
     doc["lastToolKey"] = tool_key
     doc["updatedAt"] = datetime.utcnow().isoformat()
 
