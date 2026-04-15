@@ -610,7 +610,7 @@ const PracticeTests = () => {
 
   await saveQuizAttempt(generatedQuiz, userAnswers, timer, quizMode);
 
-  await recordStudyToolUse("quiz");
+  await recordStudyToolUse("quiz", "complete_quiz");
 
   //Refresh weak areas after quiz
   try {

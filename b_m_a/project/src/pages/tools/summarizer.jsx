@@ -291,7 +291,7 @@ const Summarizer = () => {
  const handleSaved = async () => {
     setDirty(false);
     setLastSavedAt(Date.now());
-    await recordStudyToolUse("summarizer");
+    await recordStudyToolUse("summarizer", "save_summary");
     // Refresh saved summaries list (if not in a folder, always refresh)
     if (!folderId) {
       fetchSavedSummaries();
@@ -354,7 +354,7 @@ const Summarizer = () => {
       setDirty(false);
       setLastSavedAt(Date.now());
 
-      await recordStudyToolUse("summarizer");
+      await recordStudyToolUse("summarizer", "save_summary");
 
       // Refresh saved summaries list
       if (viewMode === 'saved') {

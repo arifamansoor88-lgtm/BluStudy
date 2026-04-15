@@ -334,7 +334,7 @@ const VoiceNotes = () => {
       const newNote = res.data;
       setNotes(prev => [newNote, ...prev]);
 
-      await recordStudyToolUse("voice_note");
+      await recordStudyToolUse("voice_note", "save_voice_note");
 
       // refresh tag universe
       const tags = new Set(allTags);

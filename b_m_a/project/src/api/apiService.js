@@ -1,5 +1,10 @@
 import { msalInstance, protectedResources } from "../authConfig";
 
+const API_BASE = protectedResources.todoListApi.endpoint;
+const STUDY_STREAK_UPDATE_KEY = "study_streak_recent_update";
+const STUDY_STREAK_CACHE_KEY = "study_streak_last_known";
+const STUDY_STREAK_UPDATE_MAX_AGE_MS = 5 * 60 * 1000;
+
 /**
  * Gets an active account, handles fallbacks if not immediately available
  * @returns The active account or throws an error if none can be found
@@ -26,6 +31,44 @@ const getActiveAccount = () => {
   return account;
 };
 
+const decodeJwtClaims = (token) => {
+  if (!token || typeof globalThis.atob !== "function") return {};
+
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return {};
+
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(
+      base64.length + ((4 - (base64.length % 4)) % 4),
+      "="
+    );
+
+    return JSON.parse(globalThis.atob(padded));
+  } catch (error) {
+    console.warn("Unable to decode auth token claims:", error);
+    return {};
+  }
+};
+
+const getApiUserId = (account, accessToken) => {
+  const tokenClaims = decodeJwtClaims(accessToken);
+  const accountClaims = account?.idTokenClaims || {};
+
+  return (
+    tokenClaims?.sub ||
+    tokenClaims?.oid ||
+    tokenClaims?.userId ||
+    accountClaims?.sub ||
+    accountClaims?.oid ||
+    accountClaims?.userId ||
+    account?.localAccountId ||
+    account?.homeAccountId ||
+    account?.username ||
+    "default"
+  );
+};
+
 /**
  * Fetch data from the API with authentication token
  * @param {string} endpoint - The API endpoint to fetch from
@@ -46,6 +89,7 @@ export const callProtectedApi = async (endpoint, options = {}) => {
     // Merge headers and conditionally set Content-Type only if body is not FormData
     let headers = {
       ...options.headers,
+      "X-User-Id": getApiUserId(account, response.accessToken),
       Authorization: `Bearer ${response.accessToken}`,
     };
 
@@ -92,6 +136,33 @@ export const callProtectedApi = async (endpoint, options = {}) => {
   }
 };
 
+const callStudyStreakApi = async (endpoint, options = {}) => {
+  const account = getActiveAccount();
+  const headers = {
+    ...options.headers,
+    "X-User-Id": getApiUserId(account),
+  };
+
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const apiResponse = await fetch(endpoint, {
+    ...options,
+    headers,
+  });
+
+  if (!apiResponse.ok) {
+    const errorData = await apiResponse.json().catch(() => ({}));
+    throw new Error(
+      errorData.detail ||
+        `API error: ${apiResponse.status} ${apiResponse.statusText}`
+    );
+  }
+
+  return apiResponse.json();
+};
+
 const getLocalStudyDate = () => {
   const now = new Date();
   const year = now.getFullYear();
@@ -100,18 +171,93 @@ const getLocalStudyDate = () => {
   return `${year}-${month}-${day}`;
 };
 
+const writeJsonStorage = (storage, key, value) => {
+  if (typeof window === "undefined") return;
+
+  try {
+    storage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Unable to write ${key}:`, error);
+  }
+};
+
+const readJsonStorage = (storage, key) => {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = storage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.warn(`Unable to read ${key}:`, error);
+    return null;
+  }
+};
+
+const rememberStudyStreak = (currentStreak) => {
+  if (typeof window === "undefined") return;
+
+  writeJsonStorage(window.localStorage, STUDY_STREAK_CACHE_KEY, {
+    currentStreak: currentStreak || 0,
+    localDate: getLocalStudyDate(),
+    updatedAt: Date.now(),
+  });
+};
+
+const markStudyStreakUpdated = (result, toolKey, actionKey) => {
+  if (!result?.streak_updated || typeof window === "undefined") return;
+
+  const marker = {
+    toolKey,
+    actionKey,
+    currentStreak: result.current_streak || 0,
+    previousStreak:
+      result.previous_streak ?? Math.max((result.current_streak || 1) - 1, 0),
+    localDate: getLocalStudyDate(),
+    updatedAt: Date.now(),
+  };
+
+  writeJsonStorage(window.sessionStorage, STUDY_STREAK_UPDATE_KEY, marker);
+  window.dispatchEvent(new CustomEvent("study-streak-updated", { detail: marker }));
+};
+
+export const getCachedStudyStreak = () => {
+  if (typeof window === "undefined") return null;
+
+  const cached = readJsonStorage(window.localStorage, STUDY_STREAK_CACHE_KEY);
+  if (!cached || cached.localDate !== getLocalStudyDate()) return null;
+
+  return cached.currentStreak || 0;
+};
+
+export const consumeRecentStudyStreakUpdate = () => {
+  if (typeof window === "undefined") return null;
+
+  const marker = readJsonStorage(window.sessionStorage, STUDY_STREAK_UPDATE_KEY);
+  window.sessionStorage.removeItem(STUDY_STREAK_UPDATE_KEY);
+
+  if (!marker || marker.localDate !== getLocalStudyDate()) return null;
+  if (Date.now() - (marker.updatedAt || 0) > STUDY_STREAK_UPDATE_MAX_AGE_MS) {
+    return null;
+  }
+
+  return marker;
+};
+
 export const getStudyStreak = async () => {
-  return callProtectedApi("http://localhost:8000/streak", {
+  const result = await callStudyStreakApi(`${API_BASE}/streak`, {
     headers: {
       "X-Study-Date": getLocalStudyDate(),
     },
   });
+
+  rememberStudyStreak(result.current_streak || 0);
+  return result;
 };
 
-export const updateStudyStreak = async (toolKey = "tool") => {
+export const updateStudyStreak = async (toolKey, actionKey) => {
   const localDate = getLocalStudyDate();
 
-  return callProtectedApi("http://localhost:8000/update-streak", {
+  return callStudyStreakApi(`${API_BASE}/update-streak`, {
     method: "POST",
     headers: {
       "X-Study-Date": localDate,
@@ -119,14 +265,20 @@ export const updateStudyStreak = async (toolKey = "tool") => {
     body: JSON.stringify({
       activityType: "meaningful_tool_action",
       toolKey,
+      actionKey,
       localDate,
     }),
   });
 };
 
-export const recordStudyToolUse = async (toolKey = "tool") => {
+export const recordStudyToolUse = async (toolKey, actionKey) => {
+  if (!toolKey || !actionKey) return null;
+
   try {
-    return await updateStudyStreak(toolKey);
+    const result = await updateStudyStreak(toolKey, actionKey);
+    rememberStudyStreak(result?.current_streak || 0);
+    markStudyStreakUpdated(result, toolKey, actionKey);
+    return result;
   } catch (error) {
     console.warn("Failed to update study streak:", error);
     return null;
@@ -304,7 +456,7 @@ export const generateStudyPlan = async (
     }
 
     const data = await apiResponse.json();
-    await recordStudyToolUse("study_plan");
+    await recordStudyToolUse("study_plan", "generate_study_plan");
     return data;
   } catch (error) {
     console.error("Error generating study plan:", error);
@@ -366,7 +518,7 @@ export const updateStudyPlan = async (planId, quizIds) => {
 
   try {
     const response = await callProtectedApi(endpoint, options);
-    await recordStudyToolUse("study_plan");
+    await recordStudyToolUse("study_plan", "update_study_plan");
     return response;
   } catch (error) {
     console.error("Error updating study plan:", error);
@@ -426,7 +578,7 @@ export const generateSummary = async (payload) => {
 
   try {
     const response = await callProtectedApi(endpoint, options);
-    await recordStudyToolUse("summarizer");
+    await recordStudyToolUse("summarizer", "generate_summary");
     return response; // Expected format: { summary: "..." }
   } catch (error) {
     console.error("Error generating summary:", error);
@@ -482,7 +634,7 @@ export const createMindmap = async (title) => {
 
   try {
     const response = await callProtectedApi(endpoint, options);
-    await recordStudyToolUse("mind_map");
+    await recordStudyToolUse("mind_map", "create_mind_map");
     return response; // Expected format: { id: "...", slug: "...", message: "..." }
   } catch (error) {
     console.error("Error creating mindmap:", error);
@@ -516,7 +668,7 @@ export const saveMindmap = async (mindmapData, folderId = null) => {
 
   try {
     const response = await callProtectedApi(endpoint, options);
-    await recordStudyToolUse("mind_map");
+    await recordStudyToolUse("mind_map", "save_mind_map");
     return response; // Expected format: { id: "...", message: "..." }
   } catch (error) {
     console.error("Error saving mindmap:", error);
@@ -545,7 +697,7 @@ export const updateMindmap = async (mindmapId, mindmapData) => {
 
   try {
     const response = await callProtectedApi(endpoint, options);
-    await recordStudyToolUse("mind_map");
+    await recordStudyToolUse("mind_map", "update_mind_map");
     return response; // Expected format: { id: "...", message: "..." }
   } catch (error) {
     console.error("Error updating mindmap:", error);

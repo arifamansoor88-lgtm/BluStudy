@@ -5,6 +5,8 @@ import {
   getTasks,
   getSuggestedNextSteps,
   getStudyStreak,
+  getCachedStudyStreak,
+  consumeRecentStudyStreakUpdate,
 } from "../api/apiService";
 import { useNavigate } from "react-router-dom";
 import {
@@ -40,23 +42,74 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
   const [streakDays, setStreakDays] = useState(0);
-  const [prevStreak, setPrevStreak] = useState(0);
-    const recentItems = useUserRecents();
-    const [suggestedNextSteps, setSuggestedNextSteps] = useState([]);
+  const [streakLoading, setStreakLoading] = useState(true);
+  const [streakLoadError, setStreakLoadError] = useState(false);
+  const recentItems = useUserRecents();
+  const [suggestedNextSteps, setSuggestedNextSteps] = useState([]);
   const [focusAreas, setFocusAreas] = useState([]);
   const [displayStreak, setDisplayStreak] = useState(0);
   const [glow, setGlow] = useState(false);
+  const activeAccountId =
+    accounts[0]?.homeAccountId ||
+    accounts[0]?.localAccountId ||
+    accounts[0]?.username ||
+    "";
   const streakMessages = [
-  "Keep it going 🔥",
-  "You're on fire 🚀",
-  "Consistency wins 💪",
-  "Small steps daily 📈",
-  "Don’t break the chain ⛓️",
-];
+    "Keep it going 🔥",
+    "You're on fire 🚀",
+    "Consistency wins 💪",
+    "Small steps daily 📈",
+    "Don’t break the chain ⛓️",
+  ];
 
-const [randomMessage] = useState(
-  streakMessages[Math.floor(Math.random() * streakMessages.length)]
-);
+  const [randomMessage] = useState(
+    streakMessages[Math.floor(Math.random() * streakMessages.length)]
+  );
+
+  const animateStreakCount = useCallback((from, to) => {
+    if (from === to) {
+      setDisplayStreak(to);
+      return;
+    }
+
+    const startTime = performance.now();
+    const duration = 900;
+    const startValue = Math.max(from, 0);
+    const distance = to - startValue;
+
+    const animate = (currentTime) => {
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const nextValue = Math.round(startValue + distance * easeOut);
+
+      setDisplayStreak(nextValue);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setDisplayStreak(to);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, []);
+
+  const celebrateStreak = useCallback((from, to) => {
+    setGlow(true);
+
+    setTimeout(() => {
+      setGlow(false);
+    }, 900);
+
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
+
+    animateStreakCount(from, to);
+  }, [animateStreakCount]);
+
   useEffect(() => {
   handleQuizio(); 
 }, []);
@@ -191,62 +244,64 @@ const [loadingTopic, setLoadingTopic] = useState(null);
     fetchTasks();
   }, [userData]);
 
-  // ONLY fetch streak 
-useEffect(() => {
-  if (!accounts.length) return;
+  // Fetch the saved streak once the signed-in account is available.
+  useEffect(() => {
+    let cancelled = false;
 
-  const fetchStreak = async () => {
-    try {
-      const data = await getStudyStreak();
-      const newStreak = data.current_streak || 0;
-
-if (newStreak > prevStreak) {
-  setGlow(true);
-
-  setTimeout(() => {
-    setGlow(false);
-  }, 800);
-
-  confetti({
-    particleCount: 100,
-    spread: 70,
-    origin: { y: 0.6 },
-  });
-}
-
-setPrevStreak(newStreak);
-setStreakDays(newStreak);
-
-    } catch (err) {
-      console.error("Error fetching streak:", err);
-      setStreakDays(0);
+    if (!accounts.length) {
+      setStreakLoading(true);
+      return () => {
+        cancelled = true;
+      };
     }
-  };
 
-  fetchStreak();
-}, [accounts, prevStreak]);
+    const fetchStreak = async () => {
+      setStreakLoading(true);
+      setStreakLoadError(false);
 
-useEffect(() => {
-  let start = 0;
-  const end = streakDays;
-  const duration = 1000;
-  const startTime = performance.now();
+      try {
+        const data = await getStudyStreak();
+        if (cancelled) return;
 
-  const animate = (currentTime) => {
-    const progress = Math.min((currentTime - startTime) / duration, 1);
+        const newStreak = data.current_streak || 0;
+        const streakUpdate = consumeRecentStudyStreakUpdate();
+        const shouldCelebrate =
+          streakUpdate && streakUpdate.currentStreak === newStreak;
 
-    const easeOut = 1 - Math.pow(1 - progress, 3); // smooth easing
-    const value = Math.floor(easeOut * end);
+        setStreakDays(newStreak);
 
-    setDisplayStreak(value);
+        if (shouldCelebrate) {
+          celebrateStreak(streakUpdate.previousStreak || 0, newStreak);
+        } else {
+          setDisplayStreak(newStreak);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error("Error fetching streak:", err);
 
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    }
-  };
+        const cachedStreak = getCachedStudyStreak();
+        if (cachedStreak !== null) {
+          setStreakLoadError(false);
+          setStreakDays(cachedStreak);
+          setDisplayStreak(cachedStreak);
+        } else {
+          setStreakLoadError(true);
+          setStreakDays(0);
+          setDisplayStreak(0);
+        }
+      } finally {
+        if (!cancelled) {
+          setStreakLoading(false);
+        }
+      }
+    };
 
-  requestAnimationFrame(animate);
-}, [streakDays]);
+    fetchStreak();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accounts.length, activeAccountId, celebrateStreak]);
 
     // Loads Suggested Next Steps for the dashboard.
     // If the backend request fails, fallback placeholder data is used so the UI still renders.
@@ -395,48 +450,62 @@ useEffect(() => {
         </div>
 
         {/* Study Streak Card */}
-<div className="flex-1 bg-blue-50 rounded-xl shadow-sm p-5 border border-gray-100 w-full md:w-auto">
-  <h2 className="text-xl font-semibold text-gray-900 mb-4">
-    Study Streak
-  </h2>
+        <div className="flex-1 bg-blue-50 rounded-xl shadow-sm p-5 border border-gray-100 w-full md:w-auto">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Study Streak
+          </h2>
 
-  {streakDays === 0 ? (
-    <div>
-      <p className="text-lg font-semibold text-orange-500">
-        Start your first streak 🔥
-      </p>
-      <p className="text-sm text-gray-500">
-        Study today to begin building consistency.
-      </p>
-    </div>
-  ) : (
-    <div className="flex items-center justify-between w-full">
+          {streakLoading ? (
+            <div>
+              <p className="text-lg font-semibold text-orange-500">
+                Checking your streak...
+              </p>
+              <p className="text-sm text-gray-500">
+                Syncing today's study activity.
+              </p>
+            </div>
+          ) : streakLoadError ? (
+            <div>
+              <p className="text-lg font-semibold text-orange-500">
+                Streak unavailable
+              </p>
+              <p className="text-sm text-gray-500">
+                We couldn't load your streak right now.
+              </p>
+            </div>
+          ) : streakDays === 0 ? (
+            <div>
+              <p className="text-lg font-semibold text-orange-500">
+                Start your first streak 🔥
+              </p>
+              <p className="text-sm text-gray-500">
+                Study today to begin building consistency.
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between w-full">
+              <div>
+                <p
+                  className={`text-3xl font-bold text-orange-500 transition-all duration-300 ${
+                    glow ? "scale-110 drop-shadow-[0_0_10px_rgba(255,165,0,0.8)]" : ""
+                  }`}
+                >
+                  {displayStreak}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Day{streakDays === 1 ? "" : "s"} in a row
+                </p>
+              </div>
 
-      {/* LEFT SIDE */}
-      <div>
-        <p
-  className={`text-3xl font-bold text-orange-500 transition-all duration-300 ${
-    glow ? "scale-110 drop-shadow-[0_0_10px_rgba(255,165,0,0.8)]" : ""
-  }`}
->
-          {displayStreak}
-        </p>
-        <p className="text-sm text-gray-500">
-          Day{streakDays === 1 ? "" : "s"} in a row
-        </p>
-      </div>
-
-      {/* RIGHT SIDE MESSAGE */}
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-green-600 font-semibold text-lg text-center w-full">
-          {randomMessage}
-        </p>
-      </div>
-
-    </div>
-  )}
-</div>
-</motion.div>
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-green-600 font-semibold text-lg text-center w-full">
+                  {randomMessage}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.div>
       {/* Recent Tools and Quizio Section */}
       <motion.div
         initial={{ opacity: 0 }}

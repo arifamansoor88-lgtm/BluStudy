@@ -112,7 +112,7 @@ export const useDeckData = () => {
                 );
 
                 setSaveSuccess(true);
-                await recordStudyToolUse("flashcard_deck");
+                await recordStudyToolUse("flashcard_deck", "save_flashcard_deck");
                 decksFetchedRef.current = false;
                 await fetchSavedDecks();
                 console.log(response.data.id);
@@ -193,7 +193,7 @@ export const useDeckData = () => {
 
             decksFetchedRef.current = false;
             await fetchSavedDecks();
-            await recordStudyToolUse("flashcard_deck");
+            await recordStudyToolUse("flashcard_deck", "generate_flashcards");
 
             return response.data;
         } catch (err) {
@@ -239,7 +239,7 @@ export const useDeckData = () => {
                         "Content-Type": "multipart/form-data",
                     },
                 });
-                await recordStudyToolUse("flashcard_deck");
+                await recordStudyToolUse("flashcard_deck", "generate_flashcards");
                 return response.data;
             } catch (err) {
                 console.error("Error generating quiz:", err);
@@ -310,7 +310,7 @@ export const useDeckData = () => {
                 );
 
                 setSaveSuccess(true);
-                await recordStudyToolUse("flashcard_deck");
+                await recordStudyToolUse("flashcard_deck", "update_flashcard_deck");
                 decksFetchedRef.current = false;
                 await fetchSavedDecks(); // Refresh the saved decks
                 return response.data;

@@ -331,8 +331,35 @@ else:
 # --------------------------------------------------------------------------------------
 # Helpers
 # --------------------------------------------------------------------------------------
+def _user_id_from_bearer_token(request: Request) -> Optional[str]:
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return None
+
+    token = auth_header[7:]
+    try:
+        claims = jwt.decode(
+            token,
+            key="development_key_not_for_production",
+            options={
+                "verify_signature": False,
+                "verify_aud": False,
+                "verify_exp": False
+            }
+        )
+        return claims.get("sub") or claims.get("oid") or claims.get("userId")
+    except Exception as e:
+        print(f"DEBUG: Could not resolve user id from bearer token: {e}")
+        return None
+
 def _resolve_user_id(request: Request, user_id_q: Optional[str] = None, user_id_form: Optional[str] = None) -> str:
-    return user_id_q or user_id_form or request.headers.get("X-User-Id") or "default"
+    return (
+        user_id_q
+        or user_id_form
+        or request.headers.get("X-User-Id")
+        or _user_id_from_bearer_token(request)
+        or "default"
+    )
 
 def _normalize_tags(raw: Optional[Union[str, List[str]]]) -> List[str]:
     if raw is None:
@@ -2914,20 +2941,48 @@ def _parse_study_date(value: Optional[str]):
 
 
 MEANINGFUL_STREAK_ACTIVITY = "meaningful_tool_action"
-STREAK_TOOL_KEYS = {
-    "flashcard_deck",
-    "mind_map",
-    "quiz",
-    "study_plan",
-    "summarizer",
-    "voice_note",
+STREAK_ACTION_KEYS = {
+    "flashcard_deck": {
+        "generate_flashcards",
+        "save_flashcard_deck",
+        "update_flashcard_deck",
+    },
+    "mind_map": {
+        "create_mind_map",
+        "save_mind_map",
+        "update_mind_map",
+    },
+    "quiz": {
+        "complete_quiz",
+        "generate_quiz",
+        "save_quiz",
+        "save_quiz_attempt",
+    },
+    "study_plan": {
+        "generate_study_plan",
+        "update_study_plan",
+    },
+    "summarizer": {
+        "generate_summary",
+        "save_summary",
+    },
+    "voice_note": {
+        "save_voice_note",
+    },
 }
+
+
+def _is_meaningful_streak_action(tool_key: Optional[str], action_key: Optional[str]) -> bool:
+    return action_key in STREAK_ACTION_KEYS.get(tool_key or "", set())
 
 
 def _is_meaningful_streak_doc(doc: Dict[str, Any]) -> bool:
     return (
         doc.get("lastActivityType") == MEANINGFUL_STREAK_ACTIVITY
-        and doc.get("lastToolKey") in STREAK_TOOL_KEYS
+        and _is_meaningful_streak_action(
+            doc.get("lastToolKey"),
+            doc.get("lastActionKey"),
+        )
     )
 
 
@@ -2990,12 +3045,16 @@ async def update_streak(request: Request):
 
     activity_type = payload.get("activityType") or payload.get("activity_type")
     tool_key = payload.get("toolKey") or payload.get("tool_key")
+    action_key = payload.get("actionKey") or payload.get("action_key")
 
-    if activity_type != MEANINGFUL_STREAK_ACTIVITY or tool_key not in STREAK_TOOL_KEYS:
+    if activity_type != MEANINGFUL_STREAK_ACTIVITY or not _is_meaningful_streak_action(tool_key, action_key):
         if not items:
-            return {"current_streak": 0}
+            return {"current_streak": 0, "streak_updated": False}
         doc = items[0]
-        return {"current_streak": _current_streak_for_date(doc, today)}
+        return {
+            "current_streak": _current_streak_for_date(doc, today),
+            "streak_updated": False
+        }
 
     if not items:
         doc = {
@@ -3006,10 +3065,11 @@ async def update_streak(request: Request):
             "lastStudyDate": today_str,
             "lastActivityType": MEANINGFUL_STREAK_ACTIVITY,
             "lastToolKey": tool_key,
+            "lastActionKey": action_key,
             "updatedAt": datetime.utcnow().isoformat()
         }
         container.create_item(body=doc)
-        return {"current_streak": 1}
+        return {"current_streak": 1, "previous_streak": 0, "streak_updated": True}
 
     doc = items[0]
 
@@ -3018,12 +3078,14 @@ async def update_streak(request: Request):
         doc["lastStudyDate"] = today_str
         doc["lastActivityType"] = MEANINGFUL_STREAK_ACTIVITY
         doc["lastToolKey"] = tool_key
+        doc["lastActionKey"] = action_key
         doc["updatedAt"] = datetime.utcnow().isoformat()
         container.upsert_item(doc)
-        return {"current_streak": 1}
+        return {"current_streak": 1, "previous_streak": 0, "streak_updated": True}
 
     last_date_str = doc.get("lastStudyDate")
     streak = doc.get("streakDays", 0)
+    previous_streak = streak
 
     if last_date_str:
         last_date = _parse_study_date(last_date_str)
@@ -3032,23 +3094,33 @@ async def update_streak(request: Request):
         diff = None
 
     if diff is not None and diff <= 0:
-        return {"current_streak": streak}
+        return {
+            "current_streak": streak,
+            "previous_streak": previous_streak,
+            "streak_updated": False
+        }
 
     elif diff == 1:
         streak += 1
 
     else:
+        previous_streak = 0
         streak = 1
 
     doc["streakDays"] = streak
     doc["lastStudyDate"] = today_str
     doc["lastActivityType"] = MEANINGFUL_STREAK_ACTIVITY
     doc["lastToolKey"] = tool_key
+    doc["lastActionKey"] = action_key
     doc["updatedAt"] = datetime.utcnow().isoformat()
 
     container.upsert_item(doc)
 
-    return {"current_streak": streak}
+    return {
+        "current_streak": streak,
+        "previous_streak": previous_streak,
+        "streak_updated": True
+    }
 
 # --------------------------------------------------------------------------------------
 # Dev server

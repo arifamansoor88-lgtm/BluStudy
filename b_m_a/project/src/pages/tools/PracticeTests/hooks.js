@@ -309,7 +309,7 @@ export const useQuizData = () => {
 
         // The backend now automatically saves the quiz and returns it with an ID
         // We don't need to call saveQuiz separately
-        await recordStudyToolUse("quiz");
+        await recordStudyToolUse("quiz", "generate_quiz");
         return response.data;
       } catch (err) {
         console.error("=== generateQuiz Hook Error ===");
@@ -417,7 +417,7 @@ export const useQuizData = () => {
         console.log("Response status:", response.status);
         console.log("Response data:", response.data);
 
-        await recordStudyToolUse("quiz");
+        await recordStudyToolUse("quiz", "generate_quiz");
         return response.data;
       } catch (err) {
         console.error("=== generateQuizFromTopic Hook Error ===");
@@ -489,7 +489,7 @@ export const useQuizData = () => {
         );
 
         setSaveSuccess(true);
-        await recordStudyToolUse("quiz");
+        await recordStudyToolUse("quiz", "save_quiz");
         quizzesFetchedRef.current = false;
         await fetchSavedQuizzes();
         return response.data;
@@ -540,7 +540,7 @@ export const useQuizData = () => {
         );
 
         setSaveSuccess(true);
-        await recordStudyToolUse("quiz");
+        await recordStudyToolUse("quiz", "save_quiz_attempt");
         quizzesFetchedRef.current = false;
         await fetchQuizWithHistory(generatedQuiz.id);
         await fetchSavedQuizzes();
