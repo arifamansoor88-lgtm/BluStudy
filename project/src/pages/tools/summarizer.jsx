@@ -31,6 +31,7 @@ const Summarizer = () => {
   // Get folderId from URL query params if present
   const [searchParams] = useSearchParams();
   const folderId = searchParams.get('folderId');
+  const summaryId = searchParams.get('summaryId');
   
   // View state: 'create' or 'saved'
   const [viewMode, setViewMode] = useState('create');
@@ -45,11 +46,43 @@ const Summarizer = () => {
   const [summaryStyle, setSummaryStyle] = useState('high');
   const [summaryFormat, setSummaryFormat] = useState('bullet');
   const [copied, setCopied] = useState(false);
+  const [viewingExisting, setViewingExisting] = useState(false);
 
   // Editing / status
   const [isEditing, setIsEditing] = useState(true);
   const [dirty, setDirty] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState(null);
+
+  // Load existing summary if summaryId is provided
+  useEffect(() => {
+    if (!summaryId) return;
+    (async () => {
+      try {
+        const accounts = msalInstance.getAllAccounts();
+        const request = { scopes: protectedResources.todoListApi.scopes, account: accounts[0] };
+        let token;
+        try {
+          const r = await msalInstance.acquireTokenSilent(request);
+          token = r.accessToken;
+        } catch {
+          const r = await msalInstance.acquireTokenPopup(request);
+          token = r.accessToken;
+        }
+        const res = await fetch(`${API_BASE}/items/${summaryId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSummary(data.data?.summary || data.description || "");
+          setViewingExisting(true);
+          setIsEditing(false);
+          setDirty(false);
+        }
+      } catch (e) {
+        console.error("Error loading summary:", e);
+      }
+    })();
+  }, [summaryId]);
 
   // Autosize textarea
   const textareaRef = useRef(null);
