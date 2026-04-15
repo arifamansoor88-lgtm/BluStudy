@@ -3,6 +3,7 @@ import axios from "axios";
 import { useMsal } from "@azure/msal-react";
 import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { protectedResources } from "../../../authConfig";
+import { recordStudyToolUse } from "../../../api/apiService";
 
 /**
  * Custom hook for timer functionality
@@ -177,6 +178,7 @@ export const useQuizData = () => {
           setQuizAttempts([]);
         }
 
+        await recordStudyToolUse("quiz");
         return response.data;
       } catch (error) {
         console.error("Error fetching quiz history:", error);
@@ -201,6 +203,7 @@ export const useQuizData = () => {
           },
         });
 
+        await recordStudyToolUse("quiz");
         return response.data;
       } catch (error) {
         console.error("Error fetching quiz by id:", error);
@@ -308,6 +311,7 @@ export const useQuizData = () => {
 
         // The backend now automatically saves the quiz and returns it with an ID
         // We don't need to call saveQuiz separately
+        await recordStudyToolUse("quiz");
         return response.data;
       } catch (err) {
         console.error("=== generateQuiz Hook Error ===");
@@ -415,6 +419,7 @@ export const useQuizData = () => {
         console.log("Response status:", response.status);
         console.log("Response data:", response.data);
 
+        await recordStudyToolUse("quiz");
         return response.data;
       } catch (err) {
         console.error("=== generateQuizFromTopic Hook Error ===");
@@ -486,6 +491,7 @@ export const useQuizData = () => {
         );
 
         setSaveSuccess(true);
+        await recordStudyToolUse("quiz");
         quizzesFetchedRef.current = false;
         await fetchSavedQuizzes();
         return response.data;
@@ -536,6 +542,7 @@ export const useQuizData = () => {
         );
 
         setSaveSuccess(true);
+        await recordStudyToolUse("quiz");
         quizzesFetchedRef.current = false;
         await fetchQuizWithHistory(generatedQuiz.id);
         await fetchSavedQuizzes();

@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useMsal } from "@azure/msal-react";
 import {
   Brain,
   Mic,
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { addLocalRecentTool } from "../hooks/useUserRecents";
+import { recordStudyToolUse } from "../api/apiService";
 
 const StudyTools = () => {
   const tools = [
@@ -140,28 +140,10 @@ const ToolCard = ({
   borderColor,
   index,
 }) => {
-  const { instance, accounts } = useMsal();
   const handleRecent = async () => {
-  addLocalRecentTool({ to, title, contentType: "tool" });
-
-  try {
-    const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-
-    const acct = instance.getActiveAccount() || accounts[0];
-    const tokenRes = await instance.acquireTokenSilent({
-      account: acct,
-      scopes: ["openid", "profile"],
-    });
-
-    const token = tokenRes.accessToken || tokenRes.idToken;
-
-    
-
-    console.log(" streak updated from StudyTools");
-  } catch (err) {
-    console.error(" streak update failed:", err);
-  }
-};
+    addLocalRecentTool({ to, title, contentType: "tool" });
+    await recordStudyToolUse(title.toLowerCase().replace(/\s+/g, "_"));
+  };
 
   return (
     <motion.div

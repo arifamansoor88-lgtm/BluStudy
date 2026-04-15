@@ -19,7 +19,7 @@ import {
   PlusCircle,
   BookOpen
 } from 'lucide-react';
-import { generateSummary } from '../../api/apiService';
+import { generateSummary, recordStudyToolUse } from '../../api/apiService';
 import { msalInstance, protectedResources } from '../../authConfig';
 
 // reusable save-to-folder button
@@ -291,19 +291,7 @@ const Summarizer = () => {
  const handleSaved = async () => {
     setDirty(false);
     setLastSavedAt(Date.now());
-    // 🔥 UPDATE STREAK AFTER SAVING SUMMARY
-const acct = msalInstance.getAllAccounts()[0];
-const request = { scopes: protectedResources.todoListApi.scopes, account: acct };
-
-const tokenRes = await msalInstance.acquireTokenSilent(request);
-const token = tokenRes.accessToken;
-
-await fetch(`${API_BASE}/update-streak`, {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-});
+    await recordStudyToolUse("summarizer");
     // Refresh saved summaries list (if not in a folder, always refresh)
     if (!folderId) {
       fetchSavedSummaries();
@@ -366,13 +354,7 @@ await fetch(`${API_BASE}/update-streak`, {
       setDirty(false);
       setLastSavedAt(Date.now());
 
-    // 🔥 UPDATE STREAK AFTER SAVING SUMMARY
-await fetch(`${API_BASE}/update-streak`, {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${token}`, // already exists above
-  },
-});
+      await recordStudyToolUse("summarizer");
 
       // Refresh saved summaries list
       if (viewMode === 'saved') {

@@ -92,6 +92,47 @@ export const callProtectedApi = async (endpoint, options = {}) => {
   }
 };
 
+const getLocalStudyDate = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+export const getStudyStreak = async () => {
+  return callProtectedApi("http://localhost:8000/streak", {
+    headers: {
+      "X-Study-Date": getLocalStudyDate(),
+    },
+  });
+};
+
+export const updateStudyStreak = async (toolKey = "tool") => {
+  const localDate = getLocalStudyDate();
+
+  return callProtectedApi("http://localhost:8000/update-streak", {
+    method: "POST",
+    headers: {
+      "X-Study-Date": localDate,
+    },
+    body: JSON.stringify({
+      activityType: "tool_use",
+      toolKey,
+      localDate,
+    }),
+  });
+};
+
+export const recordStudyToolUse = async (toolKey = "tool") => {
+  try {
+    return await updateStudyStreak(toolKey);
+  } catch (error) {
+    console.warn("Failed to update study streak:", error);
+    return null;
+  }
+};
+
 /**
  * Get tasks from the API
  * @returns {Promise<Array>} - List of tasks
@@ -262,8 +303,9 @@ export const generateStudyPlan = async (
       throw new Error(errorMessage);
     }
 
-    // Return JSON data
-    return await apiResponse.json();
+    const data = await apiResponse.json();
+    await recordStudyToolUse("study_plan");
+    return data;
   } catch (error) {
     console.error("Error generating study plan:", error);
     throw error;
@@ -324,6 +366,7 @@ export const updateStudyPlan = async (planId, quizIds) => {
 
   try {
     const response = await callProtectedApi(endpoint, options);
+    await recordStudyToolUse("study_plan");
     return response;
   } catch (error) {
     console.error("Error updating study plan:", error);
@@ -383,6 +426,7 @@ export const generateSummary = async (payload) => {
 
   try {
     const response = await callProtectedApi(endpoint, options);
+    await recordStudyToolUse("summarizer");
     return response; // Expected format: { summary: "..." }
   } catch (error) {
     console.error("Error generating summary:", error);
@@ -438,6 +482,7 @@ export const createMindmap = async (title) => {
 
   try {
     const response = await callProtectedApi(endpoint, options);
+    await recordStudyToolUse("mind_map");
     return response; // Expected format: { id: "...", slug: "...", message: "..." }
   } catch (error) {
     console.error("Error creating mindmap:", error);
@@ -471,6 +516,7 @@ export const saveMindmap = async (mindmapData, folderId = null) => {
 
   try {
     const response = await callProtectedApi(endpoint, options);
+    await recordStudyToolUse("mind_map");
     return response; // Expected format: { id: "...", message: "..." }
   } catch (error) {
     console.error("Error saving mindmap:", error);
@@ -499,6 +545,7 @@ export const updateMindmap = async (mindmapId, mindmapData) => {
 
   try {
     const response = await callProtectedApi(endpoint, options);
+    await recordStudyToolUse("mind_map");
     return response; // Expected format: { id: "...", message: "..." }
   } catch (error) {
     console.error("Error updating mindmap:", error);
@@ -559,4 +606,3 @@ export const deleteMindmap = async (mindmapId) => {
     throw error;
   }
 };
-

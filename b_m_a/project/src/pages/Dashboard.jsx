@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import confetti from "canvas-confetti";
 import { useMsal } from "@azure/msal-react";
-import { getTasks, getSuggestedNextSteps } from "../api/apiService";
+import {
+  getTasks,
+  getSuggestedNextSteps,
+  getStudyStreak,
+  recordStudyToolUse,
+} from "../api/apiService";
 import { useNavigate } from "react-router-dom";
 import {
   Clock,
@@ -21,31 +26,6 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserRecents } from "../hooks/useUserRecents";
-
-const updateStreakGlobal = async (instance, accounts) => {
-  try {
-    const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-
-    const acct = instance.getActiveAccount() || accounts[0];
-    const tokenRes = await instance.acquireTokenSilent({
-      account: acct,
-      scopes: ["openid", "profile"],
-    });
-
-    const token = tokenRes.accessToken || tokenRes.idToken;
-
-    await fetch(`${API}/update-streak`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    console.log("Global streak updated");
-  } catch (err) {
-    console.error("Global streak failed:", err);
-  }
-};
 
 const formatTopic = (t) => {
   return t
@@ -216,18 +196,9 @@ const [loadingTopic, setLoadingTopic] = useState(null);
 useEffect(() => {
   if (!accounts.length) return;
 
-  const account = instance.getActiveAccount() || accounts[0];
-  const token = account?.idToken;
-
   const fetchStreak = async () => {
     try {
-      const res = await fetch("http://localhost:8000/streak", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
+      const data = await getStudyStreak();
       const newStreak = data.current_streak || 0;
 
 if (newStreak > prevStreak) {
@@ -254,7 +225,7 @@ setStreakDays(newStreak);
   };
 
   fetchStreak();
-}, [accounts, instance]);
+}, [accounts, prevStreak]);
 
 useEffect(() => {
   let start = 0;
@@ -723,7 +694,11 @@ const SuggestedStepCard = ({ step, navigate }) => {
             </div>
 
             <button
-                onClick={() => step.actionPath && navigate(step.actionPath)}
+                onClick={async () => {
+                    if (!step.actionPath) return;
+                    await recordStudyToolUse(step.toolKey || "suggested_step");
+                    navigate(step.actionPath);
+                }}
                 disabled={!step.actionPath}
                 className={`mt-5 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-white transition
           ${step.actionPath ? theme.button : "bg-gray-300 cursor-not-allowed"}`}
@@ -770,6 +745,17 @@ const StudyGoalCard = ({ goal }) => (
   </motion.div>
 );
 
+const STREAK_CONTENT_TYPES = new Set([
+  "tool",
+  "voice_note",
+  "flashcard",
+  "flashcard_deck",
+  "quiz",
+  "mindmap",
+  "study_plan",
+  "summary",
+]);
+
 const RecentItemCard = ({ item, navigate }) => {
   const { instance, accounts } = useMsal();
 
@@ -796,19 +782,32 @@ const RecentItemCard = ({ item, navigate }) => {
     (item.contentType === "quiz" ? "Practice Test" : "Untitled");
 
   const handleNavigate = useCallback(async () => {
-  const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    const routeMap = {
+      voice_note: `/tools/voice-notes?noteId=${item.id}`,
+      flashcard: `/tools/flashcards/study/${item.id}`,
+      flashcard_deck: `/tools/flashcards/study/${item.id}`,
+      quiz: `/tools/practice-tests?quizId=${item.id}`,
+      mindmap: `/tools/maps/${item.id}`,
+      study_plan: `/tools/study-planner?planId=${item.id}`,
+      summary: `/tools/summarizer`,
+      folder: `/workspace/folder/${item.id}`,
+      tool: item.route || "/tools",
+    };
 
-  const acct = instance.getActiveAccount() || accounts[0];
-  const tokenRes = await instance.acquireTokenSilent({ 
-    account: acct, 
-    scopes: ["openid", "profile"] 
-  });
+    let route = item.contentType === "tool" ? item.route : routeMap[item.contentType];
+    route = route || item.route || "/tools";
+    console.log("RecentItemCard navigation:", { item: item.id, contentType: item.contentType, route });
 
-  const token = tokenRes.accessToken || tokenRes.idToken;
+    const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-  try {
+    try {
+      const acct = instance.getActiveAccount() || accounts[0];
+      const tokenRes = await instance.acquireTokenSilent({
+        account: acct,
+        scopes: ["openid", "profile"],
+      });
 
-      // Call track-access with auth
+      const token = tokenRes.accessToken || tokenRes.idToken;
       const res = await fetch(`${API}/api/track-access`, {
         method: "POST",
         headers: {
@@ -826,45 +825,10 @@ const RecentItemCard = ({ item, navigate }) => {
     } catch (e) {
       console.warn("Failed to track access:", e);
     }
-//UPDATE STREAK HERE
-    try {
-  await fetch(`${API}/update-streak`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-    },
-  });
 
-  // Fetch updated streak
-  const streakRes = await fetch(`${API}/streak`, {
-    headers: {
-      "Authorization": `Bearer ${token}`,
-    },
-  });
-
-  const streakData = await streakRes.json();
-
-  //send event to parent (for confetti later)
-  console.log("Updated streak:", streakData.current_streak);
-  window.location.reload();
-} catch (e) {
-  console.warn("Failed to update streak:", e);
-}
-    const routeMap = {
-      voice_note: `/tools/voice-notes?noteId=${item.id}`,
-      flashcard: `/tools/flashcards/study/${item.id}`,
-      flashcard_deck: `/tools/flashcards/study/${item.id}`,
-      quiz: `/tools/practice-tests?quizId=${item.id}`,
-      mindmap: `/tools/maps/${item.id}`,
-      study_plan: `/tools/study-planner?planId=${item.id}`,
-      summary: `/tools/summarizer`,
-      folder: `/workspace/folder/${item.id}`,
-      tool: item.route || "/tools",
-    };
-
-    let route = item.contentType === "tool" ? item.route : routeMap[item.contentType];
-    route = route || item.route || "/tools";
-    console.log("RecentItemCard navigation:", { item: item.id, contentType: item.contentType, route });
+    if (STREAK_CONTENT_TYPES.has(item.contentType)) {
+      await recordStudyToolUse(item.contentType);
+    }
     
     if (route) {
       navigate(route);

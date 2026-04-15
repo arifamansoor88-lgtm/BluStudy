@@ -5,6 +5,7 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import { useMsal } from '@azure/msal-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Mic, Save, Trash2, Download, Share2, Tag as TagIcon, AudioWaveform as Waveform, PauseCircle, PlayCircle } from 'lucide-react';
+import { recordStudyToolUse } from '../../api/apiService';
 
 const API_URL = "http://localhost:8000";
 
@@ -333,21 +334,7 @@ const VoiceNotes = () => {
       const newNote = res.data;
       setNotes(prev => [newNote, ...prev]);
 
-      //UPDATE STREAK AFTER SAVING VOICE NOTE
-      const acct = instance.getActiveAccount() || accounts[0];
-      const tokenRes = await instance.acquireTokenSilent({
-        account: acct,
-        scopes: ["openid", "profile"],
-      });
-
-      const token = tokenRes.accessToken || tokenRes.idToken;
-
-      await fetch(`${API_URL}/update-streak`, {
-        method: "POST",
-        headers: {
-        Authorization: `Bearer ${token}`,
-        },
-      });
+      await recordStudyToolUse("voice_note");
 
       // refresh tag universe
       const tags = new Set(allTags);

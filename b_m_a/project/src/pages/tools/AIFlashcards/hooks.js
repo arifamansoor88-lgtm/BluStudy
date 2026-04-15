@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { useMsal } from "@azure/msal-react";
 import { protectedResources } from "../../../authConfig";
+import { recordStudyToolUse } from "../../../api/apiService";
 
 /**
  * Custom hook for managing flashcard data fetching and saving
@@ -111,6 +112,7 @@ export const useDeckData = () => {
                 );
 
                 setSaveSuccess(true);
+                await recordStudyToolUse("flashcard_deck");
                 decksFetchedRef.current = false;
                 await fetchSavedDecks();
                 console.log(response.data.id);
@@ -191,6 +193,7 @@ export const useDeckData = () => {
 
             decksFetchedRef.current = false;
             await fetchSavedDecks();
+            await recordStudyToolUse("flashcard_deck");
 
             return response.data;
         } catch (err) {
@@ -236,6 +239,7 @@ export const useDeckData = () => {
                         "Content-Type": "multipart/form-data",
                     },
                 });
+                await recordStudyToolUse("flashcard_deck");
                 return response.data;
             } catch (err) {
                 console.error("Error generating quiz:", err);
@@ -265,6 +269,7 @@ export const useDeckData = () => {
             });
 
             setSavedSpecificDeck(response.data);
+            await recordStudyToolUse("flashcard_deck");
             console.log(response.data);
             return response.data;
         } catch (error) {
@@ -306,6 +311,7 @@ export const useDeckData = () => {
                 );
 
                 setSaveSuccess(true);
+                await recordStudyToolUse("flashcard_deck");
                 decksFetchedRef.current = false;
                 await fetchSavedDecks(); // Refresh the saved decks
                 return response.data;

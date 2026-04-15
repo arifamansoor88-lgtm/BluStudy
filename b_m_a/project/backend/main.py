@@ -79,7 +79,7 @@ app.add_middleware(
     allow_origins=_parse_origins(),
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*", "X-User-Id"],
+    allow_headers=["*", "X-User-Id", "X-Study-Date"],
 )
 
 # Static mount for local storage fallback
@@ -284,6 +284,15 @@ class LocalContainer:
             ]
             filtered.sort(key=lambda x: x.get("createdAt", "") or x.get("createdat", ""), reverse=True)
             return filtered
+
+        # Handle study streak query: "WHERE c.userId = @uid AND c.contentType = 'study_streak'"
+        if "from c where c.userid = @uid and c.contenttype = 'study_streak'" in q:
+            user_id = params.get("@uid")
+            return [
+                it for it in items
+                if (it.get("userId") == user_id or it.get("user_id") == user_id)
+                and it.get("contentType") == "study_streak"
+            ]
 
         return items
 
@@ -1178,7 +1187,7 @@ async def create_quiz(
 
         quiz_data = json.loads(quiz_json)
         quiz_id = str(uuid.uuid4())
-        \
+        
         
         quiz_document = {
             "id": quiz_id,
@@ -2882,6 +2891,27 @@ async def delete_file(
 # Study Streak API
 # --------------------------------------------------------------------------------------
 
+def _study_date_from_request(request: Request):
+    study_date = (request.headers.get("X-Study-Date") or "").strip()
+    if study_date:
+        try:
+            return datetime.strptime(study_date[:10], "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    return datetime.utcnow().date()
+
+
+def _parse_study_date(value: Optional[str]):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value).date()
+    except ValueError:
+        try:
+            return datetime.strptime(value[:10], "%Y-%m-%d").date()
+        except ValueError:
+            return None
+
 @app.get("/streak")
 async def get_streak(request: Request):
     uid = _resolve_user_id(request)
@@ -2894,7 +2924,19 @@ async def get_streak(request: Request):
     if not items:
         return {"current_streak": 0}
 
-    return {"current_streak": items[0].get("streakDays", 0)}
+    doc = items[0]
+    last_date_str = doc.get("lastStudyDate")
+    streak = doc.get("streakDays", 0)
+
+    if last_date_str:
+        last_date = _parse_study_date(last_date_str)
+        today = _study_date_from_request(request)
+        diff = (today - last_date).days if last_date else 0
+
+        if diff > 1:
+            return {"current_streak": 0}
+
+    return {"current_streak": streak}
 
 
 @app.post("/update-streak")
@@ -2906,7 +2948,26 @@ async def update_streak(request: Request):
 
     items = list(container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
 
-    today = datetime.utcnow().date().isoformat()
+    today = _study_date_from_request(request)
+    today_str = today.isoformat()
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+
+    activity_type = payload.get("activityType") or payload.get("activity_type")
+    tool_key = payload.get("toolKey") or payload.get("tool_key")
+
+    if activity_type and activity_type != "tool_use":
+        if not items:
+            return {"current_streak": 0}
+        doc = items[0]
+        last_date = _parse_study_date(doc.get("lastStudyDate"))
+        if last_date and (today - last_date).days > 1:
+            return {"current_streak": 0}
+        return {"current_streak": doc.get("streakDays", 0)}
 
     if not items:
         doc = {
@@ -2914,20 +2975,39 @@ async def update_streak(request: Request):
             "userId": uid,
             "contentType": "study_streak",
             "streakDays": 1,
-            "lastStudyDate": today
+            "lastStudyDate": today_str,
+            "lastActivityType": "tool_use",
+            "lastToolKey": tool_key,
+            "updatedAt": datetime.utcnow().isoformat()
         }
         container.create_item(body=doc)
         return {"current_streak": 1}
 
     doc = items[0]
 
-    last = doc.get("lastStudyDate")
+    last_date_str = doc.get("lastStudyDate")
     streak = doc.get("streakDays", 0)
 
-    streak += 1
+    if last_date_str:
+        last_date = _parse_study_date(last_date_str)
+        diff = (today - last_date).days if last_date else None
+    else:
+        diff = None
+
+    if diff is not None and diff <= 0:
+        return {"current_streak": streak}
+
+    elif diff == 1:
+        streak += 1
+
+    else:
+        streak = 1
 
     doc["streakDays"] = streak
-    doc["lastStudyDate"] = today
+    doc["lastStudyDate"] = today_str
+    doc["lastActivityType"] = "tool_use"
+    doc["lastToolKey"] = tool_key
+    doc["updatedAt"] = datetime.utcnow().isoformat()
 
     container.upsert_item(doc)
 

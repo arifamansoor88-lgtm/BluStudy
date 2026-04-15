@@ -9,6 +9,7 @@ import { isAnswerCorrect, shouldUseAIEvaluation } from "./utils";
 import {
   getAnswerExplanation,
   evaluateShortAnswer,
+  recordStudyToolUse,
 } from "../../../api/apiService";
 import { useLocation } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
@@ -602,28 +603,14 @@ const PracticeTests = () => {
   };
 
   // Function to complete the quiz after evaluation
-  const { instance, accounts } = useMsal();
+  const { instance } = useMsal();
   const completeQuiz = async () => {
   setQuizStatus("completed");
   setShowSummary(true);
 
   await saveQuizAttempt(generatedQuiz, userAnswers, timer, quizMode);
 
-  //UPDATE STREAK AFTER QUIZ COMPLETION
-const acct = instance.getActiveAccount() || accounts[0];
-const tokenRes = await instance.acquireTokenSilent({
-  account: acct,
-  scopes: ["openid", "profile"],
-});
-
-const token = tokenRes.accessToken || tokenRes.idToken;
-
-await fetch("http://localhost:8000/update-streak", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-});
+  await recordStudyToolUse("quiz");
 
   //Refresh weak areas after quiz
   try {
