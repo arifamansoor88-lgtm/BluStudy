@@ -2,34 +2,187 @@ import os
 import json
 import re
 
-def normalize_topic(title: str) -> str:
-    title = (title or "").lower()
+TOPIC_ALIASES = {
+    "add": "addition",
+    "addition": "addition",
+    "subtract": "subtraction",
+    "subtraction": "subtraction",
+    "multiply": "multiplication",
+    "multiplication": "multiplication",
+    "divide": "division",
+    "division": "division",
+    "derivative": "derivatives",
+    "derivatives": "derivatives",
+    "differentiation": "derivatives",
+    "chain rule": "derivatives",
+    "product rule": "derivatives",
+    "quotient rule": "derivatives",
+    "integral": "integration",
+    "integrals": "integration",
+    "integration": "integration",
+    "algebra": "algebra",
+    "geometry": "geometry",
+    "trigonometry": "trigonometry",
+    "chemistry": "chemistry",
+    "physics": "physics",
+    "biology": "biology",
+}
 
-    # known core subjects (add more if needed)
-    subjects = [
-        "addition",
-        "subtraction",
-        "multiplication",
-        "division",
-        "derivatives",
-        "integration",
-        "algebra",
-        "geometry",
-        "trigonometry",
-        "chemistry",
-        "physics",
-        "biology"
+TOPIC_DISPLAY_NAMES = {
+    "addition": "Addition",
+    "subtraction": "Subtraction",
+    "multiplication": "Multiplication",
+    "division": "Division",
+    "derivatives": "Derivatives",
+    "integration": "Integration",
+    "algebra": "Algebra",
+    "geometry": "Geometry",
+    "trigonometry": "Trigonometry",
+    "chemistry": "Chemistry",
+    "physics": "Physics",
+    "biology": "Biology",
+    "general": "General Practice",
+}
+
+TOPIC_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "chapter",
+    "concept",
+    "concepts",
+    "course",
+    "for",
+    "from",
+    "generated",
+    "introduction",
+    "lesson",
+    "practice",
+    "quiz",
+    "review",
+    "test",
+    "the",
+    "to",
+    "topic",
+    "unit",
+    "untitled",
+}
+
+QUIZIO_MASTERY_SCORE = 75
+
+
+def _clean_topic_text(value):
+    text = str(value or "").strip()
+    text = re.sub(r"\.[a-zA-Z0-9]{2,5}$", "", text)
+    text = re.sub(r"[_\-]+", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def _split_topic_values(value):
+    if value is None:
+        return []
+    if isinstance(value, dict):
+        values = []
+        for item in value.values():
+            values.extend(_split_topic_values(item))
+        return values
+    if isinstance(value, (list, tuple, set)):
+        values = []
+        for item in value:
+            values.extend(_split_topic_values(item))
+        return values
+
+    return [
+        _clean_topic_text(part)
+        for part in re.split(r"[,;\n]+", str(value))
+        if _clean_topic_text(part)
     ]
 
-    for subject in subjects:
-        if subject in title:
-            return subject
 
-    #first meaningful word
-    title = re.sub(r"[^a-z0-9\s]", "", title)
-    words = [w for w in title.split() if len(w) > 3]
+def normalize_topic(value):
+    text = _clean_topic_text(value).lower()
+    if not text:
+        return "general"
 
-    return words[0] if words else "general"
+    normalized = re.sub(r"[^a-z0-9\s]", " ", text)
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+
+    for phrase, canonical in sorted(TOPIC_ALIASES.items(), key=lambda item: len(item[0]), reverse=True):
+        if re.search(rf"\b{re.escape(phrase)}\b", normalized):
+            return canonical
+
+    words = [
+        word
+        for word in normalized.split()
+        if len(word) > 2 and word not in TOPIC_STOPWORDS
+    ]
+    if not words:
+        return "general"
+
+    return "-".join(words[:3])
+
+
+def _topic_display(topic_key, source=None):
+    if topic_key in TOPIC_DISPLAY_NAMES:
+        return TOPIC_DISPLAY_NAMES[topic_key]
+    clean_source = _clean_topic_text(source)
+    if clean_source and normalize_topic(clean_source) == topic_key:
+        return clean_source.title()
+    return topic_key.replace("-", " ").title()
+
+
+def _quiz_topic_info(data):
+    data = data or {}
+    options = data.get("options") if isinstance(data.get("options"), dict) else {}
+    candidates = [
+        data.get("topicKey"),
+        data.get("topic"),
+        data.get("topicDisplay"),
+        options.get("topicKey"),
+        options.get("primaryTopic"),
+        options.get("topic"),
+        options.get("selectedTopics"),
+        options.get("customTopics"),
+        options.get("focusTopics"),
+        data.get("title"),
+        data.get("resourceName"),
+    ]
+
+    fallback = None
+    for candidate in candidates:
+        for value in _split_topic_values(candidate):
+            if fallback is None:
+                fallback = value
+            topic_key = normalize_topic(value)
+            if topic_key != "general":
+                return topic_key, _topic_display(topic_key, value)
+
+    topic_key = normalize_topic(fallback)
+    return topic_key, _topic_display(topic_key, fallback)
+
+
+def _ensure_quiz_topic_metadata(data, source_topic=None):
+    if not isinstance(data, dict):
+        return data
+
+    if source_topic:
+        topic_key = normalize_topic(source_topic)
+        topic_display = _topic_display(topic_key, source_topic)
+    else:
+        topic_key, topic_display = _quiz_topic_info(data)
+
+    data["topicKey"] = topic_key
+    data["topic"] = topic_display
+    data["topicDisplay"] = topic_display
+
+    options = data.get("options")
+    if not isinstance(options, dict):
+        options = {}
+        data["options"] = options
+    options["topicKey"] = topic_key
+    options["primaryTopic"] = topic_display
+    return data
 import uuid
 import uvicorn
 import base64
@@ -1143,6 +1296,9 @@ def get_suggested_next_steps(user_claims: dict = Depends(validate_token)):
 # ----- Quizzes -----
 class QuizDataModel(BaseModel):
     title: Optional[str] = None
+    topic: Optional[str] = None
+    topicKey: Optional[str] = None
+    topicDisplay: Optional[str] = None
     questions: Any
     userAnswers: Optional[Any] = None
     score: Optional[Any] = None
@@ -1216,26 +1372,28 @@ async def create_quiz(
         quiz_id = str(uuid.uuid4())
         
         
+        quiz_payload = _ensure_quiz_topic_metadata({
+            "title": quiz_data.get("quiz_title", "Generated Quiz"),
+            "questions": quiz_data.get("questions", []),
+            "userAnswers": None,
+            "score": None,
+            "timeTaken": 0,
+            "resourceName": file.filename,
+            "options": {
+                "numQuestions": num_questions,
+                "selectedTopics": focus_topics.split(",") if focus_topics else [],
+                "customTopics": focus_topics,
+                "questionFormats": formats_dict
+            },
+            "attempts": []
+        }, source_topic=focus_topics or None)
+
         quiz_document = {
             "id": quiz_id,
             "userId": user_claims["sub"],
             "contentType": "quiz",
             "createdAt": datetime.utcnow().isoformat(),
-            "data": {
-                "title": quiz_data.get("quiz_title", "Generated Quiz"),
-                "questions": quiz_data.get("questions", []),
-                "userAnswers": None,
-                "score": None,
-                "timeTaken": 0,
-                "resourceName": file.filename,
-                "options": {
-                    "numQuestions": num_questions,
-                    "selectedTopics": focus_topics.split(",") if focus_topics else [],
-                    "customTopics": focus_topics,
-                    "questionFormats": formats_dict
-                },
-                "attempts": []
-            }
+            "data": quiz_payload,
         }
         
         # Add folderId if provided
@@ -1244,51 +1402,96 @@ async def create_quiz(
 
         container.create_item(body=quiz_document)
         quiz_data["id"] = quiz_document["id"]
+        quiz_data["topicKey"] = quiz_payload["topicKey"]
+        quiz_data["topic"] = quiz_payload["topic"]
+        quiz_data["topicDisplay"] = quiz_payload["topicDisplay"]
         print(f"Quiz generated and saved with ID: {quiz_id}")
         return quiz_data
     except Exception as e:
         print(f"Error generating quiz: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to generate quiz: {str(e)}")
 
+def _score_to_int(score):
+    if score is None:
+        return None
+    try:
+        if isinstance(score, str):
+            score = score.replace("%", "").strip()
+        return int(float(score))
+    except (TypeError, ValueError):
+        return None
+
+
+def _latest_attempt_score(data: Dict[str, Any]) -> Optional[int]:
+    scored_attempts = []
+    for attempt in data.get("attempts", []) or []:
+        score = _score_to_int(attempt.get("score"))
+        if score is None:
+            continue
+        scored_attempts.append((attempt.get("timestamp", ""), score))
+
+    if not scored_attempts:
+        return None
+
+    scored_attempts.sort(key=lambda item: item[0] or "")
+    return scored_attempts[-1][1]
+
+
+def _get_quizio_focus_areas(user_id: str) -> List[Dict[str, Any]]:
+    query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'quiz'"
+    parameters = [{"name": "@userId", "value": user_id}]
+
+    quizzes = list(container.query_items(
+        query=query,
+        parameters=parameters,
+        enable_cross_partition_query=True
+    ))
+
+    topic_scores: Dict[str, int] = {}
+    topic_display: Dict[str, str] = {}
+
+    for quiz in quizzes:
+        data = quiz.get("data", {}) or {}
+        latest_score = _latest_attempt_score(data)
+        if latest_score is None:
+            continue
+
+        topic_key, display = _quiz_topic_info(data)
+        if topic_key == "general":
+            continue
+
+        topic_display.setdefault(topic_key, display)
+        topic_scores[topic_key] = max(topic_scores.get(topic_key, latest_score), latest_score)
+
+    weak_topics = [
+        {
+            "topic": topic_key,
+            "display": topic_display.get(topic_key, _topic_display(topic_key)),
+            "score": score,
+            "masteryScore": QUIZIO_MASTERY_SCORE,
+        }
+        for topic_key, score in topic_scores.items()
+        if score < QUIZIO_MASTERY_SCORE
+    ]
+
+    weak_topics.sort(key=lambda item: (item["score"], item["display"]))
+    return weak_topics
+
+
 @app.post("/generate-focus-quiz")
 async def generate_focus_quiz(user_claims: dict = Depends(validate_token)):
     try:
         user_id = user_claims["sub"]
+        weak_areas = _get_quizio_focus_areas(user_id)
 
-        #Get past quizzes
-        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'quiz'"
-        parameters = [{"name": "@userId", "value": user_id}]
-        quizzes = list(container.query_items(
-            query=query,
-            parameters=parameters,
-            enable_cross_partition_query=True
-        ))
-
-        if not quizzes:
+        if not weak_areas:
             return {
                 "quiz": None,
                 "focusAreas": [],
-                "message": "No past quizzes found"
+                "message": "No weak quiz topics found"
             }
 
-  #Analyze weak areas
-        weak_topics = []
-
-        for quiz in quizzes:
-            title = quiz.get("data", {}).get("title", "")
-
-            if "derivative" in title.lower():
-                weak_topics.append("Derivatives")
-            if "addition" in title.lower():
-                weak_topics.append("Addition")
-            if "chemistry" in title.lower():
-                weak_topics.append("Chemistry")
-
-        # remove duplicates
-        weak_topics = list(set(weak_topics))
-
-        if not weak_topics:
-            weak_topics = ["General Practice"]
+        weak_topics = [item["display"] for item in weak_areas]
 
         #Generate quiz
         synthetic_text = f"Focus on weak areas: {', '.join(weak_topics)}"
@@ -1304,7 +1507,7 @@ async def generate_focus_quiz(user_claims: dict = Depends(validate_token)):
 
         return {
             "quiz": quiz_data,
-            "focusAreas": weak_topics
+            "focusAreas": weak_areas
         }
 
     except Exception as e:
@@ -1314,68 +1517,7 @@ async def generate_focus_quiz(user_claims: dict = Depends(validate_token)):
 async def get_weak_areas(user_claims: dict = Depends(validate_token)):
     try:
         user_id = user_claims["sub"]
-
-        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'quiz'"
-        parameters = [{"name": "@userId", "value": user_id}]
-
-        quizzes = list(container.query_items(
-            query=query,
-            parameters=parameters,
-            enable_cross_partition_query=True
-        ))
-
-        topic_scores = {}
-        topic_display = {}
-
-        for quiz in quizzes:
-            data = quiz.get("data", {})
-            original_title = (data.get("title") or "").strip()
-            normalized = normalize_topic(original_title)
-            if normalized not in topic_display:
-                topic_display[normalized] = original_title
-            clean_display = original_title
-
-            if not original_title:
-                continue
-
-            attempts = [
-                a for a in data.get("attempts", [])
-                if a.get("score") is not None and int(str(a.get("score")).replace("%","")) > 0
-            ]
-
-            if not attempts:
-                continue
-
-            def parse_score(s):
-                if isinstance(s, str):
-                    return int(s.replace("%", "").strip())
-                return int(s or 0)
-
-            attempts.sort(key=lambda x: x.get("timestamp", ""))
-
-            latest_attempt = attempts[-1]
-            latest_score = parse_score(latest_attempt.get("score"))
-
-            if normalized not in topic_scores:
-                topic_scores[normalized] = latest_score
-            else:
-                topic_scores[normalized] = max(topic_scores[normalized], latest_score)
-
-        weak_topics = []
-        for topic, latest_score in topic_scores.items():
-            
-            print("DEBUG TOPIC:", topic, "LATEST:", latest_score)
-            if latest_score < 75:
-                weak_topics.append({
-                    "topic": topic,
-                    "display": topic_display.get(topic, topic),
-                    "score": latest_score
-                })
-        
-
-        return {
-            "focusAreas": weak_topics or [{"topic": "General Practice", "score": 100}]
-        }
+        return {"focusAreas": _get_quizio_focus_areas(user_id)}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -1392,6 +1534,7 @@ async def create_quiz_from_topic(
     try:
         print(f"Generating topic-based quiz for user: {user_claims['sub']}")
         topic: str = (payload.get("topic") or "").strip()
+        topic_key = (payload.get("topic_key") or payload.get("topicKey") or "").strip()
         if not topic:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1434,26 +1577,28 @@ async def create_quiz_from_topic(
 
         quiz_data = json.loads(quiz_json)
         quiz_id = str(uuid.uuid4())
+        quiz_payload = _ensure_quiz_topic_metadata({
+            "title": quiz_data.get("quiz_title", topic or "Generated Quiz"),
+            "questions": quiz_data.get("questions", []),
+            "userAnswers": None,
+            "score": None,
+            "timeTaken": 0,
+            "resourceName": topic,
+            "options": {
+                "numQuestions": num_questions,
+                "selectedTopics": (focus_topics.split(",") if focus_topics else []),
+                "customTopics": focus_topics,
+                "questionFormats": formats_dict,
+            },
+            "attempts": [],
+        }, source_topic=topic_key or topic)
+
         quiz_document = {
             "id": quiz_id,
             "userId": user_claims["sub"],
             "contentType": "quiz",
             "createdAt": datetime.utcnow().isoformat(),
-            "data": {
-                "title": quiz_data.get("quiz_title", topic or "Generated Quiz"),
-                "questions": quiz_data.get("questions", []),
-                "userAnswers": None,
-                "score": None,
-                "timeTaken": 0,
-                "resourceName": topic,
-                "options": {
-                    "numQuestions": num_questions,
-                    "selectedTopics": (focus_topics.split(",") if focus_topics else []),
-                    "customTopics": focus_topics,
-                    "questionFormats": formats_dict,
-                },
-                "attempts": [],
-            },
+            "data": quiz_payload,
         }
         
         # Add folderId if provided
@@ -1463,6 +1608,9 @@ async def create_quiz_from_topic(
 
         container.create_item(body=quiz_document)
         quiz_data["id"] = quiz_document["id"]
+        quiz_data["topicKey"] = quiz_payload["topicKey"]
+        quiz_data["topic"] = quiz_payload["topic"]
+        quiz_data["topicDisplay"] = quiz_payload["topicDisplay"]
         print(f"Topic-based quiz generated and saved with ID: {quiz_id}")
         return quiz_data
     except HTTPException:
@@ -1482,12 +1630,13 @@ async def save_quiz(
 ):
     try:
         print(f"Saving quiz for user: {user_claims['sub']}")
+        data = _ensure_quiz_topic_metadata(quiz.data.dict())
         document = {
             "id": str(uuid.uuid4()),
             "userId": user_claims["sub"],
             "contentType": quiz.contentType,
             "createdAt": datetime.utcnow().isoformat(),
-            "data": quiz.data.dict()
+            "data": data
         }
         
         # Add folderId if provided
@@ -1517,7 +1666,7 @@ async def save_quiz_attempt(attempt: SaveQuizAttemptRequest, user_claims: dict =
         new_attempt = {
             "attemptId": attempt_id,
             "timestamp": datetime.utcnow().isoformat(),
-            "score": int(str(attempt.score).replace("%","")) if attempt.score else None,
+            "score": _score_to_int(attempt.score),
             "timeTaken": attempt.timeTaken,
             "userAnswers": attempt.userAnswers,
             "mode": attempt.mode
@@ -1526,6 +1675,7 @@ async def save_quiz_attempt(attempt: SaveQuizAttemptRequest, user_claims: dict =
         if "attempts" not in quiz["data"]:
             quiz["data"]["attempts"] = []
         quiz["data"]["attempts"].append(new_attempt)
+        quiz["data"] = _ensure_quiz_topic_metadata(quiz["data"])
         container.upsert_item(body=quiz)
         print(f"Quiz attempt saved for quiz ID: {quiz_id}, attempt ID: {attempt_id}")
         return {"quizId": quiz_id, "attemptId": attempt_id, "message": "Quiz attempt saved successfully"}

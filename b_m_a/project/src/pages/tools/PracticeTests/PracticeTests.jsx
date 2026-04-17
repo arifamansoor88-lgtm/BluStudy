@@ -13,6 +13,7 @@ import {
 } from "../../../api/apiService";
 import { useLocation } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
+import { protectedResources } from "../../../authConfig";
 
 /**
  * Main PracticeTests component that coordinates all other components
@@ -616,13 +617,13 @@ const PracticeTests = () => {
   try {
     const account = instance.getActiveAccount();
     const response = await instance.acquireTokenSilent({
-      scopes: ["https://bluemarbleacademy.onmicrosoft.com/966d3bf1-5512-4c9c-9af0-554ad974a7f5/access"],
+      scopes: protectedResources.todoListApi.scopes,
       account: account,
     });
 
     const weakAreasToken = response.accessToken;
 
-    const res = await fetch("http://localhost:8000/weak-areas", {
+    const res = await fetch(`${protectedResources.todoListApi.endpoint}/weak-areas`, {
       headers: {
         Authorization: `Bearer ${weakAreasToken}`,
       },

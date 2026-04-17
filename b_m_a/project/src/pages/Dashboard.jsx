@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import confetti from "canvas-confetti";
 import { useMsal } from "@azure/msal-react";
+import { protectedResources } from "../authConfig";
 import {
   getTasks,
   getSuggestedNextSteps,
@@ -117,13 +118,13 @@ const handleQuizio = async () => {
   try {
     const account = instance.getActiveAccount();
     const response = await instance.acquireTokenSilent({
-      scopes: ["https://bluemarbleacademy.onmicrosoft.com/966d3bf1-5512-4c9c-9af0-554ad974a7f5/access"],
+      scopes: protectedResources.todoListApi.scopes,
       account: account,
     });
 
     const token = response.accessToken;
 
-    const res = await fetch("http://localhost:8000/weak-areas", {
+    const res = await fetch(`${protectedResources.todoListApi.endpoint}/weak-areas`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -139,26 +140,30 @@ const handleQuizio = async () => {
 };
 
 // Quizio Quiz Generation
-const startFocusQuiz = async (topic) => {
+const startFocusQuiz = async (item) => {
+  const topicKey = item.topic;
+  const topicText = item.display || item.topic;
+
   try {
-    setLoadingTopic(topic); 
+    setLoadingTopic(topicKey); 
 
     const account = instance.getActiveAccount();
     const response = await instance.acquireTokenSilent({
-      scopes: ["https://bluemarbleacademy.onmicrosoft.com/966d3bf1-5512-4c9c-9af0-554ad974a7f5/access"],
+      scopes: protectedResources.todoListApi.scopes,
       account: account,
     });
 
     const token = response.accessToken;
 
-    const res = await fetch("http://localhost:8000/generate-quiz-from-topic", {
+    const res = await fetch(`${protectedResources.todoListApi.endpoint}/generate-quiz-from-topic`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        topic: topic,
+        topic: topicText,
+        topic_key: topicKey,
         num_questions: 10
       }),
     });
@@ -168,7 +173,7 @@ const startFocusQuiz = async (topic) => {
     navigate("/tools/practice-tests", {
       state: { 
         quiz: data,
-        topic: topic   
+        topic: topicKey   
       }
     });
 
@@ -606,7 +611,7 @@ useEffect(() => {
                   return (
                     <button
                       key={idx}
-                      onClick={() => startFocusQuiz(topic)}
+                      onClick={() => startFocusQuiz(item)}
                       disabled={loadingTopic !== null}
                       className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-purple-300 transition-all flex justify-between items-center"
                     >
