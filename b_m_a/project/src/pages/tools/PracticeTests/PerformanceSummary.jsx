@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { TrendingUp, TrendingDown, Target, BookOpen, AlertTriangle, CheckCircle, XCircle, Download } from "lucide-react";
-import ReactMarkdown from "react-markdown";
 import { exportResultsAsPDF, exportElementAsPDF } from "./pdfExport";
+import { renderTextWithMath } from "./MathText";
 
 /**
  * Component for displaying comprehensive performance summary
@@ -364,7 +364,8 @@ const PerformanceSummary = ({
                   onClick={() => onReviewQuestions(topic.questionIndices[0])}
                   className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm hover:bg-red-200"
                 >
-                  Review {topic.name}
+                  <span>Review </span>
+                  {renderTextWithMath(topic.name)}
                 </button>
               ))}
             </div>
@@ -432,7 +433,7 @@ const TopicBreakdown = ({ analysis, quiz }) => {
          return (
          <div key={index} className="border border-gray-200 rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-medium text-gray-900">{topic.name}</h4>
+            <h4 className="font-medium text-gray-900">{renderTextWithMath(topic.name)}</h4>
             <div className="flex items-center gap-2">
               <span className={`text-sm font-medium ${getScoreColorClass(topic.accuracy)}`}>
                 {topic.accuracy}%
@@ -526,14 +527,14 @@ const RevisionSuggestions = ({ analysis }) => {
               return (
                 <div key={index} className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <h5 className="font-medium text-red-800">{safeTopic.name}</h5>
+                    <h5 className="font-medium text-red-800">{renderTextWithMath(safeTopic.name)}</h5>
                     <span className="text-sm text-red-600">{safeTopic.accuracy}% accuracy</span>
                   </div>
-                  <p className="text-sm text-red-700 mb-2">{safeTopic.reason}</p>
+                  <p className="text-sm text-red-700 mb-2">{renderTextWithMath(safeTopic.reason)}</p>
                   <div className="flex flex-wrap gap-2">
                     {safeTopic.suggestions.map((suggestion, idx) => (
                       <span key={idx} className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs">
-                        {suggestion}
+                        {renderTextWithMath(suggestion)}
                       </span>
                     ))}
                   </div>
@@ -562,7 +563,7 @@ const RevisionSuggestions = ({ analysis }) => {
               return (
                 <div key={index} className="bg-green-50 border border-green-200 rounded-lg p-3">
                   <div className="flex items-center justify-between">
-                    <h5 className="font-medium text-green-800">{safeTopic.name}</h5>
+                    <h5 className="font-medium text-green-800">{renderTextWithMath(safeTopic.name)}</h5>
                     <span className="text-sm text-green-600">{safeTopic.accuracy}% accuracy</span>
                   </div>
                 </div>
@@ -584,7 +585,7 @@ const RevisionSuggestions = ({ analysis }) => {
               {recommendations.map((rec, index) => (
                 <li key={index} className="text-sm text-blue-800 flex items-start">
                   <span className="mr-2">•</span>
-                  {rec || 'No recommendation provided'}
+                  {renderTextWithMath(rec || "No recommendation provided")}
                 </li>
               ))}
             </ul>

@@ -70,6 +70,18 @@ TOPIC_STOPWORDS = {
 }
 
 QUIZIO_MASTERY_SCORE = 75
+QUIZ_MATH_CONTROL_TRANSLATION = {
+    8: r"\b",
+    9: r"\t",
+    12: r"\f",
+    13: r"\r",
+}
+QUIZ_TEXT_COMMAND_REPLACEMENTS = {
+    "sin": r"\sin",
+    "cos": r"\cos",
+    "tan": r"\tan",
+    "ln": r"\ln",
+}
 
 
 def _clean_topic_text(value):
@@ -163,7 +175,77 @@ def _quiz_topic_info(data):
     return topic_key, _topic_display(topic_key, fallback)
 
 
+def _repair_quiz_math_text(value):
+    text = str(value or "")
+    if not text:
+        return text
+
+    repaired = text.translate(QUIZ_MATH_CONTROL_TRANSLATION)
+    repaired = re.sub(r"\\sqrt\s*\(\s*([^()]+?)\s*\)", r"\\sqrt{\1}", repaired, flags=re.IGNORECASE)
+    repaired = re.sub(r"\\sqrt([A-Za-z0-9]+(?:\^[A-Za-z0-9{}()+-]+)?)", r"\\sqrt{\1}", repaired)
+    repaired = re.sub(r"(?<!\\)sqrt\s*\{\s*([^{}]+?)\s*\}", r"\\sqrt{\1}", repaired, flags=re.IGNORECASE)
+    repaired = re.sub(r"(?<!\\)sqrt\s*\(\s*([^()]+?)\s*\)", r"\\sqrt{\1}", repaired, flags=re.IGNORECASE)
+    repaired = re.sub(r"(?<!\\)sqrt\s+([A-Za-z0-9]+(?:\^[A-Za-z0-9{}()+-]+)?)", r"\\sqrt{\1}", repaired, flags=re.IGNORECASE)
+    repaired = re.sub(r"(?<!\\)sqrt([A-Za-z0-9]+(?:\^[A-Za-z0-9{}()+-]+)?)", r"\\sqrt{\1}", repaired, flags=re.IGNORECASE)
+    repaired = re.sub(
+        r"\\text\s*\{\s*(sin|cos|tan|ln)\s*\}",
+        lambda match: QUIZ_TEXT_COMMAND_REPLACEMENTS[match.group(1).lower()],
+        repaired,
+        flags=re.IGNORECASE,
+    )
+    repaired = re.sub(r"\\text\s*\{\s*e\s*\}", "e", repaired, flags=re.IGNORECASE)
+    repaired = re.sub(r"\\text\s*\{\s*([a-zA-Z]+)\s*\}\s*\(", r"\\\1(", repaired)
+    return repaired
+
+
+def _sanitize_quiz_question(question):
+    if not isinstance(question, dict):
+        return question
+
+    sanitized = dict(question)
+
+    for key in ("question", "correct_answer"):
+        if isinstance(sanitized.get(key), str):
+            sanitized[key] = _repair_quiz_math_text(sanitized[key])
+
+    for key in ("options", "correct_answers", "prompts", "targets", "acceptable_answers"):
+        if isinstance(sanitized.get(key), list):
+            sanitized[key] = [
+                _repair_quiz_math_text(item) if isinstance(item, str) else item
+                for item in sanitized[key]
+            ]
+
+    if isinstance(sanitized.get("correct_mapping"), dict):
+        sanitized["correct_mapping"] = {
+            _repair_quiz_math_text(key) if isinstance(key, str) else key:
+            _repair_quiz_math_text(value) if isinstance(value, str) else value
+            for key, value in sanitized["correct_mapping"].items()
+        }
+
+    return sanitized
+
+
+def _sanitize_quiz_payload(data):
+    if not isinstance(data, dict):
+        return data
+
+    sanitized = dict(data)
+
+    for key in ("title", "quiz_title"):
+        if isinstance(sanitized.get(key), str):
+            sanitized[key] = _repair_quiz_math_text(sanitized[key])
+
+    if isinstance(sanitized.get("questions"), list):
+        sanitized["questions"] = [
+            _sanitize_quiz_question(question)
+            for question in sanitized["questions"]
+        ]
+
+    return sanitized
+
+
 def _ensure_quiz_topic_metadata(data, source_topic=None):
+    data = _sanitize_quiz_payload(data)
     if not isinstance(data, dict):
         return data
 
@@ -1419,7 +1501,7 @@ async def create_quiz(
             question_formats=selected_formats
         )
 
-        quiz_data = json.loads(quiz_json)
+        quiz_data = _sanitize_quiz_payload(json.loads(quiz_json))
         quiz_id = str(uuid.uuid4())
         
         
@@ -1554,7 +1636,7 @@ async def generate_focus_quiz(user_claims: dict = Depends(validate_token)):
             question_formats=["multiple_choice"]
         )
 
-        quiz_data = json.loads(quiz_json)
+        quiz_data = _sanitize_quiz_payload(json.loads(quiz_json))
 
         return {
             "quiz": quiz_data,
@@ -1626,7 +1708,7 @@ async def create_quiz_from_topic(
             question_formats=selected_formats,
         )
 
-        quiz_data = json.loads(quiz_json)
+        quiz_data = _sanitize_quiz_payload(json.loads(quiz_json))
         quiz_id = str(uuid.uuid4())
         quiz_payload = _ensure_quiz_topic_metadata({
             "title": quiz_data.get("quiz_title", topic or "Generated Quiz"),
@@ -1743,6 +1825,9 @@ async def get_quizzes(user_claims: dict = Depends(validate_token)):
         query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'quiz' ORDER BY c.createdAt DESC"
         parameters = [{"name": "@userId", "value": user_claims["sub"]}]
         items = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+        for item in items:
+            if isinstance(item.get("data"), dict):
+                item["data"] = _ensure_quiz_topic_metadata(item["data"])
         print(f"Found {len(items)} quizzes for user")
         return items
     except Exception as e:
@@ -1755,6 +1840,8 @@ async def get_quiz(quiz_id: str, user_claims: dict = Depends(validate_token)):
         quiz = container.read_item(item=quiz_id, partition_key=user_claims["sub"])
         if quiz["userId"] != user_claims["sub"]:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        if isinstance(quiz.get("data"), dict):
+            quiz["data"] = _ensure_quiz_topic_metadata(quiz["data"])
         return quiz
     except Exception as e:
         print(f"Error fetching quiz: {str(e)}")
@@ -1766,6 +1853,8 @@ async def get_quiz_with_history(quiz_id: str, user_claims: dict = Depends(valida
         quiz = container.read_item(item=quiz_id, partition_key=user_claims["sub"])
         if quiz["userId"] != user_claims["sub"]:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        if isinstance(quiz.get("data"), dict):
+            quiz["data"] = _ensure_quiz_topic_metadata(quiz["data"])
         return quiz
     except Exception as e:
         print(f"Error fetching quiz with history: {str(e)}")

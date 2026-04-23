@@ -203,6 +203,11 @@ IMPORTANT FORMATTING RULES FOR MATHEMATICS:
 - Do NOT write raw math like x^2 or sin(x). Always wrap math using $...$.
 - Use LaTeX functions like \\sin, \\cos, \\ln, \\sqrt.
 - Use ^ for powers.
+- Because the response is JSON, every LaTeX backslash MUST be double-escaped inside strings.
+- Write \\\\frac{{1}}{{x}}, \\\\ln(x), \\\\sin(x), \\\\cos(x), \\\\sqrt{{x}} inside JSON values, never \\\\frac{{1}}{{x}} or \\\\ln(x) with single backslashes.
+- Prefer \\\\ln(x), \\\\sin(x), \\\\cos(x) instead of \\\\text{{ln}}(x), \\\\text{{sin}}(x), \\\\text{{cos}}(x).
+- Always use braces with square roots: write \\\\sqrt{{x}}, never sqrtx or \\\\sqrtx.
+- Use e^x, not \\\\text{{e}}^x.
 
 Examples:
 x squared → $x^2$
@@ -304,6 +309,7 @@ Return a JSON object structured as follows:
 # Notes:
 - Focus on generating questions that reflect critical concepts from the given text.
 - If a question OR answer option contains mathematics, format it using LaTeX inside $...$.
+- When LaTeX is used in JSON strings, double-escape all backslashes.
 - Ensure clarity and correctness in both questions and answers.
 - Proportionately balance the mix of question types across the quiz.
 - Avoid ambiguity in "correct_answer" or "correct_answers" fields by making answers explicit.
