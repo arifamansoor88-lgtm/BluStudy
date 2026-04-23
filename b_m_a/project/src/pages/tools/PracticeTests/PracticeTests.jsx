@@ -133,51 +133,6 @@ const PracticeTests = () => {
     }
   }, [quizFromDashboard, searchParams, fetchQuizById, fetchQuizWithHistory, resetTimer]);
 
-    // Auto-load a specific quiz if navigated via URL query param (?quizId=...)
-    useEffect(() => {
-        if (!quizId) return;
-
-        const loadFromQuery = async () => {
-            setShowQuiz(false);
-            setShowUpload(true);
-            setUploading(true);
-
-            try {
-                // Fetch the quiz doc (and attempts) from the backend/DB
-                const quizDoc = await fetchQuizWithHistory(quizId);
-
-                if (!quizDoc || !quizDoc.data) {
-                    setError("Quiz not found.");
-                    return;
-                }
-
-                // PracticeTests expects the quiz to include an id
-                const quizWithId = { ...quizDoc.data, id: quizDoc.id };
-                setGeneratedQuiz(quizWithId);
-
-                // Load saved answers if present, otherwise initialize blank answers
-                if (quizDoc.data.userAnswers && quizDoc.data.userAnswers.length > 0) {
-                    setUserAnswers(quizDoc.data.userAnswers);
-                } else {
-                    setUserAnswers(Array(quizDoc.data.questions.length).fill(null));
-                }
-
-                setQuizStatus("ready");
-                setShowSummary(false);
-                setShowAttemptHistory(true);
-                setCurrentQuizQuestion(0);
-                resetTimer();
-            } catch (e) {
-                console.error("Failed to load quiz from query param:", e);
-                setError("Failed to load quiz from link.");
-            } finally {
-                setUploading(false);
-            }
-        };
-
-        loadFromQuery();
-    }, [quizId]);
-
   // Create a new test
   const handleCreateTest = () => {
     setShowQuiz(false);

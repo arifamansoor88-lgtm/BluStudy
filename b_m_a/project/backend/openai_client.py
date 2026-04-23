@@ -896,11 +896,18 @@ You are a study coach inside an education platform.
 
 Generate EXACTLY {len(targets)} suggested next steps using the targets below.
 IMPORTANT:
+Generate EXACTLY {len(targets)} suggested next steps using the targets below.
+
+IMPORTANT RULES:
 - You MUST keep each toolKey and targetId exactly as provided.
-- Each suggestion must recommend using the SAME tool in that target.
-- Title: short (4–7 words)
-- Description: 1 sentence
-- ButtonText: 1–3 words
+- Each suggestion must clearly be about the specific item described by the target.
+- Your title and description MUST reference the target’s "context" (or paraphrase it clearly).
+  Example: if context is "Biology 101 - Cell Structure", mention "Cell Structure" or "Biology 101" in the title/description.
+- Do NOT use generic titles like "Review with AI Flashcards" or "Test Knowledge with Quiz".
+  Every title must be specific to the context.
+- Title: 4–7 words
+- Description: exactly 1 sentence
+- ButtonText: 1–3 words (e.g., "Resume Deck", "Start Quiz", "Open Notes")
 
 Return ONLY valid JSON in this exact schema:
 
@@ -916,7 +923,7 @@ Return ONLY valid JSON in this exact schema:
   ]
 }}
 
-Targets (do NOT change toolKey/targetId):
+Targets (do NOT change toolKey/targetId). Use toolName + context to make wording specific:
 {json.dumps(targets)}
 """
 

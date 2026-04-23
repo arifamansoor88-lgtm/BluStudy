@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import random
 
 TOPIC_ALIASES = {
     "add": "addition",
@@ -1188,22 +1189,25 @@ async def debug_voice_note(
 def get_suggested_next_steps(user_claims: dict = Depends(validate_token)):
     uid = user_claims["sub"]
 
-    # Helper: get most recent item for a content type
-    def get_latest(content_type: str):
-        query = "SELECT * FROM c WHERE c.userId = @uid AND c.contentType = @ct"
-        params = [
-            {"name": "@uid", "value": uid},
-            {"name": "@ct", "value": content_type},
-        ]
-        items = list(container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
-        items.sort(key=lambda x: x.get("updatedAt") or x.get("createdAt") or "", reverse=True)
-        return items[0] if items else None
+    # Fetch all items for this user once, then filter in Python (more reliable than query params here)
+    all_user_items = list(container.query_items(
+        query="SELECT * FROM c WHERE c.userId = @uid",
+        parameters=[{"name": "@uid", "value": uid}],
+        enable_cross_partition_query=True
+    ))
 
-    latest_deck = get_latest("flashcard_deck")
-    latest_quiz = get_latest("quiz")
-    latest_note = get_latest("voice_note")
-    latest_mindmap = get_latest("mindmap")
-    latest_summary = get_latest("summary")
+    def get_latest_by_type(desired_types):
+        if isinstance(desired_types, str):
+            desired_types = [desired_types]
+        matches = [x for x in all_user_items if x.get("contentType") in desired_types]
+        matches.sort(key=lambda x: x.get("updatedAt") or x.get("createdAt") or "", reverse=True)
+        return matches[0] if matches else None
+
+    latest_deck = get_latest_by_type("flashcard_deck")
+    latest_quiz = get_latest_by_type("quiz")
+    latest_note = get_latest_by_type("voice_note")
+    latest_mindmap = get_latest_by_type(["mind-map", "mindmap", "mind_map"])
+    latest_summary = get_latest_by_type(["summarizer", "summary"])
 
     # Build targets list for AI
     targets = []
@@ -1242,7 +1246,7 @@ def get_suggested_next_steps(user_claims: dict = Depends(validate_token)):
             "targetId": latest_mindmap["id"],
             "toolName": "Mind Maps",
             "context": mm_title,
-    })
+        })
 
     if latest_summary:
         s_title = latest_summary.get("title") or "Summary"
@@ -1251,14 +1255,47 @@ def get_suggested_next_steps(user_claims: dict = Depends(validate_token)):
             "targetId": latest_summary["id"],
             "toolName": "Smart Summarizer",
             "context": s_title,
-    })
+        })
+
+    # ---- FILLER TARGETS: suggest creating new content for missing tools ----
+
+    # Decide the "seed" topic/context:
+    # - If we have any saved items, use the first available context/title
+    # - Otherwise use a generic topic
+    seed_context = next((t.get("context") for t in targets if t.get("context")), None)
+    if not seed_context:
+        seed_context = "your current study topic"
+
+    # Which toolKeys already exist from saved items
+    present = {t["toolKey"] for t in targets}
+
+    # Tools we want Suggested Next Steps to support (no study_planner for now)
+    ALL_TOOLS = [
+        ("flashcard_deck", "AI Flashcards"),
+        ("quiz", "Practice Tests"),
+        ("voice_note", "Voice Notes"),
+        ("mind_map", "Mind Maps"),
+        ("summarizer", "Smart Summarizer"),
+    ]
+
+    # Add a "create new" filler target for any tool not already present
+    for toolKey, toolName in ALL_TOOLS:
+        if toolKey not in present:
+            targets.append({
+                "toolKey": toolKey,
+                "targetId": "new",
+                "toolName": toolName,
+                "context": seed_context,
+            })
 
     # If nothing exists yet, return safe fallback
     if not targets:
         return {"items": []}
 
-    # Limit to 3 suggestions max (AI will generate exactly len(targets))
-    targets = targets[:3]
+    targets = targets[:5]
+
+    # Randomize order of suggested tools/cards
+    random.shuffle(targets)
 
     ai_result = generate_suggested_next_steps_ai(targets)
     items = ai_result.get("items", [])
@@ -1266,6 +1303,20 @@ def get_suggested_next_steps(user_claims: dict = Depends(validate_token)):
 
     # Map toolKey + targetId -> deep link actionPath
     def to_action_path(toolKey: str, targetId: str) -> str:
+
+        if targetId == "new":
+            if toolKey == "voice_note":
+                return "/tools/voice-notes"
+            if toolKey == "mind_map":
+                return "/tools/mind-maps"  # or "/tools/maps" if that is your create page
+            if toolKey == "summarizer":
+                return "/tools/summarizer"
+            if toolKey == "quiz":
+                return "/tools/practice-tests"
+            if toolKey == "flashcard_deck":
+                return "/tools/flashcards"
+            return "/dashboard"
+
         if toolKey == "flashcard_deck":
             return f"/tools/flashcards/study/{targetId}"
         if toolKey == "quiz":

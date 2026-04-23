@@ -347,41 +347,6 @@ const [loadingTopic, setLoadingTopic] = useState(null);
         fetchSuggestedNextSteps();
     }, [userData]);
 
-useEffect(() => {
-  if (!userData) return;
-
-  const fetchSuggestedNextSteps = async () => {
-    try {
-      const data = await getSuggestedNextSteps();
-      setSuggestedNextSteps(data.items || []);
-    } catch (error) {
-      console.error("Error fetching suggested next steps:", error);
-      setSuggestedNextSteps([
-        {
-          title: "Resume AI Flashcards",
-          description:
-            "You recently used AI Flashcards for Biology 101. Continue with Cell Structure to reinforce learning.",
-          buttonText: "Resume Tool",
-        },
-        {
-          title: "Continue Practice Test",
-          description:
-            "You recently completed a Calculus quiz. Try another short practice test on derivatives.",
-          buttonText: "Start Practice",
-        },
-        {
-          title: "Open Smart Summarizer",
-          description:
-            "You recently summarized World History notes. Continue with Chapter 5 to stay on track.",
-          buttonText: "Open Tool",
-        },
-      ]);
-    }
-  };
-
-  fetchSuggestedNextSteps();
-}, [userData]);
-
   // Display loading state if still loading
   if (loading && !userData) {
     return (
