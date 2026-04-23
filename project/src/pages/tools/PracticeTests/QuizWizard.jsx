@@ -21,6 +21,8 @@ const QuizWizard = ({
   setCustomTopics,
   numQuestions,
   setNumQuestions,
+  subjectCategory,
+  setSubjectCategory,
   questionFormats,
   toggleQuestionFormat,
   handleNextStep,
@@ -203,7 +205,15 @@ const QuizWizard = ({
                     placeholder="Type a topic, chapter, or concept. AI will generate the test."
                     value={mainTopic}
                     onChange={(e) => setMainTopic(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCreationMode("topic");
+                      if (setError) setError("");
+                    }}
+                    onFocus={() => {
+                      setCreationMode("topic");
+                      if (setError) setError("");
+                    }}
                   />
                 </div>
               </div>
@@ -221,6 +231,39 @@ const QuizWizard = ({
           </h2>
 
           <div className="space-y-6">
+            {/* Subject Category Selector */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h3 className="text-lg font-medium mb-3 text-gray-900 flex items-center gap-2">
+                Subject Category
+                <span className="text-xs font-normal text-gray-500">(influences question style)</span>
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: "General / Conceptual", value: "conceptual", desc: "Focuses on terms, definitions, and concepts" },
+                  { label: "Quantitative / STEM", value: "quantitative", desc: "Focuses on math, physics, and chemistry calculations" },
+                  { label: "Mixed", value: "mixed", desc: "A blend of both styles" }
+                ].map((cat) => (
+                  <button
+                    key={cat.value}
+                    onClick={() => setSubjectCategory(cat.value)}
+                    title={cat.desc}
+                    className={`px-4 py-2 rounded-md border text-sm transition-all flex flex-col items-center ${
+                      subjectCategory === cat.value
+                        ? "bg-red-600 border-red-600 text-white shadow-sm ring-2 ring-red-200"
+                        : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="font-semibold">{cat.label}</span>
+                  </button>
+                ))}
+              </div>
+              {subjectCategory === "quantitative" && (
+                <div className="mt-3 p-2 bg-indigo-50 border border-indigo-100 rounded text-xs text-indigo-700 font-medium italic">
+                  "Questions will emphasize calculations with specific numerical values, units, and step-by-step solutions."
+                </div>
+              )}
+            </div>
+
             {/* Show main topic if in topic mode (read-only) */}
             {creationMode === "topic" && mainTopic && (
               <div>
@@ -427,6 +470,28 @@ const QuizWizard = ({
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleQuestionFormat("fill_in_blank");
+                    }}
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => toggleQuestionFormat("numerical")}
+                className={`py-2 px-4 rounded-md flex items-center gap-2 ${
+                  questionFormats.numerical
+                    ? "bg-white shadow-sm ring-2 ring-red-100"
+                    : "bg-transparent hover:bg-white/50"
+                } ${subjectCategory === 'quantitative' && !questionFormats.numerical ? 'border border-dashed border-red-300' : ''}`}
+              >
+                <span className="flex items-center gap-2">
+                  Numerical / Calculation
+                  {subjectCategory === 'quantitative' && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Rec</span>}
+                </span>
+                {questionFormats.numerical && (
+                  <X
+                    className="h-4 w-4 text-gray-500"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleQuestionFormat("numerical");
                     }}
                   />
                 )}

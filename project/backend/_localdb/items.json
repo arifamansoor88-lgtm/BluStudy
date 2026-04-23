@@ -88,5 +88,401 @@
       }
     ],
     "resourceName": "topic"
+  },
+  {
+    "id": "c7a5f3d8-4bf4-4b4e-b27b-91b1ff3dad6b",
+    "userId": "57294fb1-9b9c-4c12-913d-833fc1e99e51",
+    "contentType": "flashcard_deck",
+    "createdAt": "2026-03-29T20:50:22.396867",
+    "title": "PCS130 Physics 2 Harmonic Motion",
+    "cards": [
+      {
+        "front": "What is harmonic motion?",
+        "back": "Harmonic motion is a type of periodic motion where the restoring force is directly proportional to the displacement.",
+        "tags": [
+          "physics",
+          "harmonic motion"
+        ]
+      },
+      {
+        "front": "What is the formula for the period of a simple harmonic oscillator?",
+        "back": "T = 2π√(m/k), where T is the period, m is the mass, and k is the spring constant.",
+        "tags": [
+          "formula",
+          "harmonic motion"
+        ]
+      },
+      {
+        "front": "What is the difference between simple harmonic motion and damped harmonic motion?",
+        "back": "Simple harmonic motion has no energy loss, while damped harmonic motion includes a resistive force that reduces the amplitude over time.",
+        "tags": [
+          "concept",
+          "harmonic motion"
+        ]
+      },
+      {
+        "front": "What is the angular frequency in harmonic motion?",
+        "back": "Angular frequency (ω) is the rate of change of the phase of the motion, given by ω = 2π/T or ω = √(k/m).",
+        "tags": [
+          "frequency",
+          "harmonic motion"
+        ]
+      },
+      {
+        "front": "What is the phase constant in harmonic motion?",
+        "back": "The phase constant determines the initial position and direction of motion of the oscillator.",
+        "tags": [
+          "concept",
+          "harmonic motion"
+        ]
+      },
+      {
+        "front": "How does the amplitude affect the energy in harmonic motion?",
+        "back": "The total energy in harmonic motion is proportional to the square of the amplitude.",
+        "tags": [
+          "energy",
+          "amplitude"
+        ]
+      },
+      {
+        "front": "What is resonance in the context of harmonic motion?",
+        "back": "Resonance occurs when a system is driven at its natural frequency, resulting in maximum amplitude.",
+        "tags": [
+          "resonance",
+          "harmonic motion"
+        ]
+      },
+      {
+        "front": "What is the significance of the spring constant in harmonic motion?",
+        "back": "The spring constant determines the stiffness of the spring and affects the frequency and period of the motion.",
+        "tags": [
+          "spring constant",
+          "harmonic motion"
+        ]
+      },
+      {
+        "front": "What is the relationship between kinetic and potential energy in harmonic motion?",
+        "back": "Kinetic and potential energy continuously exchange, with their sum remaining constant in ideal harmonic motion.",
+        "tags": [
+          "energy",
+          "harmonic motion"
+        ]
+      },
+      {
+        "front": "What is the equation of motion for a simple harmonic oscillator?",
+        "back": "The equation is x(t) = A cos(ωt + φ), where A is amplitude, ω is angular frequency, and φ is the phase constant.",
+        "tags": [
+          "equation",
+          "harmonic motion"
+        ]
+      }
+    ],
+    "resourceName": "topic"
+  },
+  {
+    "id": "026f1e9f-c946-4d09-a935-dbb23b51f452",
+    "userId": "57294fb1-9b9c-4c12-913d-833fc1e99e51",
+    "contentType": "quiz",
+    "createdAt": "2026-03-29T21:06:39.224429",
+    "data": {
+      "title": "Understanding Harmonic Motion",
+      "questions": [
+        {
+          "type": "multiple_choice",
+          "question": "What is harmonic motion?",
+          "options": [
+            "Motion that repeats itself in equal intervals of time",
+            "A linear motion without repetition",
+            "Irregular motion governed by random forces",
+            "Motion with constant acceleration"
+          ],
+          "correct_answer": "Motion that repeats itself in equal intervals of time"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "Which of the following physical systems is an example of harmonic motion?",
+          "options": [
+            "A pendulum",
+            "A rock falling off a cliff",
+            "A car driving on a road",
+            "A ball rolling downhill"
+          ],
+          "correct_answer": "A pendulum"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What is the term used to describe the time taken to complete one cycle of harmonic motion?",
+          "options": [
+            "Frequency",
+            "Amplitude",
+            "Period",
+            "Phase"
+          ],
+          "correct_answer": "Period"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "Which of the following equations represents simple harmonic motion?",
+          "options": [
+            "x(t) = Acos(ωt + φ)",
+            "x(t) = A + Bt + Ct²",
+            "x(t) = At² + Bt + C",
+            "x(t) = mv² / r"
+          ],
+          "correct_answer": "x(t) = Acos(ωt + φ)"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "In simple harmonic motion, what does the term 'amplitude' represent?",
+          "options": [
+            "The total displacement over time",
+            "The maximum displacement from the equilibrium position",
+            "The time taken to complete one cycle",
+            "The force acting on the object"
+          ],
+          "correct_answer": "The maximum displacement from the equilibrium position"
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of the following are characteristics of simple harmonic motion?",
+          "options": [
+            "It is a periodic motion",
+            "The restoring force is proportional to the displacement",
+            "It occurs at varying time intervals",
+            "Energy is conserved in the absence of damping"
+          ],
+          "correct_answers": [
+            "It is a periodic motion",
+            "The restoring force is proportional to the displacement",
+            "Energy is conserved in the absence of damping"
+          ]
+        },
+        {
+          "type": "multi_select",
+          "question": "Select the factors that influence the period of a simple pendulum.",
+          "options": [
+            "Length of the pendulum",
+            "Mass of the bob",
+            "Gravitational acceleration",
+            "Initial angle of displacement"
+          ],
+          "correct_answers": [
+            "Length of the pendulum",
+            "Gravitational acceleration"
+          ]
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of the following terms are related to harmonic motion?",
+          "options": [
+            "Frequency",
+            "Amplitude",
+            "Velocity",
+            "Phase"
+          ],
+          "correct_answers": [
+            "Frequency",
+            "Amplitude",
+            "Phase"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the following terms with their definitions.",
+          "prompts": [
+            "Amplitude",
+            "Frequency",
+            "Period",
+            "Restoring Force"
+          ],
+          "targets": [
+            "Maximum displacement from equilibrium",
+            "Number of oscillations per unit time",
+            "Time taken for one complete cycle",
+            "Force that brings the object back toward equilibrium"
+          ],
+          "correct_mapping": {
+            "Amplitude": "Maximum displacement from equilibrium",
+            "Frequency": "Number of oscillations per unit time",
+            "Period": "Time taken for one complete cycle",
+            "Restoring Force": "Force that brings the object back toward equilibrium"
+          }
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Categorize the following as examples of simple harmonic motion and non-harmonic motion.",
+          "prompts": [
+            "Swinging pendulum",
+            "Mass on a spring",
+            "Car accelerating down a highway",
+            "Earth orbiting the Sun"
+          ],
+          "targets": [
+            "Simple Harmonic Motion",
+            "Non-Harmonic Motion"
+          ],
+          "correct_mapping": {
+            "Swinging pendulum": "Simple Harmonic Motion",
+            "Mass on a spring": "Simple Harmonic Motion",
+            "Car accelerating down a highway": "Non-Harmonic Motion",
+            "Earth orbiting the Sun": "Non-Harmonic Motion"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What happens to the period of a pendulum if its length is doubled?",
+          "options": [
+            "It stays the same",
+            "It doubles",
+            "It increases by √2 times",
+            "It decreases by half"
+          ],
+          "correct_answer": "It increases by √2 times"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "Which physical quantity is represented by the symbol 'ω' in the equation for SHM?",
+          "options": [
+            "Angular frequency",
+            "Wavelength",
+            "Period",
+            "Amplitude"
+          ],
+          "correct_answer": "Angular frequency"
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What aspect of simple harmonic motion is affected by damping?",
+          "options": [
+            "Amplitude",
+            "Frequency",
+            "Period",
+            "Phase"
+          ],
+          "correct_answer": "Amplitude"
+        },
+        {
+          "type": "multi_select",
+          "question": "What energy changes occur during simple harmonic motion?",
+          "options": [
+            "Potential energy increases when displacement is maximum",
+            "Kinetic energy is maximum at equilibrium",
+            "Total mechanical energy is not conserved",
+            "Kinetic energy is zero at maximum displacement"
+          ],
+          "correct_answers": [
+            "Potential energy increases when displacement is maximum",
+            "Kinetic energy is maximum at equilibrium",
+            "Kinetic energy is zero at maximum displacement"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the following terms related to angular motion in harmonic motion.",
+          "prompts": [
+            "Angular Frequency (ω)",
+            "Phase Angle (φ)",
+            "Displacement",
+            "Velocity"
+          ],
+          "targets": [
+            "Rate of change of angular displacement",
+            "Initial position of the oscillation",
+            "Distance from the equilibrium point",
+            "Rate of change of position with time"
+          ],
+          "correct_mapping": {
+            "Angular Frequency (ω)": "Rate of change of angular displacement",
+            "Phase Angle (φ)": "Initial position of the oscillation",
+            "Displacement": "Distance from the equilibrium point",
+            "Velocity": "Rate of change of position with time"
+          }
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of the following are examples of restoring forces?",
+          "options": [
+            "Spring force",
+            "Air resistance",
+            "Gravity acting on a pendulum",
+            "Friction"
+          ],
+          "correct_answers": [
+            "Spring force",
+            "Gravity acting on a pendulum"
+          ]
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What property of simple harmonic motion determines its frequency?",
+          "options": [
+            "Amplitude and displacement",
+            "Restoring force and mass",
+            "Damping",
+            "Wavelength"
+          ],
+          "correct_answer": "Restoring force and mass"
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Place the following phases of one cycle of harmonic motion in the correct order.",
+          "prompts": [
+            "Maximum displacement (Positive)",
+            "Equilibrium (Center position)",
+            "Maximum displacement (Negative)"
+          ],
+          "targets": [
+            "1st",
+            "2nd",
+            "3rd"
+          ],
+          "correct_mapping": {
+            "Maximum displacement (Positive)": "1st",
+            "Equilibrium (Center position)": "2nd",
+            "Maximum displacement (Negative)": "3rd"
+          }
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of the following are true for damped harmonic motion?",
+          "options": [
+            "Energy is dissipated over time",
+            "Restoring force depends on displacement",
+            "Amplitude remains constant",
+            "Frequency decreases over time"
+          ],
+          "correct_answers": [
+            "Energy is dissipated over time",
+            "Restoring force depends on displacement"
+          ]
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What is the phase difference between velocity and displacement in any simple harmonic motion?",
+          "options": [
+            "0°",
+            "90°",
+            "180°",
+            "270°"
+          ],
+          "correct_answer": "90°"
+        }
+      ],
+      "userAnswers": null,
+      "score": null,
+      "timeTaken": 0,
+      "resourceName": "Harmonic motion",
+      "options": {
+        "numQuestions": 20,
+        "selectedTopics": [],
+        "customTopics": "",
+        "questionFormats": {
+          "multiple_choice": true,
+          "multi_select": true,
+          "drag_and_drop": true
+        }
+      },
+      "attempts": []
+    }
   }
 ]

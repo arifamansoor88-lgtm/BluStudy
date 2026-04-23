@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2, Pencil, FolderKanban, List } from "lucide-react";
+import { Trash2, Pencil, FolderKanban, List, Star, FolderSymlink } from "lucide-react";
+import MoveFolderModal from "../components/MoveFolderModal";
 import { motion, AnimatePresence } from "framer-motion";
 
 /**
@@ -24,7 +25,7 @@ const ConfirmModal = ({
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+        className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
         onClick={onClose}
       >
         <motion.div
@@ -36,13 +37,21 @@ const ConfirmModal = ({
           {subtitle && <p className="mt-2 text-sm text-slate-600">{subtitle}</p>}
           <div className="mt-6 flex justify-end gap-3">
             <button
+              type="button"
               onClick={onClose}
               className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700"
             >
               Cancel
             </button>
             <button
-              onClick={onConfirm}
+              type="button"
+              onClick={async () => {
+                try {
+                  await onConfirm();
+                } finally {
+                  onClose();
+                }
+              }}
               className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 text-white shadow hover:brightness-110"
             >
               {confirmLabel}
@@ -57,12 +66,15 @@ const ConfirmModal = ({
 export default function FolderManager({
   view,
   folders,
+  allFolders,
   onToggleStar,
   onRename,
   onDelete,
+  onMove,
 }) {
   const navigate = useNavigate();
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [movingFolder, setMovingFolder] = useState(null);
 
   const handleRename = async (folder) => {
     const newName = prompt("Enter new folder name:", folder.name);
@@ -97,6 +109,18 @@ export default function FolderManager({
               </div>
               <div className="flex items-center gap-3">
                 <button
+                  onClick={(e) => { e.stopPropagation(); onToggleStar(folder.id); }}
+                  title={folder.starred ? "Unstar" : "Star"}
+                >
+                  <Star className={`w-5 h-5 ${folder.starred ? "fill-yellow-400 text-yellow-400" : "text-slate-400 hover:text-yellow-500"}`} />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setMovingFolder(folder); }}
+                  title="Move folder"
+                >
+                  <FolderSymlink className="w-5 h-5 text-purple-500 hover:text-purple-700" />
+                </button>
+                <button
                   onClick={(e) => { e.stopPropagation(); handleRename(folder); }}
                   title="Rename"
                 >
@@ -121,14 +145,13 @@ export default function FolderManager({
           title="Delete this folder?"
           subtitle={
             pendingDelete
-              ? `“${pendingDelete.name}” and all files inside will be permanently deleted. This action cannot be undone.`
+              ? `"${pendingDelete.name}" and its contents will be moved to the trash. You can restore them later from the Recently Deleted section.`
               : ""
           }
           onClose={() => setPendingDelete(null)}
           onConfirm={async () => {
             if (!pendingDelete) return;
             await onDelete(pendingDelete.id);
-            setPendingDelete(null);
           }}
         />
       </>
@@ -152,6 +175,18 @@ export default function FolderManager({
                 <div className="text-lg font-bold text-slate-800 mb-1">{folder.name}</div>
                 <div className="text-sm text-slate-600">{folder.items ?? 0} items</div>
                 <div className="absolute top-3 right-3 flex gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleStar(folder.id); }}
+                    title="Unstar"
+                  >
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setMovingFolder(folder); }}
+                    title="Move folder"
+                  >
+                    <FolderSymlink className="w-4 h-4 text-purple-500 hover:text-purple-700" />
+                  </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleRename(folder); }}
                     title="Rename"
@@ -187,6 +222,18 @@ export default function FolderManager({
               <div className="text-sm text-slate-600">{folder.items ?? 0} items</div>
               <div className="absolute top-3 right-3 flex gap-2">
                 <button
+                  onClick={(e) => { e.stopPropagation(); onToggleStar(folder.id); }}
+                  title="Star"
+                >
+                  <Star className="w-4 h-4 text-slate-400 hover:text-yellow-500" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setMovingFolder(folder); }}
+                  title="Move folder"
+                >
+                  <FolderSymlink className="w-4 h-4 text-purple-500 hover:text-purple-700" />
+                </button>
+                <button
                   onClick={(e) => { e.stopPropagation(); handleRename(folder); }}
                   title="Rename"
                 >
@@ -212,14 +259,26 @@ export default function FolderManager({
         title="Delete this folder?"
         subtitle={
           pendingDelete
-            ? `“${pendingDelete.name}” and all files inside will be permanently deleted. This action cannot be undone.`
+            ? `"${pendingDelete.name}" and its contents will be moved to the trash. You can restore them later from the Recently Deleted section.`
             : ""
         }
         onClose={() => setPendingDelete(null)}
         onConfirm={async () => {
           if (!pendingDelete) return;
           await onDelete(pendingDelete.id);
-          setPendingDelete(null);
+        }}
+      />
+
+      <MoveFolderModal
+        open={!!movingFolder}
+        onClose={() => setMovingFolder(null)}
+        folderId={movingFolder?.id}
+        allFolders={allFolders || []}
+        onConfirm={async (newParentId) => {
+          if (movingFolder && onMove) {
+            await onMove(movingFolder.id, newParentId);
+          }
+          setMovingFolder(null);
         }}
       />
     </>

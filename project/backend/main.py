@@ -22,12 +22,12 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from database import client, container
+import database
 from pdf_utils import extract_text_from_pdf
-from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
+from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, evaluate_numerical_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
 from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse, CreateMindmapRequest, CreateFolderRequest, UpdateFolderRequest, FolderOut 
 from pydantic import BaseModel
-from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from azure.cosmos.exceptions import CosmosHttpResponseError, CosmosResourceNotFoundError
 import time
 
 # Load the environment variables
@@ -62,7 +62,6 @@ except Exception:
 # --------------------------------------------------------------------------------------
 # Storage configuration
 # --------------------------------------------------------------------------------------
-STORAGE_BACKEND = (os.getenv("STORAGE_BACKEND") or "azure_blob").strip().lower()
 # For azure_blob
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 AZURE_BLOB_ACCOUNT_NAME = os.getenv("AZURE_BLOB_ACCOUNT_NAME")
@@ -70,13 +69,15 @@ AZURE_BLOB_ACCOUNT_KEY = os.getenv("AZURE_BLOB_ACCOUNT_KEY")
 AZURE_BLOB_CONTAINER = os.getenv("AZURE_BLOB_CONTAINER", "audio")
 AZURE_BLOB_SAS_TTL_HOURS = int(os.getenv("AZURE_BLOB_SAS_TTL_HOURS", "0"))
 
-COSMOS_URL = os.getenv("COSMOS_DB_URL") or os.getenv("COSMOS_URL") or os.getenv("COSMOS_ENDPOINT")
-COSMOS_KEY = os.getenv("COSMOS_DB_KEY") or os.getenv("COSMOS_KEY")
-COSMOS_DB_NAME = os.getenv("COSMOS_DB_NAME", "notes-db")
-COSMOS_CONTAINER_NAME = os.getenv("COSMOS_CONTAINER_NAME", "voice-notes")
-COSMOS_PARTITION_KEY_PATH = os.getenv("COSMOS_PARTITION_KEY_PATH", "/userId")
+def _resolve_storage_backend() -> str:
+    explicit = (os.getenv("STORAGE_BACKEND") or "").strip().lower()
+    if explicit:
+        return explicit
+    if AZURE_STORAGE_CONNECTION_STRING or (AZURE_BLOB_ACCOUNT_NAME and AZURE_BLOB_ACCOUNT_KEY):
+        return "azure_blob"
+    return "local"
 
-STORAGE_MODE = "cosmos" if (COSMOS_URL and COSMOS_KEY) else "local"
+STORAGE_BACKEND = _resolve_storage_backend()
 
 # ---------- Local JSON store ----------
 class LocalContainer:
@@ -115,10 +116,13 @@ class LocalContainer:
                 return it
         raise HTTPException(status_code=404, detail="Item not found")
 
-    def replace_item(self, item: str, body: Dict[str, Any]):
+    def replace_item(self, item: str, body: Dict[str, Any], partition_key: Optional[str] = None):
         items = self._load()
         for idx, it in enumerate(items):
             if it.get("id") == item:
+                pk_value = it.get("userId") or it.get("user_id")
+                if partition_key is not None and pk_value is not None and pk_value != partition_key:
+                    raise HTTPException(status_code=404, detail="Item not found")
                 items[idx] = body
                 self._save(items)
                 return body
@@ -224,22 +228,104 @@ class LocalContainer:
             filtered = [it for it in items if it.get("id") == item_id]
             return filtered
 
+        # Trash batch (restore / permanent delete cascade)
+        if "c.deletedbatchid = @batchid" in q and "c.deleted = true" in q:
+            user_id = params.get("@userid")
+            batch_id = params.get("@batchid")
+            filtered = [
+                it
+                for it in items
+                if (it.get("userId") == user_id or it.get("user_id") == user_id)
+                and it.get("deletedBatchId") == batch_id
+                and it.get("deleted") is True
+            ]
+            if "order by c.deletedat desc" in q:
+                filtered.sort(key=lambda x: x.get("deletedAt", "") or x.get("deletedat", ""), reverse=True)
+            return filtered
+
+        # Unfiled items (not in any folder, not deleted, not folders)
+        if (
+            "c.contenttype != 'folder'" in q
+            and "(not is_defined(c.folderid) or is_null(c.folderid))" in q
+            and "(not is_defined(c.deleted) or c.deleted = false)" in q
+        ):
+            user_id = params.get("@userid")
+            filtered = [
+                it
+                for it in items
+                if (it.get("userId") == user_id or it.get("user_id") == user_id)
+                and (it.get("contentType", "").lower() != "folder" and it.get("contenttype", "").lower() != "folder")
+                and not it.get("folderId")
+                and not it.get("deleted")
+            ]
+            if "and c.contenttype = @contenttype" in q:
+                content_type = params.get("@contenttype")
+                if content_type:
+                    filtered = [
+                        it
+                        for it in filtered
+                        if (it.get("contentType", "").lower() == content_type.lower())
+                    ]
+            if "order by c.createdat desc" in q:
+                filtered.sort(key=lambda x: x.get("createdAt", "") or x.get("createdat", ""), reverse=True)
+            return filtered
+
+        # Trash list / empty trash (all soft-deleted for user; not batch-scoped queries)
+        if "c.userid = @userid" in q and "c.deleted = true" in q and "c.deletedbatchid = @batchid" not in q:
+            user_id = params.get("@userid")
+            filtered = [
+                it
+                for it in items
+                if (it.get("userId") == user_id or it.get("user_id") == user_id)
+                and it.get("deleted") is True
+            ]
+            if "order by c.deletedat desc" in q:
+                filtered.sort(key=lambda x: x.get("deletedAt", "") or x.get("deletedat", ""), reverse=True)
+            return filtered
+
+        # Descendant folder IDs (folder tree / cascade delete)
+        if (
+            "c.data.parentfolderid = @parentid" in q
+            and "c.contenttype = 'folder'" in q
+            and "c.userid = @userid" in q
+        ):
+            user_id = params.get("@userid")
+            parent_id = params.get("@parentid")
+            filtered = [
+                it
+                for it in items
+                if (it.get("userId") == user_id or it.get("user_id") == user_id)
+                and (it.get("contentType", "").lower() == "folder" or it.get("contenttype", "").lower() == "folder")
+                and it.get("data", {}).get("parentFolderId") == parent_id
+            ]
+            if q.strip().startswith("select c.id"):
+                filtered = [{"id": it["id"]} for it in filtered]
+            return filtered
+
         # Handle folder items query: "WHERE c.userId = @userId AND c.folderId = @folderId"
         if "from c where c.userid = @userid and c.folderid = @folderid" in q:
             user_id = params.get("@userid")
             folder_id = params.get("@folderid")
-            
+
             filtered = [
-                it for it in items
+                it
+                for it in items
                 if (it.get("userId") == user_id or it.get("user_id") == user_id)
                 and it.get("folderId") == folder_id
             ]
-            
+
+            if "(not is_defined(c.deleted) or c.deleted = false)" in q:
+                filtered = [it for it in filtered if not it.get("deleted")]
+
             # Add content type filter if present
             if "and c.contenttype = @contenttype" in q:
                 content_type = params.get("@contenttype")
-                filtered = [it for it in filtered if (it.get("contentType", "").lower() == content_type.lower() or it.get("contenttype", "").lower() == content_type.lower())]
-            
+                filtered = [
+                    it
+                    for it in filtered
+                    if (it.get("contentType", "").lower() == content_type.lower() or it.get("contenttype", "").lower() == content_type.lower())
+                ]
+
             # Sort by createdAt if present
             filtered.sort(key=lambda x: x.get("createdAt", "") or x.get("createdat", ""), reverse=True)
             return filtered
@@ -248,10 +334,13 @@ class LocalContainer:
         if "from c where c.userid = @userid and c.contenttype = 'folder'" in q:
             user_id = params.get("@userid")
             filtered = [
-                it for it in items
+                it
+                for it in items
                 if (it.get("userId") == user_id or it.get("user_id") == user_id)
                 and (it.get("contentType", "").lower() == "folder" or it.get("contenttype", "").lower() == "folder")
             ]
+            if "(not is_defined(c.deleted) or c.deleted = false)" in q:
+                filtered = [it for it in filtered if not it.get("deleted")]
             filtered.sort(key=lambda x: x.get("createdAt", "") or x.get("createdat", ""), reverse=True)
             return filtered
 
@@ -272,22 +361,59 @@ class LocalContainer:
         item.setdefault("settings", {})
         return item
 
-# Create a "container" depending on mode
-storage_mode = STORAGE_MODE
+# Cosmos when credentials exist and the DB/container is reachable; otherwise local JSON store.
+# USE_LOCAL_JSON_STORE=1 forces ./_localdb even if Cosmos keys are set (local dev).
+# COSMOS_FALLBACK_TO_LOCAL=0 disables auto-fallback when Cosmos returns 404/unreachable (fail fast in prod).
+client = database.client
 cosmos_error: Optional[str] = None
-if storage_mode == "cosmos":
+_use_local = os.getenv("USE_LOCAL_JSON_STORE", "").strip().lower() in ("1", "true", "yes")
+_cosmos_fallback = os.getenv("COSMOS_FALLBACK_TO_LOCAL", "1").strip().lower() not in ("0", "false", "no")
+
+if _use_local:
+    container = LocalContainer("./_localdb")
+    storage_mode = "local"
+elif database.container is not None:
     try:
-        from azure.cosmos import CosmosClient, PartitionKey
-#        cosmos_client = CosmosClient(os.getenv("COSMOS_DB_URL"), credential=os.getenv("COSMOS_DB_KEY"))
-        _database = cosmos_client.get_database_client("ai-education-platform-db")
-        container = _database.get_container_client("userContent")
-        list(container.query_items(query="SELECT TOP 1 * FROM c", enable_cross_partition_query=True))
+        list(
+            database.container.query_items(
+                query="SELECT TOP 1 c.id FROM c",
+                enable_cross_partition_query=True,
+                max_item_count=1,
+            )
+        )
+        container = database.container
+        storage_mode = "cosmos"
+    except (CosmosResourceNotFoundError, CosmosHttpResponseError) as e:
+        cosmos_error = str(e)
+        status = getattr(e, "status_code", None)
+        is_not_found = isinstance(e, CosmosResourceNotFoundError) or status == 404
+        if _cosmos_fallback and is_not_found:
+            print(
+                "WARNING: Cosmos database or container not found (404). "
+                "Using local JSON store at ./_localdb. "
+                "Create the Azure resources, fix COSMOS_DB_* in .env, or set USE_LOCAL_JSON_STORE=1. "
+                "Set COSMOS_FALLBACK_TO_LOCAL=0 to disable this fallback."
+            )
+            container = LocalContainer("./_localdb")
+            storage_mode = "local"
+        else:
+            container = database.container
+            storage_mode = "cosmos"
     except Exception as e:
         cosmos_error = str(e)
-        storage_mode = "local"
-        container = LocalContainer("./_localdb")
+        if _cosmos_fallback:
+            print(
+                f"WARNING: Cosmos not usable ({e!s}). Using local JSON store at ./_localdb. "
+                "Set COSMOS_FALLBACK_TO_LOCAL=0 to fail fast instead."
+            )
+            container = LocalContainer("./_localdb")
+            storage_mode = "local"
+        else:
+            container = database.container
+            storage_mode = "cosmos"
 else:
     container = LocalContainer("./_localdb")
+    storage_mode = "local"
 
 # --------------------------------------------------------------------------------------
 # Helpers
@@ -878,6 +1004,7 @@ async def create_quiz(
     focus_topics: Optional[str] = Form(""),
     question_formats: Optional[str] = Form("{}"),
     folder_id: Optional[str] = Form(None),
+    subject_category: Optional[str] = Form("conceptual"),
     user_claims: dict = Depends(validate_token)
 ):
     try:
@@ -909,7 +1036,8 @@ async def create_quiz(
             text=text,
             num_questions=num_questions,
             focus_topics=focus_topics.strip(),
-            question_formats=selected_formats
+            question_formats=selected_formats,
+            subject_category=subject_category
         )
 
         quiz_data = json.loads(quiz_json)
@@ -930,7 +1058,8 @@ async def create_quiz(
                     "numQuestions": num_questions,
                     "selectedTopics": focus_topics.split(",") if focus_topics else [],
                     "customTopics": focus_topics,
-                    "questionFormats": formats_dict
+                    "questionFormats": formats_dict,
+                    "subjectCategory": subject_category
                 },
                 "attempts": []
             }
@@ -990,6 +1119,8 @@ async def create_quiz_from_topic(
         selected_formats = [fmt for fmt, selected in formats_dict.items() if selected]
         if not selected_formats:
             selected_formats = ["multiple_choice"]
+            
+        subject_category = payload.get("subject_category", "conceptual")
 
         # Use the topic string as synthetic "text" input for the quiz generator
         synthetic_text = f"Create a quiz for the following topic/chapter/concept:\n\n{topic}"
@@ -999,6 +1130,7 @@ async def create_quiz_from_topic(
             num_questions=num_questions,
             focus_topics=focus_topics.strip(),
             question_formats=selected_formats,
+            subject_category=subject_category,
         )
 
         quiz_data = json.loads(quiz_json)
@@ -1020,6 +1152,7 @@ async def create_quiz_from_topic(
                     "selectedTopics": (focus_topics.split(",") if focus_topics else []),
                     "customTopics": focus_topics,
                     "questionFormats": formats_dict,
+                    "subjectCategory": subject_category,
                 },
                 "attempts": [],
             },
@@ -1348,10 +1481,20 @@ class ShortAnswerEvaluationResponse(BaseModel):
 @app.post("/evaluate-short-answer", response_model=ShortAnswerEvaluationResponse)
 async def evaluate_answer(request: ShortAnswerEvaluationRequest, user_claims: dict = Depends(validate_token)):
     try:
-        result = evaluate_short_answer(question=request.question, user_answer=request.userAnswer)
+        question_type = request.question.get("type", "")
+        if question_type == "numerical":
+            result = evaluate_numerical_answer(
+                question=request.question,
+                user_answer=request.userAnswer
+            )
+        else:
+            result = evaluate_short_answer(
+                question=request.question,
+                user_answer=request.userAnswer
+            )
         return {"isCorrect": result["is_correct"], "aiResponse": result["ai_response"]}
     except Exception as e:
-        print(f"Error evaluating short answer: {str(e)}")
+        print(f"Error evaluating answer: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to evaluate answer: {str(e)}")
 
 # ----- Summarize -----
@@ -1637,6 +1780,7 @@ class TopicFlashcardRequest(BaseModel):
     topic: str
     num_cards: int = 10
     folder_id: Optional[str] = None
+    subject_category: Optional[str] = "conceptual"
 
 
 def parse_flashcard_json(raw: str) -> Dict[str, Any]:
@@ -1816,6 +1960,14 @@ Rules:
 - Output VALID JSON ONLY
 - No markdown
 - No commentary
+"""
+    if payload.subject_category == "quantitative":
+        prompt += """
+- For quantitative subjects, the "question" side should present a specific calculation-based problem with concrete numerical values and units.
+- The "answer" side should show the worked solution steps and final numerical answer.
+- Difficulty should map to computational complexity.
+"""
+    prompt += f"""
 - Structure:
 
 {{
@@ -2058,7 +2210,8 @@ async def update_mindmap(mindmap_id: str, mindmap: MindmapDocument, user_claims:
         try:
             container.replace_item(
                 item=mindmap_id,
-                body=existing_mindmap
+                body=existing_mindmap,
+                partition_key=user_claims["sub"],
             )
             slug = existing_mindmap["data"].get("slug", "")
             return {"id": mindmap_id, "slug": slug, "message": "Mindmap updated successfully"}
@@ -2205,6 +2358,44 @@ async def delete_mindmap(mindmap_id: str, user_claims: dict = Depends(validate_t
         )
 
 
+# ----- Generic Save to Folder -----
+@app.post("/save-to-folder")
+async def save_to_folder(
+    request: Dict[str, Any] = Body(...),
+    user_claims: dict = Depends(validate_token)
+):
+    """Generic endpoint to save any content item to a folder."""
+    try:
+        user_id = user_claims["sub"]
+
+        title = request.get("title", "Untitled")
+        description = request.get("description", "")
+        content_type = request.get("contentType", "note")
+        folder_id = request.get("folderId")
+        data = request.get("data", {})
+
+        document = {
+            "id": str(uuid.uuid4()),
+            "userId": user_id,
+            "title": title,
+            "description": description,
+            "contentType": content_type,
+            "data": data,
+            "createdAt": datetime.utcnow().isoformat(),
+            "updatedAt": datetime.utcnow().isoformat(),
+        }
+
+        if folder_id:
+            document["folderId"] = folder_id
+
+        container.create_item(body=document)
+
+        return {"id": document["id"], "message": "Item saved successfully"}
+    except Exception as e:
+        print(f"Error saving item to folder: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save item: {str(e)}")
+
+
 # --------------------------------------------------------------------------------------
 # Folder API Endpoints
 # --------------------------------------------------------------------------------------
@@ -2243,7 +2434,7 @@ def _map_folder_doc_to_out(doc: Dict[str, Any], user_id: str = None) -> Dict[str
     items_count = 0
     if user_id and folder_id:
         try:
-            query = "SELECT * FROM c WHERE c.userId = @userId AND c.folderId = @folderId"
+            query = "SELECT * FROM c WHERE c.userId = @userId AND c.folderId = @folderId AND (NOT IS_DEFINED(c.deleted) OR c.deleted = false)"
             parameters = [
                 {"name": "@userId", "value": user_id},
                 {"name": "@folderId", "value": folder_id}
@@ -2258,21 +2449,51 @@ def _map_folder_doc_to_out(doc: Dict[str, Any], user_id: str = None) -> Dict[str
             print(f"Error counting items for folder {folder_id}: {e}")
             items_count = 0
     
+    # FolderOut requires non-null str for id/name/color/createdAt; legacy docs may omit fields
+    created_at = doc.get("createdAt")
+    if created_at is not None and not isinstance(created_at, str):
+        created_at = str(created_at)
+    if not created_at:
+        created_at = ""
+
     return {
-        "id": folder_id,
-        "name": data.get("name", ""),
-        "color": data.get("color", ""),
+        "id": str(folder_id) if folder_id is not None else "",
+        "name": str(data.get("name") or ""),
+        "color": str(data.get("color") or "blue"),
         "parentFolderId": data.get("parentFolderId"),
-        "createdAt": doc.get("createdAt"),
+        "starred": data.get("starred", False),
+        "createdAt": created_at,
         "updatedAt": data.get("updatedAt"),
         "items": items_count,
     }
+
+def _get_descendant_folder_ids(folder_id: str, user_id: str) -> set:
+    """Recursively collect all descendant folder IDs for a given folder."""
+    descendants = set()
+    try:
+        query = "SELECT c.id FROM c WHERE c.userId = @userId AND c.contentType = 'folder' AND c.data.parentFolderId = @parentId"
+        parameters = [
+            {"name": "@userId", "value": user_id},
+            {"name": "@parentId", "value": folder_id}
+        ]
+        children = list(container.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=True
+        ))
+        for child in children:
+            child_id = child["id"]
+            descendants.add(child_id)
+            descendants.update(_get_descendant_folder_ids(child_id, user_id))
+    except Exception as e:
+        print(f"Error getting descendant folders for {folder_id}: {e}")
+    return descendants
 
 @app.get("/folders", response_model=List[FolderOut])
 async def list_folders(user_claims: dict = Depends(validate_token)):
     """Get all folders for the authenticated user."""
     try:
-        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'folder' ORDER BY c.createdAt DESC"
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'folder' AND (NOT IS_DEFINED(c.deleted) OR c.deleted = false) ORDER BY c.createdAt DESC"
         parameters = [{"name": "@userId", "value": user_claims["sub"]}]
         
         items = list(container.query_items(
@@ -2377,9 +2598,13 @@ async def update_folder(folder_id: str, body: UpdateFolderRequest, user_claims: 
             data["name"] = body.name.strip()
         if body.color is not None:
             data["color"] = body.color
+        if body.starred is not None:
+            data["starred"] = body.starred
 
         data["updatedAt"] = datetime.utcnow().isoformat()
-        container.replace_item(item=folder_id, body=doc)
+        container.replace_item(
+            item=folder_id, body=doc, partition_key=user_claims["sub"]
+        )
         return _map_folder_doc_to_out(doc, user_claims["sub"])
     except HTTPException:
         raise
@@ -2388,15 +2613,71 @@ async def update_folder(folder_id: str, body: UpdateFolderRequest, user_claims: 
         raise HTTPException(status_code=500, detail="Failed to update folder")
 
 @app.delete("/folders/{folder_id}")
-async def delete_folder(folder_id: str, user_claims: dict = Depends(validate_token)):
-    """Delete a folder. Note: Items in the folder are not automatically deleted."""
+async def delete_folder(
+    folder_id: str,
+    cascade: bool = Query(True, description="If true, soft-delete subfolders and items. If false, fail if folder has children."),
+    user_claims: dict = Depends(validate_token)
+):
+    """Soft-delete a folder. Items and subfolders are marked as deleted, not permanently removed."""
     try:
         doc = container.read_item(item=folder_id, partition_key=user_claims["sub"])
         if doc.get("userId") != user_claims["sub"] or doc.get("contentType") != "folder":
             raise HTTPException(status_code=404, detail="Folder not found")
         
-        container.delete_item(item=folder_id, partition_key=user_claims["sub"])
-        return {"ok": True}
+        descendant_ids = _get_descendant_folder_ids(folder_id, user_claims["sub"])
+        all_folder_ids = {folder_id} | descendant_ids
+        
+        if not cascade and descendant_ids:
+            raise HTTPException(status_code=409, detail="Folder has subfolders. Use cascade=true to delete.")
+        
+        deleted_at = datetime.utcnow().isoformat()
+        batch_id = str(uuid.uuid4())
+        soft_deleted_items = 0
+        soft_deleted_subfolders = 0
+        
+        for fid in all_folder_ids:
+            try:
+                items_query = "SELECT * FROM c WHERE c.userId = @userId AND c.folderId = @folderId AND c.contentType != 'folder' AND (NOT IS_DEFINED(c.deleted) OR c.deleted = false)"
+                items_params = [
+                    {"name": "@userId", "value": user_claims["sub"]},
+                    {"name": "@folderId", "value": fid}
+                ]
+                items_in_folder = list(container.query_items(query=items_query, parameters=items_params, enable_cross_partition_query=True))
+                for item in items_in_folder:
+                    item["deleted"] = True
+                    item["deletedAt"] = deleted_at
+                    item["deletedBatchId"] = batch_id
+                    item["updatedAt"] = deleted_at
+                    container.replace_item(
+                        item=item["id"], body=item, partition_key=user_claims["sub"]
+                    )
+                    soft_deleted_items += 1
+            except Exception as e:
+                print(f"Error soft-deleting items from folder {fid}: {e}")
+            
+            if fid != folder_id:
+                try:
+                    subfolder_doc = container.read_item(item=fid, partition_key=user_claims["sub"])
+                    if subfolder_doc.get("contentType") != "folder":
+                        continue
+                    subfolder_doc["deleted"] = True
+                    subfolder_doc["deletedAt"] = deleted_at
+                    subfolder_doc["deletedBatchId"] = batch_id
+                    container.replace_item(
+                        item=fid, body=subfolder_doc, partition_key=user_claims["sub"]
+                    )
+                    soft_deleted_subfolders += 1
+                except Exception as e:
+                    print(f"Error soft-deleting subfolder {fid}: {e}")
+        
+        doc["deleted"] = True
+        doc["deletedAt"] = deleted_at
+        doc["deletedBatchId"] = batch_id
+        container.replace_item(
+            item=folder_id, body=doc, partition_key=user_claims["sub"]
+        )
+
+        return {"ok": True, "soft_deleted_items": soft_deleted_items, "soft_deleted_subfolders": soft_deleted_subfolders}
     except HTTPException:
         raise
     except Exception as e:
@@ -2417,7 +2698,7 @@ async def get_folder_items(
             raise HTTPException(status_code=404, detail="Folder not found")
         
         # Build query to get items in this folder
-        query = "SELECT * FROM c WHERE c.userId = @userId AND c.folderId = @folderId"
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.folderId = @folderId AND (NOT IS_DEFINED(c.deleted) OR c.deleted = false)"
         parameters = [
             {"name": "@userId", "value": user_claims["sub"]},
             {"name": "@folderId", "value": folder_id}
@@ -2442,6 +2723,51 @@ async def get_folder_items(
     except Exception as e:
         print(f"Error fetching folder items: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch folder items")
+
+
+@app.get("/items/unfiled")
+async def get_unfiled_items(
+    content_type: Optional[str] = Query(None, description="Filter by content type"),
+    user_claims: dict = Depends(validate_token)
+):
+    """Get all items that are not in any folder."""
+    try:
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType != 'folder' AND (NOT IS_DEFINED(c.folderId) OR IS_NULL(c.folderId)) AND (NOT IS_DEFINED(c.deleted) OR c.deleted = false)"
+        parameters = [{"name": "@userId", "value": user_claims["sub"]}]
+
+        if content_type:
+            query += " AND c.contentType = @contentType"
+            parameters.append({"name": "@contentType", "value": content_type})
+
+        query += " ORDER BY c.createdAt DESC"
+
+        items = list(container.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=True
+        ))
+
+        return items
+    except Exception as e:
+        print(f"Error fetching unfiled items: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch unfiled items")
+
+
+@app.get("/items/{item_id}")
+async def get_item(item_id: str, user_claims: dict = Depends(validate_token)):
+    """Get a single item by ID, verifying ownership."""
+    try:
+        doc = container.read_item(item=item_id, partition_key=user_claims["sub"])
+        if doc.get("userId") != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+        return doc
+    except CosmosResourceNotFoundError:
+        raise HTTPException(status_code=404, detail="Item not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching item: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch item")
 
 
 @app.patch("/items/{item_id}/move")
@@ -2485,8 +2811,10 @@ async def move_item(
             doc.pop("folderId", None)
         
         doc["updatedAt"] = datetime.utcnow().isoformat()
-        container.replace_item(item=item_id, body=doc)
-        
+        container.replace_item(
+            item=item_id, body=doc, partition_key=user_claims["sub"]
+        )
+
         return {"message": "Item moved successfully", "folderId": folder_id}
     except HTTPException:
         raise
@@ -2641,6 +2969,134 @@ async def delete_file(
     except Exception as e:
         print(f"Error deleting file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
+
+
+# --------------------------------------------------------------------------------------
+# Trash / Recently Deleted Endpoints
+# --------------------------------------------------------------------------------------
+
+@app.get("/trash")
+async def list_trash(user_claims: dict = Depends(validate_token)):
+    """Get all soft-deleted items for the user."""
+    try:
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.deleted = true ORDER BY c.deletedAt DESC"
+        parameters = [{"name": "@userId", "value": user_claims["sub"]}]
+        items = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+        return items
+    except Exception as e:
+        print(f"Error fetching trash: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch trash")
+
+@app.post("/trash/{item_id}/restore")
+async def restore_from_trash(item_id: str, user_claims: dict = Depends(validate_token)):
+    """Restore a soft-deleted item. For folders, restores all items in the same deletion batch."""
+    try:
+        doc = container.read_item(item=item_id, partition_key=user_claims["sub"])
+        if doc.get("userId") != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+        if not doc.get("deleted"):
+            raise HTTPException(status_code=400, detail="Item is not deleted")
+        
+        batch_id = doc.get("deletedBatchId")
+        restored_count = 0
+        
+        if doc.get("contentType") == "folder" and batch_id:
+            batch_query = "SELECT * FROM c WHERE c.userId = @userId AND c.deletedBatchId = @batchId AND c.deleted = true"
+            batch_params = [
+                {"name": "@userId", "value": user_claims["sub"]},
+                {"name": "@batchId", "value": batch_id}
+            ]
+            batch_items = list(container.query_items(query=batch_query, parameters=batch_params, enable_cross_partition_query=True))
+            for batch_item in batch_items:
+                batch_item.pop("deleted", None)
+                batch_item.pop("deletedAt", None)
+                batch_item.pop("deletedBatchId", None)
+                batch_item["updatedAt"] = datetime.utcnow().isoformat()
+                container.replace_item(
+                    item=batch_item["id"],
+                    body=batch_item,
+                    partition_key=user_claims["sub"],
+                )
+                restored_count += 1
+        
+        doc.pop("deleted", None)
+        doc.pop("deletedAt", None)
+        doc.pop("deletedBatchId", None)
+        doc["updatedAt"] = datetime.utcnow().isoformat()
+        
+        if doc.get("contentType") == "folder":
+            parent_id = doc.get("data", {}).get("parentFolderId")
+            if parent_id:
+                try:
+                    container.read_item(item=parent_id, partition_key=user_claims["sub"])
+                except Exception:
+                    data = doc.setdefault("data", {})
+                    data["parentFolderId"] = None
+        
+        container.replace_item(
+            item=item_id, body=doc, partition_key=user_claims["sub"]
+        )
+        restored_count += 1
+        
+        return {"message": "Restored successfully", "restored_count": restored_count}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error restoring item: {e}")
+        raise HTTPException(status_code=500, detail="Failed to restore item")
+
+@app.delete("/trash/{item_id}")
+async def permanently_delete(item_id: str, user_claims: dict = Depends(validate_token)):
+    """Permanently delete a trashed item."""
+    try:
+        doc = container.read_item(item=item_id, partition_key=user_claims["sub"])
+        if doc.get("userId") != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        batch_id = doc.get("deletedBatchId")
+        deleted_count = 0
+        
+        if doc.get("contentType") == "folder" and batch_id:
+            batch_query = "SELECT * FROM c WHERE c.userId = @userId AND c.deletedBatchId = @batchId AND c.deleted = true"
+            batch_params = [
+                {"name": "@userId", "value": user_claims["sub"]},
+                {"name": "@batchId", "value": batch_id}
+            ]
+            batch_items = list(container.query_items(query=batch_query, parameters=batch_params, enable_cross_partition_query=True))
+            for batch_item in batch_items:
+                container.delete_item(item=batch_item["id"], partition_key=user_claims["sub"])
+                deleted_count += 1
+        
+        container.delete_item(item=item_id, partition_key=user_claims["sub"])
+        deleted_count += 1
+        
+        return {"message": "Permanently deleted", "deleted_count": deleted_count}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error permanently deleting: {e}")
+        raise HTTPException(status_code=500, detail="Failed to permanently delete")
+
+@app.delete("/trash")
+async def empty_trash(user_claims: dict = Depends(validate_token)):
+    """Permanently delete all trashed items for the user."""
+    try:
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.deleted = true"
+        parameters = [{"name": "@userId", "value": user_claims["sub"]}]
+        items = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+        
+        deleted_count = 0
+        for item in items:
+            try:
+                container.delete_item(item=item["id"], partition_key=user_claims["sub"])
+                deleted_count += 1
+            except Exception as e:
+                print(f"Error deleting item {item.get('id')}: {e}")
+        
+        return {"message": f"Emptied trash", "deleted_count": deleted_count}
+    except Exception as e:
+        print(f"Error emptying trash: {e}")
+        raise HTTPException(status_code=500, detail="Failed to empty trash")
 
 
 # --------------------------------------------------------------------------------------
