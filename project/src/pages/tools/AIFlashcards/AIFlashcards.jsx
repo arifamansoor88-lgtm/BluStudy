@@ -4,6 +4,7 @@ import { useDeckData } from "./hooks";
 import FlashcardDifficultySelector from "./FlashcardDifficultySelector";
 import StarSelector from "./StarSelector";
 import FlashcardDeckList from "./FlashcardDeckList";
+import PreGeneratedFlashcardSection from "./PreGeneratedFlashcardSection";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 const MIN_FLASHCARDS = 1;
@@ -100,6 +101,10 @@ const AIFlashcards = () => {
     } catch (err) {
       console.error("Failed to open deck", err);
     }
+  };
+
+  const handlePreGeneratedDeckSelect = (deck) => {
+    navigate(`/tools/flashcards/study/${deck.id}`);
   };
 
   const saveCard = () => {
@@ -339,6 +344,10 @@ const AIFlashcards = () => {
           </div>
         )}
       </div>
+
+      <PreGeneratedFlashcardSection
+        onDeckSelect={handlePreGeneratedDeckSelect}
+      />
     </div>
   );
 };
