@@ -484,5 +484,1329 @@
       },
       "attempts": []
     }
+  },
+  {
+    "id": "1b67b2b5-0bde-4e47-b65e-0b0eb2b8d71e",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "contentType": "flashcard_deck",
+    "createdAt": "2026-04-29T18:28:35.266243",
+    "title": "Biology Basics",
+    "cards": [
+      {
+        "question": "What is the basic unit of life?",
+        "answer": "The cell.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What molecule carries genetic information?",
+        "answer": "DNA.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What process do plants use to make food?",
+        "answer": "Photosynthesis.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the powerhouse of the cell?",
+        "answer": "Mitochondria.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the main function of red blood cells?",
+        "answer": "To transport oxygen.",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What is the term for organisms that can make their own food?",
+        "answer": "Autotrophs.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the process of cell division in eukaryotic cells?",
+        "answer": "Mitosis.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What are proteins made of?",
+        "answer": "Amino acids.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the role of ribosomes in a cell?",
+        "answer": "Protein synthesis.",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What is the term for the movement of water across a membrane?",
+        "answer": "Osmosis.",
+        "difficulty": "medium",
+        "important": false
+      }
+    ],
+    "resourceName": "topic"
+  },
+  {
+    "id": "14fb6441-c225-455c-88de-c609b0f2e762",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "contentType": "flashcard_deck",
+    "createdAt": "2026-04-29T18:34:42.332755",
+    "title": "World War 2 Overview",
+    "cards": [
+      {
+        "question": "When did World War 2 begin?",
+        "answer": "1939",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "When did World War 2 end?",
+        "answer": "1945",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What event triggered World War 2?",
+        "answer": "Germany's invasion of Poland",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "Which countries formed the Axis Powers?",
+        "answer": "Germany, Italy, Japan",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "Which countries were part of the Allied Powers?",
+        "answer": "USA, UK, USSR, China, France",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "Who was the leader of Nazi Germany?",
+        "answer": "Adolf Hitler",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What was the Holocaust?",
+        "answer": "The genocide of Jews and others by Nazi Germany",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What was the significance of D-Day?",
+        "answer": "Allied invasion of Normandy to liberate Europe",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What was the Manhattan Project?",
+        "answer": "The US project to develop atomic bombs",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "Which two cities were bombed with atomic bombs?",
+        "answer": "Hiroshima and Nagasaki",
+        "difficulty": "easy",
+        "important": false
+      },
+      {
+        "question": "What was the Blitz?",
+        "answer": "German bombing campaign against the UK",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What was the main purpose of the United Nations after WW2?",
+        "answer": "To promote peace and prevent future wars",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What was the name of the treaty that ended WW2 in Europe?",
+        "answer": "The unconditional surrender of Germany",
+        "difficulty": "medium",
+        "important": false
+      },
+      {
+        "question": "What was the significance of the Battle of Stalingrad?",
+        "answer": "Turning point in the war against Germany",
+        "difficulty": "hard",
+        "important": false
+      },
+      {
+        "question": "What was the role of women during WW2?",
+        "answer": "Worked in factories, served in auxiliary roles",
+        "difficulty": "easy",
+        "important": false
+      }
+    ],
+    "resourceName": "topic"
+  },
+  {
+    "id": "a617f272-de9d-4c03-a9ac-d4be41dba8a5",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "ownerDisplayName": "A classmate",
+    "contentType": "shared_link",
+    "token": "2xNEg2o5AIi1nesK9DfdMOdJG02iYCiOiphfewwAAck",
+    "source": {
+      "itemId": "14fb6441-c225-455c-88de-c609b0f2e762",
+      "itemContentType": "flashcard_deck"
+    },
+    "settings": {
+      "allowImport": true,
+      "expiresAt": null,
+      "maxImports": null,
+      "requireAuthToView": false
+    },
+    "state": {
+      "status": "active",
+      "importCount": 0,
+      "lastAccessedAt": "2026-04-29T18:37:35.887872",
+      "lastImportedAt": null
+    },
+    "createdAt": "2026-04-29T18:35:51.729778",
+    "updatedAt": "2026-04-29T18:37:35.887887"
+  },
+  {
+    "id": "53efd315-f8b8-45c2-9144-8ef01daf0730",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "contentType": "quiz",
+    "createdAt": "2026-04-29T18:41:39.580416",
+    "data": {
+      "title": "COE 628: Operating Systems - Memory Management and Virtual Memory",
+      "questions": [
+        {
+          "type": "multiple_choice",
+          "question": "What is the primary purpose of memory management in an operating system?",
+          "options": [
+            "To allow processes to execute without using main memory",
+            "To translate logical addresses into physical addresses",
+            "To prevent multiprocessing",
+            "To restrict memory access to a single process at a time"
+          ],
+          "correct_answer": "To translate logical addresses into physical addresses"
+        },
+        {
+          "type": "multi_select",
+          "question": "Which of the following are characteristics of memory management breakthroughs?",
+          "options": [
+            "Processes do not need to have all pages in main memory at a time",
+            "Only the next instruction and data location need to be in memory",
+            "Processes can function entirely without memory",
+            "Programs must be contiguous in main memory"
+          ],
+          "correct_answers": [
+            "Processes do not need to have all pages in main memory at a time",
+            "Only the next instruction and data location need to be in memory"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the term to its definition:",
+          "prompts": [
+            "Resident set",
+            "Virtual memory",
+            "Real memory"
+          ],
+          "targets": [
+            "Portion of the process in main memory",
+            "Memory on disk that extends RAM functionality",
+            "Actual RAM in the system"
+          ],
+          "correct_mapping": {
+            "Resident set": "Portion of the process in main memory",
+            "Virtual memory": "Memory on disk that extends RAM functionality",
+            "Real memory": "Actual RAM in the system"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What happens when a process accesses an address that is not in main memory?",
+          "options": [
+            "The process is terminated",
+            "The process generates a page fault",
+            "The address is automatically fetched without interruption",
+            "The process enters the exited state"
+          ],
+          "correct_answer": "The process generates a page fault"
+        },
+        {
+          "type": "multi_select",
+          "question": "What are the advantages of the new memory management strategies introduced in operating systems?",
+          "options": [
+            "More processes can be maintained in main memory",
+            "Processes must fit completely in main memory",
+            "A process can be larger than the physical memory",
+            "Processes can execute without any memory"
+          ],
+          "correct_answers": [
+            "More processes can be maintained in main memory",
+            "A process can be larger than the physical memory"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the type of memory to its purpose:",
+          "prompts": [
+            "Real memory",
+            "Virtual memory"
+          ],
+          "targets": [
+            "RAM used for running processes",
+            "Disk space used to simulate more RAM"
+          ],
+          "correct_mapping": {
+            "Real memory": "RAM used for running processes",
+            "Virtual memory": "Disk space used to simulate more RAM"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What is thrashing in a system?",
+          "options": [
+            "The state when a process enters an infinite loop",
+            "The state when the system spends most of its time swapping pieces instead of executing instructions",
+            "The phase of loading all processes into main memory",
+            "The process of deallocating memory"
+          ],
+          "correct_answer": "The state when the system spends most of its time swapping pieces instead of executing instructions"
+        },
+        {
+          "type": "multi_select",
+          "question": "Which principles does the principle of locality highlight?",
+          "options": [
+            "Program and data references tend to cluster",
+            "Only a few pieces of a process are needed for a short period of time",
+            "All pages must reside in main memory at all times",
+            "Future memory references are random"
+          ],
+          "correct_answers": [
+            "Program and data references tend to cluster",
+            "Only a few pieces of a process are needed for a short period of time"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the components of a page table entry with their descriptions:",
+          "prompts": [
+            "Frame number",
+            "Bit indicating presence in main memory",
+            "Bit indicating modification"
+          ],
+          "targets": [
+            "Maps the virtual page to a physical frame",
+            "Determines if the page is in main memory",
+            "Tracks whether the page has been altered since last loaded"
+          ],
+          "correct_mapping": {
+            "Frame number": "Maps the virtual page to a physical frame",
+            "Bit indicating presence in main memory": "Determines if the page is in main memory",
+            "Bit indicating modification": "Tracks whether the page has been altered since last loaded"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What is the purpose of a Translation Lookaside Buffer (TLB)?",
+          "options": [
+            "To store all data needed by processes",
+            "To reduce page table lookup times",
+            "To serve as primary physical memory",
+            "To deallocate unused pages automatically"
+          ],
+          "correct_answer": "To reduce page table lookup times"
+        },
+        {
+          "type": "multi_select",
+          "question": "What actions are taken when there is a TLB miss?",
+          "options": [
+            "The process directly retrieves the data",
+            "The page number is used to index the process's page table",
+            "A potential page fault is issued if the page is not in memory",
+            "The process goes into a terminated state"
+          ],
+          "correct_answers": [
+            "The page number is used to index the process's page table",
+            "A potential page fault is issued if the page is not in memory"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Map each page table architecture to its characteristic:",
+          "prompts": [
+            "Hierarchical page table",
+            "Inverted page table"
+          ],
+          "targets": [
+            "Grows with the size of the virtual address space",
+            "Uses a hash value to map pages and requires less memory"
+          ],
+          "correct_mapping": {
+            "Hierarchical page table": "Grows with the size of the virtual address space",
+            "Inverted page table": "Uses a hash value to map pages and requires less memory"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What does segmentation allow a programmer to do?",
+          "options": [
+            "Combine all data into a single address space",
+            "View memory as multiple address spaces",
+            "Access memory directly without constraints",
+            "Prevent sharing between processes"
+          ],
+          "correct_answer": "View memory as multiple address spaces"
+        },
+        {
+          "type": "multi_select",
+          "question": "What are the benefits of segmentation in memory management?",
+          "options": [
+            "Simplifies handling of growing data structures",
+            "Facilitates sharing of data among processes",
+            "Prevents memory errors from being detected",
+            "Allows programs to remain fixed in size"
+          ],
+          "correct_answers": [
+            "Simplifies handling of growing data structures",
+            "Facilitates sharing of data among processes"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the address translation mechanism to its characteristic:",
+          "prompts": [
+            "Paging",
+            "Segmentation",
+            "Combined paging and segmentation"
+          ],
+          "targets": [
+            "Breaks memory into fixed-size pages",
+            "Uses variable-sized segments and makes memory visible to programmers",
+            "Uses both segmentation and paging for added flexibility"
+          ],
+          "correct_mapping": {
+            "Paging": "Breaks memory into fixed-size pages",
+            "Segmentation": "Uses variable-sized segments and makes memory visible to programmers",
+            "Combined paging and segmentation": "Uses both segmentation and paging for added flexibility"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What happens when page size increases?",
+          "options": [
+            "Internal fragmentation decreases significantly",
+            "More pages are required per process",
+            "Page fault rate may increase",
+            "Less data is transferred during secondary memory I/O"
+          ],
+          "correct_answer": "Page fault rate may increase"
+        },
+        {
+          "type": "multi_select",
+          "question": "What support is necessary for virtual memory?",
+          "options": [
+            "Hardware support for paging and segmentation",
+            "Operating system management of page movements",
+            "All processes executed in main memory only",
+            "Processes limited strictly to their memory allocation"
+          ],
+          "correct_answers": [
+            "Hardware support for paging and segmentation",
+            "Operating system management of page movements"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Match the principle to its impact on paging:",
+          "prompts": [
+            "Smaller page size",
+            "Larger page size"
+          ],
+          "targets": [
+            "Reduces internal fragmentation but increases the page table size",
+            "Reduces the page table size but increases internal fragmentation"
+          ],
+          "correct_mapping": {
+            "Smaller page size": "Reduces internal fragmentation but increases the page table size",
+            "Larger page size": "Reduces the page table size but increases internal fragmentation"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "question": "What does the chain pointer in an inverted page table do?",
+          "options": [
+            "Points to the next process running in memory",
+            "Points to the index of the next entry in the chain",
+            "Indicates whether a page is in memory",
+            "Terminates the operating system process"
+          ],
+          "correct_answer": "Points to the index of the next entry in the chain"
+        },
+        {
+          "type": "multi_select",
+          "question": "Which fields are typically found in an inverted page table entry?",
+          "options": [
+            "Page number",
+            "Process identifier",
+            "Control bits like valid and referenced flags",
+            "Operating system version"
+          ],
+          "correct_answers": [
+            "Page number",
+            "Process identifier",
+            "Control bits like valid and referenced flags"
+          ]
+        },
+        {
+          "type": "drag_and_drop",
+          "question": "Connect the memory optimization technique to its description:",
+          "prompts": [
+            "Translation Lookaside Buffer",
+            "Associative Mapping"
+          ],
+          "targets": [
+            "High-speed cache for most recently used page table entries",
+            "Simultaneously queries TLB entries for page number matches"
+          ],
+          "correct_mapping": {
+            "Translation Lookaside Buffer": "High-speed cache for most recently used page table entries",
+            "Associative Mapping": "Simultaneously queries TLB entries for page number matches"
+          }
+        }
+      ],
+      "userAnswers": null,
+      "score": null,
+      "timeTaken": 0,
+      "resourceName": "Chapter09.pdf",
+      "options": {
+        "numQuestions": 20,
+        "selectedTopics": [],
+        "customTopics": "",
+        "questionFormats": {
+          "multiple_choice": true,
+          "multi_select": true,
+          "drag_and_drop": true
+        },
+        "subjectCategory": "conceptual"
+      },
+      "attempts": []
+    }
+  },
+  {
+    "id": "e652ccb0-0667-4a14-bdf7-04417a67b47b",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "ownerDisplayName": "A classmate",
+    "contentType": "shared_link",
+    "token": "O1WPiQAJ_h4anlm8rRpPZ4L3eIePWruzi-fLd82WaI8",
+    "source": {
+      "itemId": "53efd315-f8b8-45c2-9144-8ef01daf0730",
+      "itemContentType": "quiz"
+    },
+    "settings": {
+      "allowImport": true,
+      "expiresAt": null,
+      "maxImports": null,
+      "requireAuthToView": false
+    },
+    "state": {
+      "status": "active",
+      "importCount": 0,
+      "lastAccessedAt": null,
+      "lastImportedAt": null
+    },
+    "createdAt": "2026-04-29T18:44:21.849459",
+    "updatedAt": "2026-04-29T18:48:55.967403"
+  },
+  {
+    "id": "5b914741-9768-442a-be87-ccc1ab7f2f57",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "contentType": "study_plan",
+    "createdAt": "2026-04-29T18:50:05.862362",
+    "data": {
+      "title": "test",
+      "description": "Study Duration: 2 weeks",
+      "content": {
+        "title": "test",
+        "description": "A 2-week comprehensive study plan designed to master key concepts of Operating Systems, with a focus on memory management, virtual memory, page tables, TLBs, segmentation, and their implications.",
+        "duration": "2 weeks",
+        "overview": "This study plan provides a structured approach to learning important topics in Operating Systems (COE 628), including memory management, virtual memory, paging, segmentation, Translation Lookaside Buffer (TLB), and related mechanisms. Each week builds foundational understanding before progressing to more advanced topics.",
+        "weekly_schedule": [
+          {
+            "week": 1,
+            "theme": "Foundations of Memory Management and Virtual Memory",
+            "description": "Introduce basic terminology, memory management principles, and key concepts related to virtual memory such as thrashing, principle of locality, and performance considerations.",
+            "days": [
+              {
+                "day": 1,
+                "topics": [
+                  {
+                    "title": "Terminology and Basics of Memory Management",
+                    "description": "Understand logical and physical memory references, memory swapping, and segmentation.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Review 'Key Points in Memory Management' and related sections.",
+                        "duration": "30 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "flashcards",
+                        "description": "Create flashcards for key terms such as 'logical address', 'physical address', 'resident set', and 'blocking state'.",
+                        "duration": "20 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 2,
+                "topics": [
+                  {
+                    "title": "Breakthrough in Memory Management and Execution of Processes",
+                    "description": "Learn how partial memory and execution strategies optimize performance.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Explore 'Breakthrough in Memory Management' and 'Execution of a Process' sections.",
+                        "duration": "40 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "AI Summarizer",
+                        "description": "Generate summaries to condense main ideas about process execution and memory usage strategy.",
+                        "duration": "15 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 3,
+                "topics": [
+                  {
+                    "title": "Thrashing and Principle of Locality",
+                    "description": "Learn the concept of thrashing and how the principle of locality impacts virtual memory efficiency.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Review sections on 'Thrashing' and 'Principle of Locality'.",
+                        "duration": "25 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "practice test generator",
+                        "description": "Create a short quiz to assess understanding of thrashing and locality principles.",
+                        "duration": "20 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 4,
+                "topics": [
+                  {
+                    "title": "Support Needed for Virtual Memory",
+                    "description": "Understand hardware and OS requirements for paging and segmentation.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Study 'Support Needed for Virtual Memory' section and make notes.",
+                        "duration": "30 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "voice notes",
+                        "description": "Record audio notes summarizing hardware and OS dependencies for virtual memory.",
+                        "duration": "15 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 5,
+                "topics": [
+                  {
+                    "title": "Paging and Address Translation",
+                    "description": "Dive deeper into paging concepts and how address translation works.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Study 'Paging' and 'Address Translation' sections.",
+                        "duration": "30 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "mind maps",
+                        "description": "Create a visual representation of paging workflow and address translation.",
+                        "duration": "25 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 6,
+                "topics": [
+                  {
+                    "title": "Page Tables and Hierarchical Structures",
+                    "description": "Examine hierarchical page tables and alternative structures like inverted page tables.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Study 'Page Tables' and 'Inverted Page Tables'.",
+                        "duration": "40 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "AI summarizer",
+                        "description": "Condense details into actionable notes for hierarchical page table mechanisms.",
+                        "duration": "15 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 7,
+                "topics": [],
+                "activities": [
+                  {
+                    "type": "tool",
+                    "tool": "practice test generator",
+                    "description": "Conduct a weekly review test on Week 1 topics using generated questions.",
+                    "duration": "30 minutes",
+                    "priority": "high",
+                    "completed": false
+                  },
+                  {
+                    "type": "analysis",
+                    "description": "Review goals for mastery and address gaps in understanding.",
+                    "duration": "20 minutes",
+                    "priority": "medium",
+                    "completed": false
+                  }
+                ]
+              }
+            ],
+            "weekly_goals": [
+              "Understand the basics of memory management and virtual memory.",
+              "Learn strategies for optimizing execution processes and avoiding thrashing.",
+              "Grasp paging concepts and hierarchical page table mechanisms."
+            ],
+            "assessment": "Complete a practice test on memory management fundamentals and explain key concepts by creating voice notes or flashcards."
+          },
+          {
+            "week": 2,
+            "theme": "Advanced Memory Management: TLBs, Segmentation, and Combined Techniques",
+            "description": "Build upon foundational knowledge to understand advanced mechanisms like TLB operations, segmentation, and combined paging/segmentation strategies.",
+            "days": [
+              {
+                "day": 1,
+                "topics": [
+                  {
+                    "title": "Translation Lookaside Buffer (TLB) Basics",
+                    "description": "Understand how TLB operates and enhances memory access efficiency.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Review 'TLB Operation' and related sections.",
+                        "duration": "30 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "flashcards",
+                        "description": "Create flashcards for TLB-related terms such as 'hit', 'miss', and associative mapping.",
+                        "duration": "20 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 2,
+                "topics": [
+                  {
+                    "title": "Page Size Trade-offs",
+                    "description": "Examine how page size impacts memory management and system performance.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Study 'Page Size' and example scenarios.",
+                        "duration": "30 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "mind maps",
+                        "description": "Visualize pros and cons of different page sizes based on given examples.",
+                        "duration": "25 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 3,
+                "topics": [
+                  {
+                    "title": "Segmentation Principles",
+                    "description": "Learn how segmentation simplifies memory handling through multiple address spaces.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Review 'Segmentation' and 'Segment Table Entries'.",
+                        "duration": "35 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "voice notes",
+                        "description": "Create audio summaries explaining segmentation benefits.",
+                        "duration": "15 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 4,
+                "topics": [
+                  {
+                    "title": "Combined Paging and Segmentation",
+                    "description": "Understand the interaction between paging and segmentation.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Explore 'Combined Paging and Segmentation' and its address translation mechanism.",
+                        "duration": "30 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "flashcards",
+                        "description": "Create flashcards for combined paging and segmentation terms.",
+                        "duration": "20 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 5,
+                "topics": [
+                  {
+                    "title": "Protection and Sharing in Segmentation",
+                    "description": "Learn how segmentation enhances memory protection and supports sharing policies.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Study 'Protection and Sharing' section in detail.",
+                        "duration": "25 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "AI summarizer",
+                        "description": "Condense core ideas about protection relationships into short notes.",
+                        "duration": "15 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 6,
+                "topics": [
+                  {
+                    "title": "Review Advanced Concepts",
+                    "description": "Consolidate knowledge on TLBs, segmentation, and combined methods.",
+                    "activities": [
+                      {
+                        "type": "tool",
+                        "tool": "practice test generator",
+                        "description": "Create a comprehensive quiz on Week 2 topics.",
+                        "duration": "30 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "mind maps",
+                        "description": "Connect advanced concepts visually to revisit relationships between memory techniques.",
+                        "duration": "25 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 7,
+                "topics": [],
+                "activities": [
+                  {
+                    "type": "assessment",
+                    "description": "Prepare an end-of-plan assessment using flashcards, voice notes, or a self-created presentation.",
+                    "duration": "30 minutes",
+                    "priority": "high",
+                    "completed": false
+                  },
+                  {
+                    "type": "analysis",
+                    "description": "Evaluate mastery of advanced memory management principles and identify areas for further review.",
+                    "duration": "20 minutes",
+                    "priority": "medium",
+                    "completed": false
+                  }
+                ]
+              }
+            ],
+            "weekly_goals": [
+              "Understand Translation Lookaside Buffers and how they optimize memory operations.",
+              "Learn segmentation principles and how they simplify programmer interaction with memory.",
+              "Grasp combined paging and segmentation strategies and their implications for protection and sharing."
+            ],
+            "assessment": "Complete a cumulative quiz covering topics from both weeks and prepare an overview presentation summarizing key concepts."
+          }
+        ],
+        "study_techniques": [
+          {
+            "technique": "Flashcards",
+            "description": "Create and review flashcards for memorizing key definitions and terms.",
+            "best_for": "Terminology-heavy sections like 'Paging', 'TLB', and 'Segmentation'."
+          },
+          {
+            "technique": "Practice Quizzes",
+            "description": "Generate short quizzes to test understanding of specific topics.",
+            "best_for": "Concept-heavy sections requiring application, such as 'Thrashing' and 'Combined Paging/Segmentation'."
+          },
+          {
+            "technique": "Mind Maps",
+            "description": "Organize complex ideas visually to demonstrate interconnections.",
+            "best_for": "Understanding workflows in topics like 'Paging Workflow' and 'TLB Operation'."
+          },
+          {
+            "technique": "AI Summarizer",
+            "description": "Quickly extract essential points from lengthy sections.",
+            "best_for": "Long text sections like 'Support Needed for Virtual Memory'."
+          },
+          {
+            "technique": "Voice Notes",
+            "description": "Record summaries or explanations to reinforce understanding audibly.",
+            "best_for": "Sections requiring explanations, like 'Segmentation Benefits' and 'Protection Sharing'."
+          }
+        ],
+        "resources": [
+          {
+            "title": "Flashcard Generator",
+            "type": "tool",
+            "description": "Helps practice and memorize key terminology and mechanisms effectively."
+          },
+          {
+            "title": "Practice Test Generator",
+            "type": "tool",
+            "description": "Generates quizzes to assess comprehension and retention of study topics."
+          },
+          {
+            "title": "AI Summarizer",
+            "type": "tool",
+            "description": "Speeds up learning by providing condensed summaries of complex sections."
+          },
+          {
+            "title": "Voice Notes",
+            "type": "tool",
+            "description": "Supports audio learning by enabling students to record quick summaries in their own words."
+          },
+          {
+            "title": "Mind Maps",
+            "type": "tool",
+            "description": "Visual tool for organizing ideas, representing workflows, and connecting concepts."
+          }
+        ]
+      },
+      "tags": [],
+      "pdfs": [
+        "Chapter09.pdf"
+      ],
+      "duration_info": {
+        "duration": 2,
+        "unit": "weeks"
+      },
+      "updatedAt": null
+    }
+  },
+  {
+    "id": "4781e508-b110-461a-b6ce-7072633a74eb",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "contentType": "study_plan",
+    "createdAt": "2026-04-29T18:56:28.365641",
+    "data": {
+      "title": "test",
+      "description": "Study Duration: 1 weeks",
+      "content": {
+        "title": "test",
+        "description": "A 1-week adaptive study plan to cover key concepts in operating systems, focusing on memory management, execution processes, virtual memory, and advanced paging/segmentation techniques.",
+        "duration": "1 week",
+        "overview": "This study plan aims to strengthen the foundational understanding of various memory management strategies in operating systems, including memory hierarchy, paging, segmentation, TLB operations, and combined paging/segmentation. Students will utilize application tools like flashcards, practice quizzes, and AI summarizers to solidify their learning.",
+        "weekly_schedule": [
+          {
+            "week": 1,
+            "theme": "Foundations of OS Memory Management",
+            "description": "This week focuses on understanding terminology, key memory management principles, execution of processes, virtual memory, paging, and segmentation. The plan builds from the basics toward advanced concepts like TLB, page tables, and combined paging/segmentation.",
+            "days": [
+              {
+                "day": 1,
+                "topics": [
+                  {
+                    "title": "Terminology & Key Points of Memory Management",
+                    "description": "Introduction to logical vs. physical addresses, swapping, and memory fragmentation.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Read 'Terminology' and 'Key Points in Memory Management' sections.",
+                        "duration": "30 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "flashcards",
+                        "description": "Create flashcards for key terms like logical addresses, physical addresses, and swapping.",
+                        "duration": "20 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 2,
+                "topics": [
+                  {
+                    "title": "Breakthroughs in Memory Management & Execution Process",
+                    "description": "Understand how resident sets, interrupts, blocking states, and disk I/O improve process performance.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Study the 'Breakthrough in Memory Management' and 'Execution of a Process' sections.",
+                        "duration": "30 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "practice quizzes",
+                        "description": "Take a short quiz on execution process steps and resident set definitions.",
+                        "duration": "20 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 3,
+                "topics": [
+                  {
+                    "title": "Virtual Memory, Thrashing and Principle of Locality",
+                    "description": "Explore the fundamental concepts of virtual memory, avoiding thrashing, and clustering in memory processes.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Review 'Real and Virtual Memory,' 'Thrashing,' and 'Principle of Locality' sections.",
+                        "duration": "40 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "mixed",
+                        "description": "Use the AI summarizer to distill the key ideas of virtual memory and thrashing prevention.",
+                        "duration": "15 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 4,
+                "topics": [
+                  {
+                    "title": "Paging and Page Tables",
+                    "description": "Understand page tables, hierarchical and inverted page tables, and address translation.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Study the 'Paging,' 'Page Tables,' 'Hierarchical Page Table,' and 'Inverted Page Table' sections.",
+                        "duration": "40 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "mind maps",
+                        "description": "Create a mind map to visualize the relationships between different types of page tables.",
+                        "duration": "20 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 5,
+                "topics": [
+                  {
+                    "title": "Translation Lookaside Buffer (TLB)",
+                    "description": "Examine how TLB operates, including associative mapping and memory optimization.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Read the sections 'Translation Lookaside Buffer' and 'Associative Mapping.'",
+                        "duration": "30 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "practice quizzes",
+                        "description": "Attempt a quiz on TLB operations and associative mapping concepts.",
+                        "duration": "20 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 6,
+                "topics": [
+                  {
+                    "title": "Segmentation & Combined Paging-Segmentation",
+                    "description": "Learn about memory segmentation, its advantages, and its integration with paging.",
+                    "activities": [
+                      {
+                        "type": "reading",
+                        "description": "Review 'Segmentation,' 'Segment Organization,' and 'Combined Paging and Segmentation.'",
+                        "duration": "40 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "flashcards",
+                        "description": "Create flashcards summarizing differences between paging, segmentation, and combined paging-segmentation.",
+                        "duration": "15 minutes",
+                        "priority": "medium",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "day": 7,
+                "topics": [
+                  {
+                    "title": "Review and Practice with Assessments",
+                    "description": "Revisit all key topics from the week and practice with quizzes.",
+                    "activities": [
+                      {
+                        "type": "review",
+                        "description": "Review flashcards from throughout the week on topics like memory management and virtual memory.",
+                        "duration": "30 minutes",
+                        "priority": "high",
+                        "completed": false
+                      },
+                      {
+                        "type": "tool",
+                        "tool": "practice quizzes",
+                        "description": "Complete a comprehensive practice quiz covering the week's material.",
+                        "duration": "30 minutes",
+                        "priority": "high",
+                        "completed": false
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "weekly_goals": [
+              "Understand the core principles of memory management in operating systems.",
+              "Explain the role of virtual memory and its impact on system performance.",
+              "Distinguish between paging, segmentation, and their combined approaches.",
+              "Learn how the Translation Lookaside Buffer (TLB) optimizes memory access."
+            ],
+            "assessment": "Complete practice quizzes on all major topics and ensure confidence with flashcards."
+          }
+        ],
+        "study_techniques": [
+          {
+            "technique": "Flashcards",
+            "description": "Summarize key points as question-answer pairs to reinforce memorization.",
+            "best_for": "Learning terminology, definitions, and fragmented concepts like memory types."
+          },
+          {
+            "technique": "AI Summarizer",
+            "description": "Condense sections of material into clear takeaways for easier review.",
+            "best_for": "Longer reading assignments or complex explanations of concepts like TLB operation."
+          },
+          {
+            "technique": "Mind Maps",
+            "description": "Visualize relationships between concepts to understand hierarchical dependencies.",
+            "best_for": "Mapping topics like page tables and memory hierarchy."
+          },
+          {
+            "technique": "Practice Quizzes",
+            "description": "Apply knowledge through recall-based tests and scenario-based questions.",
+            "best_for": "Assessing deeper understanding of execution processes and TLB/segmentation operations."
+          }
+        ],
+        "resources": [
+          {
+            "title": "Flashcard Generator",
+            "type": "tool",
+            "description": "Reinforces memorization of key OS terms and concepts."
+          },
+          {
+            "title": "Practice Test Generator",
+            "type": "tool",
+            "description": "Allows self-assessment through quizzes to check understanding of topics."
+          },
+          {
+            "title": "AI Summarizer",
+            "type": "tool",
+            "description": "Breaks down dense content into concise summaries for easier retention."
+          },
+          {
+            "title": "Mind Maps",
+            "type": "tool",
+            "description": "A visual organization tool to understand relationships between OS components."
+          }
+        ]
+      },
+      "tags": [],
+      "pdfs": [
+        "Chapter09.pdf"
+      ],
+      "duration_info": {
+        "duration": 1,
+        "unit": "weeks"
+      },
+      "updatedAt": null
+    }
+  },
+  {
+    "id": "5077c4c0-5222-468f-834e-e49b9130dbc2",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "ownerDisplayName": "A classmate",
+    "contentType": "shared_link",
+    "token": "67CyHuG-ZGg9Q5zGp5jH2i7aVi7dA424kGzshnGoSIk",
+    "source": {
+      "itemId": "4781e508-b110-461a-b6ce-7072633a74eb",
+      "itemContentType": "study_plan"
+    },
+    "settings": {
+      "allowImport": true,
+      "expiresAt": null,
+      "maxImports": null,
+      "requireAuthToView": false
+    },
+    "state": {
+      "status": "active",
+      "importCount": 0,
+      "lastAccessedAt": null,
+      "lastImportedAt": null
+    },
+    "createdAt": "2026-04-29T19:10:34.540569",
+    "updatedAt": "2026-04-29T19:10:34.540569"
+  },
+  {
+    "id": "c9db625e-c1cd-4b1d-b00b-d3f08a3ba89e",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "contentType": "folder",
+    "createdAt": "2026-04-29T19:11:10.658709",
+    "data": {
+      "name": "test",
+      "color": "from-indigo-100 to-indigo-200",
+      "parentFolderId": null,
+      "updatedAt": null
+    }
+  },
+  {
+    "id": "42243e48-5442-4479-8deb-abf2476ad69d",
+    "userId": "587a1d0d-d2ae-4606-9e8d-27e80a433af8",
+    "title": "Summary: Chapter09.pdf",
+    "description": "- Logical addresses are dynamically translated into physical addresses at runtime. - Processes can be swapped in and out of memory, occupyin",
+    "contentType": "Summary",
+    "data": {
+      "summary": "- Logical addresses are dynamically translated into physical addresses at runtime.  \n- Processes can be swapped in and out of memory, occupying different regions during execution.  \n- Processes may be divided into non-contiguous pieces in memory.  \n- Not all pages or segments of a process need to be in memory during execution.  \n- Execution can proceed if the next instruction and data location are in memory.  \n- Operating systems load parts of a program into main memory (resident set).  \n- Interrupts occur when an address needed is not in main memory, placing the process in a blocking state.  \n- Disk I/O requests are issued for missing pieces, and other processes are dispatched during disk operations.  \n- More processes can be maintained in memory by loading only parts of each process.  \n- Processes can be larger than the main memory.  \n- Real memory refers to RAM, while virtual memory uses disk space for effective multiprogramming.  \n- Thrashing occurs when the system spends more time swapping than executing instructions.  \n- The principle of locality suggests that program and data references tend to cluster, enabling efficient virtual memory use.  \n- Virtual memory requires hardware support for paging and segmentation and OS management of memory movement.  \n- Paging uses page tables to map virtual addresses to physical memory frames.  \n- Page tables contain entries indicating if pages are in memory and if they have been altered.  \n- Page tables are stored in virtual memory, with parts loaded into main memory during execution.  \n- Hierarchical page tables grow proportionally with virtual address space size.  \n- Inverted page tables use hashing to map virtual addresses to physical memory, requiring fixed memory proportions.  \n- Translation Lookaside Buffers (TLBs) speed up memory access by caching page table",
+      "tags": [
+        "smart-summarizer"
+      ]
+    },
+    "createdAt": "2026-04-29T19:11:10.681832",
+    "updatedAt": "2026-04-29T19:11:10.681847",
+    "folderId": "c9db625e-c1cd-4b1d-b00b-d3f08a3ba89e"
   }
 ]

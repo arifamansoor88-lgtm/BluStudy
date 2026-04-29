@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { useDeckData } from './hooks';
 import { X } from 'lucide-react';
+import ShareItemButton from "../../../components/ShareItemButton";
 
 const CardStackIcon = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}>
@@ -24,6 +25,7 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
       ...deck,
       title: deck.title ?? deck.data?.title ?? "Untitled Deck",
       cards: deck.cards ?? deck.data?.cards ?? [],
+      cardCount: deck.cardCount ?? deck.cards?.length ?? deck.data?.cards?.length ?? 0,
     }));
 
     setLocalDecks(normalizedDecks);
@@ -58,6 +60,11 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
           className="group relative cursor-pointer rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition"
         >
           {/* Delete */}
+          <ShareItemButton
+            itemId={deck.id}
+            itemLabel="flashcard deck"
+            className="absolute top-4 right-14 rounded-full p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition"
+          />
           <button
             onClick={(e) => handleDeleteDeck(deck.id, e)}
             className="absolute top-4 right-4 rounded-full p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
@@ -75,7 +82,7 @@ const FlashcardDeckList = ({ decks, onDeckSelect }) => {
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <div className="flex items-center gap-1.5">
               <CardStackIcon className="h-4 w-4" />
-              <span>{deck.cards.length} cards</span>
+              <span>{deck.cardCount} cards</span>
             </div>
 
             <span className="text-xs rounded-full bg-blue-50 px-2 py-0.5 text-blue-600">

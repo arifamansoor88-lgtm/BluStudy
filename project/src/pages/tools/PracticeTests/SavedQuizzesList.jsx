@@ -1,4 +1,5 @@
 import React from "react";
+import ShareItemButton from "../../../components/ShareItemButton";
 
 /**
  * Component for displaying a list of saved quizzes
@@ -22,10 +23,15 @@ const SavedQuizzesList = ({ savedQuizzes, onQuizSelect }) => {
       {savedQuizzes.map((quiz, index) => (
         <div
           key={quiz.id || index}
-          className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden h-full transform hover:-translate-y-1"
+          className="relative bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden h-full transform hover:-translate-y-1"
           onClick={() => onQuizSelect(quiz)}
         >
           <div className="h-3 bg-gradient-to-r from-red-500 to-red-400 transition-all duration-300 group-hover:h-4"></div>
+          <ShareItemButton
+            itemId={quiz.id}
+            itemLabel="practice test"
+            className="absolute right-4 top-6 rounded-full p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition"
+          />
           <div className="p-8 h-full flex flex-col">
             <h3 className="font-semibold text-gray-800 text-xl mb-3 min-h-[3.5rem] leading-tight">
               {quiz.data?.title || "Untitled Quiz"}

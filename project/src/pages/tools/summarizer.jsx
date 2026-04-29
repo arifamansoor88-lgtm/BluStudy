@@ -24,6 +24,7 @@ import { msalInstance, protectedResources } from '../../authConfig';
 
 // reusable save-to-folder button
 import SaveToFolderButton from '../../components/SaveToFolderButton';
+import ShareItemButton from '../../components/ShareItemButton';
 
 const API_BASE = "http://localhost:8000";
 
@@ -444,9 +445,14 @@ const Summarizer = () => {
                   <div
                     key={savedSummary.id}
                     onClick={() => handleSelectSummary(savedSummary)}
-                    className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden h-full transform hover:-translate-y-1"
+                    className="relative bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden h-full transform hover:-translate-y-1"
                   >
                     <div className="h-3 bg-gradient-to-r from-purple-500 to-indigo-400"></div>
+                    <ShareItemButton
+                      itemId={savedSummary.id}
+                      itemLabel="summary"
+                      className="absolute right-4 top-6 rounded-full p-1.5 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition"
+                    />
                     <div className="p-6 h-full flex flex-col">
                       <h3 className="font-semibold text-gray-800 text-lg mb-3 min-h-[3rem] leading-tight">
                         {savedSummary.title || "Untitled Summary"}

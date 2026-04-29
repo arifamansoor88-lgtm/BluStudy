@@ -202,3 +202,47 @@ class FolderOut(BaseModel):
     createdAt: str
     updatedAt: Optional[str] = None
     items: Optional[int] = 0
+
+
+# =========================
+# Share link models
+# =========================
+
+class ShareLinkSettings(BaseModel):
+    allowImport: bool = True
+    expiresAt: Optional[str] = None
+    maxImports: Optional[int] = None
+    requireAuthToView: bool = False
+
+
+class ShareLinkSource(BaseModel):
+    itemId: str
+    itemContentType: str
+
+
+class ShareLinkState(BaseModel):
+    status: str = "active"
+    importCount: int = 0
+    lastAccessedAt: Optional[str] = None
+    lastImportedAt: Optional[str] = None
+
+
+class ShareLinkCreateRequest(BaseModel):
+    sourceItemId: str
+    settings: Optional[ShareLinkSettings] = None
+
+
+class ShareLinkUpdateRequest(BaseModel):
+    settings: Optional[ShareLinkSettings] = None
+    status: Optional[str] = None
+
+
+class ShareLinkDocument(BaseModel):
+    contentType: str = "shared_link"
+    userId: str
+    token: str
+    source: ShareLinkSource
+    settings: ShareLinkSettings = Field(default_factory=ShareLinkSettings)
+    state: ShareLinkState = Field(default_factory=ShareLinkState)
+    createdAt: str
+    updatedAt: str

@@ -5,6 +5,9 @@ import uvicorn
 import base64
 import mimetypes
 import shutil
+import secrets
+import hmac
+import copy
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional, Union
 from json_repair import repair_json
@@ -25,7 +28,7 @@ from pydantic import BaseModel
 import database
 from pdf_utils import extract_text_from_pdf
 from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, evaluate_numerical_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
-from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse, CreateMindmapRequest, CreateFolderRequest, UpdateFolderRequest, FolderOut 
+from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse, CreateMindmapRequest, CreateFolderRequest, UpdateFolderRequest, FolderOut, ShareLinkCreateRequest, ShareLinkUpdateRequest, ShareLinkSettings
 from pydantic import BaseModel
 from azure.cosmos.exceptions import CosmosHttpResponseError, CosmosResourceNotFoundError
 import time
@@ -200,6 +203,17 @@ class LocalContainer:
             filtered.sort(key=lambda x: x.get("createdAt", "") or x.get("createdat", ""), reverse=True)
             return filtered
 
+        if "from c where c.userid = @uid and c.contenttype = 'study_plan'" in q:
+            user_id = params.get("@uid")
+            filtered = [
+                it
+                for it in items
+                if (it.get("userId") == user_id or it.get("user_id") == user_id)
+                and (it.get("contentType") == "study_plan" or it.get("contenttype") == "study_plan")
+            ]
+            filtered.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
+            return filtered
+
         if "from c where c.userid = '" in q and "and c.contenttype = 'study_plan'" in q:
             try:
                 start = q.index("c.userid = '") + len("c.userid = '")
@@ -254,7 +268,8 @@ class LocalContainer:
                 it
                 for it in items
                 if (it.get("userId") == user_id or it.get("user_id") == user_id)
-                and (it.get("contentType", "").lower() != "folder" and it.get("contenttype", "").lower() != "folder")
+                and (it.get("contentType", "").lower() not in {"folder", "shared_link"})
+                and (it.get("contenttype", "").lower() not in {"folder", "shared_link"})
                 and not it.get("folderId")
                 and not it.get("deleted")
             ]
@@ -262,12 +277,63 @@ class LocalContainer:
                 content_type = params.get("@contenttype")
                 if content_type:
                     filtered = [
-                        it
-                        for it in filtered
-                        if (it.get("contentType", "").lower() == content_type.lower())
-                    ]
+                it
+                for it in filtered
+                if (it.get("contentType", "").lower() == content_type.lower())
+            ]
             if "order by c.createdat desc" in q:
                 filtered.sort(key=lambda x: x.get("createdAt", "") or x.get("createdat", ""), reverse=True)
+            return filtered
+
+        # Share link queries
+        if "c.contenttype = 'shared_link'" in q:
+            filtered = [
+                it
+                for it in items
+                if (it.get("contentType", "").lower() == "shared_link" or it.get("contenttype", "").lower() == "shared_link")
+            ]
+
+            if "c.userid = @userid" in q:
+                user_id = params.get("@userid")
+                filtered = [
+                    it
+                    for it in filtered
+                    if (it.get("userId") == user_id or it.get("user_id") == user_id)
+                ]
+
+            if "c.token = @token" in q:
+                token = params.get("@token")
+                filtered = [it for it in filtered if it.get("token") == token]
+
+            if "c.source.itemid = @sourceitemid" in q:
+                source_item_id = params.get("@sourceitemid")
+                filtered = [
+                    it
+                    for it in filtered
+                    if it.get("source", {}).get("itemId") == source_item_id
+                ]
+
+            if "c.source.itemcontenttype = @itemcontenttype" in q:
+                item_content_type = params.get("@itemcontenttype")
+                filtered = [
+                    it
+                    for it in filtered
+                    if it.get("source", {}).get("itemContentType") == item_content_type
+                ]
+
+            if "c.state.status = 'active'" in q:
+                filtered = [
+                    it
+                    for it in filtered
+                    if it.get("state", {}).get("status") == "active"
+                ]
+
+            if "order by c.createdat desc" in q:
+                filtered.sort(key=lambda x: x.get("createdAt", "") or x.get("createdat", ""), reverse=True)
+
+            if "select top 1" in q:
+                return filtered[:1]
+
             return filtered
 
         # Trash list / empty trash (all soft-deleted for user; not batch-scoped queries)
@@ -479,6 +545,286 @@ def _attach_playback_urls(item: Dict[str, Any], request: Request) -> Dict[str, A
     item["audio_url"] = playback_url
     item["audioUrl"] = playback_url
     return item
+
+
+SHAREABLE_CONTENT_TYPES = {
+    "flashcard_deck",
+    "quiz",
+    "study_plan",
+    "summary",
+}
+
+
+def _utcnow_iso() -> str:
+    return datetime.utcnow().isoformat()
+
+
+def _get_item_owner(item: Dict[str, Any]) -> Optional[str]:
+    return item.get("userId") or item.get("user_id")
+
+
+def _is_shareable_content_type(content_type: Optional[str]) -> bool:
+    return (content_type or "").strip().lower() in SHAREABLE_CONTENT_TYPES
+
+
+def _load_owned_item(item_id: str, user_id: str) -> Dict[str, Any]:
+    try:
+        item = container.read_item(item=item_id, partition_key=user_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Source item not found")
+
+    if _get_item_owner(item) != user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    content_type = item.get("contentType")
+    if not _is_shareable_content_type(content_type):
+        raise HTTPException(status_code=400, detail="This item type cannot be shared yet")
+
+    if item.get("deleted") is True:
+        raise HTTPException(status_code=404, detail="Source item not found")
+
+    return item
+
+
+def _normalize_share_settings(raw_settings: Optional[Union[ShareLinkSettings, Dict[str, Any]]]) -> Dict[str, Any]:
+    if isinstance(raw_settings, ShareLinkSettings):
+        settings = raw_settings.dict()
+    elif isinstance(raw_settings, dict):
+        settings = ShareLinkSettings(**raw_settings).dict()
+    else:
+        settings = ShareLinkSettings().dict()
+
+    expires_at = settings.get("expiresAt")
+    if expires_at:
+        try:
+            datetime.fromisoformat(expires_at)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="expiresAt must be a valid ISO timestamp")
+
+    max_imports = settings.get("maxImports")
+    if max_imports is not None and max_imports < 1:
+        raise HTTPException(status_code=400, detail="maxImports must be at least 1")
+
+    return settings
+
+
+def _serialize_share_link(link: Dict[str, Any], request: Request) -> Dict[str, Any]:
+    token = link.get("token", "")
+    return {
+        "id": link["id"],
+        "token": token,
+        "source": link.get("source", {}),
+        "settings": link.get("settings", {}),
+        "state": link.get("state", {}),
+        "createdAt": link.get("createdAt"),
+        "updatedAt": link.get("updatedAt"),
+        "sharePath": f"/share/{token}" if token else None,
+    }
+
+
+def _find_active_share_link(owner_id: str, source_item_id: str, item_content_type: str) -> Optional[Dict[str, Any]]:
+    query = """
+    SELECT TOP 1 * FROM c
+    WHERE c.userId = @userId
+      AND c.contentType = 'shared_link'
+      AND c.source.itemId = @sourceItemId
+      AND c.source.itemContentType = @itemContentType
+      AND c.state.status = 'active'
+    ORDER BY c.createdAt DESC
+    """
+    parameters = [
+        {"name": "@userId", "value": owner_id},
+        {"name": "@sourceItemId", "value": source_item_id},
+        {"name": "@itemContentType", "value": item_content_type},
+    ]
+    links = list(
+        container.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=True,
+        )
+    )
+    return links[0] if links else None
+
+
+def _get_share_link_by_token(token: str) -> Dict[str, Any]:
+    query = "SELECT * FROM c WHERE c.contentType = 'shared_link' AND c.token = @token"
+    parameters = [{"name": "@token", "value": token}]
+    links = list(
+        container.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=True,
+        )
+    )
+
+    for link in links:
+        if hmac.compare_digest(link.get("token", ""), token):
+            return link
+
+    raise HTTPException(status_code=404, detail="Share link not found")
+
+
+def _ensure_share_link_is_available(link: Dict[str, Any], *, for_import: bool = False) -> None:
+    state = link.get("state", {})
+    settings = link.get("settings", {})
+
+    if state.get("status") != "active":
+        raise HTTPException(status_code=404, detail="Share link not found")
+
+    expires_at = settings.get("expiresAt")
+    if expires_at:
+        try:
+            if datetime.fromisoformat(expires_at) <= datetime.utcnow():
+                raise HTTPException(status_code=410, detail="Share link expired")
+        except ValueError:
+            raise HTTPException(status_code=410, detail="Share link expired")
+
+    if for_import:
+        if not settings.get("allowImport", True):
+            raise HTTPException(status_code=403, detail="Import is disabled for this share link")
+        max_imports = settings.get("maxImports")
+        import_count = int(state.get("importCount") or 0)
+        if max_imports is not None and import_count >= int(max_imports):
+            raise HTTPException(status_code=410, detail="Share link import limit reached")
+
+
+def _extract_shared_preview(source_item: Dict[str, Any]) -> Dict[str, Any]:
+    content_type = source_item.get("contentType")
+
+    if content_type == "flashcard_deck":
+        cards = source_item.get("cards") or []
+        return {
+            "title": source_item.get("title") or "Untitled Flashcard Deck",
+            "subtitle": f"{len(cards)} flashcards",
+            "cards": cards,
+        }
+
+    if content_type == "quiz":
+        data = source_item.get("data", {})
+        questions = data.get("questions") or []
+        sanitized_questions = []
+        for question in questions:
+            q = copy.deepcopy(question)
+            q.pop("correctAnswer", None)
+            q.pop("correct_answer", None)
+            q.pop("answer", None)
+            q.pop("explanation", None)
+            sanitized_questions.append(q)
+        return {
+            "title": data.get("title") or "Untitled Quiz",
+            "subtitle": f"{len(questions)} questions",
+            "resourceName": data.get("resourceName"),
+            "questions": sanitized_questions,
+        }
+
+    if content_type == "study_plan":
+        data = source_item.get("data", {})
+        return {
+            "title": data.get("title") or "Untitled Study Plan",
+            "subtitle": data.get("description") or "",
+            "description": data.get("description") or "",
+            "tags": data.get("tags") or [],
+            "content": data.get("content"),
+        }
+
+    if content_type == "summary":
+        data = source_item.get("data", {})
+        return {
+            "title": source_item.get("title") or "Untitled Summary",
+            "subtitle": source_item.get("description") or "",
+            "description": source_item.get("description") or "",
+            "summary": data.get("summary") or "",
+            "style": data.get("style"),
+            "format": data.get("format"),
+        }
+
+    raise HTTPException(status_code=400, detail="Unsupported shared content type")
+
+
+def _build_share_preview_payload(link: Dict[str, Any], source_item: Dict[str, Any]) -> Dict[str, Any]:
+    owner_name = link.get("ownerDisplayName") or "A classmate"
+    return {
+        "linkId": link["id"],
+        "contentType": source_item.get("contentType"),
+        "owner": {
+            "userId": link.get("userId"),
+            "displayName": owner_name,
+        },
+        "source": {
+            "itemId": source_item.get("id"),
+            "createdAt": source_item.get("createdAt"),
+            "updatedAt": source_item.get("updatedAt") or source_item.get("data", {}).get("updatedAt"),
+        },
+        "settings": link.get("settings", {}),
+        "preview": _extract_shared_preview(source_item),
+    }
+
+
+def _clone_shared_item_for_user(source_item: Dict[str, Any], recipient_user_id: str, share_link_id: str) -> Dict[str, Any]:
+    now = _utcnow_iso()
+    content_type = source_item.get("contentType")
+
+    if content_type == "flashcard_deck":
+        clone = {
+            "id": str(uuid.uuid4()),
+            "userId": recipient_user_id,
+            "contentType": "flashcard_deck",
+            "createdAt": now,
+            "updatedAt": now,
+            "title": source_item.get("title") or "Untitled Flashcard Deck",
+            "cards": copy.deepcopy(source_item.get("cards") or []),
+        }
+    elif content_type == "quiz":
+        source_data = copy.deepcopy(source_item.get("data") or {})
+        source_data["userAnswers"] = None
+        source_data["score"] = None
+        source_data["timeTaken"] = 0
+        source_data["attempts"] = []
+        clone = {
+            "id": str(uuid.uuid4()),
+            "userId": recipient_user_id,
+            "contentType": "quiz",
+            "createdAt": now,
+            "updatedAt": now,
+            "data": source_data,
+        }
+    elif content_type == "study_plan":
+        source_data = copy.deepcopy(source_item.get("data") or {})
+        source_data["updatedAt"] = None
+        clone = {
+            "id": str(uuid.uuid4()),
+            "userId": recipient_user_id,
+            "contentType": "study_plan",
+            "createdAt": now,
+            "updatedAt": now,
+            "data": source_data,
+        }
+    elif content_type == "summary":
+        clone = {
+            "id": str(uuid.uuid4()),
+            "userId": recipient_user_id,
+            "title": source_item.get("title") or "Untitled Summary",
+            "description": source_item.get("description") or "",
+            "contentType": "summary",
+            "data": copy.deepcopy(source_item.get("data") or {}),
+            "createdAt": now,
+            "updatedAt": now,
+        }
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported shared content type")
+
+    clone["sharedSource"] = {
+        "shareLinkId": share_link_id,
+        "originalItemId": source_item.get("id"),
+        "originalOwnerId": _get_item_owner(source_item),
+        "importedAt": now,
+    }
+    clone.pop("folderId", None)
+    clone.pop("deleted", None)
+    clone.pop("deletedAt", None)
+    clone.pop("deletedBatchId", None)
+    return clone
 
 # --------------------------------------------------------------------------------------
 # Azure Blob helper
@@ -1376,6 +1722,8 @@ async def get_study_plans(user_claims: dict = Depends(validate_token)):
         ))
         study_plans = []
         for item in items:
+            if item.get("contentType") != "study_plan" or not isinstance(item.get("data"), dict):
+                continue
             study_plans.append({
                 "id": item["id"],
                 "title": item["data"]["title"],
@@ -1585,6 +1933,227 @@ async def get_summaries(user_claims: dict = Depends(validate_token)):
     except Exception as e:
         print(f"Error fetching summaries: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch summaries: {str(e)}")
+
+
+# ----- Share Links -----
+@app.post("/share-links")
+async def create_share_link(
+    request: Request,
+    body: ShareLinkCreateRequest,
+    user_claims: dict = Depends(validate_token),
+):
+    user_id = user_claims.get("oid") or user_claims.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID not found in token")
+
+    source_item = _load_owned_item(body.sourceItemId, user_id)
+    settings = _normalize_share_settings(body.settings)
+    now = _utcnow_iso()
+    owner_display_name = (
+        user_claims.get("name")
+        or user_claims.get("preferred_username")
+        or "A classmate"
+    )
+
+    share_link = _find_active_share_link(
+        owner_id=user_id,
+        source_item_id=source_item["id"],
+        item_content_type=source_item["contentType"],
+    )
+
+    if share_link:
+        share_link["settings"] = settings
+        share_link["updatedAt"] = now
+        share_link["ownerDisplayName"] = owner_display_name
+        container.replace_item(
+            item=share_link["id"],
+            body=share_link,
+            partition_key=user_id,
+        )
+    else:
+        share_link = {
+            "id": str(uuid.uuid4()),
+            "userId": user_id,
+            "ownerDisplayName": owner_display_name,
+            "contentType": "shared_link",
+            "token": secrets.token_urlsafe(32),
+            "source": {
+                "itemId": source_item["id"],
+                "itemContentType": source_item["contentType"],
+            },
+            "settings": settings,
+            "state": {
+                "status": "active",
+                "importCount": 0,
+                "lastAccessedAt": None,
+                "lastImportedAt": None,
+            },
+            "createdAt": now,
+            "updatedAt": now,
+        }
+        container.create_item(body=share_link)
+
+    return _serialize_share_link(share_link, request)
+
+
+@app.get("/share-links")
+async def list_share_links(
+    request: Request,
+    source_item_id: Optional[str] = Query(None),
+    user_claims: dict = Depends(validate_token),
+):
+    user_id = user_claims.get("oid") or user_claims.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID not found in token")
+
+    query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'shared_link' ORDER BY c.createdAt DESC"
+    parameters = [{"name": "@userId", "value": user_id}]
+
+    links = list(
+        container.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=True,
+        )
+    )
+
+    if source_item_id:
+        links = [link for link in links if link.get("source", {}).get("itemId") == source_item_id]
+
+    return [_serialize_share_link(link, request) for link in links]
+
+
+@app.patch("/share-links/{share_link_id}")
+async def update_share_link(
+    share_link_id: str,
+    body: ShareLinkUpdateRequest,
+    request: Request,
+    user_claims: dict = Depends(validate_token),
+):
+    user_id = user_claims.get("oid") or user_claims.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID not found in token")
+
+    try:
+        share_link = container.read_item(item=share_link_id, partition_key=user_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Share link not found")
+
+    if share_link.get("contentType") != "shared_link" or _get_item_owner(share_link) != user_id:
+        raise HTTPException(status_code=404, detail="Share link not found")
+
+    if body.settings is not None:
+        share_link["settings"] = _normalize_share_settings(body.settings)
+
+    if body.status is not None:
+        if body.status not in {"active", "revoked"}:
+            raise HTTPException(status_code=400, detail="status must be 'active' or 'revoked'")
+        share_link.setdefault("state", {})["status"] = body.status
+
+    share_link["updatedAt"] = _utcnow_iso()
+    container.replace_item(item=share_link_id, body=share_link, partition_key=user_id)
+    return _serialize_share_link(share_link, request)
+
+
+@app.post("/share-links/{share_link_id}/revoke")
+async def revoke_share_link(
+    share_link_id: str,
+    request: Request,
+    user_claims: dict = Depends(validate_token),
+):
+    user_id = user_claims.get("oid") or user_claims.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID not found in token")
+
+    try:
+        share_link = container.read_item(item=share_link_id, partition_key=user_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Share link not found")
+
+    if share_link.get("contentType") != "shared_link" or _get_item_owner(share_link) != user_id:
+        raise HTTPException(status_code=404, detail="Share link not found")
+
+    share_link.setdefault("state", {})["status"] = "revoked"
+    share_link["updatedAt"] = _utcnow_iso()
+    container.replace_item(item=share_link_id, body=share_link, partition_key=user_id)
+    return _serialize_share_link(share_link, request)
+
+
+@app.get("/share/{token}")
+async def get_shared_content(token: str):
+    link = _get_share_link_by_token(token)
+    _ensure_share_link_is_available(link)
+
+    if link.get("settings", {}).get("requireAuthToView"):
+        raise HTTPException(status_code=403, detail="Sign-in required to view this share link")
+
+    owner_id = link.get("userId")
+    source_meta = link.get("source", {})
+
+    try:
+        source_item = container.read_item(item=source_meta.get("itemId"), partition_key=owner_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Shared item no longer exists")
+
+    if _get_item_owner(source_item) != owner_id or source_item.get("contentType") != source_meta.get("itemContentType"):
+        raise HTTPException(status_code=404, detail="Shared item no longer exists")
+
+    if source_item.get("deleted") is True:
+        raise HTTPException(status_code=404, detail="Shared item no longer exists")
+
+    link.setdefault("state", {})["lastAccessedAt"] = _utcnow_iso()
+    link["updatedAt"] = _utcnow_iso()
+    container.replace_item(item=link["id"], body=link, partition_key=owner_id)
+
+    return _build_share_preview_payload(link, source_item)
+
+
+@app.post("/share/{token}/import")
+async def import_shared_content(
+    token: str,
+    user_claims: dict = Depends(validate_token),
+):
+    recipient_user_id = user_claims.get("oid") or user_claims.get("sub")
+    if not recipient_user_id:
+        raise HTTPException(status_code=401, detail="User ID not found in token")
+
+    link = _get_share_link_by_token(token)
+    _ensure_share_link_is_available(link, for_import=True)
+
+    owner_id = link.get("userId")
+    source_meta = link.get("source", {})
+
+    try:
+        source_item = container.read_item(item=source_meta.get("itemId"), partition_key=owner_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Shared item no longer exists")
+
+    if _get_item_owner(source_item) != owner_id or source_item.get("contentType") != source_meta.get("itemContentType"):
+        raise HTTPException(status_code=404, detail="Shared item no longer exists")
+
+    if source_item.get("deleted") is True:
+        raise HTTPException(status_code=404, detail="Shared item no longer exists")
+
+    imported_item = _clone_shared_item_for_user(
+        source_item=source_item,
+        recipient_user_id=recipient_user_id,
+        share_link_id=link["id"],
+    )
+    container.create_item(body=imported_item)
+
+    state = link.setdefault("state", {})
+    state["importCount"] = int(state.get("importCount") or 0) + 1
+    now = _utcnow_iso()
+    state["lastImportedAt"] = now
+    state["lastAccessedAt"] = now
+    link["updatedAt"] = now
+    container.replace_item(item=link["id"], body=link, partition_key=owner_id)
+
+    return {
+        "id": imported_item["id"],
+        "contentType": imported_item["contentType"],
+        "message": "Shared item imported successfully",
+    }
 
 # ----- Quiz Performance Analysis -----
 class QuizPerformanceRequest(BaseModel):
@@ -2732,7 +3301,7 @@ async def get_unfiled_items(
 ):
     """Get all items that are not in any folder."""
     try:
-        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType != 'folder' AND (NOT IS_DEFINED(c.folderId) OR IS_NULL(c.folderId)) AND (NOT IS_DEFINED(c.deleted) OR c.deleted = false)"
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType != 'folder' AND c.contentType != 'shared_link' AND (NOT IS_DEFINED(c.folderId) OR IS_NULL(c.folderId)) AND (NOT IS_DEFINED(c.deleted) OR c.deleted = false)"
         parameters = [{"name": "@userId", "value": user_claims["sub"]}]
 
         if content_type:
