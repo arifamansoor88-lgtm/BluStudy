@@ -12,6 +12,10 @@ import { useLocation, Link, useParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import { useDeckData } from './hooks';
 import FlashcardDifficultySelector from './FlashcardDifficultySelector';
+import {
+  getPreGeneratedDeckById,
+  isPreGeneratedDeckId,
+} from './preGeneratedDecks';
 
 const FlashcardStudyPage = () => {
   const [index, setIndex] = useState(0);
@@ -19,10 +23,12 @@ const FlashcardStudyPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const location = useLocation();
   const { deckId } = useParams();
+  const routeTitle = location.state?.title || '';
+  const isPreGeneratedDeck = isPreGeneratedDeckId(deckId);
 
   const { getFlashcardByID, updateDeck } = useDeckData();
 
-  const [deckTitle, setDeckTitle] = useState(location.state?.title || '');
+  const [deckTitle, setDeckTitle] = useState(routeTitle);
   const [flashcards, setFlashcards] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,7 +50,19 @@ const FlashcardStudyPage = () => {
      LOAD FROM BACKEND
   -----------------------------------------*/
   useEffect(() => {
-    if (!deckId) return;
+    if (!deckId) {
+      setLoading(false);
+      return;
+    }
+
+    if (isPreGeneratedDeck) {
+      const sampleDeck = getPreGeneratedDeckById(deckId);
+
+      setDeckTitle(sampleDeck?.title || routeTitle || 'Pre-Generated Deck');
+      setFlashcards((sampleDeck?.cards || []).map(normalizeCard));
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     getFlashcardByID(deckId)
@@ -54,7 +72,7 @@ const FlashcardStudyPage = () => {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [deckId]);
+  }, [deckId, getFlashcardByID, isPreGeneratedDeck, routeTitle]);
 
   /* ----------------------------------------
      STUDY MODE CONTROLS
@@ -120,6 +138,10 @@ const FlashcardStudyPage = () => {
   };
 
   const toggleEditMode = async () => {
+    if (isPreGeneratedDeck) {
+      return;
+    }
+
     if (isEditing) {
       await updateDeck(deckTitle, deckId, flashcards);
     }
@@ -164,10 +186,16 @@ const FlashcardStudyPage = () => {
         </Link>
 
         <div className="flex gap-4">
-          <button onClick={toggleEditMode} className="text-gray-600 flex items-center">
-            <Pencil className="w-4 h-4 mr-1" />
-            {isEditing ? 'Save Editor' : 'Edit Cards'}
-          </button>
+          {!isPreGeneratedDeck ? (
+            <button onClick={toggleEditMode} className="text-gray-600 flex items-center">
+              <Pencil className="w-4 h-4 mr-1" />
+              {isEditing ? 'Save Editor' : 'Edit Cards'}
+            </button>
+          ) : (
+            <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">
+              Pre-generated deck
+            </span>
+          )}
           <button onClick={exportToJSON} className="text-blue-600 flex items-center">
             <FileDown className="w-4 h-4 mr-1" />
             Export JSON
