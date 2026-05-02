@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Book,
   PlusCircle,
@@ -12,7 +13,7 @@ import {
   Check,
   Info
 } from "lucide-react";
-import { getStudyPlans } from "../../../api/apiService";
+import { getStudyPlan, getStudyPlans } from "../../../api/apiService";
 import StudyPlanWizard from "./StudyPlanWizard";
 import StudyPlanDisplay from "./StudyPlanDisplay";
 import SavedStudyPlansList from "./SavedStudyPlansList";
@@ -21,6 +22,9 @@ import SavedStudyPlansList from "./SavedStudyPlansList";
  * Main StudyPlans component that coordinates all other components
  */
 const StudyPlans = () => {
+  const [searchParams] = useSearchParams();
+  const planId = searchParams.get("planId");
+
   // State for component display
   const [showCreate, setShowCreate] = useState(false);
   const [showPlanner, setShowPlanner] = useState(true);
@@ -42,6 +46,43 @@ const StudyPlans = () => {
       fetchStudyPlans();
     }
   }, [showPlanner]);
+
+  useEffect(() => {
+    if (!planId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadPlanFromQuery = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const plan = await getStudyPlan(planId);
+        if (cancelled) {
+          return;
+        }
+        setCurrentPlan(plan);
+        setShowPlanner(false);
+        setShowCreate(false);
+      } catch (err) {
+        console.error("Error fetching study plan by id:", err);
+        if (!cancelled) {
+          setError("Failed to load study plan");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadPlanFromQuery();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [planId]);
 
   const fetchStudyPlans = async () => {
     try {

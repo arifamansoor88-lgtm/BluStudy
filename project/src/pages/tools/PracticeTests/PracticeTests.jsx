@@ -18,6 +18,7 @@ const PracticeTests = () => {
   // Get folderId from URL query params if present
   const [searchParams] = useSearchParams();
   const folderId = searchParams.get('folderId');
+  const quizId = searchParams.get('quizId');
   
   // State for quiz display
   const [showQuiz, setShowQuiz] = useState(true);
@@ -88,6 +89,65 @@ const PracticeTests = () => {
       fetchSavedQuizzes();
     }
   }, [showQuiz, fetchSavedQuizzes, quizzesFetchedRef]);
+
+  const loadQuizIntoViewer = (quizDocument) => {
+    const quizData = quizDocument?.data || {};
+    const quizWithId = { ...quizData, id: quizDocument.id };
+
+    setGeneratedQuiz(quizWithId);
+
+    if (quizData.userAnswers && quizData.userAnswers.length > 0) {
+      setUserAnswers(quizData.userAnswers);
+    } else {
+      setUserAnswers(Array((quizData.questions || []).length).fill(null));
+    }
+
+    if (quizData.timeTaken) {
+      setTimerValue(quizData.timeTaken);
+    } else {
+      resetTimer();
+    }
+
+    setQuizStatus("ready");
+    setShowSummary(false);
+    setShowAttemptHistory(true);
+    setCurrentQuizQuestion(0);
+  };
+
+  useEffect(() => {
+    if (!quizId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadFromQuery = async () => {
+      try {
+        setShowQuiz(false);
+        setShowUpload(true);
+        setUploading(true);
+        const loadedQuiz = await fetchQuizWithHistory(quizId);
+        if (!cancelled && loadedQuiz) {
+          loadQuizIntoViewer(loadedQuiz);
+        }
+      } catch (loadError) {
+        console.error("Error loading quiz from query param:", loadError);
+        if (!cancelled) {
+          setError("Failed to load saved quiz");
+        }
+      } finally {
+        if (!cancelled) {
+          setUploading(false);
+        }
+      }
+    };
+
+    loadFromQuery();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [quizId, fetchQuizWithHistory, resetTimer, setTimerValue, setError]);
 
   // Create a new test
   const handleCreateTest = () => {
@@ -694,34 +754,8 @@ const PracticeTests = () => {
 
     try {
       // Fetch the quiz history
-      await fetchQuizWithHistory(savedQuiz.id);
-
-      // Set the quiz data
-      const quizWithId = { ...savedQuiz.data, id: savedQuiz.id };
-      setGeneratedQuiz(quizWithId);
-
-      // If there are saved answers, load them
-      if (savedQuiz.data.userAnswers && savedQuiz.data.userAnswers.length > 0) {
-        setUserAnswers(savedQuiz.data.userAnswers);
-      } else {
-        // Initialize empty answers
-        const answerArray = Array(savedQuiz.data.questions.length).fill(null);
-        setUserAnswers(answerArray);
-      }
-
-      // Set timer if available
-      if (savedQuiz.data.timeTaken) {
-        setTimerValue(savedQuiz.data.timeTaken);
-      } else {
-        resetTimer();
-      }
-
-      // Set quiz status
-      setQuizStatus("ready");
-      setShowSummary(false);
-      setShowAttemptHistory(true); // Show attempt history by default
-
-      setCurrentQuizQuestion(0);
+      const loadedQuiz = await fetchQuizWithHistory(savedQuiz.id);
+      loadQuizIntoViewer(loadedQuiz || savedQuiz);
     } catch (error) {
       console.error("Error loading saved quiz:", error);
       setError("Failed to load saved quiz");

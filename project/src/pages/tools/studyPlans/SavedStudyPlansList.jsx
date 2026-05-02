@@ -1,6 +1,7 @@
 import React from "react";
 import { Calendar, Tag, Clock, ChevronRight, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import ShareItemButton from "../../../components/ShareItemButton";
 
 /**
  * Component to display a list of saved study plans
@@ -58,7 +59,7 @@ const SavedStudyPlansList = ({ plans, onSelectPlan, refreshPlans }) => {
             {truncateText(plan.description)}
           </p>
 
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center gap-3">
             <div className="flex flex-wrap gap-2">
               {plan.tags && plan.tags.length > 0 ? (
                 plan.tags.map((tag) => (
@@ -75,13 +76,21 @@ const SavedStudyPlansList = ({ plans, onSelectPlan, refreshPlans }) => {
               )}
             </div>
 
-            <button
-              onClick={() => onSelectPlan(plan)}
-              className="flex items-center gap-1 text-primary-600 hover:text-primary-800 text-sm font-medium"
-            >
-              View Plan
-              <ChevronRight className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <ShareItemButton
+                itemId={plan.id}
+                itemLabel="study plan"
+                variant="inline"
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              />
+              <button
+                onClick={() => onSelectPlan(plan)}
+                className="flex items-center gap-1 text-primary-600 hover:text-primary-800 text-sm font-medium"
+              >
+                View Plan
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       ))}
