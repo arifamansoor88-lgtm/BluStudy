@@ -8,6 +8,25 @@ import { Mic, Save, Trash2, Download, Share2, Tag as TagIcon, AudioWaveform as W
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
+const getSupportedMimeType = () => {
+  const types = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+    'audio/ogg;codecs=opus',
+  ];
+  for (const type of types) {
+    if (MediaRecorder.isTypeSupported(type)) return type;
+  }
+  return '';
+};
+
+const getExtensionForMime = (mime) => {
+  if (mime.includes('mp4')) return '.m4a';
+  if (mime.includes('ogg')) return '.ogg';
+  return '.webm';
+};
+
 const VoiceNotes = () => {
   // Get folderId from URL query params if present
   const [searchParams] = useSearchParams();
@@ -59,6 +78,7 @@ const VoiceNotes = () => {
 
   const mediaRecorderRef = useRef(null);
   const timerRef = useRef(null);
+  const mimeTypeRef = useRef('audio/webm');
   const canvasRef = useRef(null);
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
@@ -194,12 +214,16 @@ const VoiceNotes = () => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      const mimeType = getSupportedMimeType();
+      mimeTypeRef.current = mimeType || 'audio/webm';
+      mediaRecorderRef.current = new MediaRecorder(stream,
+        mimeType ? { mimeType } : undefined
+      );
       const localChunks = [];
 
       mediaRecorderRef.current.ondataavailable = (e) => { if (e.data.size > 0) localChunks.push(e.data); };
       mediaRecorderRef.current.onstop = () => {
-        const blob = new Blob(localChunks, { type: 'audio/webm' });
+        const blob = new Blob(localChunks, { type: mimeTypeRef.current });
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
         setChunks(localChunks);
@@ -298,11 +322,12 @@ const VoiceNotes = () => {
   const removePendingTag = (t) => setPendingTags(prev => prev.filter(x => x !== t));
 
   const saveNoteToBackend = async () => {
-    const blob = new Blob(chunks, { type: 'audio/webm' });
+    const blob = new Blob(chunks, { type: mimeTypeRef.current });
     if (!blob || !noteTitle.trim()) return;
 
     const formData = new FormData();
-    formData.append('audio', blob, `note_${Date.now()}.webm`);
+    const ext = getExtensionForMime(mimeTypeRef.current);
+    formData.append('audio', blob, `note_${Date.now()}${ext}`);
     formData.append('title', noteTitle.trim());
     formData.append('text', transcript || '');
     formData.append('duration', recordingDuration || 0);
@@ -535,7 +560,7 @@ const VoiceNotes = () => {
         {audioUrl && !isRecording && (
           <div className="mt-6 flex items-center gap-4">
             <audio controls src={audioUrl} className="flex-1" />
-            <a href={audioUrl} download={`voice_note_${Date.now()}.webm`} className="flex items-center gap-2 text-purple-600 hover:text-purple-700">
+            <a href={audioUrl} download={`voice_note_${Date.now()}${getExtensionForMime(mimeTypeRef.current)}`} className="flex items-center gap-2 text-purple-600 hover:text-purple-700">
               <Download className="h-4 w-4" /> Download
             </a>
           </div>
@@ -579,7 +604,7 @@ const VoiceNotes = () => {
               </button>
 
               {note.audio_url && (
-                <a href={note.audio_url} download={`voice_note_${note.id}.webm`} className="text-purple-600 hover:text-purple-800">
+                <a href={note.audio_url} download={`voice_note_${note.id}${note.audio_filename ? note.audio_filename.substring(note.audio_filename.lastIndexOf('.')) : '.webm'}`} className="text-purple-600 hover:text-purple-800">
                   <Download className="h-6 w-6" />
                 </a>
               )}

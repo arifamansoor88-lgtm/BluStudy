@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FolderPlus,
   Star,
   FolderKanban,
   List,
-  Search
+  Search,
+  FileQuestion,
+  Trash2
 } from "lucide-react";
 import FolderManager from "./FolderManager";
 import { motion, AnimatePresence } from "framer-motion";
@@ -50,7 +53,19 @@ async function apiFetch(path, options = {}) {
   if (!res.ok) {
     let msg = "";
     try {
-      msg = await res.text();
+      const text = await res.text();
+      try {
+        const body = JSON.parse(text);
+        if (typeof body.detail === "string") {
+          msg = body.detail;
+        } else if (Array.isArray(body.detail)) {
+          msg = body.detail.map((e) => (typeof e === "object" && e.msg ? e.msg : String(e))).join("; ");
+        } else {
+          msg = text;
+        }
+      } catch {
+        msg = text;
+      }
     } catch {}
     throw new Error(msg || `Request failed (${res.status})`);
   }
@@ -69,12 +84,16 @@ const folderColors = [
 ];
 
 export default function Workspace() {
+  const navigate = useNavigate();
   const [view, setView] = useState("grid");
   const [folders, setFolders] = useState([]);
+  const [allFoldersRaw, setAllFoldersRaw] = useState([]);
   const [stats, setStats] = useState({ totalFolders: 0, starredFolders: 0, totalItems: 0 });
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [search, setSearch] = useState("");
+  const [unfiledCount, setUnfiledCount] = useState(0);
+  const [trashCount, setTrashCount] = useState(0);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -112,6 +131,7 @@ export default function Workspace() {
     try {
       // Fetch ALL folders (not just root) to calculate recursive counts
       const allFoldersRes = await apiFetch("/folders", { method: "GET" });
+      setAllFoldersRaw(allFoldersRes || []);
 
       // Filter to show only root-level folders (parentFolderId is null or undefined)
       const rootFolders = (allFoldersRes || []).filter(f => !f.parentFolderId);
@@ -129,6 +149,16 @@ export default function Workspace() {
       
       // Derive stats client-side from folders
       setStats(deriveStats(serverFolders));
+
+      try {
+        const unfiledItems = await apiFetch("/items/unfiled", { method: "GET" });
+        setUnfiledCount((unfiledItems || []).length);
+      } catch { setUnfiledCount(0); }
+
+      try {
+        const trashItems = await apiFetch("/trash", { method: "GET" });
+        setTrashCount((trashItems || []).length);
+      } catch { setTrashCount(0); }
     } catch (e) {
       setFolders([]);
       setStats({ totalFolders: 0, starredFolders: 0, totalItems: 0 });
@@ -194,7 +224,20 @@ export default function Workspace() {
 
   // Callbacks for child (FolderManager)
   async function onToggleStar(id) {
-    return;
+    const folder = folders.find(f => f.id === id);
+    if (!folder) return;
+    setErr("");
+    try {
+      const updated = await apiFetch(`/folders/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ starred: !folder.starred }),
+      });
+      const next = folders.map(f => f.id === id ? { ...f, starred: !!updated.starred } : f);
+      setFolders(next);
+      setStats(deriveStats(next));
+    } catch (e) {
+      setErr("Failed to update folder.");
+    }
   }
 
   async function onRename(id, newName) {
@@ -211,14 +254,24 @@ export default function Workspace() {
     }
   }
 
+  async function onMove(folderId, newParentId) {
+    setErr("");
+    try {
+      await apiFetch(`/folders/${folderId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ parentFolderId: newParentId }),
+      });
+      await loadAll();
+    } catch (e) {
+      setErr("Failed to move folder.");
+    }
+  }
+
   async function onDelete(id) {
     setErr("");
     try {
       await apiFetch(`/folders/${id}`, { method: "DELETE" });
-      const next = folders.filter(x => x.id !== id);
-      setFolders(next);
-      // Derive stats client-side from folders
-      setStats(deriveStats(next));
+      await loadAll();
     } catch (e) {
       setErr("Failed to delete folder.");
     }
@@ -267,14 +320,54 @@ export default function Workspace() {
         </div>
       ) : null}
 
+      {unfiledCount > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 cursor-pointer"
+          onClick={() => navigate("/workspace/unfiled")}
+        >
+          <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-3 rounded-xl bg-white shadow">
+              <FileQuestion className="w-6 h-6 text-amber-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-800">Unfiled Items</h3>
+              <p className="text-sm text-slate-500">{unfiledCount} item{unfiledCount !== 1 ? 's' : ''} not in any folder</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {trashCount > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 cursor-pointer"
+          onClick={() => navigate("/workspace/trash")}
+        >
+          <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-3 rounded-xl bg-white shadow">
+              <Trash2 className="w-6 h-6 text-red-500" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-800">Recently Deleted</h3>
+              <p className="text-sm text-slate-500">{trashCount} item{trashCount !== 1 ? 's' : ''} in trash</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* FOLDER MANAGER */}
       <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
         <FolderManager
           view={view}
           folders={filtered}
+          allFolders={allFoldersRaw}
           onToggleStar={onToggleStar}
           onRename={onRename}
           onDelete={onDelete}
+          onMove={onMove}
         />
       </motion.div>
 

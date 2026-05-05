@@ -1,0 +1,228 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 12 Trigonometric Identities and Equations Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the correct identity for sin(2θ)?",
+                "options": [
+                    "sin²θ - cos²θ",
+                    "2 sinθ cosθ",
+                    "2 sinθ",
+                    "cos²θ - sin²θ"
+                ],
+                "correct_answer": "2 sinθ cosθ",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Simplify the expression: sin(x) cos(y) + cos(x) sin(y)",
+                "options": [
+                    "sin(x - y)",
+                    "cos(x + y)",
+                    "sin(x + y)",
+                    "cos(x - y)"
+                ],
+                "correct_answer": "sin(x + y)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Solve for x in the domain 0 ≤ x ≤ 2π: 2 sin(x) - 1 = 0. (Provide answers in radians, separated by a comma)",
+                "correct_answer": "π/6, 5π/6",
+                "acceptable_answers": [
+                    "pi/6, 5pi/6",
+                    "π/6,5π/6",
+                    "0.52, 2.62"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which identity is equivalent to 1 + tan²θ?",
+                "options": [
+                    "sin²θ",
+                    "cos²θ",
+                    "cot²θ",
+                    "sec²θ"
+                ],
+                "correct_answer": "sec²θ",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the exact value of cos(2θ) if cos(θ) = 3/5 and θ is in Quadrant I?",
+                "options": [
+                    "7/25",
+                    "-7/25",
+                    "24/25",
+                    "1/5"
+                ],
+                "correct_answer": "-7/25",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "How many solutions exist for sin(2x) = 0.5 in the interval [0, 2π]?",
+                "correct_answer": "4",
+                "acceptable_answers": [
+                    "4",
+                    "four"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Simplify: (sec x) / (tan x)",
+                "options": [
+                    "sin x",
+                    "cos x",
+                    "csc x",
+                    "1"
+                ],
+                "correct_answer": "csc x",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is NOT a valid expression for cos(2θ)?",
+                "options": [
+                    "cos²θ - sin²θ",
+                    "2 cos²θ - 1",
+                    "1 - 2 sin²θ",
+                    "1 - 2 cos²θ"
+                ],
+                "correct_answer": "1 - 2 cos²θ",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Solve for θ in degrees (0° ≤ θ ≤ 360°): cos²θ = 1. (Separate by commas)",
+                "correct_answer": "0, 180, 360",
+                "acceptable_answers": [
+                    "0, 180, 360",
+                    "0,180,360",
+                    "0°, 180°, 360°"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "To prove the identity (sin x + cos x)² = 1 + sin(2x), what is the best first step?",
+                "options": [
+                    "Divide by sin x",
+                    "Expand the binomial on the left side",
+                    "Substitute sin(2x) = cos x",
+                    "Square root both sides"
+                ],
+                "correct_answer": "Expand the binomial on the left side",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find all solutions for x in the interval [0, 2π] if 2 cos²x - 3 cos x + 1 = 0. (Provide answers in radians, separated by a comma)",
+                "correct_answer": "0, π/3, 5π/3",
+                "acceptable_answers": [
+                    "0, π/3, 5π/3",
+                    "0,pi/3,5pi/3",
+                    "0,1.05,5.24"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a solution to the equation sin(2x) = 0.5?",
+                "options": [
+                    "x = π/12",
+                    "x = π/4",
+                    "x = π/6",
+                    "x = π/3"
+                ],
+                "correct_answer": "x = π/12",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Prove the identity: (1 - cos(2x)) / 2 = sin²x. (Provide a step-by-step explanation)",
+                "correct_answer": "Step 1: Start with the left side of the equation: (1 - cos(2x)) / 2. Step 2: Use the double angle identity for cosine: cos(2x) = 1 - 2 sin²x. Step 3: Substitute this into the equation: (1 - (1 - 2 sin²x)) / 2. Step 4: Simplify the expression: (1 - 1 + 2 sin²x) / 2 = (2 sin²x) / 2. Step 5: This simplifies to sin²x, which is the right side of the equation. Therefore, the identity is proven.",
+                "acceptable_answers": [
+                    "Step 1: Start with the left side of the equation: (1 - cos(2x)) / 2. Step 2: Use the double angle identity for cosine: cos(2x) = 1 - 2 sin²x. Step 3: Substitute this into the equation: (1 - (1 - 2 sin²x)) / 2. Step 4: Simplify the expression: (1 - 1 + 2 sin²x) / 2 = (2 sin²x) / 2. Step 5: This simplifies to sin²x, which is the right side of the equation. Therefore, the identity is proven.",
+                    "Start with left side, use double angle identity, substitute, simplify to get right side."
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a solution to the equation cos²x - 3 cos x + 1 = 0?",
+                "options": [
+                    "x = 0",
+                    "x = π/3",
+                    "x = 5π/3",
+                    "x = π/2"
+                ],
+                "correct_answer": "x = π/3",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find all solutions for x in the interval [0, 2π] if sin(2x) = 0.5. (Provide answers in radians, separated by a comma)",
+                "correct_answer": "π/12, 5π/12, 13π/12, 17π/12",
+                "acceptable_answers": [
+                    "pi/12, 5pi/12, 13pi/12, 17pi/12",
+                    "π/12,5π/12,13π/12,17π/12",
+                    "0.26,1.31,3.40,4.45"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the value of sin(2θ) if sin(θ) = 1/3 and θ is in Quadrant II?",
+                "options": [
+                    "4/9",
+                    "5/9",
+                    "-4/9",
+                    "-5/9"
+                ],
+                "correct_answer": "4/9",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Prove the identity: (1 + cos(2x)) / 2 = cos²x. (Provide a step-by-step explanation)",
+                "correct_answer": "Step 1: Start with the left side of the equation: (1 + cos(2x)) / 2. Step 2: Use the double angle identity for cosine: cos(2x) = 2 cos²x - 1. Step 3: Substitute this into the equation: (1 + (2 cos²x - 1)) / 2. Step 4: Simplify the expression: (1 + 2 cos²x - 1) / 2 = (2 cos²x) / 2. Step 5: This simplifies to cos²x, which is the right side of the equation. Therefore, the identity is proven.",
+                "acceptable_answers": [
+                    "Step 1: Start with the left side of the equation: (1 + cos(2x)) / 2. Step 2: Use the double angle identity for cosine: cos(2x) = 2 cos²x - 1. Step 3: Substitute this into the equation: (1 + (2 cos²x - 1)) / 2. Step 4: Simplify the expression: (1 + 2 cos²x - 1) / 2 = (2 cos²x) / 2. Step 5: This simplifies to cos²x, which is the right side of the equation. Therefore, the identity is proven.",
+                    "Start with left side, use double angle identity, substitute, simplify to get right side."
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is NOT a solution to the equation 2 cos²x - 3 cos x + 1 = 0?",
+                "options": [
+                    "x = 0",
+                    "x = π/3",
+                    "x = 5π/3",
+                    "x = π/2"
+                ],
+                "correct_answer": "x = π/2",
+                "difficulty": "Medium"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Pythagorean & Quotient Identities",
+                "Compound Angle Formulas",
+                "Double Angle Formulas",
+                "Solving Linear Trig Equations",
+                "Solving Quadratic Trig Equations"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

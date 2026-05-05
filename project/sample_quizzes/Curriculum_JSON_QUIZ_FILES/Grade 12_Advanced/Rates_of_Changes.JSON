@@ -1,0 +1,281 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 12 Rates of Change Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "What does the slope of a secant line between two points on a curve represent?",
+                "options": [
+                    "Instantaneous Rate of Change",
+                    "Average Rate of Change",
+                    "The y-intercept",
+                    "The local maximum"
+                ],
+                "correct_answer": "Average Rate of Change",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the average rate of change for f(x) = x² from x = 1 to x = 3.",
+                "correct_answer": "4",
+                "acceptable_answers": [
+                    "4",
+                    "4.0"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following describes the Instantaneous Rate of Change (IROC)?",
+                "options": [
+                    "The slope of a line connecting two distant points",
+                    "The slope of the tangent line at a specific point",
+                    "The total distance divided by total time",
+                    "The area under the curve"
+                ],
+                "correct_answer": "The slope of the tangent line at a specific point",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "To estimate the IROC at x = a, which interval for x would provide the most accurate result?",
+                "options": [
+                    "[a, a + 1]",
+                    "[a, a + 0.1]",
+                    "[a, a + 0.001]",
+                    "[a, a + 10]"
+                ],
+                "correct_answer": "[a, a + 0.001]",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "If a position function is s(t) = 5t², what is the average velocity between t = 0 and t = 2 seconds?",
+                "correct_answer": "10",
+                "acceptable_answers": [
+                    "10",
+                    "10 units/s"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "When a function is increasing, its rate of change is:",
+                "options": [
+                    "Positive",
+                    "Negative",
+                    "Zero",
+                    "Undefined"
+                ],
+                "correct_answer": "Positive",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What happens to the secant line as the interval between two points approach zero?",
+                "options": [
+                    "It becomes a horizontal line",
+                    "It becomes a vertical line",
+                    "It becomes a tangent line",
+                    "It disappears"
+                ],
+                "correct_answer": "It becomes a tangent line",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "At a local maximum or minimum point on a smooth curve, what is the instantaneous rate of change?",
+                "correct_answer": "0",
+                "acceptable_answers": [
+                    "0",
+                    "zero"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "The Difference Quotient formula [f(a+h) - f(a)] / h is used to find:",
+                "options": [
+                    "The y-intercept",
+                    "The average rate of change over interval h",
+                    "The product of two functions",
+                    "The inverse of a function"
+                ],
+                "correct_answer": "The average rate of change over interval h",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If the rate of change of a function is constant, the function must be:",
+                "options": [
+                    "Quadratic",
+                    "Linear",
+                    "Exponential",
+                    "Sinusoidal"
+                ],
+                "correct_answer": "Linear",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "If the velocity of an object is given by v(t) = 3t², what is the instantaneous acceleration at t = 2 seconds?",
+                "correct_answer": "12",
+                "acceptable_answers": [
+                    "12",
+                    "12 units/s²"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following best describes the relationship between secant lines and tangent lines?",
+                "options": [
+                    "Secant lines are always steeper than tangent lines",
+                    "Tangent lines are a special case of secant lines as the interval approaches zero",
+                    "Secant lines only exist for linear functions",
+                    "Tangent lines can never touch the curve at more than one point"
+                ],
+                "correct_answer": "Tangent lines are a special case of secant lines as the interval approaches zero",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Calculate the average rate of change of f(x) = 2x³ - x from x = 1 to x = 4.",
+                "correct_answer": "57",
+                "acceptable_answers": [
+                    "57",
+                    "57.0"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If the average rate of change of a function over an interval is zero, what can we conclude about the function on that interval?",
+                "options": [
+                    "The function is increasing",
+                    "The function is decreasing",
+                    "The function has a local extremum",
+                    "The function is constant"
+                ],
+                "correct_answer": "The function has a local extremum",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is NOT a method to estimate the instantaneous rate of change at a point?",
+                "options": [
+                    "Using the slope of a secant line with a small interval",
+                    "Using the limit definition of the derivative",
+                    "Using the average rate of change over a large interval",
+                    "Using numerical approximation methods"
+                ],
+                "correct_answer": "Using the average rate of change over a large interval",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "If f(x) = 4x² + 3, what is the instantaneous rate of change at x = 2?",
+                "correct_answer": "16",
+                "acceptable_answers": [
+                    "16",
+                    "16.0"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What does the sign of the instantaneous rate of change indicate about the behavior of a function at a specific point?",
+                "options": [
+                    "Positive indicates a local maximum, negative indicates a local minimum",
+                    "Positive indicates the function is increasing, negative indicates the function is decreasing",
+                    "Positive indicates the function is concave up, negative indicates the function is concave down",
+                    "The sign of the instantaneous rate of change does not provide any information about the behavior of the function"
+                ],
+                "correct_answer": "Positive indicates the function is increasing, negative indicates the function is decreasing",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "If the position function of an object is given by s(t) = t³ - 6t² + 9t, what is the average velocity between t = 1 and t = 3 seconds?",
+                "correct_answer": "0",
+                "acceptable_answers": [
+                    "0",
+                    "0 units/s"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following functions has a constant average rate of change?",
+                "options": [
+                    "f(x) = x²",
+                    "f(x) = x³ + x",
+                    "f(x) = x³ + 1",
+                    "f(x) = x⁴ - x²"
+                ],
+                "correct_answer": "f(x) = x³ + x",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Using synthetic division, divide f(x) = 2x³ - 3x² + 4 by (x - 1) and provide the quotient and remainder.",
+                "correct_answer": "Quotient: 2x² - x + 3, Remainder: 7",
+                "acceptable_answers": [
+                    "Quotient: 2x² - x + 3, Remainder: 7",
+                    "2x² - x + 3, Remainder: 7",
+                    "Quotient: 2x² - x + 3, Remainder:7"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the end behavior of the polynomial f(x) = -3x⁴ + 2x³ - x + 5?",
+                "options": [
+                    "Starts in Q1, ends in Q1",
+                    "Starts in Q2, ends in Q2",
+                    "Starts in Q3, ends in Q3",
+                    "Starts in Q4, ends in Q4"
+                ],
+                "correct_answer": "Starts in Q3, ends in Q3",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the multiplicity of the zero x = -2 for the polynomial f(x) = (x + 2)³(x - 1)².",
+                "correct_answer": "3",
+                "acceptable_answers": [
+                    "3",
+                    "multiplicity 3"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following polynomials has a zero at x = 4 with multiplicity 2?",
+                "options": [
+                    "f(x) = (x - 4)(x + 1)²",
+                    "f(x) = (x - 4)²(x + 1)",
+                    "f(x) = (x - 4)(x + 1)(x - 2)",
+                    "f(x) = (x - 4)³"
+                ],
+                "correct_answer": "f(x) = (x - 4)²(x + 1)",
+                "difficulty": "Medium"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Average Rate of Change",
+                "Instantaneous Rate of Change",
+                "Secant vs Tangent Lines",
+                "Difference Quotient",
+                "Velocity and Speed"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

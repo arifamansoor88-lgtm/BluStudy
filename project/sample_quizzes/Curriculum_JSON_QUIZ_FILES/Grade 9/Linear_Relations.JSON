@@ -1,0 +1,134 @@
+{
+  "contentType": "quiz",
+  "data": {
+    "title": "Grade 9: Linear Relations Quiz",
+    "questions": [
+      {
+        "type": "multiple_choice",
+        "question": "What is the slope (m) of the line represented by the equation y = -3x + 5?",
+        "options": ["5", "-3", "3", "-5"],
+        "correct_answer": "-3",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "Calculate the slope of a line passing through the points (2, 5) and (4, 11).",
+        "correct_answer": "3",
+        "acceptable_answers": ["3", "m=3", "m = 3"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "What does the 'b' represent in the equation y = mx + b?",
+        "options": ["The slope", "The x-intercept", "The y-intercept", "The rate of change"],
+        "correct_answer": "The y-intercept",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Which of the following equations represents a horizontal line?",
+        "options": ["x = 4", "y = x", "y = 4", "y = 4x"],
+        "correct_answer": "y = 4",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "short_answer",
+        "question": "State the y-intercept of the line: 2x - 3y + 12 = 0",
+        "correct_answer": "4",
+        "acceptable_answers": ["4", "y=4", "b=4", "(0,4)"],
+        "difficulty": "Hard"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "What is the slope of a line that is perpendicular to a line with a slope of 2/3?",
+        "options": ["2/3", "-2/3", "3/2", "-3/2"],
+        "correct_answer": "-3/2",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "If a line has a slope of 0, it is:",
+        "options": ["Vertical", "Horizontal", "Diagonal", "Undefined"],
+        "correct_answer": "Horizontal",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "A taxi charges a flat fee of $5.00 plus $2.00 per kilometer. Write the equation for the total cost (C) in terms of kilometers (d).",
+        "correct_answer": "C = 2d + 5",
+        "acceptable_answers": ["C=2d+5", "C = 2x + 5", "y = 2x + 5"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Identify the x-intercept of the equation y = 2x - 8.",
+        "options": ["-8", "2", "4", "0"],
+        "correct_answer": "4",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Which relationship is a partial variation?",
+        "options": ["y = 5x", "y = -2x", "y = 3x + 1", "y = x²"],
+        "correct_answer": "y = 3x + 1",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "Write the equation of a line in slope-intercept form that has a slope of -1 and a y-intercept of 4.",
+        "correct_answer": "y = -1x + 4",
+        "acceptable_answers": ["y=-1x+4", "y = -x + 4", "y=-x+4"],
+        "difficulty": "Medium"
+        },
+        {
+        "type": "multiple_choice",
+        "question": "What is the slope of the line represented by the equation 3y - 6x = 9?",
+        "options": ["2", "-2", "1/2", "-1/2"],
+        "correct_answer": "2",
+        "difficulty": "Medium"
+        },
+        {
+        "type": "short_answer",
+        "question": "Determine the slope of a line that passes through the points (1, 2) and (3, 6).",
+        "correct_answer": "2",
+        "acceptable_answers": ["2", "m=2", "m = 2"],
+        "difficulty": "Medium"
+        },
+        {
+        "type": "multiple_choice",
+        "question": "In the equation y = 4x - 7, what is the y-intercept?",
+        "options": ["4", "-7", "0", "7"],
+        "correct_answer": "-7",
+        "difficulty": "Easy"
+         },
+        {
+        "type": "multiple_choice",
+        "question": "Which of the following equations represents a vertical line?",
+        "options": ["x = 5", "y = 5", "y = x", "y = -x"],
+        "correct_answer": "x = 5",
+        "difficulty": "Medium"
+        },
+        {
+        "type": "short_answer",
+        "question": "Find the equation of a line in slope-intercept form that has a slope of 3 and passes through the point (2, 5).",
+        "correct_answer": "y = 3x - 1",
+        "acceptable_answers": ["y=3x-1", "y = 3x - 1"],
+        "difficulty": "Hard"
+        }
+    ],
+    "timeTaken": 0,
+    "options": {
+      "numQuestions": 10,
+      "selectedTopics": [
+        "Slope and Rate of Change",
+        "y = mx + b",
+        "Point-Slope Form",
+        "Parallel and Perpendicular Lines",
+        "Direct and Partial Variation"
+      ],
+      "customTopics": null,
+      "questionFormats": {}
+    },
+    "attempts": []
+  }
+}

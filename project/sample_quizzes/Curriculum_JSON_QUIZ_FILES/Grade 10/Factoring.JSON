@@ -1,0 +1,173 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 10: Factoring Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "What is the first step you should always take when factoring any polynomial?",
+                "options": [
+                    "Find the square root of the first term",
+                    "Check for a Greatest Common Factor (GCF)",
+                    "Use the quadratic formula",
+                    "Split the middle term"
+                ],
+                "correct_answer": "Check for a Greatest Common Factor (GCF)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Factor completely: 5x² - 20x",
+                "correct_answer": "5x(x - 4)",
+                "acceptable_answers": [
+                    "5x(x-4)",
+                    "5x(x - 4)",
+                    "5x*(x-4)"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the factored form of x² + 7x + 10?",
+                "options": [
+                    "(x + 7)(x + 10)",
+                    "(x + 2)(x + 5)",
+                    "(x - 2)(x - 5)",
+                    "(x + 1)(x + 10)"
+                ],
+                "correct_answer": "(x + 2)(x + 5)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Factor the difference of squares: x² - 49",
+                "options": [
+                    "(x - 7)(x - 7)",
+                    "(x + 7)(x - 7)",
+                    "(x + 49)(x - 1)",
+                    "(x + 7)(x + 7)"
+                ],
+                "correct_answer": "(x + 7)(x - 7)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Factor the trinomial: x² - 5x - 24",
+                "correct_answer": "(x - 8)(x + 3)",
+                "acceptable_answers": [
+                    "(x-8)(x+3)",
+                    "(x+3)(x-8)",
+                    "(x - 8)(x + 3)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Factor the complex trinomial: 2x² + 7x + 3",
+                "options": [
+                    "(2x + 1)(x + 3)",
+                    "(2x + 3)(x + 1)",
+                    "(x + 1)(x + 3)",
+                    "(2x + 7)(x + 3)"
+                ],
+                "correct_answer": "(2x + 1)(x + 3)",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which binomial is a factor of x² - 10x + 25?",
+                "options": [
+                    "(x + 5)",
+                    "(x - 5)",
+                    "(x - 10)",
+                    "(x + 25)"
+                ],
+                "correct_answer": "(x - 5)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Factor completely: 3x² - 27",
+                "correct_answer": "3(x - 3)(x + 3)",
+                "acceptable_answers": [
+                    "3(x-3)(x+3)",
+                    "3(x+3)(x-3)",
+                    "3(x - 3)(x + 3)"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Factor the following: 6x² + 11x - 10",
+                "options": [
+                    "(3x - 2)(2x + 5)",
+                    "(6x - 5)(x + 2)",
+                    "(2x - 5)(3x + 2)",
+                    "(3x + 2)(2x - 5)"
+                ],
+                "correct_answer": "(3x - 2)(2x + 5)",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which expression represents the area of a square if the side length is (x - 3)?",
+                "options": [
+                    "x² - 9",
+                    "x² + 9",
+                    "x² - 6x + 9",
+                    "x² + 6x + 9"
+                ],
+                "correct_answer": "x² - 6x + 9",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Factor the perfect square trinomial: x² + 12x + 36",
+                "correct_answer": "(x + 6)(x + 6)",
+                "acceptable_answers": [
+                    "(x+6)(x+6)",
+                    "(x + 6)(x + 6)",
+                    "(x + 6)²"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the factored form of 4x² - 25?",
+                "options": [
+                    "(2x - 5)(2x + 5)",
+                    "(4x - 25)(x + 1)",
+                    "(2x - 25)(2x + 1)",
+                    "(4x - 5)(x + 5)"
+                ],
+                "correct_answer": "(2x - 5)(2x + 5)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Factor completely: 8x³ - 27",
+                "correct_answer": "(2x - 3)(4x² + 6x + 9)",
+                "acceptable_answers": [
+                    "(2x-3)(4x²+6x+9)",
+                    "(2x - 3)(4x² + 6x + 9)",
+                    "(2x - 3)(4x² + 6x + 9)"
+                ],
+                "difficulty": "Hard"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Common Factoring",
+                "Simple Trinomials",
+                "Complex Trinomials",
+                "Difference of Squares",
+                "Perfect Square Trinomials"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

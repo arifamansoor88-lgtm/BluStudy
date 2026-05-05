@@ -18,6 +18,7 @@ const PracticeTests = () => {
   // Get folderId from URL query params if present
   const [searchParams] = useSearchParams();
   const folderId = searchParams.get('folderId');
+  const quizId = searchParams.get('quizId');
   
   // State for quiz display
   const [showQuiz, setShowQuiz] = useState(true);
@@ -44,6 +45,7 @@ const PracticeTests = () => {
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [customTopics, setCustomTopics] = useState("");
   const [numQuestions, setNumQuestions] = useState(20);
+  const [subjectCategory, setSubjectCategory] = useState("conceptual");
   const [questionFormats, setQuestionFormats] = useState({
     multiple_choice: true,
     multi_select: true,
@@ -51,6 +53,7 @@ const PracticeTests = () => {
     true_false: false,
     short_response: false,
     fill_in_blank: false,
+    numerical: false,
   });
 
   // Hooks for quiz functionality
@@ -87,6 +90,65 @@ const PracticeTests = () => {
     }
   }, [showQuiz, fetchSavedQuizzes, quizzesFetchedRef]);
 
+  const loadQuizIntoViewer = (quizDocument) => {
+    const quizData = quizDocument?.data || {};
+    const quizWithId = { ...quizData, id: quizDocument.id };
+
+    setGeneratedQuiz(quizWithId);
+
+    if (quizData.userAnswers && quizData.userAnswers.length > 0) {
+      setUserAnswers(quizData.userAnswers);
+    } else {
+      setUserAnswers(Array((quizData.questions || []).length).fill(null));
+    }
+
+    if (quizData.timeTaken) {
+      setTimerValue(quizData.timeTaken);
+    } else {
+      resetTimer();
+    }
+
+    setQuizStatus("ready");
+    setShowSummary(false);
+    setShowAttemptHistory(true);
+    setCurrentQuizQuestion(0);
+  };
+
+  useEffect(() => {
+    if (!quizId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadFromQuery = async () => {
+      try {
+        setShowQuiz(false);
+        setShowUpload(true);
+        setUploading(true);
+        const loadedQuiz = await fetchQuizWithHistory(quizId);
+        if (!cancelled && loadedQuiz) {
+          loadQuizIntoViewer(loadedQuiz);
+        }
+      } catch (loadError) {
+        console.error("Error loading quiz from query param:", loadError);
+        if (!cancelled) {
+          setError("Failed to load saved quiz");
+        }
+      } finally {
+        if (!cancelled) {
+          setUploading(false);
+        }
+      }
+    };
+
+    loadFromQuery();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [quizId, fetchQuizWithHistory, resetTimer, setTimerValue, setError]);
+
   // Create a new test
   const handleCreateTest = () => {
     setShowQuiz(false);
@@ -97,6 +159,7 @@ const PracticeTests = () => {
     setCustomTopics("");
     setMainTopic(""); // Reset main topic
     setNumQuestions(20);
+    setSubjectCategory("conceptual");
     setQuestionFormats({
       multiple_choice: true,
       multi_select: true,
@@ -104,6 +167,7 @@ const PracticeTests = () => {
       true_false: false,
       short_response: false,
       fill_in_blank: false,
+      numerical: false,
     });
     setGeneratedQuiz(null);
     setQuizStatus("idle");
@@ -123,6 +187,17 @@ const PracticeTests = () => {
     // Reset the quizzesFetchedRef to ensure fresh data when returning to home screen
     quizzesFetchedRef.current = false;
   };
+
+  // Auto-enable numerical and short answer for quantitative subject
+  useEffect(() => {
+    if (subjectCategory === "quantitative") {
+      setQuestionFormats(prev => ({
+        ...prev,
+        numerical: true,
+        short_response: true
+      }));
+    }
+  }, [subjectCategory]);
 
   // File handling
   const handleFileSelect = (event) => {
@@ -253,7 +328,8 @@ const PracticeTests = () => {
           selectedTopics,
           customTopics,
           questionFormats,
-          folderId // Pass folderId if present
+          folderId, // Pass folderId if present
+          subjectCategory
         );
       } else {
         // Generate quiz using the topic-based hook
@@ -266,7 +342,8 @@ const PracticeTests = () => {
           selectedTopics,
           customTopics, // Additional focus topics from Step 2
           questionFormats,
-          folderId // Pass folderId if present
+          folderId, // Pass folderId if present
+          subjectCategory
         );
       }
 
@@ -355,13 +432,16 @@ const PracticeTests = () => {
         setAiExplanations(newExplanations);
       }
 
-      // Only show feedback immediately in review mode
+      // Only auto-check in review mode for question types where a single interaction
+      // completes the answer. Multi-select requires an explicit "Check My Answer" click.
       if (quizMode === "review") {
         setShowAnswerFeedback(false);
-        // Auto-check answer after a short delay to provide instant feedback
-        setTimeout(() => {
-          checkAnswerForQuestion(questionIndex);
-        }, 500);
+        const questionType = generatedQuiz.questions[questionIndex]?.type;
+        if (questionType !== "multi_select") {
+          setTimeout(() => {
+            checkAnswerForQuestion(questionIndex);
+          }, 500);
+        }
       }
     }
   };
@@ -410,6 +490,48 @@ const PracticeTests = () => {
 
     if (!userAnswer || userAnswer === null || userAnswer === undefined) {
       return; // Don't check if no answer provided
+    }
+
+    // For numerical questions, first try local tolerance check
+    if (question.type === "numerical") {
+      let localCheckIsCorrect = false;
+      const parsed = parseFloat(String(userAnswer).replace(/[^0-9.\-]/g, ""));
+      if (!isNaN(parsed)) {
+         localCheckIsCorrect = Math.abs(parsed - question.correct_answer_value) <= (question.tolerance ?? 0.01);
+         if(localCheckIsCorrect) {
+             // mark as true, don't fallback to AI
+             if (quizMode === "review") {
+                if (!loadingExplanation) setLoadingExplanation(true);
+                try {
+                  const explanation = await getAnswerExplanation(
+                    question,
+                    userAnswer,
+                    true
+                  );
+                  setAiExplanations(prev => ({
+                    ...prev,
+                    [questionIndex]: explanation
+                  }));
+                  setAiExplanation(explanation);
+                } catch (error) {
+                  const errorMessage = "Failed to generate an explanation. Please try again.";
+                  setAiExplanations(prev => ({
+                    ...prev,
+                    [questionIndex]: errorMessage
+                  }));
+                  setAiExplanation(errorMessage);
+                } finally {
+                  setLoadingExplanation(false);
+                }
+                setCheckedAnswers(prev => ({
+                  ...prev,
+                  [questionIndex]: true
+                }));
+                setShowAnswerFeedback(true);
+             }
+             return;
+         }
+      }
     }
 
     // For short answer and fill-in-blank questions, evaluate with AI
@@ -607,6 +729,17 @@ const PracticeTests = () => {
     setAiEvaluatedAnswers({});
     setError("");
 
+    setSubjectCategory("conceptual");
+    setQuestionFormats({
+      multiple_choice: true,
+      multi_select: true,
+      drag_and_drop: true,
+      true_false: false,
+      short_response: false,
+      fill_in_blank: false,
+      numerical: false,
+    });
+
     quizzesFetchedRef.current = false;
 
     // Fetch saved quizzes when going back to main screen
@@ -621,34 +754,8 @@ const PracticeTests = () => {
 
     try {
       // Fetch the quiz history
-      await fetchQuizWithHistory(savedQuiz.id);
-
-      // Set the quiz data
-      const quizWithId = { ...savedQuiz.data, id: savedQuiz.id };
-      setGeneratedQuiz(quizWithId);
-
-      // If there are saved answers, load them
-      if (savedQuiz.data.userAnswers && savedQuiz.data.userAnswers.length > 0) {
-        setUserAnswers(savedQuiz.data.userAnswers);
-      } else {
-        // Initialize empty answers
-        const answerArray = Array(savedQuiz.data.questions.length).fill(null);
-        setUserAnswers(answerArray);
-      }
-
-      // Set timer if available
-      if (savedQuiz.data.timeTaken) {
-        setTimerValue(savedQuiz.data.timeTaken);
-      } else {
-        resetTimer();
-      }
-
-      // Set quiz status
-      setQuizStatus("ready");
-      setShowSummary(false);
-      setShowAttemptHistory(true); // Show attempt history by default
-
-      setCurrentQuizQuestion(0);
+      const loadedQuiz = await fetchQuizWithHistory(savedQuiz.id);
+      loadQuizIntoViewer(loadedQuiz || savedQuiz);
     } catch (error) {
       console.error("Error loading saved quiz:", error);
       setError("Failed to load saved quiz");
@@ -714,6 +821,8 @@ const PracticeTests = () => {
               setCustomTopics={setCustomTopics}
               numQuestions={numQuestions}
               setNumQuestions={setNumQuestions}
+              subjectCategory={subjectCategory}
+              setSubjectCategory={setSubjectCategory}
               questionFormats={questionFormats}
               toggleQuestionFormat={toggleQuestionFormat}
               handleNextStep={handleNextStep}

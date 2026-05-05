@@ -197,7 +197,8 @@ export const useQuizData = () => {
       selectedTopics,
       customTopics,
       questionFormats,
-      folderId = null
+      folderId = null,
+      subjectCategory = "conceptual"
     ) => {
       try {
         console.log("=== generateQuiz Hook Called ===");
@@ -208,7 +209,8 @@ export const useQuizData = () => {
           numQuestions,
           selectedTopics,
           customTopics,
-          questionFormats
+          questionFormats,
+          subjectCategory
         });
 
         const token = await getToken();
@@ -218,6 +220,7 @@ export const useQuizData = () => {
         const formData = new FormData();
         formData.append("file", selectedFile);
         formData.append("num_questions", numQuestions.toString()); // Convert to string
+        formData.append("subject_category", subjectCategory);
 
         // Combine selected topics and custom topics
         const allTopics = [...selectedTopics];
@@ -238,6 +241,7 @@ export const useQuizData = () => {
           true_false: "multiple_choice", // True/false is a special case of multiple choice
           short_response: "short_answer",
           fill_in_blank: "fill_in_blank",
+          numerical: "numerical",
         };
 
         const selectedFormats = Object.entries(questionFormats)
@@ -321,7 +325,8 @@ export const useQuizData = () => {
       selectedTopics,
       customTopics,
       questionFormats,
-      folderId = null
+      folderId = null,
+      subjectCategory = "conceptual"
     ) => {
       try {
         console.log("=== generateQuizFromTopic Hook Called ===");
@@ -330,6 +335,7 @@ export const useQuizData = () => {
         console.log("Selected topics:", selectedTopics);
         console.log("Custom topics:", customTopics);
         console.log("Question formats:", questionFormats);
+        console.log("Subject category:", subjectCategory);
 
         const token = await getToken();
         if (!token) {
@@ -354,6 +360,7 @@ export const useQuizData = () => {
           true_false: "multiple_choice",
           short_response: "short_answer",
           fill_in_blank: "fill_in_blank",
+          numerical: "numerical",
         };
 
         const selectedFormats = Object.entries(questionFormats)
@@ -373,6 +380,7 @@ export const useQuizData = () => {
             (obj, format) => ({ ...obj, [format]: true }),
             {}
           ),
+          subject_category: subjectCategory,
         };
 
       // Add folderId if provided
@@ -587,6 +595,12 @@ function isAnswerCorrect(question, userAnswer) {
         (question.acceptable_answers &&
           question.acceptable_answers.includes(userAnswer))
       );
+    case "numerical": {
+      if (!userAnswer) return false;
+      const parsed = parseFloat(String(userAnswer).replace(/[^0-9.\-]/g, ""));
+      if (isNaN(parsed)) return false;
+      return Math.abs(parsed - question.correct_answer_value) <= (question.tolerance ?? 0.01);
+    }
     default:
       return false;
   }

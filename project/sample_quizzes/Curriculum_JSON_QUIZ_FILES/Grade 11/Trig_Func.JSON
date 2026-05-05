@@ -1,0 +1,303 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 11 Trigonometric Functions Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "What is the amplitude of the function y = -4 sin(3x) + 2?",
+                "options": [
+                    "-4",
+                    "4",
+                    "3",
+                    "2"
+                ],
+                "correct_answer": "4",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the period of the function f(x) = cos(2x) in degrees.",
+                "correct_answer": "180",
+                "acceptable_answers": [
+                    "180",
+                    "180 degrees",
+                    "180°"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which parameter in the equation y = a sin[k(x - d)] + c represents the phase shift?",
+                "options": [
+                    "a",
+                    "k",
+                    "d",
+                    "c"
+                ],
+                "correct_answer": "d",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the equation of the axis (midline) for the function y = 3 cos(x) - 5?",
+                "options": [
+                    "y = 3",
+                    "y = 5",
+                    "y = -5",
+                    "y = 0"
+                ],
+                "correct_answer": "y = -5",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "If the period of a sine function is 120°, what is the value of 'k'?",
+                "correct_answer": "3",
+                "acceptable_answers": [
+                    "3",
+                    "k=3"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Describe the transformation of g(x) = sin(x - 30°).",
+                "options": [
+                    "Phase shift 30° left",
+                    "Phase shift 30° right",
+                    "Vertical shift 30° up",
+                    "Horizontal compression by 30"
+                ],
+                "correct_answer": "Phase shift 30° right",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the range of the function y = 2 sin(x) + 1?",
+                "options": [
+                    "{y ∈ ℝ | -2 ≤ y ≤ 2}",
+                    "{y ∈ ℝ | -1 ≤ y ≤ 3}",
+                    "{y ∈ ℝ | 1 ≤ y ≤ 3}",
+                    "{y ∈ ℝ}"
+                ],
+                "correct_answer": "{y ∈ ℝ | -1 ≤ y ≤ 3}",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the maximum value of the function y = 10 cos(x) + 4?",
+                "correct_answer": "14",
+                "acceptable_answers": [
+                    "14",
+                    "y=14"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "A ferris wheel height is modeled by a sine graph. If the wheel goes from 2m to 22m, what is the amplitude?",
+                "options": [
+                    "22",
+                    "20",
+                    "10",
+                    "12"
+                ],
+                "correct_answer": "10",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which function has a period of 2π?",
+                "options": [
+                    "y = sin(2x)",
+                    "y = 2 sin(x)",
+                    "y = sin(0.5x)",
+                    "y = sin(x) + 2"
+                ],
+                "correct_answer": "y = sin(x) + 2",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the phase shift of the function y = 5 cos(4(x + 45°)) - 3.",
+                "correct_answer": "-45°",
+                "acceptable_answers": [
+                    "-45°",
+                    "-45 degrees",
+                    "x+45°"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the equation of the function with amplitude 3, period 90°, and vertical shift 2?",
+                "options": [
+                    "y = 3 sin(4x) + 2",
+                    "y = 3 cos(4x) + 2",
+                    "y = 3 sin(0.25x) + 2",
+                    "y = 3 cos(0.25x) + 2"
+                ],
+                "correct_answer": "y = 3 sin(4x) + 2",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following functions has a vertical shift of 5 units up?",
+                "options": [
+                    "y = 2 sin(x) + 5",
+                    "y = 2 sin(x) - 5",
+                    "y = 2 sin(x)",
+                    "y = 2 sin(x) + 10"
+                ],
+                "correct_answer": "y = 2 sin(x) + 5",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the period of the function f(x) = tan(3x) in degrees.",
+                "correct_answer": "60",
+                "acceptable_answers": [
+                    "60",
+                    "60 degrees",
+                    "60°"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the equation of the function with amplitude 4, period 180°, and no vertical shift?",
+                "options": [
+                    "y = 4 sin(2x)",
+                    "y = 4 cos(2x)",
+                    "y = 4 sin(0.5x)",
+                    "y = 4 cos(0.5x)"
+                ],
+                "correct_answer": "y = 4 sin(0.5x)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following functions has a phase shift of 90° to the left?",
+                "options": [
+                    "y = 3 sin(x - 90°)",
+                    "y = 3 cos(x - 90°)",
+                    "y = 3 sin(x + 90°)",
+                    "y = 3 cos(x + 90°)"
+                ],
+                "correct_answer": "y = 3 sin(x + 90°)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the range of the function y = -2 cos(x) + 1.",
+                "correct_answer": "{y ∈ ℝ | -1 ≤ y ≤ 3}",
+                "acceptable_answers": [
+                    "{y ∈ ℝ | -1 ≤ y ≤ 3}",
+                    "{y ∈ ℝ | -1 ≤ y ≤ 3}",
+                    "{-1 ≤ y ≤ 3}"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the amplitude of the function y = -5 sin(2x) + 4?",
+                "options": [
+                    "-5",
+                    "5",
+                    "-4",
+                    "4"
+                ],
+                "correct_answer": "5",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following functions has a period of π?",
+                "options": [
+                    "y = sin(2x)",
+                    "y = cos(2x)",
+                    "y = tan(2x)",
+                    "y = cot(2x)"
+                ],
+                "correct_answer": [
+                    "y = tan(2x)",
+                    "y = cot(2x)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the phase shift of the function y = 6 cos(0.5(x - 60°)) + 2.",
+                "correct_answer": "-60°",
+                "acceptable_answers": [
+                    "-60°",
+                    "-60 degrees",
+                    "-60°"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the equation of the function with amplitude 2, period 360°, and vertical shift 3?",
+                "options": [
+                    "y = 2 sin(x) + 3",
+                    "y = 2 cos(x) + 3",
+                    "y = 2 sin(0.5x) + 3",
+                    "y = 2 cos(0.5x) + 3"
+                ],
+                "correct_answer": "y = 2 sin(x) + 3",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following functions has a vertical shift of 4 units down?",
+                "options": [
+                    "y = 3 sin(x) - 4",
+                    "y = 3 sin(x) + 4",
+                    "y = 3 sin(x)",
+                    "y = 3 sin(x) - 8"
+                ],
+                "correct_answer": "y = 3 sin(x) - 4",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the range of the function y = 5 sin(x) - 2.",
+                "correct_answer": "{y ∈ ℝ | -7 ≤ y ≤ 3}",
+                "acceptable_answers": [
+                    "{y ∈ ℝ | -7 ≤ y ≤ 3}",
+                    "{y ∈ ℝ | -7 ≤ y ≤ 3}",
+                    "{-7 ≤ y ≤ 3}"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the amplitude of the function y = 4 cos(3x) + 1?",
+                "options": [
+                    "4",
+                    "-4",
+                    "1",
+                    "-1"
+                ],
+                "correct_answer": "4",
+                "difficulty": "Easy"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Amplitude and Period",
+                "Phase Shifts",
+                "Vertical Translations",
+                "Domain and Range of Sinusoids",
+                "Modeling with Trig Functions"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

@@ -68,23 +68,6 @@ async function apiFetch(path, options = {}) {
   return res.status === 204 ? null : res.json();
 }
 
-// ---------- localStorage helpers ----------
-const LS_KEY_PREFIX = "folderItems:";
-const lsKeyFor = (folderId) => `${LS_KEY_PREFIX}${folderId}`;
-function loadItems(folderId) {
-  try {
-    const raw = localStorage.getItem(lsKeyFor(folderId));
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-function saveItems(folderId, items) {
-  localStorage.setItem(lsKeyFor(folderId), JSON.stringify(items));
-  // workspace listener
-  localStorage.setItem("folders:changed", Date.now().toString());
-}
-
 // palette (reuses folder colors)
 const FOLDER_COLORS = [
   "from-indigo-100 to-indigo-200",
@@ -172,7 +155,7 @@ export default function SaveToFolderButton({
     return {
       title: `${toolType} ${now.toLocaleTimeString()}`,
       description: `Saved from ${toolType}`,
-      type: "Notes",
+      contentType: "note",
       date: now.toLocaleString(),
       tags: [toolType.toLowerCase().replace(/\s+/g, "-")],
       timestamp: now,
@@ -184,7 +167,6 @@ export default function SaveToFolderButton({
     setLoading(true);
     try {
       let folderIdToUse = selectedFolderId;
-      let folderItemsCount = selectedFolder?.items ?? 0;
 
       // create folder if needed
       if (creatingNew) {
@@ -194,51 +176,34 @@ export default function SaveToFolderButton({
           body: JSON.stringify({
             name: newName.trim(),
             color: newColor,
-            starred: false,
-            items: 0,
           }),
         });
         folderIdToUse = created.id;
-        folderItemsCount = created.items ?? 0;
         setFolders((prev) => [created, ...prev]);
         setSelectedFolderId(created.id);
       }
 
       const item = typeof buildItem === "function" ? buildItem() : defaultBuildItem();
 
-      // If this is a Smart Summarizer item, save to database (not localStorage)
-      if (String(item?.type).toLowerCase() === "summary") {
-        await apiFetch("/save-summary", {
-          method: "POST",
-          body: JSON.stringify({
-            title: item.title,
-            description: item.description || "",
-            contentType: "summary",
-            folderId: folderIdToUse,
-            data: {
-              summary: item.fullText || item.description || "",
-              tags: item.tags || [],
-              // timestamp is stored as part of createdAt on the backend
-            },
-          }),
-        });
-        // notify workspace listeners so UI can refresh without using localStorage for storage
-        localStorage.setItem("folders:changed", Date.now().toString());
-      } else {
-        // Default behavior for other tools (localStorage mirror for instant UI)
-        const existing = loadItems(folderIdToUse);
-        const updated = [item, ...existing];
-        saveItems(folderIdToUse, updated);
-      }
-
-      // bump backend count => Workspace stats in sync
-      const newCount = folderItemsCount + 1;
-      await apiFetch(`/folders/${folderIdToUse}`, {
-        method: "PATCH",
-        body: JSON.stringify({ items: newCount }),
+      // Always save to database via generic endpoint
+      await apiFetch("/save-to-folder", {
+        method: "POST",
+        body: JSON.stringify({
+          title: item.title,
+          description: item.description || "",
+          contentType: item.contentType || item.type || "note",
+          folderId: folderIdToUse,
+          data: {
+            summary: item.fullText || item.description || "",
+            tags: item.tags || [],
+            ...item.data,
+          },
+        }),
       });
 
-      // notify parent that a save occurred (so it can flip its dirty indicator)
+      // Signal cross-tab refresh
+      localStorage.setItem("folders:changed", Date.now().toString());
+
       if (typeof onSaved === "function") onSaved();
 
       setOpen(false);

@@ -4,7 +4,11 @@ import { useDeckData } from "./hooks";
 import FlashcardDifficultySelector from "./FlashcardDifficultySelector";
 import StarSelector from "./StarSelector";
 import FlashcardDeckList from "./FlashcardDeckList";
+import PreGeneratedFlashcardSection from "./PreGeneratedFlashcardSection";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+
+const MIN_FLASHCARDS = 1;
+const MAX_FLASHCARDS = 100;
 
 const AIFlashcards = () => {
   // Get folderId from URL query params if present
@@ -19,6 +23,7 @@ const AIFlashcards = () => {
   const [difficulty, setDifficulty] = useState(null);
   const [selectedDeckID, setSelectedDeckID] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [numCards, setNumCards] = useState(10);
   const navigate = useNavigate();
 
   const {
@@ -98,6 +103,10 @@ const AIFlashcards = () => {
     }
   };
 
+  const handlePreGeneratedDeckSelect = (deck) => {
+    navigate(`/tools/flashcards/study/${deck.id}`);
+  };
+
   const saveCard = () => {
     let deckName = prompt("Choose a name for this deck");
     saveDeck(deckName, cards, folderId);
@@ -108,7 +117,7 @@ const AIFlashcards = () => {
 
     setIsProcessing(true);
     try {
-      const result = await generateFlashcardsFromTopic(topicPrompt, 10, folderId);
+      const result = await generateFlashcardsFromTopic(topicPrompt, numCards, folderId);
 
       navigate(`/tools/flashcards/study/${result.deckId}`, {
         state: {
@@ -139,14 +148,44 @@ const AIFlashcards = () => {
     if (file) {
       setIsProcessing(true);
       try {
-        await generateFlashcards(file, 10, folderId);
+        await generateFlashcards(file, numCards, folderId);
         window.location.reload();
       } catch (error) {
         console.error("Error processing PDF:", error);
+        alert(error.message || "Failed to generate flashcards from PDF");
       } finally {
         setIsProcessing(false);
       }
     }
+  };
+
+  const handleNumCardsChange = (e) => {
+    const rawValue = e.target.value;
+
+    if (rawValue === "") {
+      setNumCards("");
+      return;
+    }
+
+    const parsedValue = Number.parseInt(rawValue, 10);
+    if (Number.isNaN(parsedValue)) {
+      return;
+    }
+
+    setNumCards(
+      Math.min(MAX_FLASHCARDS, Math.max(MIN_FLASHCARDS, parsedValue))
+    );
+  };
+
+  const handleNumCardsBlur = () => {
+    if (numCards === "") {
+      setNumCards(10);
+      return;
+    }
+
+    setNumCards(
+      Math.min(MAX_FLASHCARDS, Math.max(MIN_FLASHCARDS, Number(numCards)))
+    );
   };
 
   // Fetch saved decks on component mount
@@ -207,9 +246,27 @@ const AIFlashcards = () => {
       "
           />
 
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-gray-700">
+                Number of flashcards
+              </span>
+              <input
+                type="number"
+                min={MIN_FLASHCARDS}
+                max={MAX_FLASHCARDS}
+                value={numCards}
+                onChange={handleNumCardsChange}
+                onBlur={handleNumCardsBlur}
+                className="w-32 rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="mt-2 text-xs text-gray-500">
+                Choose between {MIN_FLASHCARDS} and {MAX_FLASHCARDS} cards.
+              </p>
+            </label>
+
             <button
-              disabled={!topicPrompt}
+              disabled={!topicPrompt || numCards === ""}
               onClick={handleTopicGenerate}
               className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3
              text-sm font-medium text-white hover:bg-blue-700 transition
@@ -224,6 +281,25 @@ const AIFlashcards = () => {
 
       {/* Upload Card */}
       <div className="max-w-xl mx-auto mb-24">
+        <div className="mb-4 flex items-end justify-between gap-4 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4">
+          <div>
+            <p className="text-sm font-medium text-gray-900">PDF flashcard count</p>
+            <p className="text-xs text-gray-500">
+              The uploaded PDF will use the same card count.
+            </p>
+          </div>
+
+          <input
+            type="number"
+            min={MIN_FLASHCARDS}
+            max={MAX_FLASHCARDS}
+            value={numCards}
+            onChange={handleNumCardsChange}
+            onBlur={handleNumCardsBlur}
+            className="w-28 rounded-xl border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
         <label
           htmlFor="pdf-upload"
           className="group cursor-pointer block rounded-3xl border border-gray-200 bg-white p-10 text-center shadow-sm hover:shadow-md transition"
@@ -268,6 +344,10 @@ const AIFlashcards = () => {
           </div>
         )}
       </div>
+
+      <PreGeneratedFlashcardSection
+        onDeckSelect={handlePreGeneratedDeckSelect}
+      />
     </div>
   );
 };

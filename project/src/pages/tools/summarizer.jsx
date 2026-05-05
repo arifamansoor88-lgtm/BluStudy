@@ -24,6 +24,7 @@ import { msalInstance, protectedResources } from '../../authConfig';
 
 // reusable save-to-folder button
 import SaveToFolderButton from '../../components/SaveToFolderButton';
+import ShareItemButton from '../../components/ShareItemButton';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
@@ -31,6 +32,7 @@ const Summarizer = () => {
   // Get folderId from URL query params if present
   const [searchParams] = useSearchParams();
   const folderId = searchParams.get('folderId');
+  const summaryId = searchParams.get('summaryId');
   
   // View state: 'create' or 'saved'
   const [viewMode, setViewMode] = useState('create');
@@ -45,11 +47,43 @@ const Summarizer = () => {
   const [summaryStyle, setSummaryStyle] = useState('high');
   const [summaryFormat, setSummaryFormat] = useState('bullet');
   const [copied, setCopied] = useState(false);
+  const [viewingExisting, setViewingExisting] = useState(false);
 
   // Editing / status
   const [isEditing, setIsEditing] = useState(true);
   const [dirty, setDirty] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState(null);
+
+  // Load existing summary if summaryId is provided
+  useEffect(() => {
+    if (!summaryId) return;
+    (async () => {
+      try {
+        const accounts = msalInstance.getAllAccounts();
+        const request = { scopes: protectedResources.todoListApi.scopes, account: accounts[0] };
+        let token;
+        try {
+          const r = await msalInstance.acquireTokenSilent(request);
+          token = r.accessToken;
+        } catch {
+          const r = await msalInstance.acquireTokenPopup(request);
+          token = r.accessToken;
+        }
+        const res = await fetch(`${API_BASE}/items/${summaryId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSummary(data.data?.summary || data.description || "");
+          setViewingExisting(true);
+          setIsEditing(false);
+          setDirty(false);
+        }
+      } catch (e) {
+        console.error("Error loading summary:", e);
+      }
+    })();
+  }, [summaryId]);
 
   // Autosize textarea
   const textareaRef = useRef(null);
@@ -411,9 +445,14 @@ const Summarizer = () => {
                   <div
                     key={savedSummary.id}
                     onClick={() => handleSelectSummary(savedSummary)}
-                    className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden h-full transform hover:-translate-y-1"
+                    className="relative bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden h-full transform hover:-translate-y-1"
                   >
                     <div className="h-3 bg-gradient-to-r from-purple-500 to-indigo-400"></div>
+                    <ShareItemButton
+                      itemId={savedSummary.id}
+                      itemLabel="summary"
+                      className="absolute right-4 top-6 rounded-full p-1.5 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition"
+                    />
                     <div className="p-6 h-full flex flex-col">
                       <h3 className="font-semibold text-gray-800 text-lg mb-3 min-h-[3rem] leading-tight">
                         {savedSummary.title || "Untitled Summary"}

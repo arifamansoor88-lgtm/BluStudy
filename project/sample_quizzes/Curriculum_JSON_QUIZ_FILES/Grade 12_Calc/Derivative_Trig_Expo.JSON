@@ -1,0 +1,261 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 12 Calculus: Derivative of Trigonometric and Exponential Functions Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "What is the derivative of f(x) = e^(5x)?",
+                "options": [
+                    "e^(5x)",
+                    "5e^(5x)",
+                    "5e^x",
+                    "e^5"
+                ],
+                "correct_answer": "5e^(5x)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the derivative of f(x) = sin(x²).",
+                "correct_answer": "2x cos(x²)",
+                "acceptable_answers": [
+                    "2xcos(x^2)",
+                    "2x cos(x**2)",
+                    "2x * cos(x^2)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the derivative of f(x) = cos(x)?",
+                "options": [
+                    "sin(x)",
+                    "-sin(x)",
+                    "sec²(x)",
+                    "-cos(x)"
+                ],
+                "correct_answer": "-sin(x)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the derivative of y = 3^x?",
+                "options": [
+                    "x(3^{x-1})",
+                    "3^x",
+                    "3^x ln(3)",
+                    "3^x / ln(3)"
+                ],
+                "correct_answer": "3^x ln(3)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the derivative of f(x) = tan(4x).",
+                "correct_answer": "4 sec²(4x)",
+                "acceptable_answers": [
+                    "4sec^2(4x)",
+                    "4 sec**2(4x)",
+                    "4/cos^2(4x)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Find the derivative of f(x) = e^x sin(x) using the Product Rule.",
+                "options": [
+                    "e^x cos(x)",
+                    "e^x (sin(x) + cos(x))",
+                    "e^x (sin(x) - cos(x))",
+                    "e^x sin(x) + cos(x)"
+                ],
+                "correct_answer": "e^x (sin(x) + cos(x))",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the derivative of f(x) = ln(sin x)?",
+                "options": [
+                    "1/sin x",
+                    "cos x",
+                    "cot x",
+                    "tan x"
+                ],
+                "correct_answer": "cot x",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "At what value of x does the function f(x) = e^x have a slope of 1?",
+                "correct_answer": "0",
+                "acceptable_answers": [
+                    "0",
+                    "x=0"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "The derivative of f(x) = cos²(x) is:",
+                "options": [
+                    "-2 sin(x)",
+                    "2 cos(x)",
+                    "-2 sin(x) cos(x)",
+                    "-sin²(x)"
+                ],
+                "correct_answer": "-2 sin(x) cos(x)",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the second derivative of f(x) = sin(x)?",
+                "options": [
+                    "cos(x)",
+                    "-sin(x)",
+                    "-cos(x)",
+                    "sin(x)"
+                ],
+                "correct_answer": "-sin(x)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "To find the limit of a rational function as x approaches infinity, which method is most commonly used?",
+                "options": [
+                    "L'Hôpital's Rule",
+                    "Polynomial long division",
+                    "Factoring the numerator and denominator",
+                    "Substituting infinity directly into the function"
+                ],
+                "correct_answer": "Polynomial long division",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the interval where the function f(x) = x^3 - 6x^2 + 9x is increasing.",
+                "correct_answer": "x < 2",
+                "acceptable_answers": [
+                    "x < 2",
+                    "(-infinity, 2)",
+                    "x < 2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the interval where the function f(x) = x^3 - 6x^2 + 9x is decreasing.",
+                "correct_answer": "x > 2",
+                "acceptable_answers": [
+                    "x > 2",
+                    "(2, infinity)",
+                    "x > 2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "On what interval is the function $f(x) = x^2 - 4x$ increasing?",
+                "correct_answer": "x > 2",
+                "acceptable_answers": [
+                    "x > 2",
+                    "(2, infinity)",
+                    "x > 2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "On what interval is the function $f(x) = x^2 - 4x$ decreasing?",
+                "correct_answer": "x < 2",
+                "acceptable_answers": [
+                    "x < 2",
+                    "(-infinity, 2)",
+                    "x < 2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "For a rational function, if the degree of the numerator is equal to the degree of the denominator, the horizontal asymptote is found by:",
+                "options": [
+                    "Setting the denominator to zero",
+                    "The ratio of the leading coefficients",
+                    "Polynomial long division",
+                    "Taking the derivative of the numerator"
+                ],
+                "correct_answer": "The ratio of the leading coefficients",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "A function $f(x)$ is increasing on an interval if:",
+                "options": [
+                    "$f'(x) > 0$",
+                    "$f'(x) < 0$",
+                    "$f''(x) > 0$",
+                    "$f''(x) < 0$"
+                ],
+                "correct_answer": "$f'(x) > 0$",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If a function has a vertical asymptote at $x = a$, what can be said about the limit of $f(x)$ as $x$ approaches $a$?",
+                "options": [
+                    "The limit is zero",
+                    "The limit is finite",
+                    "The limit is infinite or does not exist",
+                    "The limit is negative"
+                ],
+                "correct_answer": "The limit is infinite or does not exist",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the x-intercepts of the function $f(x) = x^3 - 4x$.",
+                "correct_answer": "0, -2, 2",
+                "acceptable_answers": [
+                    "0, -2, 2",
+                    "-2, 0, 2",
+                    "x=0, x=-2, x=2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the y-intercept of the function $f(x) = x^3 - 4x$.",
+                "correct_answer": "0",
+                "acceptable_answers": [
+                    "0",
+                    "y=0"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the end behavior of the function $f(x) = x^3 - 4x$ as x approaches infinity and negative infinity.",
+                "correct_answer": "As x approaches infinity, f(x) approaches infinity; as x approaches negative infinity, f(x) approaches negative infinity.",
+                "acceptable_answers": [
+                    "As x approaches infinity, f(x) approaches infinity; as x approaches negative infinity, f(x) approaches negative infinity.",
+                    "As x → ∞, f(x) → ∞; as x → -∞, f(x) → -∞"
+                ],
+                "difficulty": "Medium"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Exponential Derivatives (e^x and a^x)",
+                "Trigonometric Derivatives (sin, cos, tan)",
+                "Chain Rule Applications",
+                "Product and Quotient Rule with Transcendental Functions",
+                "Higher Order Derivatives"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

@@ -1,0 +1,289 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 10: Trigonometry Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "Which trigonometric ratio is defined as Adjacent / Hypotenuse?",
+                "options": [
+                    "Sine",
+                    "Cosine",
+                    "Tangent",
+                    "Cosecant"
+                ],
+                "correct_answer": "Cosine",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "In a right triangle, if the opposite side is 5 and the adjacent side is 5, what is the value of tan(θ)?",
+                "correct_answer": "1",
+                "acceptable_answers": [
+                    "1",
+                    "1.0",
+                    "tan(θ)=1"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "When should you use the Sine Law instead of SOH CAH TOA?",
+                "options": [
+                    "Only in right-angled triangles",
+                    "In any triangle where you know an opposite angle-side pair",
+                    "Only when the triangle is equilateral",
+                    "When you only know all three side lengths"
+                ],
+                "correct_answer": "In any triangle where you know an opposite angle-side pair",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which formula represents the Cosine Law to find a side 'a'?",
+                "options": [
+                    "a² = b² + c² - 2bc cos(A)",
+                    "a/sin(A) = b/sin(B)",
+                    "a² = b² + c² + 2bc cos(A)",
+                    "a = b + c - cos(A)"
+                ],
+                "correct_answer": "a² = b² + c² - 2bc cos(A)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the measure of angle A in a right triangle if sin(A) = 0.5. (Answer in degrees)",
+                "correct_answer": "30",
+                "acceptable_answers": [
+                    "30",
+                    "30°",
+                    "30 degrees"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "In triangle ABC, you are given side a, side b, and the contained angle C. Which law should you use to find side c?",
+                "options": [
+                    "Sine Law",
+                    "Cosine Law",
+                    "Pythagorean Theorem",
+                    "Tangent Ratio"
+                ],
+                "correct_answer": "Cosine Law",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the 'angle of elevation'?",
+                "options": [
+                    "The angle between the horizontal and the line of sight looking up",
+                    "The angle between the vertical and the line of sight looking up",
+                    "The angle between the horizontal and the line of sight looking down",
+                    "The total sum of angles in a triangle"
+                ],
+                "correct_answer": "The angle between the horizontal and the line of sight looking up",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "A 10m ladder leans against a wall at an angle of 60° to the ground. How high up the wall does it reach? (Use sin(60°) ≈ 0.866, round to one decimal place)",
+                "correct_answer": "8.7",
+                "acceptable_answers": [
+                    "8.7",
+                    "8.7m",
+                    "8.66"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If sin(A) = 4/5 in a right triangle, what is cos(A)?",
+                "options": [
+                    "3/5",
+                    "5/4",
+                    "1/5",
+                    "3/4"
+                ],
+                "correct_answer": "3/5",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "In triangle PQR, p=10, q=12, and angle P=40°. To find angle Q, you should use:",
+                "options": [
+                    "Sine Law",
+                    "Cosine Law",
+                    "SOH CAH TOA",
+                    "Angle Sum Theorem"
+                ],
+                "correct_answer": "Sine Law",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the length of the side opposite to angle A in a triangle where angle A = 45°, and the hypotenuse is 14. (Use sin(45°) ≈ 0.707, round to one decimal place)",
+                "correct_answer": "9.9",
+                "acceptable_answers": [
+                    "9.9",
+                    "9.9 units",
+                    "9.899"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the correct expression for the inverse sine function to find angle A?",
+                "options": [
+                    "A = sin⁻¹(opposite/hypotenuse)",
+                    "A = cos⁻¹(adjacent/hypotenuse)",
+                    "A = tan⁻¹(opposite/adjacent)",
+                    "A = sin(opposite/hypotenuse)"
+                ],
+                "correct_answer": "A = sin⁻¹(opposite/hypotenuse)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "In a triangle, if angle B = 30° and the side opposite to angle B is 5, what is the length of the hypotenuse? (Use sin(30°) = 0.5)",
+                "correct_answer": "10",
+                "acceptable_answers": [
+                    "10",
+                    "10 units",
+                    "10.0"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following best describes the 'angle of depression'?",
+                "options": [
+                    "The angle between the horizontal and the line of sight looking down",
+                    "The angle between the vertical and the line of sight looking down",
+                    "The angle between the horizontal and the line of sight looking up",
+                    "The total sum of angles in a triangle"
+                ],
+                "correct_answer": "The angle between the horizontal and the line of sight looking down",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the measure of angle C in a triangle if cos(C) = 0.25. (Answer in degrees)",
+                "correct_answer": "75.5",
+                "acceptable_answers": [
+                    "75.5",
+                    "75.5°",
+                    "75.5 degrees"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "In triangle XYZ, x=7, y=9, and angle Z=60°. To find side z, you should use:",
+                "options": [
+                    "Sine Law",
+                    "Cosine Law",
+                    "SOH CAH TOA",
+                    "Angle Sum Theorem"
+                ],
+                "correct_answer": "Cosine Law",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the length of the adjacent side to angle A in a triangle where angle A = 60°, and the hypotenuse is 20. (Use cos(60°) = 0.5)",
+                "correct_answer": "10",
+                "acceptable_answers": [
+                    "10",
+                    "10 units",
+                    "10.0"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the correct expression for the inverse cosine function to find angle B?",
+                "options": [
+                    "B = sin⁻¹(opposite/hypotenuse)",
+                    "B = cos⁻¹(adjacent/hypotenuse)",
+                    "B = tan⁻¹(opposite/adjacent)",
+                    "B = cos(adjacent/hypotenuse)"
+                ],
+                "correct_answer": "B = cos⁻¹(adjacent/hypotenuse)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "In a triangle, if angle D = 45° and the side adjacent to angle D is 7, what is the length of the hypotenuse? (Use cos(45°) ≈ 0.707, round to one decimal place)",
+                "correct_answer": "9.9",
+                "acceptable_answers": [
+                    "9.9",
+                    "9.9 units",
+                    "9.899"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following best describes the 'angle of elevation'?",
+                "options": [
+                    "The angle between the horizontal and the line of sight looking up",
+                    "The angle between the vertical and the line of sight looking up",
+                    "The angle between the horizontal and the line of sight looking down",
+                    "The total sum of angles in a triangle"
+                ],
+                "correct_answer": "The angle between the horizontal and the line of sight looking up",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the measure of angle E in a triangle if tan(E) = 1. (Answer in degrees)",
+                "correct_answer": "45",
+                "acceptable_answers": [
+                    "45",
+                    "45°",
+                    "45 degrees"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "In triangle ABC, you are given side a, side b, and the contained angle C. Which law should you use to find angle A?",
+                "options": [
+                    "Sine Law",
+                    "Cosine Law",
+                    "Pythagorean Theorem",
+                    "Tangent Ratio"
+                ],
+                "correct_answer": "Sine Law",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "A 15m pole casts a shadow that is 10m long. What is the angle of elevation of the sun? (Use tan(θ) = opposite/adjacent)",
+                "options": [
+                    "56.3°",
+                    "33.7°",
+                    "45°",
+                    "60°"
+                ],
+                "correct_answer": "56.3°",
+                "difficulty": "Hard"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "SOH CAH TOA",
+                "Sine Law",
+                "Cosine Law",
+                "Angles of Elevation and Depression",
+                "Inverse Trig Functions"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

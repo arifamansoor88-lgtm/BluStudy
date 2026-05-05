@@ -1,0 +1,277 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 11 Transformations Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "In the general transformation equation y = a f[k(x - d)] + c, what does a negative 'a' value represent?",
+                "options": [
+                    "Reflection in the y-axis",
+                    "Reflection in the x-axis",
+                    "A horizontal compression",
+                    "A vertical translation"
+                ],
+                "correct_answer": "Reflection in the x-axis",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Given the parent function f(x) = x², describe the transformation in g(x) = (x + 4)².",
+                "correct_answer": "Horizontal shift left 4 units",
+                "acceptable_answers": [
+                    "Shift left 4",
+                    "Left 4",
+                    "Horizontal translation 4 units left"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which parameter in y = a f[k(x - d)] + c affects the period or horizontal stretch of a function?",
+                "options": [
+                    "a",
+                    "k",
+                    "d",
+                    "c"
+                ],
+                "correct_answer": "k",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If k = 3 in y = f(kx), how is the graph transformed compared to the parent function?",
+                "options": [
+                    "Horizontal stretch by a factor of 3",
+                    "Horizontal compression by a factor of 1/3",
+                    "Vertical stretch by a factor of 3",
+                    "Vertical compression by a factor of 1/3"
+                ],
+                "correct_answer": "Horizontal compression by a factor of 1/3",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "State the vertex of the transformed parabola: y = -2(x - 5)² + 10.",
+                "correct_answer": "5,10",
+                "acceptable_answers": [
+                    "5,10",
+                    "(5,10)",
+                    "5, 10"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the correct order to apply transformations to a point (x, y)?",
+                "options": [
+                    "Translations, then Stretches/Reflections",
+                    "Stretches/Reflections, then Translations",
+                    "Vertical moves, then Horizontal moves",
+                    "It does not matter"
+                ],
+                "correct_answer": "Stretches/Reflections, then Translations",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Given f(x) = √x, which equation represents a vertical stretch by a factor of 4 and a shift down 2 units?",
+                "options": [
+                    "y = 4√(x - 2)",
+                    "y = 1/4√x - 2",
+                    "y = 4√x - 2",
+                    "y = √(4x) - 2"
+                ],
+                "correct_answer": "y = 4√x - 2",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "If a point (2, 6) is on the graph of f(x), what is the new point on f(x + 3) - 1?",
+                "correct_answer": "-1,5",
+                "acceptable_answers": [
+                    "-1,5",
+                    "(-1,5)",
+                    "-1, 5"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "A reflection in the y-axis is caused by which change to the parent function?",
+                "options": [
+                    "y = -f(x)",
+                    "y = f(-x)",
+                    "y = f(x) - 1",
+                    "y = f(x - 1)"
+                ],
+                "correct_answer": "y = f(-x)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the range of y = -|x| + 4?",
+                "options": [
+                    "{y ∈ ℝ | y ≥ 4}",
+                    "{y ∈ ℝ | y ≤ 4}",
+                    "{y ∈ ℝ | y ≤ 0}",
+                    "{y ∈ ℝ}"
+                ],
+                "correct_answer": "{y ∈ ℝ | y ≤ 4}",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following represents a horizontal shift right 3 units and a vertical stretch by a factor of 2?",
+                "options": [
+                    "y = 2f(x - 3)",
+                    "y = f(2x - 3)",
+                    "y = 2f(x) - 3",
+                    "y = f(2(x - 3))"
+                ],
+                "correct_answer": "y = 2f(x - 3)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Describe the transformation of the function g(x) = -f(x + 2) - 1 compared to the parent function f(x).",
+                "correct_answer": "Reflection in x-axis, horizontal shift left 2 units, vertical shift down 1 unit",
+                "acceptable_answers": [
+                    "Reflection in x-axis, horizontal shift left 2 units, vertical shift down 1 unit",
+                    "Reflect x-axis, shift left 2, shift down 1",
+                    "Reflection in x-axis, shift left 2, shift down 1"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the result of simplifying (x * y) / (x / y)?",
+                "options": [
+                    "x²y",
+                    "xy²",
+                    "x/y",
+                    "y/x"
+                ],
+                "correct_answer": "xy²",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the simplified form of (x + y)²?",
+                "options": [
+                    "x² + y²",
+                    "x² + 2xy + y²",
+                    "x² - 2xy + y²",
+                    "x² + xy + y²"
+                ],
+                "correct_answer": "x² + 2xy + y²",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "If f(x) = 2x + 3, find the value of f⁻¹(7).",
+                "correct_answer": "2",
+                "acceptable_answers": [
+                    "2",
+                    "f^-1(7)=2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the simplified form of (x²y) / (xy²)?",
+                "options": [
+                    "x/y",
+                    "y/x",
+                    "x²/y²",
+                    "y²/x²"
+                ],
+                "correct_answer": "x/y",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the simplified form of (x + y)(x - y)?",
+                "options": [
+                    "x² - y²",
+                    "x² + y²",
+                    "x² - 2xy + y²",
+                    "x² + 2xy + y²"
+                ],
+                "correct_answer": "x² - y²",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Simplify: (2x³y) / (4xy²).",
+                "correct_answer": "x²/2y",
+                "acceptable_answers": [
+                    "x²/2y",
+                    "(1/2)x²/y",
+                    "(1/2)(x²/y)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the result of simplifying (x * y) * (y / x)?",
+                "options": [
+                    "x²y",
+                    "xy²",
+                    "x/y",
+                    "y/x"
+                ],
+                "correct_answer": "xy²",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the simplified form of (x - y)²?",
+                "options": [
+                    "x² - y²",
+                    "x² + y²",
+                    "x² - 2xy + y²",
+                    "x² + 2xy + y²"
+                ],
+                "correct_answer": "x² - 2xy + y²",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "If f(x) = 5x - 2, find the value of f⁻¹(8).",
+                "correct_answer": "2",
+                "acceptable_answers": [
+                    "2",
+                    "f^-1(8)=2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the simplified form of (x³y²) / (xy)?",
+                "options": [
+                    "x²y",
+                    "xy²",
+                    "x²/y",
+                    "y/x²"
+                ],
+                "correct_answer": "x²y",
+                "difficulty": "Medium"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Vertical and Horizontal Translations",
+                "Reflections",
+                "Stretches and Compressions",
+                "Mapping Rules",
+                "Combined Transformations"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

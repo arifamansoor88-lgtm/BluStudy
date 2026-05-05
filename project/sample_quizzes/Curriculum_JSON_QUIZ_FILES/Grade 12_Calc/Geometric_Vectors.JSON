@@ -1,0 +1,208 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 12 Geometric Vectors Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following defines a vector quantity?",
+                "options": [
+                    "A quantity described by magnitude only",
+                    "A quantity described by both magnitude and direction",
+                    "A quantity that represents the slope of a line",
+                    "A quantity that has no units of measurement"
+                ],
+                "correct_answer": "A quantity described by both magnitude and direction",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Two vectors are considered 'equivalent' if they have:",
+                "options": [
+                    "The same magnitude only",
+                    "The same starting point (tail)",
+                    "The same magnitude and the same direction",
+                    "Slopes that are negative reciprocals"
+                ],
+                "correct_answer": "The same magnitude and the same direction",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "When using the Triangle Law to add vectors u and v, how are the vectors arranged?",
+                "options": [
+                    "Tail-to-tail",
+                    "Tip-to-tail",
+                    "Tip-to-tip",
+                    "Parallel to each other"
+                ],
+                "correct_answer": "Tip-to-tail",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If u and v are placed tail-to-tail forming a parallelogram, which diagonal represents the sum u + v?",
+                "options": [
+                    "The diagonal originating from the common tail",
+                    "The diagonal connecting the two tips",
+                    "The shorter of the two diagonals",
+                    "The vertical diagonal only"
+                ],
+                "correct_answer": "The diagonal originating from the common tail",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the result of the scalar multiplication k(v) if k = -1?",
+                "options": [
+                    "A vector with the same magnitude but opposite direction",
+                    "A vector with zero magnitude",
+                    "The original vector v",
+                    "A scalar value of -1"
+                ],
+                "correct_answer": "A vector with the same magnitude but opposite direction",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "In a regular hexagon ABCDEF, what single vector is equal to AB + BC?",
+                "correct_answer": "AC",
+                "acceptable_answers": [
+                    "AC",
+                    "vector AC",
+                    "AC vector"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which property is represented by the equation u + v = v + u?",
+                "options": [
+                    "The Distributive Property",
+                    "The Associative Property",
+                    "The Commutative Property",
+                    "The Zero Vector Property"
+                ],
+                "correct_answer": "The Commutative Property",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the magnitude of the resultant of two perpendicular vectors with magnitudes 3 and 4?",
+                "correct_answer": "5",
+                "acceptable_answers": [
+                    "5",
+                    "5.0"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If |u| = 10, what is the magnitude of the vector -3u?",
+                "options": [
+                    "-30",
+                    "30",
+                    "10",
+                    "7"
+                ],
+                "correct_answer": "30",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following represents a unit vector in the direction of v?",
+                "options": [
+                    "v / |v|",
+                    "|v| * v",
+                    "v + 1",
+                    "1 / v"
+                ],
+                "correct_answer": "v / |v|",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "If u = (2, 3) and v = (4, 1), what is the vector u - v?",
+                "correct_answer": "(-2, 2)",
+                "acceptable_answers": [
+                    "(-2, 2)",
+                    "-2i + 2j",
+                    "-2i + 2j",
+                    "-2i + 2j"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the magnitude of the vector w = (5, -12)?",
+                "correct_answer": "13",
+                "acceptable_answers": [
+                    "13",
+                    "13.0"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is NOT a property of vector addition?",
+                "options": [
+                    "Commutative Property",
+                    "Associative Property",
+                    "Distributive Property",
+                    "Transitive Property"
+                ],
+                "correct_answer": "Transitive Property",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If u = (3, 4) and k = 2, what is the result of the scalar multiplication k(u)?",
+                "options": [
+                    "(6, 8)",
+                    "(1.5, 2)",
+                    "(3, 4)",
+                    "(0, 0)"
+                ],
+                "correct_answer": "(6, 8)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "In a regular hexagon ABCDEF, what single vector is equal to AB + BC + CD?",
+                "correct_answer": "AD",
+                "acceptable_answers": [
+                    "AD",
+                    "vector AD",
+                    "AD vector"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following represents the zero vector?",
+                "options": [
+                    "(0, 0)",
+                    "(1, 0)",
+                    "(0, 1)",
+                    "(1, 1)"
+                ],
+                "correct_answer": "(0, 0)",
+                "difficulty": "Easy"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Vector Definition",
+                "Triangle and Parallelogram Laws",
+                "Scalar Multiplication",
+                "Vector Properties",
+                "Magnitude Calculations"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

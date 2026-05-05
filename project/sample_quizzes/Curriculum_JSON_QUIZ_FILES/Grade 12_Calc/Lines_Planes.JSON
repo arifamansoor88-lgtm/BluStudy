@@ -1,0 +1,207 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 12 Lines and Planes Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "What is the vector equation of a line passing through point P₀ with direction vector d?",
+                "options": [
+                    "r = P₀ + td",
+                    "r = d + tP₀",
+                    "n · (r - P₀) = 0",
+                    "Ax + By + Cz + D = 0"
+                ],
+                "correct_answer": "r = P₀ + td",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the direction vector for the line with parametric equations: x = 2 - 3t, y = 5 + t, z = -4t. (Format: x,y,z)",
+                "correct_answer": "-3,1,-4",
+                "acceptable_answers": [
+                    "-3,1,-4",
+                    "(-3,1,-4)",
+                    "-3, 1, -4"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is required to define a unique plane in R³?",
+                "options": [
+                    "A point and one direction vector",
+                    "Two parallel lines",
+                    "A point and a normal vector",
+                    "Three collinear points"
+                ],
+                "correct_answer": "A point and a normal vector",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If two lines in R³ are not parallel and do not intersect, they are called:",
+                "options": [
+                    "Coincident lines",
+                    "Skew lines",
+                    "Orthogonal lines",
+                    "Parametric lines"
+                ],
+                "correct_answer": "Skew lines",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the scalar equation of the plane with normal n = (2, -1, 3) passing through the origin (0, 0, 0).",
+                "correct_answer": "2x - y + 3z = 0",
+                "acceptable_answers": [
+                    "2x-y+3z=0",
+                    "2x - 1y + 3z = 0"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the relationship between the direction vector of a line and the normal vector of a plane if the line is parallel to the plane?",
+                "options": [
+                    "The vectors are parallel",
+                    "The vectors are orthogonal (dot product is 0)",
+                    "The vectors are equal",
+                    "The vectors are in opposite directions"
+                ],
+                "correct_answer": "The vectors are orthogonal (dot product is 0)",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "The scalar equation Ax + By + C = 0 represents what in R² and R³ respectively?",
+                "options": [
+                    "A line in R² and a plane in R³",
+                    "A point in R² and a line in R³",
+                    "A plane in R² and a line in R³",
+                    "A line in both R² and R³"
+                ],
+                "correct_answer": "A line in R² and a plane in R³",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Identify the point of intersection between the line r = (1, 0, -1) + t(2, 3, 4) and the plane z = 3.",
+                "correct_answer": "3,3,3",
+                "acceptable_answers": [
+                    "3,3,3",
+                    "(3,3,3)",
+                    "3, 3, 3"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Two planes are parallel if:",
+                "options": [
+                    "Their direction vectors are orthogonal",
+                    "Their normal vectors are scalar multiples",
+                    "They share the same x-intercept",
+                    "Their D values in scalar form are equal"
+                ],
+                "correct_answer": "Their normal vectors are scalar multiples",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "How many direction vectors are needed for the vector equation of a plane?",
+                "options": [
+                    "One",
+                    "Two",
+                    "Three",
+                    "Zero"
+                ],
+                "correct_answer": "Two",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the normal vector to the plane defined by the scalar equation 4x - 2y + z = 5? (Format: x,y,z)",
+                "correct_answer": "4,-2,1",
+                "acceptable_answers": [
+                    "4,-2,1",
+                    "(4,-2,1)",
+                    "4, -2, 1"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If a line is perpendicular to a plane, what can be said about the direction vector of the line and the normal vector of the plane?",
+                "options": [
+                    "They are parallel",
+                    "They are orthogonal (dot product is 0)",
+                    "They are equal",
+                    "They are in opposite directions"
+                ],
+                "correct_answer": "They are parallel",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the point of intersection between the line r = (2, -1, 3) + t(1, 4, -2) and the plane 2x + y - z = 7. (Format: x,y,z)",
+                "correct_answer": "3,3,1",
+                "acceptable_answers": [
+                    "3,3,1",
+                    "(3,3,1)",
+                    "3, 3, 1"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following represents the parametric equations of a line in R³?",
+                "options": [
+                    "x = 2t + 1, y = -t + 4, z = 3t - 2",
+                    "2x - y + z = 5",
+                    "r = (1, 0, -1) + t(2, 3, 4)",
+                    "Ax + By + Cz + D = 0"
+                ],
+                "correct_answer": "x = 2t + 1, y = -t + 4, z = 3t - 2",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the vector equation of a plane that passes through the point P(1, 2, 3) and has a normal vector n = (4, -1, 2).",
+                "correct_answer": "r = (1, 2, 3) + s(4, -1, 2) + t(0, 0, 0)",
+                "acceptable_answers": [
+                    "r = (1, 2, 3) + s(4, -1, 2) + t(0, 0, 0)",
+                    "r = (1, 2, 3) + s(4, -1, 2)",
+                    "r = (1, 2, 3) + t(4, -1, 2)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the distance from the point P(3, -2, 5) to the plane defined by the scalar equation x - y + z = 4?",
+                "options": [
+                    "√6",
+                    "√14",
+                    "√26",
+                    "√34"
+                ],
+                "correct_answer": "√14",
+                "difficulty": "Hard"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Vector/Parametric/Symmetric Equations of Lines",
+                "Vector/Parametric/Scalar Equations of Planes",
+                "Intersection of Lines and Planes",
+                "Skew Lines",
+                "Normal Vectors"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

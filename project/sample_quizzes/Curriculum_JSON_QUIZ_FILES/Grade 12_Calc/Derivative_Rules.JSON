@@ -1,0 +1,240 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 12 Calculus: Derivative Rules Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "What is the derivative of f(x) = x^n according to the Power Rule?",
+                "options": [
+                    "nx^(n-1)",
+                    "nx^n",
+                    "(n-1)x^n",
+                    "x^(n-1)"
+                ],
+                "correct_answer": "nx^(n-1)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the derivative of f(x) = 5x³ - 4x + 7.",
+                "correct_answer": "15x² - 4",
+                "acceptable_answers": [
+                    "15x^2 - 4",
+                    "15x**2 - 4",
+                    "15x^2-4"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the correct Product Rule for the derivative of [f(x)g(x)]?",
+                "options": [
+                    "f'(x)g'(x)",
+                    "f'(x)g(x) + f(x)g'(x)",
+                    "f'(x)g(x) - f(x)g'(x)",
+                    "f(x)g(x) + f'(x)g'(x)"
+                ],
+                "correct_answer": "f'(x)g(x) + f(x)g'(x)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the derivative of the function f(x) = sin(x)?",
+                "options": [
+                    "cos(x)",
+                    "-cos(x)",
+                    "sin(x)",
+                    "-sin(x)"
+                ],
+                "correct_answer": "cos(x)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Apply the Chain Rule: Find the derivative of f(x) = (3x² + 1)⁴.",
+                "correct_answer": "24x(3x² + 1)³",
+                "acceptable_answers": [
+                    "24x(3x^2+1)^3",
+                    "24x(3x**2+1)**3"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "According to the Quotient Rule, what is the numerator of the derivative of [f(x)/g(x)]?",
+                "options": [
+                    "f'(x)g(x) + f(x)g'(x)",
+                    "f'(x)g(x) - f(x)g'(x)",
+                    "f(x)g'(x) - f'(x)g(x)",
+                    "f'(x)g'(x)"
+                ],
+                "correct_answer": "f'(x)g(x) - f(x)g'(x)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the derivative of f(x) = e^x?",
+                "options": [
+                    "xe^(x-1)",
+                    "e^x",
+                    "ln(x)",
+                    "1/x"
+                ],
+                "correct_answer": "e^x",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the slope of the tangent to f(x) = x² at x = 3.",
+                "correct_answer": "6",
+                "acceptable_answers": [
+                    "6",
+                    "6.0"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the derivative of f(x) = tan(x)?",
+                "options": [
+                    "sec(x)",
+                    "sec²(x)",
+                    "-csc²(x)",
+                    "cos²(x)"
+                ],
+                "correct_answer": "sec²(x)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Find the derivative of f(x) = ln(x).",
+                "options": [
+                    "e^x",
+                    "1/x",
+                    "1",
+                    "1/ln(x)"
+                ],
+                "correct_answer": "1/x",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Apply the Product Rule: Find the derivative of f(x) = (2x)(x² + 1).",
+                "correct_answer": "6x² + 2",
+                "acceptable_answers": [
+                    "6x^2 + 2",
+                    "6x**2 + 2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Apply the Quotient Rule: Find the derivative of f(x) = (x² + 1)/(2x).",
+                "correct_answer": "(2x)(2x) - (x² + 1)(2) / (2x)²",
+                "acceptable_answers": [
+                    "(2x)(2x) - (x^2 + 1)(2) / (2x)^2",
+                    "(2x)(2x) - (x**2 + 1)(2) / (2x)**2"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the derivative of f(x) = cos(x).",
+                "correct_answer": "-sin(x)",
+                "acceptable_answers": [
+                    "-sin(x)",
+                    "-sin x",
+                    "-sinx"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the derivative of f(x) = e^(2x).",
+                "correct_answer": "2e^(2x)",
+                "acceptable_answers": [
+                    "2e^(2x)",
+                    "2e**(2x)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the derivative of f(x) = ln(3x).",
+                "correct_answer": "1/x",
+                "acceptable_answers": [
+                    "1/x",
+                    "1/(3x) * 3"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Apply the Chain Rule: Find the derivative of f(x) = (5x³ + 2)⁵.",
+                "correct_answer": "75x²(5x³ + 2)⁴",
+                "acceptable_answers": [
+                    "75x^2(5x^3 + 2)^4",
+                    "75x**2(5x**3 + 2)**4"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the derivative of f(x) = sec(x).",
+                "correct_answer": "sec(x)tan(x)",
+                "acceptable_answers": [
+                    "sec(x)tan(x)",
+                    "sec x tan x",
+                    "secx tanx"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the derivative of f(x) = csc(x).",
+                "correct_answer": "-csc(x)cot(x)",
+                "acceptable_answers": [
+                    "-csc(x)cot(x)",
+                    "-csc x cot x",
+                    "-cscx cotx"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the derivative of f(x) = (x² + 1)^(1/2).",
+                "correct_answer": "x/(x² + 1)^(1/2)",
+                "acceptable_answers": [
+                    "x/(x^2 + 1)^(1/2)",
+                    "x/(x**2 + 1)**(1/2)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the derivative of f(x) = (2x + 3)^(4).",
+                "correct_answer": "32(2x + 3)³",
+                "acceptable_answers": [
+                    "32(2x + 3)^3",
+                    "32(2x + 3)**3"
+                ],
+                "difficulty": "Medium"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Power Rule",
+                "Product Rule",
+                "Quotient Rule",
+                "Chain Rule",
+                "Trigonometric Derivatives"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

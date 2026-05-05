@@ -15,14 +15,19 @@ import StudyPlans from "./pages/tools/studyPlans/StudyPlans";
 import Summarizer from "./pages/tools/summarizer";
 import Workspace from "./pages/Workspace";
 import FolderView from "./pages/FolderView";
+import UnfiledItems from "./pages/UnfiledItems";
+import TrashPage from "./pages/Trash";
 import PublicLibrary from "./pages/publicLibrary";
 import FlashcardStudyPage from "./pages/tools/AIFlashcards/FlashcardStudy";
+import SharedItemPage from "./pages/shared/SharedItemPage";
 
 function AppContent() {
   const location = useLocation();
 
   const publicRoutes = ["/", "/signin", "/signup"];
-  const isPublicPage = publicRoutes.includes(location.pathname);
+  const isPublicPage =
+    publicRoutes.includes(location.pathname) ||
+    location.pathname.startsWith("/share/");
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -41,9 +46,12 @@ function AppContent() {
         <Route path="/tools/study-planner" element={<StudyPlans />} />
         <Route path="/tools/summarizer" element={<Summarizer />} />
         <Route path="/workspace" element={<Workspace />} />
+        <Route path="/workspace/unfiled" element={<UnfiledItems />} />
         <Route path="/workspace/folder/:id" element={<FolderView />} />
+        <Route path="/workspace/trash" element={<TrashPage />} />
         <Route path="/tools/flashcards/study/:deckId" element={<FlashcardStudyPage />} />
         <Route path="/public_library" element={<PublicLibrary />} />
+        <Route path="/share/:token" element={<SharedItemPage />} />
       </Routes>
     </div>
   );

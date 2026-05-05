@@ -1,0 +1,141 @@
+{
+  "contentType": "quiz",
+  "data": {
+    "title": "Grade 9: Number Sense Quiz",
+    "questions": [
+      {
+        "type": "multiple_choice",
+        "question": "Which of the following is an irrational number?",
+        "options": ["√16", "0.333...", "√2", "22/7"],
+        "correct_answer": "√2",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "Evaluate: 10 + 2 × (5 - 8)²",
+        "correct_answer": "28",
+        "acceptable_answers": ["28"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "What is the value of 5⁻² expressed as a fraction?",
+        "options": ["-25", "1/25", "1/10", "25"],
+        "correct_answer": "1/25",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "A $40 shirt is 20% off. After the discount, 13% HST is added. What is the final cost?",
+        "options": ["$36.16", "$37.20", "$32.00", "$45.20"],
+        "correct_answer": "$36.16",
+        "difficulty": "Hard"
+      },
+      {
+        "type": "short_answer",
+        "question": "Simplify the ratio 24:36:60 to its lowest terms (format: x:y:z)",
+        "correct_answer": "2:3:5",
+        "acceptable_answers": ["2:3:5", "2 : 3 : 5"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Simplify the expression: (x⁷) / (x³)",
+        "options": ["x¹⁰", "x⁴", "x²¹", "x³"],
+        "correct_answer": "x⁴",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "Express 0.000045 in scientific notation (use x for multiplication).",
+        "correct_answer": "4.5 x 10⁻⁵",
+        "acceptable_answers": ["4.5 x 10^-5", "4.5x10^-5", "4.5*10^-5"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Calculate the square root of 0.64.",
+        "options": ["0.08", "0.8", "8", "0.32"],
+        "correct_answer": "0.8",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "A recipe uses 2 cups of flour for every 3 cups of sugar. If you use 5 cups of flour, how many cups of sugar are needed?",
+        "correct_answer": "7.5",
+        "acceptable_answers": ["7.5", "7 1/2", "15/2"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Which of the following is equivalent to 15% of 80?",
+        "options": ["1.2", "12", "120", "8"],
+        "correct_answer": "12",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "Evaluate: (3² + 4²)^(1/2)",
+        "correct_answer": "5",
+        "acceptable_answers": ["5"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Which of the following is a rational number?",
+        "options": ["π", "√3", "-2/5", "e"],
+        "correct_answer": "-2/5",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "Simplify the expression: (2³)⁴",
+        "correct_answer": "4096",
+        "acceptable_answers": ["4096"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "What is 25% of 200?",
+        "options": ["25", "50", "75", "100"],
+        "correct_answer": "50",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "short_answer",
+        "question": "Express 0.000001 in scientific notation.",
+        "correct_answer": "1 x 10⁻⁶",
+        "acceptable_answers": ["1 x 10^-6", "1x10^-6", "1*10^-6"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Calculate the value of 2³ × 3².",
+        "options": ["72", "54", "36", "18"],
+        "correct_answer": "72",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "short_answer",
+        "question": "If a number is increased by 20% and then decreased by 20%, what is the overall percentage change?",
+        "correct_answer": "-4%",
+        "acceptable_answers": ["-4%", "-4 percent", "-0.04"],
+        "difficulty": "Hard"
+      }
+    ],
+    "timeTaken": 0,
+    "options": {
+      "numQuestions": 10,
+      "selectedTopics": [
+        "Rational and Irrational Numbers",
+        "Order of Operations (BEDMAS)",
+        "Exponent Laws",
+        "Ratios and Percentages",
+        "Scientific Notation"
+      ],
+      "customTopics": null,
+      "questionFormats": {}
+    },
+    "attempts": []
+  }
+}
