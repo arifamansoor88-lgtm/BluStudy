@@ -293,13 +293,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import database
 from pdf_utils import extract_text_from_pdf
-<<<<<<< HEAD:b_m_a/project/backend/main.py
-from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance, generate_suggested_next_steps_ai
-from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse, CreateMindmapRequest, CreateFolderRequest, UpdateFolderRequest, FolderOut 
-=======
-from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, evaluate_numerical_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
+from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, evaluate_numerical_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance, generate_suggested_next_steps_ai
 from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse, CreateMindmapRequest, CreateFolderRequest, UpdateFolderRequest, FolderOut, ShareLinkCreateRequest, ShareLinkUpdateRequest, ShareLinkSettings
->>>>>>> origin/main:project/backend/main.py
 from pydantic import BaseModel
 from azure.cosmos.exceptions import CosmosHttpResponseError, CosmosResourceNotFoundError
 import time
@@ -1995,7 +1990,8 @@ async def create_quiz(
                 "numQuestions": num_questions,
                 "selectedTopics": focus_topics.split(",") if focus_topics else [],
                 "customTopics": focus_topics,
-                "questionFormats": formats_dict
+                "questionFormats": formats_dict,
+                    "subjectCategory": subject_category
             },
             "attempts": []
         }, source_topic=focus_topics or None)
@@ -2005,26 +2001,7 @@ async def create_quiz(
             "userId": user_claims["sub"],
             "contentType": "quiz",
             "createdAt": datetime.utcnow().isoformat(),
-<<<<<<< HEAD:b_m_a/project/backend/main.py
             "data": quiz_payload,
-=======
-            "data": {
-                "title": quiz_data.get("quiz_title", "Generated Quiz"),
-                "questions": quiz_data.get("questions", []),
-                "userAnswers": None,
-                "score": None,
-                "timeTaken": 0,
-                "resourceName": file.filename,
-                "options": {
-                    "numQuestions": num_questions,
-                    "selectedTopics": focus_topics.split(",") if focus_topics else [],
-                    "customTopics": focus_topics,
-                    "questionFormats": formats_dict,
-                    "subjectCategory": subject_category
-                },
-                "attempts": []
-            }
->>>>>>> origin/main:project/backend/main.py
         }
         
         # Add folderId if provided
@@ -2223,6 +2200,7 @@ async def create_quiz_from_topic(
                 "selectedTopics": (focus_topics.split(",") if focus_topics else []),
                 "customTopics": focus_topics,
                 "questionFormats": formats_dict,
+                    "subjectCategory": subject_category,
             },
             "attempts": [],
         }, source_topic=topic_key or topic)
@@ -2232,26 +2210,7 @@ async def create_quiz_from_topic(
             "userId": user_claims["sub"],
             "contentType": "quiz",
             "createdAt": datetime.utcnow().isoformat(),
-<<<<<<< HEAD:b_m_a/project/backend/main.py
             "data": quiz_payload,
-=======
-            "data": {
-                "title": quiz_data.get("quiz_title", topic or "Generated Quiz"),
-                "questions": quiz_data.get("questions", []),
-                "userAnswers": None,
-                "score": None,
-                "timeTaken": 0,
-                "resourceName": topic,
-                "options": {
-                    "numQuestions": num_questions,
-                    "selectedTopics": (focus_topics.split(",") if focus_topics else []),
-                    "customTopics": focus_topics,
-                    "questionFormats": formats_dict,
-                    "subjectCategory": subject_category,
-                },
-                "attempts": [],
-            },
->>>>>>> origin/main:project/backend/main.py
         }
         
         # Add folderId if provided
@@ -4301,6 +4260,134 @@ async def delete_file(
         print(f"Error deleting file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
 
+
+# --------------------------------------------------------------------------------------
+# Trash / Recently Deleted Endpoints
+# --------------------------------------------------------------------------------------
+
+@app.get("/trash")
+async def list_trash(user_claims: dict = Depends(validate_token)):
+    """Get all soft-deleted items for the user."""
+    try:
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.deleted = true ORDER BY c.deletedAt DESC"
+        parameters = [{"name": "@userId", "value": user_claims["sub"]}]
+        items = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+        return items
+    except Exception as e:
+        print(f"Error fetching trash: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch trash")
+
+@app.post("/trash/{item_id}/restore")
+async def restore_from_trash(item_id: str, user_claims: dict = Depends(validate_token)):
+    """Restore a soft-deleted item. For folders, restores all items in the same deletion batch."""
+    try:
+        doc = container.read_item(item=item_id, partition_key=user_claims["sub"])
+        if doc.get("userId") != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+        if not doc.get("deleted"):
+            raise HTTPException(status_code=400, detail="Item is not deleted")
+        
+        batch_id = doc.get("deletedBatchId")
+        restored_count = 0
+        
+        if doc.get("contentType") == "folder" and batch_id:
+            batch_query = "SELECT * FROM c WHERE c.userId = @userId AND c.deletedBatchId = @batchId AND c.deleted = true"
+            batch_params = [
+                {"name": "@userId", "value": user_claims["sub"]},
+                {"name": "@batchId", "value": batch_id}
+            ]
+            batch_items = list(container.query_items(query=batch_query, parameters=batch_params, enable_cross_partition_query=True))
+            for batch_item in batch_items:
+                batch_item.pop("deleted", None)
+                batch_item.pop("deletedAt", None)
+                batch_item.pop("deletedBatchId", None)
+                batch_item["updatedAt"] = datetime.utcnow().isoformat()
+                container.replace_item(
+                    item=batch_item["id"],
+                    body=batch_item,
+                    partition_key=user_claims["sub"],
+                )
+                restored_count += 1
+        
+        doc.pop("deleted", None)
+        doc.pop("deletedAt", None)
+        doc.pop("deletedBatchId", None)
+        doc["updatedAt"] = datetime.utcnow().isoformat()
+        
+        if doc.get("contentType") == "folder":
+            parent_id = doc.get("data", {}).get("parentFolderId")
+            if parent_id:
+                try:
+                    container.read_item(item=parent_id, partition_key=user_claims["sub"])
+                except Exception:
+                    data = doc.setdefault("data", {})
+                    data["parentFolderId"] = None
+        
+        container.replace_item(
+            item=item_id, body=doc, partition_key=user_claims["sub"]
+        )
+        restored_count += 1
+        
+        return {"message": "Restored successfully", "restored_count": restored_count}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error restoring item: {e}")
+        raise HTTPException(status_code=500, detail="Failed to restore item")
+
+@app.delete("/trash/{item_id}")
+async def permanently_delete(item_id: str, user_claims: dict = Depends(validate_token)):
+    """Permanently delete a trashed item."""
+    try:
+        doc = container.read_item(item=item_id, partition_key=user_claims["sub"])
+        if doc.get("userId") != user_claims["sub"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        batch_id = doc.get("deletedBatchId")
+        deleted_count = 0
+        
+        if doc.get("contentType") == "folder" and batch_id:
+            batch_query = "SELECT * FROM c WHERE c.userId = @userId AND c.deletedBatchId = @batchId AND c.deleted = true"
+            batch_params = [
+                {"name": "@userId", "value": user_claims["sub"]},
+                {"name": "@batchId", "value": batch_id}
+            ]
+            batch_items = list(container.query_items(query=batch_query, parameters=batch_params, enable_cross_partition_query=True))
+            for batch_item in batch_items:
+                container.delete_item(item=batch_item["id"], partition_key=user_claims["sub"])
+                deleted_count += 1
+        
+        container.delete_item(item=item_id, partition_key=user_claims["sub"])
+        deleted_count += 1
+        
+        return {"message": "Permanently deleted", "deleted_count": deleted_count}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error permanently deleting: {e}")
+        raise HTTPException(status_code=500, detail="Failed to permanently delete")
+
+@app.delete("/trash")
+async def empty_trash(user_claims: dict = Depends(validate_token)):
+    """Permanently delete all trashed items for the user."""
+    try:
+        query = "SELECT * FROM c WHERE c.userId = @userId AND c.deleted = true"
+        parameters = [{"name": "@userId", "value": user_claims["sub"]}]
+        items = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+        
+        deleted_count = 0
+        for item in items:
+            try:
+                container.delete_item(item=item["id"], partition_key=user_claims["sub"])
+                deleted_count += 1
+            except Exception as e:
+                print(f"Error deleting item {item.get('id')}: {e}")
+        
+        return {"message": f"Emptied trash", "deleted_count": deleted_count}
+    except Exception as e:
+        print(f"Error emptying trash: {e}")
+        raise HTTPException(status_code=500, detail="Failed to empty trash")
+
 # --------------------------------------------------------------------------------------
 # Study Streak API
 # --------------------------------------------------------------------------------------
@@ -4508,134 +4595,6 @@ async def update_streak(request: Request):
         "previous_streak": previous_streak,
         "streak_updated": True
     }
-
-# --------------------------------------------------------------------------------------
-# Trash / Recently Deleted Endpoints
-# --------------------------------------------------------------------------------------
-
-@app.get("/trash")
-async def list_trash(user_claims: dict = Depends(validate_token)):
-    """Get all soft-deleted items for the user."""
-    try:
-        query = "SELECT * FROM c WHERE c.userId = @userId AND c.deleted = true ORDER BY c.deletedAt DESC"
-        parameters = [{"name": "@userId", "value": user_claims["sub"]}]
-        items = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
-        return items
-    except Exception as e:
-        print(f"Error fetching trash: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch trash")
-
-@app.post("/trash/{item_id}/restore")
-async def restore_from_trash(item_id: str, user_claims: dict = Depends(validate_token)):
-    """Restore a soft-deleted item. For folders, restores all items in the same deletion batch."""
-    try:
-        doc = container.read_item(item=item_id, partition_key=user_claims["sub"])
-        if doc.get("userId") != user_claims["sub"]:
-            raise HTTPException(status_code=403, detail="Access denied")
-        if not doc.get("deleted"):
-            raise HTTPException(status_code=400, detail="Item is not deleted")
-        
-        batch_id = doc.get("deletedBatchId")
-        restored_count = 0
-        
-        if doc.get("contentType") == "folder" and batch_id:
-            batch_query = "SELECT * FROM c WHERE c.userId = @userId AND c.deletedBatchId = @batchId AND c.deleted = true"
-            batch_params = [
-                {"name": "@userId", "value": user_claims["sub"]},
-                {"name": "@batchId", "value": batch_id}
-            ]
-            batch_items = list(container.query_items(query=batch_query, parameters=batch_params, enable_cross_partition_query=True))
-            for batch_item in batch_items:
-                batch_item.pop("deleted", None)
-                batch_item.pop("deletedAt", None)
-                batch_item.pop("deletedBatchId", None)
-                batch_item["updatedAt"] = datetime.utcnow().isoformat()
-                container.replace_item(
-                    item=batch_item["id"],
-                    body=batch_item,
-                    partition_key=user_claims["sub"],
-                )
-                restored_count += 1
-        
-        doc.pop("deleted", None)
-        doc.pop("deletedAt", None)
-        doc.pop("deletedBatchId", None)
-        doc["updatedAt"] = datetime.utcnow().isoformat()
-        
-        if doc.get("contentType") == "folder":
-            parent_id = doc.get("data", {}).get("parentFolderId")
-            if parent_id:
-                try:
-                    container.read_item(item=parent_id, partition_key=user_claims["sub"])
-                except Exception:
-                    data = doc.setdefault("data", {})
-                    data["parentFolderId"] = None
-        
-        container.replace_item(
-            item=item_id, body=doc, partition_key=user_claims["sub"]
-        )
-        restored_count += 1
-        
-        return {"message": "Restored successfully", "restored_count": restored_count}
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error restoring item: {e}")
-        raise HTTPException(status_code=500, detail="Failed to restore item")
-
-@app.delete("/trash/{item_id}")
-async def permanently_delete(item_id: str, user_claims: dict = Depends(validate_token)):
-    """Permanently delete a trashed item."""
-    try:
-        doc = container.read_item(item=item_id, partition_key=user_claims["sub"])
-        if doc.get("userId") != user_claims["sub"]:
-            raise HTTPException(status_code=403, detail="Access denied")
-        
-        batch_id = doc.get("deletedBatchId")
-        deleted_count = 0
-        
-        if doc.get("contentType") == "folder" and batch_id:
-            batch_query = "SELECT * FROM c WHERE c.userId = @userId AND c.deletedBatchId = @batchId AND c.deleted = true"
-            batch_params = [
-                {"name": "@userId", "value": user_claims["sub"]},
-                {"name": "@batchId", "value": batch_id}
-            ]
-            batch_items = list(container.query_items(query=batch_query, parameters=batch_params, enable_cross_partition_query=True))
-            for batch_item in batch_items:
-                container.delete_item(item=batch_item["id"], partition_key=user_claims["sub"])
-                deleted_count += 1
-        
-        container.delete_item(item=item_id, partition_key=user_claims["sub"])
-        deleted_count += 1
-        
-        return {"message": "Permanently deleted", "deleted_count": deleted_count}
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error permanently deleting: {e}")
-        raise HTTPException(status_code=500, detail="Failed to permanently delete")
-
-@app.delete("/trash")
-async def empty_trash(user_claims: dict = Depends(validate_token)):
-    """Permanently delete all trashed items for the user."""
-    try:
-        query = "SELECT * FROM c WHERE c.userId = @userId AND c.deleted = true"
-        parameters = [{"name": "@userId", "value": user_claims["sub"]}]
-        items = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
-        
-        deleted_count = 0
-        for item in items:
-            try:
-                container.delete_item(item=item["id"], partition_key=user_claims["sub"])
-                deleted_count += 1
-            except Exception as e:
-                print(f"Error deleting item {item.get('id')}: {e}")
-        
-        return {"message": f"Emptied trash", "deleted_count": deleted_count}
-    except Exception as e:
-        print(f"Error emptying trash: {e}")
-        raise HTTPException(status_code=500, detail="Failed to empty trash")
-
 
 # --------------------------------------------------------------------------------------
 # Dev server
