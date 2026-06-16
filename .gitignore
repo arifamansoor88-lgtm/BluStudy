@@ -1,4 +1,10 @@
-﻿# --- Added ignores (feature branch cleanup) ---
+# Notes (local only)
+notes/
+
+# Local notes (not tracked)
+notes/
+
+# --- Added ignores (feature branch cleanup) ---
 node_modules/
 dist/
 build/

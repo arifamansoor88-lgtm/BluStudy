@@ -1,0 +1,256 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 10: Quadratics Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "In the quadratic relation y = ax² + bx + c, if 'a' is negative, which way does the parabola open?",
+                "options": [
+                    "Upward",
+                    "Downward",
+                    "To the left",
+                    "To the right"
+                ],
+                "correct_answer": "Downward",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the vertex of the parabola defined by y = 2(x - 3)² + 5? (Format: x,y)",
+                "correct_answer": "3,5",
+                "acceptable_answers": [
+                    "3,5",
+                    "(3,5)",
+                    "3, 5"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the equation for the axis of symmetry for the parabola y = -(x + 4)² - 7?",
+                "options": [
+                    "x = 4",
+                    "x = -4",
+                    "y = -7",
+                    "x = -7"
+                ],
+                "correct_answer": "x = -4",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following represents the 'zeros' of the relation y = (x - 2)(x + 5)?",
+                "options": [
+                    "x = 2 and x = -5",
+                    "x = -2 and x = 5",
+                    "x = 2 and x = 5",
+                    "x = -2 and x = -5"
+                ],
+                "correct_answer": "x = 2 and x = -5",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the y-intercept of the quadratic relation y = x² - 4x - 12.",
+                "correct_answer": "-12",
+                "acceptable_answers": [
+                    "-12",
+                    "y=-12",
+                    "(0,-12)"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If a parabola has a vertex at (1, -4) and opens upward, how many x-intercepts does it have?",
+                "options": [
+                    "Zero",
+                    "One",
+                    "Two",
+                    "Infinite"
+                ],
+                "correct_answer": "Two",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What transformation does the 'k' value in y = a(x - h)² + k represent?",
+                "options": [
+                    "Horizontal shift",
+                    "Vertical shift",
+                    "Vertical stretch",
+                    "Reflection"
+                ],
+                "correct_answer": "Vertical shift",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the optimal value (maximum or minimum) of the relation y = -3(x + 1)² + 8.",
+                "correct_answer": "8",
+                "acceptable_answers": [
+                    "8",
+                    "max=8",
+                    "maximum of 8"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "The second differences of a table of values are constant and non-zero. What type of relationship is this?",
+                "options": [
+                    "Linear",
+                    "Quadratic",
+                    "Exponential",
+                    "Inverse"
+                ],
+                "correct_answer": "Quadratic",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which equation represents a parabola that is wider than the parent function y = x²?",
+                "options": [
+                    "y = 4x²",
+                    "y = -2x²",
+                    "y = 0.5x²",
+                    "y = x² + 5"
+                ],
+                "correct_answer": "y = 0.5x²",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the x-intercepts of the relation y = 2x² - 8. (Format: x₁,x₂)",
+                "correct_answer": "-2,2",
+                "acceptable_answers": [
+                    "-2,2",
+                    "( -2, 0), (2, 0)",
+                    "-2 and 2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the vertex form of the quadratic relation y = 3x² - 12x + 7?",
+                "options": [
+                    "y = 3(x - 2)² + 1",
+                    "y = 3(x + 2)² + 1",
+                    "y = 3(x - 2)² - 1",
+                    "y = 3(x + 2)² - 1"
+                ],
+                "correct_answer": "y = 3(x - 2)² + 1",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If the parabola y = ax² + bx + c has its vertex at (2, -3), which of the following could be the equation of the parabola?",
+                "options": [
+                    "y = 2(x - 2)² - 3",
+                    "y = -1(x - 2)² - 3",
+                    "y = 1(x + 2)² - 3",
+                    "y = 0.5(x - 2)² + 3"
+                ],
+                "correct_answer": "y = 2(x - 2)² - 3",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the y-intercept of the relation y = -x² + 6x - 8.",
+                "correct_answer": "-8",
+                "acceptable_answers": [
+                    "-8",
+                    "y=-8",
+                    "(0,-8)"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following represents the 'zeros' of the relation y = (x + 3)(x - 1)?",
+                "options": [
+                    "x = -3 and x = 1",
+                    "x = 3 and x = -1",
+                    "x = -3 and x = -1",
+                    "x = 3 and x = 1"
+                ],
+                "correct_answer": "x = -3 and x = 1",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the equation for the axis of symmetry for the parabola y = 0.5(x - 5)² + 2?",
+                "options": [
+                    "x = 5",
+                    "x = -5",
+                    "y = 2",
+                    "x = 2"
+                ],
+                "correct_answer": "x = 5",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the vertex of the parabola defined by y = -0.5(x + 2)² + 4? (Format: x,y)",
+                "correct_answer": "-2,4",
+                "acceptable_answers": [
+                    "-2,4",
+                    "( -2, 4)",
+                    "-2, 4"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "In the quadratic relation y = ax² + bx + c, if 'a' is positive, which way does the parabola open?",
+                "options": [
+                    "Upward",
+                    "Downward",
+                    "To the left",
+                    "To the right"
+                ],
+                "correct_answer": "Upward",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "The second differences of a table of values are zero. What type of relationship is this?",
+                "options": [
+                    "Linear",
+                    "Quadratic",
+                    "Exponential",
+                    "Inverse"
+                ],
+                "correct_answer": "Linear",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which equation represents a parabola that is narrower than the parent function y = x²?",
+                "options": [
+                    "y = 0.5x²",
+                    "y = -2x²",
+                    "y = 4x²",
+                    "y = x² - 5"
+                ],
+                "correct_answer": "y = 4x²",
+                "difficulty": "Hard"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Properties of Parabolas",
+                "Vertex Form Transformations",
+                "Factored Form and Zeros",
+                "Standard Form and Intercepts",
+                "Second Differences"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

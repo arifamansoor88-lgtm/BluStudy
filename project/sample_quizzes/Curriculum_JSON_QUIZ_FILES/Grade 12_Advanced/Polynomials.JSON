@@ -1,0 +1,215 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 12 Polynomials Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "What is the maximum number of turning points for a polynomial of degree 'n'?",
+                "options": [
+                    "n",
+                    "n + 1",
+                    "n - 1",
+                    "2n"
+                ],
+                "correct_answer": "n - 1",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "According to the Factor Theorem, if f(k) = 0, then which of the following must be a factor of f(x)?",
+                "options": [
+                    "(x + k)",
+                    "(x - k)",
+                    "x",
+                    "k"
+                ],
+                "correct_answer": "(x - k)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Use the Remainder Theorem to find the remainder when f(x) = x³ - 2x² + 5 is divided by (x - 1).",
+                "correct_answer": "4",
+                "acceptable_answers": [
+                    "4",
+                    "f(1)=4"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "A polynomial has a leading coefficient that is negative and an even degree. What is its end behavior?",
+                "options": [
+                    "Starts in Q2, ends in Q4",
+                    "Starts in Q3, ends in Q4",
+                    "Starts in Q2, ends in Q1",
+                    "Starts in Q3, ends in Q1"
+                ],
+                "correct_answer": "Starts in Q3, ends in Q4",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the degree of the polynomial f(x) = (x - 2)²(x + 5)(x - 1)³?",
+                "correct_answer": "6",
+                "acceptable_answers": [
+                    "6",
+                    "degree 6"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If a root has a multiplicity of 2 (e.g., (x - 3)²), what does the graph do at that x-intercept?",
+                "options": [
+                    "Crosses straight through",
+                    "Passes through with an inflection",
+                    "Bounces off the x-axis (tangent)",
+                    "The graph is undefined there"
+                ],
+                "correct_answer": "Bounces off the x-axis (tangent)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which method is specifically used for dividing a polynomial by a linear binomial of the form (x - k)?",
+                "options": [
+                    "Long Division",
+                    "Synthetic Division",
+                    "Partial Fractions",
+                    "The Quadratic Formula"
+                ],
+                "correct_answer": "Synthetic Division",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the zeros of the polynomial f(x) = x(x + 4)(2x - 1). (Separate by commas)",
+                "correct_answer": "0,-4,0.5",
+                "acceptable_answers": [
+                    "0,-4,0.5",
+                    "0,-4,1/2",
+                    "-4,0,0.5"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the leading coefficient of the polynomial f(x) = -2x³ + 5x² - x + 8?",
+                "options": [
+                    "8",
+                    "5",
+                    "-2",
+                    "3"
+                ],
+                "correct_answer": "-2",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "A polynomial function is 'odd' if f(-x) = -f(x). Which of the following is an odd function?",
+                "options": [
+                    "f(x) = x²",
+                    "f(x) = x³ + x",
+                    "f(x) = x³ + 1",
+                    "f(x) = x⁴ - x²"
+                ],
+                "correct_answer": "f(x) = x³ + x",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Using synthetic division, divide f(x) = 2x³ - 3x² + 4 by (x - 1) and provide the quotient and remainder.",
+                "correct_answer": "Quotient: 2x² - x + 3, Remainder: 7",
+                "acceptable_answers": [
+                    "Quotient: 2x² - x + 3, Remainder: 7",
+                    "2x² - x + 3, Remainder: 7",
+                    "Quotient: 2x² - x + 3, Remainder:7"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the end behavior of the polynomial f(x) = -3x⁴ + 2x³ - x + 5?",
+                "options": [
+                    "Starts in Q1, ends in Q1",
+                    "Starts in Q2, ends in Q2",
+                    "Starts in Q3, ends in Q3",
+                    "Starts in Q4, ends in Q4"
+                ],
+                "correct_answer": "Starts in Q3, ends in Q3",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the multiplicity of the zero x = -2 for the polynomial f(x) = (x + 2)³(x - 1)².",
+                "correct_answer": "3",
+                "acceptable_answers": [
+                    "3",
+                    "multiplicity 3"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following polynomials has a zero at x = 4 with multiplicity 2?",
+                "options": [
+                    "f(x) = (x - 4)(x + 1)²",
+                    "f(x) = (x - 4)²(x + 1)",
+                    "f(x) = (x - 4)(x + 1)(x - 2)",
+                    "f(x) = (x - 4)³"
+                ],
+                "correct_answer": "f(x) = (x - 4)²(x + 1)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the y-intercept of the polynomial f(x) = 4x³ - 2x² + 3x - 5.",
+                "correct_answer": "-5",
+                "acceptable_answers": [
+                    "-5",
+                    "y-intercept: -5"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a correct application of the Remainder Theorem?",
+                "options": [
+                    "To find the degree of a polynomial",
+                    "To determine the end behavior of a polynomial",
+                    "To find the remainder when dividing a polynomial by (x - k)",
+                    "To identify the leading coefficient of a polynomial"
+                ],
+                "correct_answer": "To find the remainder when dividing a polynomial by (x - k)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Using the Factor Theorem, determine if (x - 3) is a factor of f(x) = 2x³ - 5x² + 4x - 6.",
+                "correct_answer": "Yes",
+                "acceptable_answers": [
+                    "Yes",
+                    "(x - 3) is a factor",
+                    "Factor"
+                ],
+                "difficulty": "Medium"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Remainder and Factor Theorems",
+                "Synthetic Division",
+                "End Behavior",
+                "Multiplicity of Zeros",
+                "Turning Points"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

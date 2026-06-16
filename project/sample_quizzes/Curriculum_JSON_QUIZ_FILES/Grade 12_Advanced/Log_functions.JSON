@@ -1,0 +1,257 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 12 Logarithmic Functions Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "What is the logarithmic form of the exponential equation 2³ = 8?",
+                "options": [
+                    "log₂ 3 = 8",
+                    "log₃ 8 = 2",
+                    "log₂ 8 = 3",
+                    "log₈ 2 = 3"
+                ],
+                "correct_answer": "log₂ 8 = 3",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Evaluate the following: log₅ 125",
+                "correct_answer": "3",
+                "acceptable_answers": [
+                    "3",
+                    "3.0"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "According to the Laws of Logarithms, what is log(A) + log(B) equivalent to?",
+                "options": [
+                    "log(A + B)",
+                    "log(A - B)",
+                    "log(A × B)",
+                    "log(A / B)"
+                ],
+                "correct_answer": "log(A × B)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the vertical asymptote for the function f(x) = log(x - 4)?",
+                "options": [
+                    "x = 0",
+                    "y = 0",
+                    "x = 4",
+                    "x = -4"
+                ],
+                "correct_answer": "x = 4",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Simplify to a single logarithm: 2 log(x) - log(y)",
+                "correct_answer": "log(x²/y)",
+                "acceptable_answers": [
+                    "log(x^2/y)",
+                    "log(x**2/y)",
+                    "log(x^2 / y)"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the 'Change of Base' formula for logₐ b?",
+                "options": [
+                    "log(a) / log(b)",
+                    "log(b) / log(a)",
+                    "log(b - a)",
+                    "a / b"
+                ],
+                "correct_answer": "log(b) / log(a)",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the value of log₇ 1?",
+                "options": [
+                    "7",
+                    "1",
+                    "0",
+                    "undefined"
+                ],
+                "correct_answer": "0",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Solve for x: log₂(x + 1) = 4",
+                "correct_answer": "15",
+                "acceptable_answers": [
+                    "15",
+                    "x=15"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "The pH scale is logarithmic. If the concentration of hydronium ions is 10⁻⁵, what is the pH?",
+                "options": [
+                    "-5",
+                    "5",
+                    "10",
+                    "1"
+                ],
+                "correct_answer": "5",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the domain of f(x) = log(x)?",
+                "options": [
+                    "{x ∈ ℝ}",
+                    "{x ∈ ℝ | x > 0}",
+                    "{x ∈ ℝ | x ≥ 0}",
+                    "{x ∈ ℝ | x ≠ 0}"
+                ],
+                "correct_answer": "{x ∈ ℝ | x > 0}",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "If log₃ 27 = 3, what is log₃ 9?",
+                "correct_answer": "2",
+                "acceptable_answers": [
+                    "2",
+                    "log₃ 9 = 2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is equivalent to logₐ (b^c)?",
+                "options": [
+                    "c logₐ b",
+                    "logₐ b + logₐ c",
+                    "logₐ b - logₐ c",
+                    "logₐ (b + c)"
+                ],
+                "correct_answer": "c logₐ b",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Evaluate log₁₀ 0.01",
+                "correct_answer": "-2",
+                "acceptable_answers": [
+                    "-2",
+                    "log₁₀ 0.01 = -2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is NOT a property of logarithms?",
+                "options": [
+                    "logₐ (xy) = logₐ x + logₐ y",
+                    "logₐ (x/y) = logₐ x - logₐ y",
+                    "logₐ (x^n) = n logₐ x",
+                    "logₐ (x + y) = logₐ x + logₐ y"
+                ],
+                "correct_answer": "logₐ (x + y) = logₐ x + logₐ y",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "If log₂ 8 = 3, what is log₂ 4?",
+                "correct_answer": "2",
+                "acceptable_answers": [
+                    "2",
+                    "log₂ 4 = 2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the value of log₁₀ 1000?",
+                "options": [
+                    "3",
+                    "2",
+                    "1",
+                    "0"
+                ],
+                "correct_answer": "3",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Solve for x: log₅(x) = 2",
+                "correct_answer": "25",
+                "acceptable_answers": [
+                    "25",
+                    "x=25"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the correct expansion of logₐ (xy²/z)?",
+                "options": [
+                    "logₐ x + 2 logₐ y - logₐ z",
+                    "logₐ x + logₐ y² - logₐ z",
+                    "logₐ x + logₐ y - logₐ z²",
+                    "logₐ x + 2 logₐ y + logₐ z"
+                ],
+                "correct_answer": "logₐ x + 2 logₐ y - logₐ z",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Evaluate log₂ (1/8)",
+                "correct_answer": "-3",
+                "acceptable_answers": [
+                    "-3",
+                    "log₂ (1/8) = -3"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the value of log₁₀ 0.001?",
+                "options": [
+                    "-3",
+                    "-2",
+                    "-1",
+                    "0"
+                ],
+                "correct_answer": "-3",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "If log₂ 16 = 4, what is log₂ 64?",
+                "correct_answer": "6",
+                "acceptable_answers": [
+                    "6",
+                    "log₂ 64 = 6"
+                ],
+                "difficulty": "Medium"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Exponential to Logarithmic Form",
+                "Log Laws (Product, Quotient, Power)",
+                "Solving Logarithmic Equations",
+                "Logarithmic Graphs and Asymptotes",
+                "pH and Richter Scale Applications"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

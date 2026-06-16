@@ -1,0 +1,260 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 12 Trigonometry in Radians Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "How many degrees are equivalent to π/3 radians?",
+                "options": [
+                    "30°",
+                    "45°",
+                    "60°",
+                    "90°"
+                ],
+                "correct_answer": "60°",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Convert 225° into radians. (Use 'pi' for π)",
+                "correct_answer": "5pi/4",
+                "acceptable_answers": [
+                    "5pi/4",
+                    "1.25pi",
+                    "5/4pi"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the formula for the arc length (s) of a circle with radius 'r' and central angle 'θ' in radians?",
+                "options": [
+                    "s = rθ",
+                    "s = r²θ",
+                    "s = 2πr",
+                    "s = θ/r"
+                ],
+                "correct_answer": "s = rθ",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Evaluate exactly: sin(7π/6)",
+                "options": [
+                    "1/2",
+                    "-1/2",
+                    "√3/2",
+                    "-√3/2"
+                ],
+                "correct_answer": "-1/2",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "A circle has a radius of 10 cm. Find the arc length subtended by an angle of 2 radians.",
+                "correct_answer": "20",
+                "acceptable_answers": [
+                    "20",
+                    "20 cm"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the exact value of tan(π/4)?",
+                "options": [
+                    "0",
+                    "1/2",
+                    "1",
+                    "undefined"
+                ],
+                "correct_answer": "1",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following angles is co-terminal with π/2?",
+                "options": [
+                    "3π/2",
+                    "5π/2",
+                    "-π/2",
+                    "π"
+                ],
+                "correct_answer": "5π/2",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the exact value of cos(2π/3).",
+                "correct_answer": "-1/2",
+                "acceptable_answers": [
+                    "-1/2",
+                    "-0.5"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "An object moves along a circle of radius 5m at an angular velocity of π/2 rad/s. What is its linear velocity?",
+                "options": [
+                    "2.5π m/s",
+                    "5π m/s",
+                    "π/10 m/s",
+                    "10π m/s"
+                ],
+                "correct_answer": "2.5π m/s",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "In which quadrant does the angle 4 radians lie?",
+                "options": [
+                    "Quadrant I",
+                    "Quadrant II",
+                    "Quadrant III",
+                    "Quadrant IV"
+                ],
+                "correct_answer": "Quadrant III",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the smallest positive angle in radians that is co-terminal with -3π/4.",
+                "correct_answer": "5π/4",
+                "acceptable_answers": [
+                    "5π/4",
+                    "1.25pi",
+                    "5/4pi"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is NOT a factor of f(x) = x³ - 6x² + 11x - 6?",
+                "options": [
+                    "x - 1",
+                    "x - 2",
+                    "x - 3",
+                    "x + 1"
+                ],
+                "correct_answer": "x + 1",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine if (x - 2) is a factor of f(x) = x³ - 4x² + 5x - 2. (Answer Yes or No)",
+                "correct_answer": "Yes",
+                "acceptable_answers": [
+                    "Yes",
+                    "yes",
+                    "Y"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "When dividing a polynomial P(x) by (ax - b), the Remainder Theorem states the remainder is:",
+                "options": [
+                    "P(b)",
+                    "P(b/a)",
+                    "P(-b/a)",
+                    "P(a/b)"
+                ],
+                "correct_answer": "P(b/a)",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the value of 'k' if (x - 3) is a factor of f(x) = x³ - kx² + 9x - 27.",
+                "correct_answer": "9",
+                "acceptable_answers": [
+                    "9",
+                    "k=9"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If f(1) = 4 and f(-2) = 0, which of the following is a factor of f(x)?",
+                "options": [
+                    "(x - 1)",
+                    "(x + 1)",
+                    "(x - 2)",
+                    "(x + 2)"
+                ],
+                "correct_answer": "(x + 2)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the multiplicity of the zero x = -1 for the polynomial f(x) = (x + 1)⁴(x - 2)².",
+                "correct_answer": "4",
+                "acceptable_answers": [
+                    "4",
+                    "multiplicity 4"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following polynomials has a zero at x = 3 with multiplicity 3?",
+                "options": [
+                    "f(x) = (x - 3)(x + 1)²",
+                    "f(x) = (x - 3)³(x + 1)",
+                    "f(x) = (x - 3)(x + 1)(x - 2)",
+                    "f(x) = (x - 3)³"
+                ],
+                "correct_answer": "f(x) = (x - 3)³",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the y-intercept of the polynomial f(x) = 2x³ - 3x² + 4x - 5.",
+                "correct_answer": "-5",
+                "acceptable_answers": [
+                    "-5",
+                    "y-intercept: -5"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a correct application of the Remainder Theorem?",
+                "options": [
+                    "To find the degree of a polynomial",
+                    "To determine the end behavior of a polynomial",
+                    "To find the remainder when dividing a polynomial by (x - k)",
+                    "To identify the leading coefficient of a polynomial"
+                ],
+                "correct_answer": "To find the remainder when dividing a polynomial by (x - k)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Using the Factor Theorem, determine if (x - 4) is a factor of f(x) = x⁴ - 8x³ + 24x² - 32x + 16. (Answer Yes or No)",
+                "correct_answer": "Yes",
+                "acceptable_answers": [
+                    "Yes",
+                    "(x - 4) is a factor",
+                    "Factor"
+                ],
+                "difficulty": "Medium"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Radian/Degree Conversion",
+                "Arc Length Formula",
+                "Unit Circle in Radians",
+                "Angular and Linear Velocity",
+                "Co-terminal Angles"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

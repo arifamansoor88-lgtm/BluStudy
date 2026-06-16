@@ -1,0 +1,133 @@
+{
+  "contentType": "quiz",
+  "data": {
+    "title": "Grade 9: Polynomials & Factoring Quiz",
+    "questions": [
+      {
+        "type": "multiple_choice",
+        "question": "Which of the following describes the degree of the polynomial: 4x³y² - 2x²y + 7?",
+        "options": ["3", "2", "5", "6"],
+        "correct_answer": "5",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "short_answer",
+        "question": "Simplify using exponent laws: (x⁴)³",
+        "correct_answer": "x¹²",
+        "acceptable_answers": ["x^12", "x**12", "x12"],
+        "difficulty": "Easy"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "What is the result of (3x - 5) + (2x + 8)?",
+        "options": ["5x + 3", "5x - 13", "x + 3", "6x - 40"],
+        "correct_answer": "5x + 3",
+        "difficulty": "Easy"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Expand and simplify: 3x(x - 4)",
+        "options": ["3x - 12", "3x² - 12x", "3x² - 4", "x² - 12x"],
+        "correct_answer": "3x² - 12x",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Which expression represents the area of a rectangle with length (x + 5) and width (x + 2)?",
+        "options": ["2x + 7", "x² + 10", "x² + 7x + 10", "x² + 3x + 10"],
+        "correct_answer": "x² + 7x + 10",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "short_answer",
+        "question": "What is the Greatest Common Factor (GCF) of 12x³ and 8x²?",
+        "correct_answer": "4x²",
+        "acceptable_answers": ["4x^2", "4x**2"],
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Factor the following expression completely: x² - 25",
+        "options": ["(x - 5)(x - 5)", "(x + 5)(x - 5)", "(x + 25)(x - 1)", "x(x - 25)"],
+        "correct_answer": "(x + 5)(x - 5)",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Factor the trinomial: x² + 7x + 12",
+        "options": ["(x + 1)(x + 12)", "(x + 2)(x + 6)", "(x + 3)(x + 4)", "(x - 3)(x - 4)"],
+        "correct_answer": "(x + 3)(x + 4)",
+        "difficulty": "Medium"
+      },
+      {
+        "type": "multiple_choice",
+        "question": "Simplify the expression: (15a⁵b²) ÷ (3a²b)",
+        "options": ["5a³b", "12a³b", "5a⁷b³", "5a³"],
+        "correct_answer": "5a³b",
+        "difficulty": "Hard"
+      },
+      {
+        "type": "short_answer",
+        "question": "Expand and simplify: (2x - 3)²",
+        "correct_answer": "4x² - 12x + 9",
+        "acceptable_answers": ["4x^2-12x+9", "4x**2 - 12x + 9"],
+        "difficulty": "Hard"
+      },
+      {
+          "type": "multiple_choice",
+          "question": "Which of the following is a factor of the polynomial: 2x³ - 3x² + 5x - 6?",
+          "options": ["x - 1", "x + 1", "2x - 3", "2x + 3"],
+          "correct_answer": "x - 1",
+          "difficulty": "Hard"
+      },
+      {
+          "type": "short_answer",
+          "question": "Factor the expression completely: 6x² - 11x + 3",
+          "correct_answer": "(3x - 1)(2x - 3)",
+          "acceptable_answers": ["(3x-1)(2x-3)", "(2x-3)(3x-1)"],
+          "difficulty": "Hard"
+      },
+      {
+          "type": "multiple_choice",
+          "question": "What is the result of expanding (x + 2)(x² - 3x + 4)?",
+          "options": ["x³ - x² + 6", "x³ - x² + 8", "x³ - x² + 10", "x³ - x² + 12"],
+          "correct_answer": "x³ - x² + 8",
+          "difficulty": "Hard"
+      },
+      {
+          "type": "short_answer",
+          "question": "Simplify using exponent laws: (2x³y²)²",
+          "correct_answer": "4x⁶y⁴",
+          "acceptable_answers": ["4x^6y^4", "4x**6y**4"],
+          "difficulty": "Medium"
+      },
+      {
+          "type": "multiple_choice",
+          "question": "Which of the following represents the difference of squares: x² - 16?",
+          "options": ["(x - 4)(x + 4)", "(x - 8)(x + 8)", "(x - 2)(x + 2)", "(x - 1)(x + 1)"],
+          "correct_answer": "(x - 4)(x + 4)",
+          "difficulty": "Medium"
+      },
+      {
+          "type": "short_answer",
+          "question": "Factor the expression completely: x³ - 6x² + 11x - 6",
+          "correct_answer": "(x - 1)(x - 2)(x - 3)",
+          "acceptable_answers": ["(x-1)(x-2)(x-3)", "(x-2)(x-1)(x-3)", "(x-3)(x-1)(x-2)"],
+          "difficulty": "Hard"
+      }
+    ],
+    "timeTaken": 0,
+    "options": {
+      "numQuestions": 10,
+      "selectedTopics": [
+        "Exponent Laws",
+        "Expanding Polynomials",
+        "Factoring Trinomials",
+        "Difference of Squares"
+      ],
+      "customTopics": null,
+      "questionFormats": {}
+    },
+    "attempts": []
+  }
+}

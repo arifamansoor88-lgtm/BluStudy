@@ -1,0 +1,260 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 11 Functions Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following tests is used to determine if a graph represents a function?",
+                "options": [
+                    "Horizontal Line Test",
+                    "Vertical Line Test",
+                    "Diagonal Line Test",
+                    "Origin Symmetry Test"
+                ],
+                "correct_answer": "Vertical Line Test",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "If f(x) = 3x² - 5, find the value of f(2).",
+                "correct_answer": "7",
+                "acceptable_answers": [
+                    "7",
+                    "f(2)=7"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the 'range' of a function?",
+                "options": [
+                    "The set of all possible input values (x)",
+                    "The set of all possible output values (y)",
+                    "The distance between the x-intercepts",
+                    "The slope of the function"
+                ],
+                "correct_answer": "The set of all possible output values (y)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the domain of the function f(x) = √(x - 4)?",
+                "options": [
+                    "{x ∈ ℝ | x > 4}",
+                    "{x ∈ ℝ | x ≥ 4}",
+                    "{x ∈ ℝ | x ≤ 4}",
+                    "{x ∈ ℝ}"
+                ],
+                "correct_answer": "{x ∈ ℝ | x ≥ 4}",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the inverse function f⁻¹(x) for f(x) = 2x + 3.",
+                "correct_answer": "(x - 3) / 2",
+                "acceptable_answers": [
+                    "(x-3)/2",
+                    "0.5x - 1.5",
+                    "f^-1(x)=(x-3)/2"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If f(x) = x + 2 and g(x) = x², what is the value of f(g(3))?",
+                "options": [
+                    "25",
+                    "11",
+                    "9",
+                    "5"
+                ],
+                "correct_answer": "11",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which set of ordered pairs represents a function?",
+                "options": [
+                    "{(1, 2), (1, 3), (2, 4)}",
+                    "{(1, 2), (2, 2), (3, 2)}",
+                    "{(2, 5), (2, 6), (2, 7)}",
+                    "{(0, 1), (0, 2), (0, 3)}"
+                ],
+                "correct_answer": "{(1, 2), (2, 2), (3, 2)}",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "State the range of the function f(x) = x² + 1.",
+                "correct_answer": "{y ∈ ℝ | y ≥ 1}",
+                "acceptable_answers": [
+                    "y >= 1",
+                    "{y >= 1}",
+                    "y is greater than or equal to 1"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What happens to the graph of y = f(x) if it is transformed into y = f(x - 5)?",
+                "options": [
+                    "Shifted 5 units up",
+                    "Shifted 5 units down",
+                    "Shifted 5 units left",
+                    "Shifted 5 units right"
+                ],
+                "correct_answer": "Shifted 5 units right",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following functions is its own inverse?",
+                "options": [
+                    "f(x) = x²",
+                    "f(x) = 1/x",
+                    "f(x) = 2x",
+                    "f(x) = x + 5"
+                ],
+                "correct_answer": "f(x) = 1/x",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "If f(x) = 3x - 4, find the value of f⁻¹(5).",
+                "correct_answer": "3",
+                "acceptable_answers": [
+                    "3",
+                    "f^-1(5)=3"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a transformation of the function f(x) = x²?",
+                "options": [
+                    "g(x) = (x - 2)²",
+                    "h(x) = x² + 3",
+                    "k(x) = 2x²",
+                    "All of the above"
+                ],
+                "correct_answer": "All of the above",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the value of f(0) for the function f(x) = 5x + 2.",
+                "correct_answer": "2",
+                "acceptable_answers": [
+                    "2",
+                    "f(0)=2"
+                ],
+                "difficulty": "Easy"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the output of the function f(x) = 4x - 1 when the input is x = 3?",
+                "options": [
+                    "11",
+                    "12",
+                    "13",
+                    "14"
+                ],
+                "correct_answer": "11",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine if the function f(x) = |x| is even, odd, or neither.",
+                "correct_answer": "Even",
+                "acceptable_answers": [
+                    "Even",
+                    "even function"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following functions has a domain of all real numbers?",
+                "options": [
+                    "f(x) = √x",
+                    "g(x) = 1/x",
+                    "h(x) = x² + 1",
+                    "k(x) = ln(x)"
+                ],
+                "correct_answer": "h(x) = x² + 1",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the value of g(2) for the function g(x) = 2x² - 3x + 1.",
+                "correct_answer": "3",
+                "acceptable_answers": [
+                    "3",
+                    "g(2)=3"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "What is the inverse of the function f(x) = 5x + 10?",
+                "options": [
+                    "f⁻¹(x) = (x - 10) / 5",
+                    "f⁻¹(x) = (x + 10) / 5",
+                    "f⁻¹(x) = (x - 10) * 5",
+                    "f⁻¹(x) = (x + 10) * 5"
+                ],
+                "correct_answer": "f⁻¹(x) = (x - 10) / 5",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "State the domain of the function f(x) = 1/(x - 2).",
+                "correct_answer": "{x ∈ ℝ | x ≠ 2}",
+                "acceptable_answers": [
+                    "x ≠ 2",
+                    "{x ≠ 2}",
+                    "x is not equal to 2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following functions is not a linear function?",
+                "options": [
+                    "f(x) = 2x + 3",
+                    "g(x) = x² + 1",
+                    "h(x) = -4x + 5",
+                    "k(x) = 0.5x - 2"
+                ],
+                "correct_answer": "g(x) = x² + 1",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the value of f(1) for the function f(x) = 3x³ - 2x² + x - 5.",
+                "correct_answer": "-3",
+                "acceptable_answers": [
+                    "-3",
+                    "f(1)=-3"
+                ],
+                "difficulty": "Medium"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Function Definition",
+                "Vertical Line Test",
+                "Function Notation",
+                "Domain and Range",
+                "Inverse Functions",
+                "Transformations"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}

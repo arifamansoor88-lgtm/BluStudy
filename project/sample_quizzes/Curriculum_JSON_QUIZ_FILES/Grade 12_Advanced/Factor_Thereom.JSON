@@ -1,0 +1,216 @@
+{
+    "contentType": "quiz",
+    "data": {
+        "title": "Grade 12 Factor Theorem Quiz",
+        "questions": [
+            {
+                "type": "multiple_choice",
+                "question": "If f(k) = 0, which of the following must be a factor of the polynomial f(x)?",
+                "options": [
+                    "(x + k)",
+                    "(x - k)",
+                    "x",
+                    "(x / k)"
+                ],
+                "correct_answer": "(x - k)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the remainder when f(x) = x³ - 3x² + 5x - 7 is divided by (x - 2)?",
+                "correct_answer": "-1",
+                "acceptable_answers": [
+                    "-1",
+                    "f(2)=-1"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "To use the Factor Theorem to factor x³ - 4x² + x + 6, which values should you test first?",
+                "options": [
+                    "Factors of 4",
+                    "Factors of 6",
+                    "Factors of 1",
+                    "Any prime number"
+                ],
+                "correct_answer": "Factors of 6",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If (x + 3) is a factor of f(x), what is the value of f(-3)?",
+                "options": [
+                    "3",
+                    "-3",
+                    "0",
+                    "1"
+                ],
+                "correct_answer": "0",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine if (x - 1) is a factor of f(x) = x⁴ - 2x³ + 2x - 1. (Answer Yes or No)",
+                "correct_answer": "Yes",
+                "acceptable_answers": [
+                    "Yes",
+                    "yes",
+                    "Y"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "When dividing a polynomial P(x) by (ax - b), the Remainder Theorem states the remainder is:",
+                "options": [
+                    "P(b)",
+                    "P(b/a)",
+                    "P(-b/a)",
+                    "P(a/b)"
+                ],
+                "correct_answer": "P(b/a)",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Find the value of 'k' if (x - 2) is a factor of f(x) = x³ - kx + 2.",
+                "correct_answer": "5",
+                "acceptable_answers": [
+                    "5",
+                    "k=5"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If f(1) = 5 and f(-2) = 0, which of the following is a factor of f(x)?",
+                "options": [
+                    "(x - 1)",
+                    "(x + 1)",
+                    "(x - 2)",
+                    "(x + 2)"
+                ],
+                "correct_answer": "(x + 2)",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is the best description of the Remainder Theorem?",
+                "options": [
+                    "It helps find the quotient of a division",
+                    "It finds the remainder without performing long division",
+                    "It only works for quadratic equations",
+                    "It proves a function is even or odd"
+                ],
+                "correct_answer": "It finds the remainder without performing long division",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "What is the first integer you would test as a potential root for f(x) = x³ - x - 6 using the Rational Zero Theorem?",
+                "correct_answer": "2",
+                "acceptable_answers": [
+                    "2",
+                    "x=2",
+                    "-2"
+                ],
+                "difficulty": "Hard"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If (x - 4) is a factor of f(x) = 2x³ - 3x² + ax - 8, what is the value of 'a'?",
+                "options": [
+                    "-2",
+                    "2",
+                    "-4",
+                    "4"
+                ],
+                "correct_answer": "2",
+                "difficulty": "Medium"
+            },
+            {
+                "type": "short_answer",
+                "question": "Using the Factor Theorem, determine if (x + 1) is a factor of f(x) = x³ - 2x² + x - 1.",
+                "correct_answer": "No",
+                "acceptable_answers": [
+                    "No",
+                    "(x + 1) is not a factor",
+                    "Not a factor"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following is a correct application of the Factor Theorem?",
+                "options": [
+                    "To find the degree of a polynomial",
+                    "To determine the end behavior of a polynomial",
+                    "To find the remainder when dividing a polynomial by (x - k)",
+                    "To identify the leading coefficient of a polynomial"
+                ],
+                "correct_answer": "To find the remainder when dividing a polynomial by (x - k)",
+                "difficulty": "Easy"
+            },
+            {
+                "type": "short_answer",
+                "question": "Using the Factor Theorem, determine if (x - 3) is a factor of f(x) = 2x³ - 5x² + 4x - 6.",
+                "correct_answer": "Yes",
+                "acceptable_answers": [
+                    "Yes",
+                    "(x - 3) is a factor",
+                    "Factor"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "If (x - 2) is a factor of f(x) = x³ + ax² + bx + 8, which of the following must be true?",
+                "options": [
+                    "a + b = -4",
+                    "a - b = 4",
+                    "2a + b = -8",
+                    "a + 2b = -8"
+                ],
+                "correct_answer": "a + 2b = -8",
+                "difficulty": "Hard"
+            },
+            {
+                "type": "short_answer",
+                "question": "Determine the multiplicity of the zero x = 1 for the polynomial f(x) = (x - 1)²(x + 2)(x - 3).",
+                "correct_answer": "2",
+                "acceptable_answers": [
+                    "2",
+                    "multiplicity 2"
+                ],
+                "difficulty": "Medium"
+            },
+            {
+                "type": "multiple_choice",
+                "question": "Which of the following polynomials has a zero at x = -1 with multiplicity 3?",
+                "options": [
+                    "f(x) = (x + 1)(x - 2)²",
+                    "f(x) = (x + 1)³(x - 2)",
+                    "f(x) = (x + 1)(x - 2)(x + 3)",
+                    "f(x) = (x + 1)²(x - 2)"
+                ],
+                "correct_answer": "f(x) = (x + 1)³(x - 2)",
+                "difficulty": "Medium"
+            }
+        ],
+        "timeTaken": 0,
+        "options": {
+            "numQuestions": 10,
+            "selectedTopics": [
+                "Factor Theorem",
+                "Remainder Theorem",
+                "Solving for unknown coefficients",
+                "Testing rational roots",
+                "Division of polynomials"
+            ],
+            "customTopics": null,
+            "questionFormats": {}
+        },
+        "attempts": []
+    }
+}
