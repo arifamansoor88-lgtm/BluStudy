@@ -726,8 +726,8 @@ elif database.container is not None:
         storage_mode = "cosmos"
     except (CosmosResourceNotFoundError, CosmosHttpResponseError) as e:
         cosmos_error = str(e)
-        status = getattr(e, "status_code", None)
-        is_not_found = isinstance(e, CosmosResourceNotFoundError) or status == 404
+        err_status = getattr(e, "status_code", None)
+        is_not_found = isinstance(e, CosmosResourceNotFoundError) or err_status == 404
         if _cosmos_fallback and is_not_found:
             print(
                 "WARNING: Cosmos database or container not found (404). "
