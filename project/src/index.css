@@ -123,7 +123,20 @@ body {
     }
 
     /* Math equations */
-    & .math {
-        @apply overflow-x-auto;
-    }
+& .math {
+    @apply overflow-x-auto;
+}
+}
+
+/* KaTeX math rendering fixes */
+.katex {
+  font-size: 1em;
+}
+
+.katex-display {
+  margin: 0.5rem 0;
+}
+
+.katex * {
+  font-style: normal;
 }

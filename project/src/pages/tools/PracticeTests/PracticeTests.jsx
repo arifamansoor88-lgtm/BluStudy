@@ -9,7 +9,11 @@ import { isAnswerCorrect, shouldUseAIEvaluation } from "./utils";
 import {
   getAnswerExplanation,
   evaluateShortAnswer,
+  recordStudyToolUse,
 } from "../../../api/apiService";
+import { useLocation } from "react-router-dom";
+import { useMsal } from "@azure/msal-react";
+import { protectedResources } from "../../../authConfig";
 
 /**
  * Main PracticeTests component that coordinates all other components
@@ -55,7 +59,9 @@ const PracticeTests = () => {
     fill_in_blank: false,
     numerical: false,
   });
-
+  const location = useLocation();
+  const quizFromDashboard = location.state?.quiz;
+  const topicFromDashboard = location.state?.topic;
   // Hooks for quiz functionality
   const { timer, resetTimer, setTimerValue } = useQuizTimer(quizStatus);
   const {
@@ -68,6 +74,7 @@ const PracticeTests = () => {
     quizzesFetchedRef,
     fetchSavedQuizzes,
     fetchQuizWithHistory,
+    fetchQuizById,
     generateQuiz,
     generateQuizFromTopic,
     saveQuiz,
@@ -89,6 +96,44 @@ const PracticeTests = () => {
       fetchSavedQuizzes();
     }
   }, [showQuiz, fetchSavedQuizzes, quizzesFetchedRef]);
+
+  // Load quiz from state or quiz Id param
+  useEffect(() => {
+    const quizIdParam = searchParams.get("quizId");
+
+    if (quizFromDashboard) {
+      console.log("Loading quiz from dashboard...");
+      setGeneratedQuiz(quizFromDashboard);
+      setQuizStatus("ready");
+      setShowQuiz(false);
+      setShowUpload(true);
+      setCurrentQuizQuestion(0);
+      setShowSummary(false);
+      resetTimer();
+      return;
+    }
+
+    if (quizIdParam) {
+      (async () => {
+        console.log("Loading quiz from query string...", quizIdParam);
+        const quizById = await fetchQuizById(quizIdParam);
+        if (quizById) {
+          const quizData = quizById.data || quizById;
+          setGeneratedQuiz({ ...quizData, id: quizById.id || quizData.id });
+          const questions = quizData.questions || [];
+          setUserAnswers(Array(questions.length).fill(null));
+          setQuizStatus("ready");
+          setShowQuiz(false);
+          setShowUpload(true);
+          setCurrentQuizQuestion(0);
+          setShowSummary(false);
+          resetTimer();
+
+          await fetchQuizWithHistory(quizIdParam);
+        }
+      })();
+    }
+  }, [quizFromDashboard, searchParams, fetchQuizById, fetchQuizWithHistory, resetTimer]);
 
   const loadQuizIntoViewer = (quizDocument) => {
     const quizData = quizDocument?.data || {};
@@ -635,13 +680,40 @@ const PracticeTests = () => {
   };
 
   // Function to complete the quiz after evaluation
-  const completeQuiz = () => {
-    setQuizStatus("completed");
-    setShowSummary(true);
+  const { instance } = useMsal();
+  const completeQuiz = async () => {
+  setQuizStatus("completed");
+  setShowSummary(true);
 
-    // Auto-save the quiz attempt when completed
-    saveQuizAttempt(generatedQuiz, userAnswers, timer, quizMode);
-  };
+  await saveQuizAttempt(generatedQuiz, userAnswers, timer, quizMode);
+
+  await recordStudyToolUse("quiz", "complete_quiz");
+
+  //Refresh weak areas after quiz
+  try {
+    const account = instance.getActiveAccount();
+    const response = await instance.acquireTokenSilent({
+      scopes: protectedResources.todoListApi.scopes,
+      account: account,
+    });
+
+    const weakAreasToken = response.accessToken;
+
+    const res = await fetch(`${protectedResources.todoListApi.endpoint}/weak-areas`, {
+      headers: {
+        Authorization: `Bearer ${weakAreasToken}`,
+      },
+    });
+
+    const data = await res.json();
+
+    //  store in localStorage so Dashboard updates
+    localStorage.setItem("focusAreas", JSON.stringify(data.focusAreas));
+
+  } catch (err) {
+    console.error("Failed to refresh weak areas:", err);
+  }
+};
 
   const nextQuizQuestion = () => {
     // In review mode, check if the current question has been answered and checked

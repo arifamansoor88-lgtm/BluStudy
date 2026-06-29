@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { 
+import {
   BookOpen, 
   Clock, 
   CheckCircle, 
@@ -12,6 +12,11 @@ import {
   TrendingUp
 } from "lucide-react";
 import { formatTime } from "./utils";
+import {
+  renderAnswerValue,
+  renderMultilineMathText,
+  renderTextWithMath,
+} from "./MathText";
 
 /**
  * Component for reviewing saved tests and answers
@@ -100,7 +105,7 @@ const SavedTestsReview = ({
         <div className="flex items-center gap-3">
           <BookOpen className="h-6 w-6 text-red-600" />
           <h2 className="text-xl font-semibold text-gray-900">
-            {quiz?.quiz_title || "Quiz Review"}
+            {renderTextWithMath(quiz?.quiz_title || "Quiz Review")}
           </h2>
         </div>
         <div className="flex gap-2">
@@ -279,35 +284,35 @@ const SavedTestsReview = ({
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         <div className="mb-3">
                           <h4 className="font-medium text-gray-900 mb-2">Question:</h4>
-                          <p className="text-gray-700">{question.question}</p>
+                          <div className="text-gray-700">{renderTextWithMath(question.question)}</div>
                         </div>
                         
                         {savedAnswer && (
                           <div className="space-y-3">
                             <div>
                               <h4 className="font-medium text-gray-900 mb-1">Your Answer:</h4>
-                              <p className="text-gray-700 bg-gray-50 p-2 rounded">
-                                {Array.isArray(savedAnswer.userAnswer) 
-                                  ? savedAnswer.userAnswer.join(', ')
-                                  : savedAnswer.userAnswer}
-                              </p>
+                              <div className="text-gray-700 bg-gray-50 p-2 rounded">
+                                {renderAnswerValue(savedAnswer.userAnswer)}
+                              </div>
                             </div>
                             
                             <div>
                               <h4 className="font-medium text-gray-900 mb-1">Correct Answer:</h4>
-                              <p className="text-gray-700 bg-green-50 p-2 rounded">
-                                {question.correct_answer || 
-                                 question.correct_answers?.join(', ') ||
-                                 JSON.stringify(question.correct_mapping)}
-                              </p>
+                              <div className="text-gray-700 bg-green-50 p-2 rounded">
+                                {renderAnswerValue(
+                                  question.correct_answer ||
+                                    question.correct_answers ||
+                                    question.correct_mapping
+                                )}
+                              </div>
                             </div>
                             
                             {savedAnswer.explanation && (
                               <div>
                                 <h4 className="font-medium text-gray-900 mb-1">Explanation:</h4>
-                                <p className="text-gray-700 bg-blue-50 p-2 rounded">
-                                  {savedAnswer.explanation}
-                                </p>
+                                <div className="text-gray-700 bg-blue-50 p-2 rounded">
+                                  {renderMultilineMathText(savedAnswer.explanation)}
+                                </div>
                               </div>
                             )}
                             
@@ -361,35 +366,35 @@ const SavedTestsReview = ({
                     <div className="space-y-3">
                       <div>
                         <h4 className="font-medium text-gray-900 mb-1">Question:</h4>
-                        <p className="text-gray-700">{question?.question}</p>
+                        <div className="text-gray-700">{renderTextWithMath(question?.question)}</div>
                       </div>
                       
                       <div>
                         <h4 className="font-medium text-gray-900 mb-1">Your Answer:</h4>
-                        <p className={`p-2 rounded ${
+                        <div className={`p-2 rounded ${
                           answer.isCorrect ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
                         }`}>
-                          {Array.isArray(answer.userAnswer) 
-                            ? answer.userAnswer.join(', ')
-                            : answer.userAnswer}
-                        </p>
+                          {renderAnswerValue(answer.userAnswer)}
+                        </div>
                       </div>
                       
                       <div>
                         <h4 className="font-medium text-gray-900 mb-1">Correct Answer:</h4>
-                        <p className="text-gray-700 bg-gray-50 p-2 rounded">
-                          {question?.correct_answer || 
-                           question?.correct_answers?.join(', ') ||
-                           JSON.stringify(question?.correct_mapping)}
-                        </p>
+                        <div className="text-gray-700 bg-gray-50 p-2 rounded">
+                          {renderAnswerValue(
+                            question?.correct_answer ||
+                              question?.correct_answers ||
+                              question?.correct_mapping
+                          )}
+                        </div>
                       </div>
                       
                       {answer.explanation && (
                         <div>
                           <h4 className="font-medium text-gray-900 mb-1">Explanation:</h4>
-                          <p className="text-gray-700 bg-blue-50 p-2 rounded">
-                            {answer.explanation}
-                          </p>
+                          <div className="text-gray-700 bg-blue-50 p-2 rounded">
+                            {renderMultilineMathText(answer.explanation)}
+                          </div>
                         </div>
                       )}
                       
