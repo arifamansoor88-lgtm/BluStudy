@@ -4467,8 +4467,8 @@ def _current_streak_for_date(doc: Dict[str, Any], today):
 
 
 @app.get("/streak")
-async def get_streak(request: Request):
-    uid = _resolve_user_id(request)
+async def get_streak(request: Request, user_claims: dict = Depends(validate_token)):
+    uid = user_claims["sub"]
 
     query = "SELECT * FROM c WHERE c.userId = @uid AND c.contentType = 'study_streak'"
     params = [{"name": "@uid", "value": uid}]
@@ -4497,8 +4497,8 @@ async def get_streak(request: Request):
 
 
 @app.post("/update-streak")
-async def update_streak(request: Request):
-    uid = _resolve_user_id(request)
+async def update_streak(request: Request, user_claims: dict = Depends(validate_token)):
+    uid = user_claims["sub"]
 
     query = "SELECT * FROM c WHERE c.userId = @uid AND c.contentType = 'study_streak'"
     params = [{"name": "@uid", "value": uid}]

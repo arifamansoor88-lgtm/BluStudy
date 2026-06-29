@@ -6,8 +6,8 @@ const stripDollarMarkers = (text = "") => text.replace(/^\$+|\$+$/g, "");
 
 const normalizeMathText = (text = "") =>
   text
-    .replace(/\u0008/g, "\\b")
-    .replace(/\u000c/g, "\\f")
+    .replace(//g, "\\b")
+    .replace(//g, "\\f")
     .replace(/\t/g, "\\t")
     .replace(/\r/g, "\\r")
     .replace(/×/g, "\\times")

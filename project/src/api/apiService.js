@@ -136,32 +136,6 @@ export const callProtectedApi = async (endpoint, options = {}) => {
   }
 };
 
-const callStudyStreakApi = async (endpoint, options = {}) => {
-  const account = getActiveAccount();
-  const headers = {
-    ...options.headers,
-    "X-User-Id": getApiUserId(account),
-  };
-
-  if (!(options.body instanceof FormData)) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  const apiResponse = await fetch(endpoint, {
-    ...options,
-    headers,
-  });
-
-  if (!apiResponse.ok) {
-    const errorData = await apiResponse.json().catch(() => ({}));
-    throw new Error(
-      errorData.detail ||
-        `API error: ${apiResponse.status} ${apiResponse.statusText}`
-    );
-  }
-
-  return apiResponse.json();
-};
 
 const getLocalStudyDate = () => {
   const now = new Date();
@@ -244,7 +218,7 @@ export const consumeRecentStudyStreakUpdate = () => {
 };
 
 export const getStudyStreak = async () => {
-  const result = await callStudyStreakApi(`${API_BASE}/streak`, {
+  const result = await callProtectedApi(`${API_BASE}/streak`, {
     headers: {
       "X-Study-Date": getLocalStudyDate(),
     },
@@ -257,7 +231,7 @@ export const getStudyStreak = async () => {
 export const updateStudyStreak = async (toolKey, actionKey) => {
   const localDate = getLocalStudyDate();
 
-  return callStudyStreakApi(`${API_BASE}/update-streak`, {
+  return callProtectedApi(`${API_BASE}/update-streak`, {
     method: "POST",
     headers: {
       "X-Study-Date": localDate,
