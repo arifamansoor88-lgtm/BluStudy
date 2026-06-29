@@ -1,4 +1,5 @@
 import os
+import json
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 from typing import List, Optional, Union, Dict, Any
@@ -206,7 +207,27 @@ def generate_quiz(
     
     focus_instruction = f"\n\n# Focus Areas:\nPay special attention to these topics: {focus_topics}" if focus_topics else ""
     
-    system_prompt = f"""You are an AI quiz generator that creates quizzes based on input text containing a specific topic. The quiz will consist of {num_questions} questions using the following question types: {', '.join(question_formats)}. The output should be a structured JSON object.{focus_instruction}
+    system_prompt = f"""You are an AI quiz generator that creates quizzes based on input text containing a specific topic.
+
+IMPORTANT FORMATTING RULES FOR MATHEMATICS:
+- Any mathematical expression MUST be written using LaTeX.
+- Do NOT write raw math like x^2 or sin(x). Always wrap math using $...$.
+- Use LaTeX functions like \\sin, \\cos, \\ln, \\sqrt.
+- Use ^ for powers.
+- Because the response is JSON, every LaTeX backslash MUST be double-escaped inside strings.
+- Write \\\\frac{{1}}{{x}}, \\\\ln(x), \\\\sin(x), \\\\cos(x), \\\\sqrt{{x}} inside JSON values, never \\\\frac{{1}}{{x}} or \\\\ln(x) with single backslashes.
+- Prefer \\\\ln(x), \\\\sin(x), \\\\cos(x) instead of \\\\text{{ln}}(x), \\\\text{{sin}}(x), \\\\text{{cos}}(x).
+- Always use braces with square roots: write \\\\sqrt{{x}}, never sqrtx or \\\\sqrtx.
+- Use e^x, not \\\\text{{e}}^x.
+
+Examples:
+x squared → $x^2$
+sin(x) → $\\sin(x)$
+ln(x) → $\\ln(x)$
+square root of x → $\\sqrt{{x}}$
+absolute value → $|x|$
+
+The quiz will consist of {num_questions} questions using the following question types: {', '.join(question_formats)}. The output should be a structured JSON object.{focus_instruction}
 
 ---
 
@@ -371,6 +392,8 @@ Return a JSON object structured as follows:
 
 # Notes:
 - Focus on generating questions that reflect critical concepts from the given text.
+- If a question OR answer option contains mathematics, format it using LaTeX inside $...$.
+- When LaTeX is used in JSON strings, double-escape all backslashes.
 - Ensure clarity and correctness in both questions and answers.
 - Proportionately balance the mix of question types across the quiz.
 - Avoid ambiguity in "correct_answer" or "correct_answers" fields by making answers explicit.
@@ -1011,3 +1034,73 @@ def create_fallback_analysis(
             "studyPriorities": ["Review incorrect answers", "Practice weak areas"]
         }
     }
+
+# Generates "Suggested Next Steps"
+def generate_suggested_next_steps_ai(targets: list[dict]):
+    """
+    AI generates titles/descriptions/buttons, BUT the backend controls IDs.
+    targets input example:
+      [
+        {"toolKey":"flashcard_deck","targetId":"abc","toolName":"AI Flashcards","context":"Biology 101 - Cell Structure"},
+        {"toolKey":"quiz","targetId":"def","toolName":"Practice Tests","context":"Calculus - Derivatives"},
+        {"toolKey":"voice_note","targetId":"ghi","toolName":"Voice Notes","context":"World History - Chapter 5"}
+        {"toolKey":"mind_map","targetId":"mmm","toolName":"Mind Maps","context":"..."},
+        {"toolKey":"summarizer","targetId":"sss","toolName":"Summarizer","context":"..."}
+      ]
+    Output schema:
+      {"items": [{"toolKey","targetId","title","description","buttonText"}]}
+    """
+    prompt = f"""
+You are a study coach inside an education platform.
+
+Generate EXACTLY {len(targets)} suggested next steps using the targets below.
+IMPORTANT:
+Generate EXACTLY {len(targets)} suggested next steps using the targets below.
+
+IMPORTANT RULES:
+- You MUST keep each toolKey and targetId exactly as provided.
+- Each suggestion must clearly be about the specific item described by the target.
+- Your title and description MUST reference the target’s "context" (or paraphrase it clearly).
+  Example: if context is "Biology 101 - Cell Structure", mention "Cell Structure" or "Biology 101" in the title/description.
+- Do NOT use generic titles like "Review with AI Flashcards" or "Test Knowledge with Quiz".
+  Every title must be specific to the context.
+- Title: 4–7 words
+- Description: exactly 1 sentence
+- ButtonText: 1–3 words (e.g., "Resume Deck", "Start Quiz", "Open Notes")
+
+Return ONLY valid JSON in this exact schema:
+
+{{
+  "items": [
+    {{
+      "toolKey": "flashcard_deck|quiz|voice_note|mind_map|summarizer",
+      "targetId": "string",
+      "title": "string",
+      "description": "string",
+      "buttonText": "string"
+    }}
+  ]
+}}
+
+Targets (do NOT change toolKey/targetId). Use toolName + context to make wording specific:
+{json.dumps(targets)}
+"""
+
+    resp = quiz_client.chat.completions.create(
+        model=QUIZ_DEPLOYMENT_NAME,
+        messages=[
+            {"role": "system", "content": "Return ONLY JSON. No extra text."},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.4,
+    )
+
+    content = resp.choices[0].message.content.strip()
+
+    # Strip ```json fences if present
+    if content.startswith("```"):
+        parts = content.split("```")
+        if len(parts) >= 2:
+            content = parts[1].strip()
+
+    return json.loads(content)

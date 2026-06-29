@@ -19,7 +19,7 @@ import {
   PlusCircle,
   BookOpen
 } from 'lucide-react';
-import { generateSummary } from '../../api/apiService';
+import { generateSummary, recordStudyToolUse } from '../../api/apiService';
 import { msalInstance, protectedResources } from '../../authConfig';
 
 // reusable save-to-folder button
@@ -147,6 +147,25 @@ const Summarizer = () => {
       fetchSavedSummaries();
     }
   }, [viewMode, fetchSavedSummaries]);
+
+  // If we deep-link with ?summaryId=..., switch to Saved view so the list is loaded
+  useEffect(() => {
+      if (!summaryId) return;
+      setViewMode('saved');
+  }, [summaryId]);
+
+  // After saved summaries are loaded, auto-select the one specified in the URL (?summaryId=...)
+  useEffect(() => {
+      if (!summaryId) return;
+      if (!savedSummaries || savedSummaries.length === 0) return;
+
+      const match = savedSummaries.find((s) => s.id === summaryId);
+      if (match) {
+          handleSelectSummary(match);
+      } else {
+          setError("That saved summary was not found.");
+      }
+  }, [summaryId, savedSummaries]);
 
   // Handle creating a new summary
   const handleCreateNew = () => {
@@ -302,14 +321,17 @@ const Summarizer = () => {
   };
 
   // called by SaveToFolderButton after successful save
-  const handleSaved = () => {
+ const handleSaved = async () => {
     setDirty(false);
     setLastSavedAt(Date.now());
+    await recordStudyToolUse("summarizer", "save_summary");
     // Refresh saved summaries list (if not in a folder, always refresh)
     if (!folderId) {
       fetchSavedSummaries();
     }
   };
+
+  
 
   // State for saving to folder directly (when folderId is in URL)
   const [isSavingToFolder, setIsSavingToFolder] = useState(false);
@@ -364,6 +386,9 @@ const Summarizer = () => {
 
       setDirty(false);
       setLastSavedAt(Date.now());
+
+      await recordStudyToolUse("summarizer", "save_summary");
+
       // Refresh saved summaries list
       if (viewMode === 'saved') {
         fetchSavedSummaries();

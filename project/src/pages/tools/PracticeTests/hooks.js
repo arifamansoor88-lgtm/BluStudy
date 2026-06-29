@@ -3,6 +3,7 @@ import axios from "axios";
 import { useMsal } from "@azure/msal-react";
 import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { protectedResources } from "../../../authConfig";
+import { recordStudyToolUse } from "../../../api/apiService";
 
 /**
  * Custom hook for timer functionality
@@ -187,6 +188,29 @@ export const useQuizData = () => {
     [getToken, inProgress]
   );
 
+  // Fetch specific quiz by ID
+  const fetchQuizById = useCallback(
+    async (quizId) => {
+      if (inProgress !== "none") {
+        return null;
+      }
+      try {
+        const token = await getToken();
+        const response = await axios.get(`http://127.0.0.1:8000/quizzes/${quizId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching quiz by id:", error);
+        return null;
+      }
+    },
+    [getToken, inProgress]
+  );
+
   // Generate a new quiz
   const generateQuiz = useCallback(
     async (
@@ -289,6 +313,7 @@ export const useQuizData = () => {
 
         // The backend now automatically saves the quiz and returns it with an ID
         // We don't need to call saveQuiz separately
+        await recordStudyToolUse("quiz", "generate_quiz");
         return response.data;
       } catch (err) {
         console.error("=== generateQuiz Hook Error ===");
@@ -400,6 +425,7 @@ export const useQuizData = () => {
         console.log("Response status:", response.status);
         console.log("Response data:", response.data);
 
+        await recordStudyToolUse("quiz", "generate_quiz");
         return response.data;
       } catch (err) {
         console.error("=== generateQuizFromTopic Hook Error ===");
@@ -471,6 +497,7 @@ export const useQuizData = () => {
         );
 
         setSaveSuccess(true);
+        await recordStudyToolUse("quiz", "save_quiz");
         quizzesFetchedRef.current = false;
         await fetchSavedQuizzes();
         return response.data;
@@ -521,6 +548,7 @@ export const useQuizData = () => {
         );
 
         setSaveSuccess(true);
+        await recordStudyToolUse("quiz", "save_quiz_attempt");
         quizzesFetchedRef.current = false;
         await fetchQuizWithHistory(generatedQuiz.id);
         await fetchSavedQuizzes();
@@ -549,6 +577,7 @@ export const useQuizData = () => {
     quizzesFetchedRef,
     fetchSavedQuizzes,
     fetchQuizWithHistory,
+    fetchQuizById,
     generateQuiz,
     generateQuizFromTopic,
     saveQuiz,

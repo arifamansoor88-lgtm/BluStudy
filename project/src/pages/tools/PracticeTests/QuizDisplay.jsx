@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Clock, ArrowRight, Check, X, Loader2 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
 import { formatTime } from "./utils";
+import {
+  renderAnswerValue,
+  renderMultilineMathText,
+  renderTextWithMath,
+} from "./MathText";
 import QuizQuestion from "./QuizQuestion";
 import QuizSummary from "./QuizSummary";
 import PerformanceSummary from "./PerformanceSummary";
@@ -100,9 +104,9 @@ const QuizDisplay = ({
   // Ready to start
   if (status === "ready") {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
+        <div className="flex flex-col items-center justify-center py-12">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          {quiz.quiz_title}
+          {renderTextWithMath(quiz.quiz_title || quiz.title || "Practice Quiz")}
         </h2>
         <p className="text-gray-600 mb-8 text-center max-w-2xl">
           This quiz contains {quiz.questions.length} questions of various types.
@@ -385,7 +389,7 @@ const QuizDisplay = ({
                         <div>
                           <p className="font-medium text-red-800 mb-1">Correct Answer:</p>
                           <p className="bg-white p-2 rounded border border-red-200 text-red-700">
-                            {formatCorrectAnswer(currentQuestion)}
+                            {renderAnswerValue(formatCorrectAnswer(currentQuestion))}
                           </p>
                         </div>
                       )}
@@ -411,7 +415,7 @@ const QuizDisplay = ({
                           AI Explanation:
                         </h4>
                         <div className="text-sm text-gray-700 markdown-content">
-                          <ReactMarkdown>{getCurrentQuestionExplanation()}</ReactMarkdown>
+                          {renderMultilineMathText(getCurrentQuestionExplanation())}
                         </div>
                       </div>
                     )}
@@ -624,20 +628,16 @@ function formatCorrectAnswer(question) {
     case "multiple_choice":
       return question.correct_answer;
     case "multi_select":
-      return question.correct_answers.join(", ");
+      return question.correct_answers || [];
     case "drag_and_drop":
-      return Object.entries(question.correct_mapping)
-        .map(([key, value]) => `${key} → ${value}`)
-        .join(", ");
+      return question.correct_mapping || {};
     case "short_answer":
     case "fill_in_blank":
       if (
         question.acceptable_answers &&
         question.acceptable_answers.length > 0
       ) {
-        return `${
-          question.correct_answer
-        } (or ${question.acceptable_answers.join(", ")})`;
+        return [question.correct_answer, ...question.acceptable_answers];
       }
       return question.correct_answer;
     case "numerical":
@@ -724,7 +724,7 @@ function extractTopicsFromExplanation(explanation) {
       return (
         <ul className="list-disc list-inside space-y-1">
           {topics.map((topic, index) => (
-            <li key={index}>{topic}</li>
+            <li key={index}>{renderTextWithMath(topic)}</li>
           ))}
         </ul>
       );

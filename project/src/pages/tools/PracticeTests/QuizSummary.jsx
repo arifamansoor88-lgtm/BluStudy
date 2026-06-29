@@ -1,5 +1,10 @@
 import React from "react";
 import { formatTime, getCorrectAnswerCount } from "./utils";
+import {
+  renderAnswerValue,
+  renderMultilineMathText,
+  renderTextWithMath,
+} from "./MathText";
 
 /**
  * Component for displaying quiz summary and results
@@ -293,20 +298,16 @@ const IncorrectAnswersReview = ({ quiz, userAnswers }) => {
       case "multiple_choice":
         return question.correct_answer;
       case "multi_select":
-        return question.correct_answers.join(", ");
+        return question.correct_answers || [];
       case "drag_and_drop":
-        return Object.entries(question.correct_mapping)
-          .map(([key, value]) => `${key} → ${value}`)
-          .join(", ");
+        return question.correct_mapping || {};
       case "short_answer":
       case "fill_in_blank":
         if (
           question.acceptable_answers &&
           question.acceptable_answers.length > 0
         ) {
-          return `${
-            question.correct_answer
-          } (or ${question.acceptable_answers.join(", ")})`;
+          return [question.correct_answer, ...question.acceptable_answers];
         }
         return question.correct_answer;
       case "numerical":
@@ -370,20 +371,22 @@ const IncorrectAnswersReview = ({ quiz, userAnswers }) => {
               <h5 className="font-medium text-red-800 mb-2">
                 Question {index + 1}
               </h5>
-              <p className="text-sm text-gray-700 mb-2">{question.question}</p>
+              <div className="text-sm text-gray-700 mb-2">
+                {renderTextWithMath(question.question)}
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                 <div>
                   <p className="text-xs font-medium text-red-600 mb-1">Your Answer:</p>
-                  <p className="text-sm bg-white p-2 rounded border border-red-200 text-red-700">
-                    {userAnswer || "No answer provided"}
-                  </p>
+                  <div className="text-sm bg-white p-2 rounded border border-red-200 text-red-700">
+                    {renderAnswerValue(userAnswer)}
+                  </div>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-green-600 mb-1">Correct Answer:</p>
-                  <p className="text-sm bg-white p-2 rounded border border-green-200 text-green-700">
-                    {formatCorrectAnswer(question)}
-                  </p>
+                  <div className="text-sm bg-white p-2 rounded border border-green-200 text-green-700">
+                    {renderAnswerValue(formatCorrectAnswer(question))}
+                  </div>
                 </div>
               </div>
 
@@ -400,7 +403,7 @@ const IncorrectAnswersReview = ({ quiz, userAnswers }) => {
                       Explanation:
                     </h6>
                     <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {explanations[index]}
+                      {renderMultilineMathText(explanations[index])}
                     </div>
                   </div>
                 ) : (

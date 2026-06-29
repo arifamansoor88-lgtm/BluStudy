@@ -1,5 +1,271 @@
 import os
 import json
+import re
+import random
+
+TOPIC_ALIASES = {
+    "add": "addition",
+    "addition": "addition",
+    "subtract": "subtraction",
+    "subtraction": "subtraction",
+    "multiply": "multiplication",
+    "multiplication": "multiplication",
+    "divide": "division",
+    "division": "division",
+    "derivative": "derivatives",
+    "derivatives": "derivatives",
+    "differentiation": "derivatives",
+    "chain rule": "derivatives",
+    "product rule": "derivatives",
+    "quotient rule": "derivatives",
+    "integral": "integration",
+    "integrals": "integration",
+    "integration": "integration",
+    "algebra": "algebra",
+    "geometry": "geometry",
+    "trigonometry": "trigonometry",
+    "chemistry": "chemistry",
+    "physics": "physics",
+    "biology": "biology",
+}
+
+TOPIC_DISPLAY_NAMES = {
+    "addition": "Addition",
+    "subtraction": "Subtraction",
+    "multiplication": "Multiplication",
+    "division": "Division",
+    "derivatives": "Derivatives",
+    "integration": "Integration",
+    "algebra": "Algebra",
+    "geometry": "Geometry",
+    "trigonometry": "Trigonometry",
+    "chemistry": "Chemistry",
+    "physics": "Physics",
+    "biology": "Biology",
+    "general": "General Practice",
+}
+
+TOPIC_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "chapter",
+    "concept",
+    "concepts",
+    "course",
+    "for",
+    "from",
+    "generated",
+    "introduction",
+    "lesson",
+    "practice",
+    "quiz",
+    "review",
+    "test",
+    "the",
+    "to",
+    "topic",
+    "unit",
+    "untitled",
+}
+
+QUIZIO_MASTERY_SCORE = 75
+QUIZ_MATH_CONTROL_TRANSLATION = {
+    8: r"\b",
+    9: r"\t",
+    12: r"\f",
+    13: r"\r",
+}
+QUIZ_TEXT_COMMAND_REPLACEMENTS = {
+    "sin": r"\sin",
+    "cos": r"\cos",
+    "tan": r"\tan",
+    "ln": r"\ln",
+}
+
+
+def _clean_topic_text(value):
+    text = str(value or "").strip()
+    text = re.sub(r"\.[a-zA-Z0-9]{2,5}$", "", text)
+    text = re.sub(r"[_\-]+", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def _split_topic_values(value):
+    if value is None:
+        return []
+    if isinstance(value, dict):
+        values = []
+        for item in value.values():
+            values.extend(_split_topic_values(item))
+        return values
+    if isinstance(value, (list, tuple, set)):
+        values = []
+        for item in value:
+            values.extend(_split_topic_values(item))
+        return values
+
+    return [
+        _clean_topic_text(part)
+        for part in re.split(r"[,;\n]+", str(value))
+        if _clean_topic_text(part)
+    ]
+
+
+def normalize_topic(value):
+    text = _clean_topic_text(value).lower()
+    if not text:
+        return "general"
+
+    normalized = re.sub(r"[^a-z0-9\s]", " ", text)
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+
+    for phrase, canonical in sorted(TOPIC_ALIASES.items(), key=lambda item: len(item[0]), reverse=True):
+        if re.search(rf"\b{re.escape(phrase)}\b", normalized):
+            return canonical
+
+    words = [
+        word
+        for word in normalized.split()
+        if len(word) > 2 and word not in TOPIC_STOPWORDS
+    ]
+    if not words:
+        return "general"
+
+    return "-".join(words[:3])
+
+
+def _topic_display(topic_key, source=None):
+    if topic_key in TOPIC_DISPLAY_NAMES:
+        return TOPIC_DISPLAY_NAMES[topic_key]
+    clean_source = _clean_topic_text(source)
+    if clean_source and normalize_topic(clean_source) == topic_key:
+        return clean_source.title()
+    return topic_key.replace("-", " ").title()
+
+
+def _quiz_topic_info(data):
+    data = data or {}
+    options = data.get("options") if isinstance(data.get("options"), dict) else {}
+    candidates = [
+        data.get("topicKey"),
+        data.get("topic"),
+        data.get("topicDisplay"),
+        options.get("topicKey"),
+        options.get("primaryTopic"),
+        options.get("topic"),
+        options.get("selectedTopics"),
+        options.get("customTopics"),
+        options.get("focusTopics"),
+        data.get("title"),
+        data.get("resourceName"),
+    ]
+
+    fallback = None
+    for candidate in candidates:
+        for value in _split_topic_values(candidate):
+            if fallback is None:
+                fallback = value
+            topic_key = normalize_topic(value)
+            if topic_key != "general":
+                return topic_key, _topic_display(topic_key, value)
+
+    topic_key = normalize_topic(fallback)
+    return topic_key, _topic_display(topic_key, fallback)
+
+
+def _repair_quiz_math_text(value):
+    text = str(value or "")
+    if not text:
+        return text
+
+    repaired = text.translate(QUIZ_MATH_CONTROL_TRANSLATION)
+    repaired = re.sub(r"\\sqrt\s*\(\s*([^()]+?)\s*\)", r"\\sqrt{\1}", repaired, flags=re.IGNORECASE)
+    repaired = re.sub(r"\\sqrt([A-Za-z0-9]+(?:\^[A-Za-z0-9{}()+-]+)?)", r"\\sqrt{\1}", repaired)
+    repaired = re.sub(r"(?<!\\)sqrt\s*\{\s*([^{}]+?)\s*\}", r"\\sqrt{\1}", repaired, flags=re.IGNORECASE)
+    repaired = re.sub(r"(?<!\\)sqrt\s*\(\s*([^()]+?)\s*\)", r"\\sqrt{\1}", repaired, flags=re.IGNORECASE)
+    repaired = re.sub(r"(?<!\\)sqrt\s+([A-Za-z0-9]+(?:\^[A-Za-z0-9{}()+-]+)?)", r"\\sqrt{\1}", repaired, flags=re.IGNORECASE)
+    repaired = re.sub(r"(?<!\\)sqrt([A-Za-z0-9]+(?:\^[A-Za-z0-9{}()+-]+)?)", r"\\sqrt{\1}", repaired, flags=re.IGNORECASE)
+    repaired = re.sub(
+        r"\\text\s*\{\s*(sin|cos|tan|ln)\s*\}",
+        lambda match: QUIZ_TEXT_COMMAND_REPLACEMENTS[match.group(1).lower()],
+        repaired,
+        flags=re.IGNORECASE,
+    )
+    repaired = re.sub(r"\\text\s*\{\s*e\s*\}", "e", repaired, flags=re.IGNORECASE)
+    repaired = re.sub(r"\\text\s*\{\s*([a-zA-Z]+)\s*\}\s*\(", r"\\\1(", repaired)
+    return repaired
+
+
+def _sanitize_quiz_question(question):
+    if not isinstance(question, dict):
+        return question
+
+    sanitized = dict(question)
+
+    for key in ("question", "correct_answer"):
+        if isinstance(sanitized.get(key), str):
+            sanitized[key] = _repair_quiz_math_text(sanitized[key])
+
+    for key in ("options", "correct_answers", "prompts", "targets", "acceptable_answers"):
+        if isinstance(sanitized.get(key), list):
+            sanitized[key] = [
+                _repair_quiz_math_text(item) if isinstance(item, str) else item
+                for item in sanitized[key]
+            ]
+
+    if isinstance(sanitized.get("correct_mapping"), dict):
+        sanitized["correct_mapping"] = {
+            _repair_quiz_math_text(key) if isinstance(key, str) else key:
+            _repair_quiz_math_text(value) if isinstance(value, str) else value
+            for key, value in sanitized["correct_mapping"].items()
+        }
+
+    return sanitized
+
+
+def _sanitize_quiz_payload(data):
+    if not isinstance(data, dict):
+        return data
+
+    sanitized = dict(data)
+
+    for key in ("title", "quiz_title"):
+        if isinstance(sanitized.get(key), str):
+            sanitized[key] = _repair_quiz_math_text(sanitized[key])
+
+    if isinstance(sanitized.get("questions"), list):
+        sanitized["questions"] = [
+            _sanitize_quiz_question(question)
+            for question in sanitized["questions"]
+        ]
+
+    return sanitized
+
+
+def _ensure_quiz_topic_metadata(data, source_topic=None):
+    data = _sanitize_quiz_payload(data)
+    if not isinstance(data, dict):
+        return data
+
+    if source_topic:
+        topic_key = normalize_topic(source_topic)
+        topic_display = _topic_display(topic_key, source_topic)
+    else:
+        topic_key, topic_display = _quiz_topic_info(data)
+
+    data["topicKey"] = topic_key
+    data["topic"] = topic_display
+    data["topicDisplay"] = topic_display
+
+    options = data.get("options")
+    if not isinstance(options, dict):
+        options = {}
+        data["options"] = options
+    options["topicKey"] = topic_key
+    options["primaryTopic"] = topic_display
+    return data
 import uuid
 import uvicorn
 import base64
@@ -27,12 +293,12 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import database
 from pdf_utils import extract_text_from_pdf
-from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, evaluate_numerical_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance
+from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, evaluate_numerical_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance, generate_suggested_next_steps_ai
 from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse, CreateMindmapRequest, CreateFolderRequest, UpdateFolderRequest, FolderOut, ShareLinkCreateRequest, ShareLinkUpdateRequest, ShareLinkSettings
 from pydantic import BaseModel
 from azure.cosmos.exceptions import CosmosHttpResponseError, CosmosResourceNotFoundError
 import time
-
+from openai_client import analyze_quiz_performance
 # Load the environment variables
 load_dotenv()
 
@@ -52,7 +318,7 @@ app.add_middleware(
     allow_origins=_parse_origins(),
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*", "X-User-Id"],
+    allow_headers=["*", "X-User-Id", "X-Study-Date"],
 )
 
 # Static mount for local storage fallback
@@ -410,6 +676,15 @@ class LocalContainer:
             filtered.sort(key=lambda x: x.get("createdAt", "") or x.get("createdat", ""), reverse=True)
             return filtered
 
+        # Handle study streak query: "WHERE c.userId = @uid AND c.contentType = 'study_streak'"
+        if "from c where c.userid = @uid and c.contenttype = 'study_streak'" in q:
+            user_id = params.get("@uid")
+            return [
+                it for it in items
+                if (it.get("userId") == user_id or it.get("user_id") == user_id)
+                and it.get("contentType") == "study_streak"
+            ]
+
         return items
 
     @staticmethod
@@ -484,8 +759,35 @@ else:
 # --------------------------------------------------------------------------------------
 # Helpers
 # --------------------------------------------------------------------------------------
+def _user_id_from_bearer_token(request: Request) -> Optional[str]:
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return None
+
+    token = auth_header[7:]
+    try:
+        claims = jwt.decode(
+            token,
+            key="development_key_not_for_production",
+            options={
+                "verify_signature": False,
+                "verify_aud": False,
+                "verify_exp": False
+            }
+        )
+        return claims.get("sub") or claims.get("oid") or claims.get("userId")
+    except Exception as e:
+        print(f"DEBUG: Could not resolve user id from bearer token: {e}")
+        return None
+
 def _resolve_user_id(request: Request, user_id_q: Optional[str] = None, user_id_form: Optional[str] = None) -> str:
-    return user_id_q or user_id_form or request.headers.get("X-User-Id") or "default"
+    return (
+        user_id_q
+        or user_id_form
+        or request.headers.get("X-User-Id")
+        or _user_id_from_bearer_token(request)
+        or "default"
+    )
 
 def _normalize_tags(raw: Optional[Union[str, List[str]]]) -> List[str]:
     if raw is None:
@@ -988,6 +1290,127 @@ def health_check():
         "timestamp": datetime.utcnow().isoformat()
     }
 
+# ----- Recents -----
+@app.get("/api/recents")
+async def get_recent_items(
+    request: Request,
+    limit: int = Query(8, ge=1, le=50),
+):
+    """Get recently accessed/created items for the authenticated user"""
+    # Try to get user ID from multiple sources
+    uid = request.headers.get("X-User-Id")
+    
+    if not uid:
+        # Try to extract from Authorization header
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+            try:
+                # Try to decode JWT without verification (for user ID extraction only)
+                from jwt import decode as jwt_decode
+                claims = jwt_decode(token, options={"verify_signature": False})
+                uid = claims.get("sub") or claims.get("oid") or claims.get("userId")
+            except Exception as e:
+                print(f"DEBUG: Could not decode token: {e}")
+                uid = None
+    
+    uid = uid or _resolve_user_id(request)
+
+    if not uid or uid == "default":
+        print(f"DEBUG: /api/recents called with uid={uid}, returning empty recents")
+        return {"items": []}
+
+    print(f"DEBUG: /api/recents called with uid={uid}")
+    
+    try:
+        # Query all items for this user, ordered by most recent
+        # Some items might not have createdAt, so we'll handle both cases
+        query = "SELECT * FROM c WHERE c.userId = @uid"
+        params = [{"name": "@uid", "value": uid}]
+        
+        items = list(container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+        print(f"DEBUG: Found {len(items)} items for user {uid}")
+        
+        # Sort by createdAt or updatedAt in Python (some items might not have these fields)
+        items.sort(key=lambda x: x.get("updatedAt") or x.get("createdAt") or "", reverse=True)
+        
+        # Limit results
+        items = items[:limit]
+        
+        # Format results to include relevant fields
+        result_items = []
+        for item in items:
+            content_type = (item.get("contentType") or item.get("contenttype") or "unknown").lower()
+            data = item.get("data") or {}
+            resource_name = item.get("resourceName") or item.get("name") or ""
+            raw_title = (
+                item.get("title")
+                or item.get("name")
+                or data.get("title")
+                or data.get("name")
+                or data.get("quiz_title")
+                or resource_name
+                or ""
+            )
+            display_title = raw_title.strip() or {
+                "quiz": "Practice Test",
+                "flashcard": "Flashcard",
+                "flashcard_deck": "Flashcard Deck",
+                "mindmap": "Mind Map",
+                "study_plan": "Study Plan",
+                "summary": "Summary",
+                "voice_note": "Voice Note",
+                "folder": "Folder",
+                "tool": "Tool",
+            }.get(content_type, "Untitled")
+
+            result_items.append({
+                "id": item.get("id"),
+                "title": display_title,
+                "rawTitle": raw_title,
+                "contentType": content_type,
+                "createdAt": item.get("createdAt"),
+                "updatedAt": item.get("updatedAt"),
+                "route": item.get("route"),
+            })
+
+        return {"items": result_items}
+    except Exception as e:
+        print(f"DEBUG: Error in /api/recents: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"items": []}
+
+# ----- Track Tool Access -----
+@app.post("/api/track-access")
+async def track_tool_access(
+    request: Request,
+    item_id: str = Body(...),
+):
+    """Track when a user accesses/opens a tool to keep recents updated"""
+    uid = _resolve_user_id(request)
+
+    try:
+        query = "SELECT * FROM c WHERE c.id = @id AND c.userId = @uid"
+        params = [
+            {"name": "@id", "value": item_id},
+            {"name": "@uid", "value": uid},
+        ]
+
+        items = list(container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+
+        if not items:
+            return {"success": False, "error": "Item not found"}
+
+        item = items[0]
+        item["updatedAt"] = datetime.utcnow().isoformat()
+        container.upsert_item(item)
+
+        return {"success": True, "message": "Access tracked"}
+    except Exception as e:
+        print(f"DEBUG: Error in track-access: {str(e)}")
+        return {"success": False}
+
 # ----- Voice Notes -----
 @app.get("/voice-notes")
 async def get_voice_notes(
@@ -1312,9 +1735,172 @@ async def debug_voice_note(
     scrub.pop("audio_inline_b64", None)
     return JSONResponse(scrub)
 
+# Returns "Suggested Next Steps".
+@app.get("/dashboard/next-steps")
+def get_suggested_next_steps(user_claims: dict = Depends(validate_token)):
+    uid = user_claims["sub"]
+
+    # Fetch all items for this user once, then filter in Python (more reliable than query params here)
+    all_user_items = list(container.query_items(
+        query="SELECT * FROM c WHERE c.userId = @uid",
+        parameters=[{"name": "@uid", "value": uid}],
+        enable_cross_partition_query=True
+    ))
+
+    def get_latest_by_type(desired_types):
+        if isinstance(desired_types, str):
+            desired_types = [desired_types]
+        matches = [x for x in all_user_items if x.get("contentType") in desired_types]
+        matches.sort(key=lambda x: x.get("updatedAt") or x.get("createdAt") or "", reverse=True)
+        return matches[0] if matches else None
+
+    latest_deck = get_latest_by_type("flashcard_deck")
+    latest_quiz = get_latest_by_type("quiz")
+    latest_note = get_latest_by_type("voice_note")
+    latest_mindmap = get_latest_by_type(["mind-map", "mindmap", "mind_map"])
+    latest_summary = get_latest_by_type(["summarizer", "summary"])
+
+    # Build targets list for AI
+    targets = []
+
+    if latest_deck:
+        deck_title = latest_deck.get("title") or latest_deck.get("data", {}).get("title") or "Flashcards"
+        targets.append({
+            "toolKey": "flashcard_deck",
+            "targetId": latest_deck["id"],
+            "toolName": "AI Flashcards",
+            "context": deck_title,
+        })
+
+    if latest_quiz:
+        quiz_title = latest_quiz.get("data", {}).get("title") or "Practice Test"
+        targets.append({
+            "toolKey": "quiz",
+            "targetId": latest_quiz["id"],
+            "toolName": "Practice Tests",
+            "context": quiz_title,
+        })
+
+    if latest_note:
+        note_title = latest_note.get("title") or "Voice Note"
+        targets.append({
+            "toolKey": "voice_note",
+            "targetId": latest_note["id"],
+            "toolName": "Voice Notes",
+            "context": note_title,
+        })
+
+    if latest_mindmap:
+        mm_title = latest_mindmap.get("title") or "Mind Map"
+        targets.append({
+            "toolKey": "mind_map",
+            "targetId": latest_mindmap["id"],
+            "toolName": "Mind Maps",
+            "context": mm_title,
+        })
+
+    if latest_summary:
+        s_title = latest_summary.get("title") or "Summary"
+        targets.append({
+            "toolKey": "summarizer",
+            "targetId": latest_summary["id"],
+            "toolName": "Smart Summarizer",
+            "context": s_title,
+        })
+
+    # ---- FILLER TARGETS: suggest creating new content for missing tools ----
+
+    # Decide the "seed" topic/context:
+    # - If we have any saved items, use the first available context/title
+    # - Otherwise use a generic topic
+    seed_context = next((t.get("context") for t in targets if t.get("context")), None)
+    if not seed_context:
+        seed_context = "your current study topic"
+
+    # Which toolKeys already exist from saved items
+    present = {t["toolKey"] for t in targets}
+
+    # Tools we want Suggested Next Steps to support (no study_planner for now)
+    ALL_TOOLS = [
+        ("flashcard_deck", "AI Flashcards"),
+        ("quiz", "Practice Tests"),
+        ("voice_note", "Voice Notes"),
+        ("mind_map", "Mind Maps"),
+        ("summarizer", "Smart Summarizer"),
+    ]
+
+    # Add a "create new" filler target for any tool not already present
+    for toolKey, toolName in ALL_TOOLS:
+        if toolKey not in present:
+            targets.append({
+                "toolKey": toolKey,
+                "targetId": "new",
+                "toolName": toolName,
+                "context": seed_context,
+            })
+
+    # If nothing exists yet, return safe fallback
+    if not targets:
+        return {"items": []}
+
+    targets = targets[:5]
+
+    # Randomize order of suggested tools/cards
+    random.shuffle(targets)
+
+    ai_result = generate_suggested_next_steps_ai(targets)
+    items = ai_result.get("items", [])
+    items = items[:3]
+
+    # Map toolKey + targetId -> deep link actionPath
+    def to_action_path(toolKey: str, targetId: str) -> str:
+
+        if targetId == "new":
+            if toolKey == "voice_note":
+                return "/tools/voice-notes"
+            if toolKey == "mind_map":
+                return "/tools/mind-maps"  # or "/tools/maps" if that is your create page
+            if toolKey == "summarizer":
+                return "/tools/summarizer"
+            if toolKey == "quiz":
+                return "/tools/practice-tests"
+            if toolKey == "flashcard_deck":
+                return "/tools/flashcards"
+            return "/dashboard"
+
+        if toolKey == "flashcard_deck":
+            return f"/tools/flashcards/study/{targetId}"
+        if toolKey == "quiz":
+            return f"/tools/practice-tests?quizId={targetId}"
+        if toolKey == "voice_note":
+            return f"/tools/voice-notes?noteId={targetId}"
+        if toolKey == "mind_map":
+            return f"/tools/maps/{targetId}"
+        if toolKey == "summarizer":
+            return f"/tools/summarizer?summaryId={targetId}"
+        return "/dashboard"
+
+    # Build final response for frontend
+    final_items = []
+    for item in items:
+        toolKey = item.get("toolKey")
+        targetId = item.get("targetId")
+        final_items.append({
+            "toolKey": toolKey,
+            "title": item.get("title", "Suggested Next Step"),
+            "description": item.get("description", ""),
+            "buttonText": item.get("buttonText", "Open"),
+            "actionPath": to_action_path(toolKey, targetId),
+        })
+
+    return {"items": final_items}
+
 # ----- Quizzes -----
 class QuizDataModel(BaseModel):
     title: Optional[str] = None
+    topic: Optional[str] = None
+    topicKey: Optional[str] = None
+    topicDisplay: Optional[str] = None
     questions: Any
     userAnswers: Optional[Any] = None
     score: Optional[Any] = None
@@ -1386,29 +1972,33 @@ async def create_quiz(
             subject_category=subject_category
         )
 
-        quiz_data = json.loads(quiz_json)
+        quiz_data = _sanitize_quiz_payload(json.loads(quiz_json))
         quiz_id = str(uuid.uuid4())
+        
+        
+        quiz_payload = _ensure_quiz_topic_metadata({
+            "title": quiz_data.get("quiz_title", "Generated Quiz"),
+            "questions": quiz_data.get("questions", []),
+            "userAnswers": None,
+            "score": None,
+            "timeTaken": 0,
+            "resourceName": file.filename,
+            "options": {
+                "numQuestions": num_questions,
+                "selectedTopics": focus_topics.split(",") if focus_topics else [],
+                "customTopics": focus_topics,
+                "questionFormats": formats_dict,
+                    "subjectCategory": subject_category
+            },
+            "attempts": []
+        }, source_topic=focus_topics or None)
+
         quiz_document = {
             "id": quiz_id,
             "userId": user_claims["sub"],
             "contentType": "quiz",
             "createdAt": datetime.utcnow().isoformat(),
-            "data": {
-                "title": quiz_data.get("quiz_title", "Generated Quiz"),
-                "questions": quiz_data.get("questions", []),
-                "userAnswers": None,
-                "score": None,
-                "timeTaken": 0,
-                "resourceName": file.filename,
-                "options": {
-                    "numQuestions": num_questions,
-                    "selectedTopics": focus_topics.split(",") if focus_topics else [],
-                    "customTopics": focus_topics,
-                    "questionFormats": formats_dict,
-                    "subjectCategory": subject_category
-                },
-                "attempts": []
-            }
+            "data": quiz_payload,
         }
         
         # Add folderId if provided
@@ -1417,13 +2007,126 @@ async def create_quiz(
 
         container.create_item(body=quiz_document)
         quiz_data["id"] = quiz_document["id"]
+        quiz_data["topicKey"] = quiz_payload["topicKey"]
+        quiz_data["topic"] = quiz_payload["topic"]
+        quiz_data["topicDisplay"] = quiz_payload["topicDisplay"]
         print(f"Quiz generated and saved with ID: {quiz_id}")
         return quiz_data
     except Exception as e:
         print(f"Error generating quiz: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to generate quiz: {str(e)}")
 
+def _score_to_int(score):
+    if score is None:
+        return None
+    try:
+        if isinstance(score, str):
+            score = score.replace("%", "").strip()
+        return int(float(score))
+    except (TypeError, ValueError):
+        return None
 
+
+def _latest_attempt_score(data: Dict[str, Any]) -> Optional[int]:
+    scored_attempts = []
+    for attempt in data.get("attempts", []) or []:
+        score = _score_to_int(attempt.get("score"))
+        if score is None:
+            continue
+        scored_attempts.append((attempt.get("timestamp", ""), score))
+
+    if not scored_attempts:
+        return None
+
+    scored_attempts.sort(key=lambda item: item[0] or "")
+    return scored_attempts[-1][1]
+
+
+def _get_quizio_focus_areas(user_id: str) -> List[Dict[str, Any]]:
+    query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'quiz'"
+    parameters = [{"name": "@userId", "value": user_id}]
+
+    quizzes = list(container.query_items(
+        query=query,
+        parameters=parameters,
+        enable_cross_partition_query=True
+    ))
+
+    topic_scores: Dict[str, int] = {}
+    topic_display: Dict[str, str] = {}
+
+    for quiz in quizzes:
+        data = quiz.get("data", {}) or {}
+        latest_score = _latest_attempt_score(data)
+        if latest_score is None:
+            continue
+
+        topic_key, display = _quiz_topic_info(data)
+        if topic_key == "general":
+            continue
+
+        topic_display.setdefault(topic_key, display)
+        topic_scores[topic_key] = max(topic_scores.get(topic_key, latest_score), latest_score)
+
+    weak_topics = [
+        {
+            "topic": topic_key,
+            "display": topic_display.get(topic_key, _topic_display(topic_key)),
+            "score": score,
+            "masteryScore": QUIZIO_MASTERY_SCORE,
+        }
+        for topic_key, score in topic_scores.items()
+        if score < QUIZIO_MASTERY_SCORE
+    ]
+
+    weak_topics.sort(key=lambda item: (item["score"], item["display"]))
+    return weak_topics
+
+
+@app.post("/generate-focus-quiz")
+async def generate_focus_quiz(user_claims: dict = Depends(validate_token)):
+    try:
+        user_id = user_claims["sub"]
+        weak_areas = _get_quizio_focus_areas(user_id)
+
+        if not weak_areas:
+            return {
+                "quiz": None,
+                "focusAreas": [],
+                "message": "No weak quiz topics found"
+            }
+
+        weak_topics = [item["display"] for item in weak_areas]
+
+        #Generate quiz
+        synthetic_text = f"Focus on weak areas: {', '.join(weak_topics)}"
+
+        quiz_json = generate_quiz(
+            text=synthetic_text,
+            num_questions=10,
+            focus_topics=", ".join(weak_topics),
+            question_formats=["multiple_choice"]
+        )
+
+        quiz_data = _sanitize_quiz_payload(json.loads(quiz_json))
+
+        return {
+            "quiz": quiz_data,
+            "focusAreas": weak_areas
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/weak-areas")
+async def get_weak_areas(user_claims: dict = Depends(validate_token)):
+    try:
+        user_id = user_claims["sub"]
+        return {"focusAreas": _get_quizio_focus_areas(user_id)}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+ 
 @app.post("/generate-quiz-from-topic")
 async def create_quiz_from_topic(
     payload: Dict[str, Any],
@@ -1436,6 +2139,7 @@ async def create_quiz_from_topic(
     try:
         print(f"Generating topic-based quiz for user: {user_claims['sub']}")
         topic: str = (payload.get("topic") or "").strip()
+        topic_key = (payload.get("topic_key") or payload.get("topicKey") or "").strip()
         if not topic:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1479,29 +2183,31 @@ async def create_quiz_from_topic(
             subject_category=subject_category,
         )
 
-        quiz_data = json.loads(quiz_json)
+        quiz_data = _sanitize_quiz_payload(json.loads(quiz_json))
         quiz_id = str(uuid.uuid4())
+        quiz_payload = _ensure_quiz_topic_metadata({
+            "title": quiz_data.get("quiz_title", topic or "Generated Quiz"),
+            "questions": quiz_data.get("questions", []),
+            "userAnswers": None,
+            "score": None,
+            "timeTaken": 0,
+            "resourceName": topic,
+            "options": {
+                "numQuestions": num_questions,
+                "selectedTopics": (focus_topics.split(",") if focus_topics else []),
+                "customTopics": focus_topics,
+                "questionFormats": formats_dict,
+                    "subjectCategory": subject_category,
+            },
+            "attempts": [],
+        }, source_topic=topic_key or topic)
+
         quiz_document = {
             "id": quiz_id,
             "userId": user_claims["sub"],
             "contentType": "quiz",
             "createdAt": datetime.utcnow().isoformat(),
-            "data": {
-                "title": quiz_data.get("quiz_title", topic or "Generated Quiz"),
-                "questions": quiz_data.get("questions", []),
-                "userAnswers": None,
-                "score": None,
-                "timeTaken": 0,
-                "resourceName": topic,
-                "options": {
-                    "numQuestions": num_questions,
-                    "selectedTopics": (focus_topics.split(",") if focus_topics else []),
-                    "customTopics": focus_topics,
-                    "questionFormats": formats_dict,
-                    "subjectCategory": subject_category,
-                },
-                "attempts": [],
-            },
+            "data": quiz_payload,
         }
         
         # Add folderId if provided
@@ -1511,6 +2217,9 @@ async def create_quiz_from_topic(
 
         container.create_item(body=quiz_document)
         quiz_data["id"] = quiz_document["id"]
+        quiz_data["topicKey"] = quiz_payload["topicKey"]
+        quiz_data["topic"] = quiz_payload["topic"]
+        quiz_data["topicDisplay"] = quiz_payload["topicDisplay"]
         print(f"Topic-based quiz generated and saved with ID: {quiz_id}")
         return quiz_data
     except HTTPException:
@@ -1530,12 +2239,13 @@ async def save_quiz(
 ):
     try:
         print(f"Saving quiz for user: {user_claims['sub']}")
+        data = _ensure_quiz_topic_metadata(quiz.data.dict())
         document = {
             "id": str(uuid.uuid4()),
             "userId": user_claims["sub"],
             "contentType": quiz.contentType,
             "createdAt": datetime.utcnow().isoformat(),
-            "data": quiz.data.dict()
+            "data": data
         }
         
         # Add folderId if provided
@@ -1565,7 +2275,7 @@ async def save_quiz_attempt(attempt: SaveQuizAttemptRequest, user_claims: dict =
         new_attempt = {
             "attemptId": attempt_id,
             "timestamp": datetime.utcnow().isoformat(),
-            "score": attempt.score,
+            "score": _score_to_int(attempt.score),
             "timeTaken": attempt.timeTaken,
             "userAnswers": attempt.userAnswers,
             "mode": attempt.mode
@@ -1574,6 +2284,7 @@ async def save_quiz_attempt(attempt: SaveQuizAttemptRequest, user_claims: dict =
         if "attempts" not in quiz["data"]:
             quiz["data"]["attempts"] = []
         quiz["data"]["attempts"].append(new_attempt)
+        quiz["data"] = _ensure_quiz_topic_metadata(quiz["data"])
         container.upsert_item(body=quiz)
         print(f"Quiz attempt saved for quiz ID: {quiz_id}, attempt ID: {attempt_id}")
         return {"quizId": quiz_id, "attemptId": attempt_id, "message": "Quiz attempt saved successfully"}
@@ -1590,6 +2301,9 @@ async def get_quizzes(user_claims: dict = Depends(validate_token)):
         query = "SELECT * FROM c WHERE c.userId = @userId AND c.contentType = 'quiz' ORDER BY c.createdAt DESC"
         parameters = [{"name": "@userId", "value": user_claims["sub"]}]
         items = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+        for item in items:
+            if isinstance(item.get("data"), dict):
+                item["data"] = _ensure_quiz_topic_metadata(item["data"])
         print(f"Found {len(items)} quizzes for user")
         return items
     except Exception as e:
@@ -1602,6 +2316,8 @@ async def get_quiz(quiz_id: str, user_claims: dict = Depends(validate_token)):
         quiz = container.read_item(item=quiz_id, partition_key=user_claims["sub"])
         if quiz["userId"] != user_claims["sub"]:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        if isinstance(quiz.get("data"), dict):
+            quiz["data"] = _ensure_quiz_topic_metadata(quiz["data"])
         return quiz
     except Exception as e:
         print(f"Error fetching quiz: {str(e)}")
@@ -1613,6 +2329,8 @@ async def get_quiz_with_history(quiz_id: str, user_claims: dict = Depends(valida
         quiz = container.read_item(item=quiz_id, partition_key=user_claims["sub"])
         if quiz["userId"] != user_claims["sub"]:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        if isinstance(quiz.get("data"), dict):
+            quiz["data"] = _ensure_quiz_topic_metadata(quiz["data"])
         return quiz
     except Exception as e:
         print(f"Error fetching quiz with history: {str(e)}")
@@ -3667,6 +4385,213 @@ async def empty_trash(user_claims: dict = Depends(validate_token)):
         print(f"Error emptying trash: {e}")
         raise HTTPException(status_code=500, detail="Failed to empty trash")
 
+# --------------------------------------------------------------------------------------
+# Study Streak API
+# --------------------------------------------------------------------------------------
+
+def _study_date_from_request(request: Request):
+    study_date = (request.headers.get("X-Study-Date") or "").strip()
+    if study_date:
+        try:
+            return datetime.strptime(study_date[:10], "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    return datetime.utcnow().date()
+
+
+def _parse_study_date(value: Optional[str]):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value).date()
+    except ValueError:
+        try:
+            return datetime.strptime(value[:10], "%Y-%m-%d").date()
+        except ValueError:
+            return None
+
+
+MEANINGFUL_STREAK_ACTIVITY = "meaningful_tool_action"
+STREAK_ACTION_KEYS = {
+    "flashcard_deck": {
+        "generate_flashcards",
+        "save_flashcard_deck",
+        "update_flashcard_deck",
+    },
+    "mind_map": {
+        "create_mind_map",
+        "save_mind_map",
+        "update_mind_map",
+    },
+    "quiz": {
+        "complete_quiz",
+        "generate_quiz",
+        "save_quiz",
+        "save_quiz_attempt",
+    },
+    "study_plan": {
+        "generate_study_plan",
+        "update_study_plan",
+    },
+    "summarizer": {
+        "generate_summary",
+        "save_summary",
+    },
+    "voice_note": {
+        "save_voice_note",
+    },
+}
+
+
+def _is_meaningful_streak_action(tool_key: Optional[str], action_key: Optional[str]) -> bool:
+    return action_key in STREAK_ACTION_KEYS.get(tool_key or "", set())
+
+
+def _is_meaningful_streak_doc(doc: Dict[str, Any]) -> bool:
+    return (
+        doc.get("lastActivityType") == MEANINGFUL_STREAK_ACTIVITY
+        and _is_meaningful_streak_action(
+            doc.get("lastToolKey"),
+            doc.get("lastActionKey"),
+        )
+    )
+
+
+def _current_streak_for_date(doc: Dict[str, Any], today):
+    if not _is_meaningful_streak_doc(doc):
+        return 0
+    last_date = _parse_study_date(doc.get("lastStudyDate"))
+    if last_date and (today - last_date).days > 1:
+        return 0
+    return doc.get("streakDays", 0)
+
+
+@app.get("/streak")
+async def get_streak(request: Request, user_claims: dict = Depends(validate_token)):
+    uid = user_claims["sub"]
+
+    query = "SELECT * FROM c WHERE c.userId = @uid AND c.contentType = 'study_streak'"
+    params = [{"name": "@uid", "value": uid}]
+
+    items = list(container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+
+    if not items:
+        return {"current_streak": 0}
+
+    doc = items[0]
+    last_date_str = doc.get("lastStudyDate")
+    streak = doc.get("streakDays", 0)
+
+    if not _is_meaningful_streak_doc(doc):
+        return {"current_streak": 0}
+
+    if last_date_str:
+        last_date = _parse_study_date(last_date_str)
+        today = _study_date_from_request(request)
+        diff = (today - last_date).days if last_date else 0
+
+        if diff > 1:
+            return {"current_streak": 0}
+
+    return {"current_streak": streak}
+
+
+@app.post("/update-streak")
+async def update_streak(request: Request, user_claims: dict = Depends(validate_token)):
+    uid = user_claims["sub"]
+
+    query = "SELECT * FROM c WHERE c.userId = @uid AND c.contentType = 'study_streak'"
+    params = [{"name": "@uid", "value": uid}]
+
+    items = list(container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+
+    today = _study_date_from_request(request)
+    today_str = today.isoformat()
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+
+    activity_type = payload.get("activityType") or payload.get("activity_type")
+    tool_key = payload.get("toolKey") or payload.get("tool_key")
+    action_key = payload.get("actionKey") or payload.get("action_key")
+
+    if activity_type != MEANINGFUL_STREAK_ACTIVITY or not _is_meaningful_streak_action(tool_key, action_key):
+        if not items:
+            return {"current_streak": 0, "streak_updated": False}
+        doc = items[0]
+        return {
+            "current_streak": _current_streak_for_date(doc, today),
+            "streak_updated": False
+        }
+
+    if not items:
+        doc = {
+            "id": str(uuid.uuid4()),
+            "userId": uid,
+            "contentType": "study_streak",
+            "streakDays": 1,
+            "lastStudyDate": today_str,
+            "lastActivityType": MEANINGFUL_STREAK_ACTIVITY,
+            "lastToolKey": tool_key,
+            "lastActionKey": action_key,
+            "updatedAt": datetime.utcnow().isoformat()
+        }
+        container.create_item(body=doc)
+        return {"current_streak": 1, "previous_streak": 0, "streak_updated": True}
+
+    doc = items[0]
+
+    if not _is_meaningful_streak_doc(doc):
+        doc["streakDays"] = 1
+        doc["lastStudyDate"] = today_str
+        doc["lastActivityType"] = MEANINGFUL_STREAK_ACTIVITY
+        doc["lastToolKey"] = tool_key
+        doc["lastActionKey"] = action_key
+        doc["updatedAt"] = datetime.utcnow().isoformat()
+        container.upsert_item(doc)
+        return {"current_streak": 1, "previous_streak": 0, "streak_updated": True}
+
+    last_date_str = doc.get("lastStudyDate")
+    streak = doc.get("streakDays", 0)
+    previous_streak = streak
+
+    if last_date_str:
+        last_date = _parse_study_date(last_date_str)
+        diff = (today - last_date).days if last_date else None
+    else:
+        diff = None
+
+    if diff is not None and diff <= 0:
+        return {
+            "current_streak": streak,
+            "previous_streak": previous_streak,
+            "streak_updated": False
+        }
+
+    elif diff == 1:
+        streak += 1
+
+    else:
+        previous_streak = 0
+        streak = 1
+
+    doc["streakDays"] = streak
+    doc["lastStudyDate"] = today_str
+    doc["lastActivityType"] = MEANINGFUL_STREAK_ACTIVITY
+    doc["lastToolKey"] = tool_key
+    doc["lastActionKey"] = action_key
+    doc["updatedAt"] = datetime.utcnow().isoformat()
+
+    container.upsert_item(doc)
+
+    return {
+        "current_streak": streak,
+        "previous_streak": previous_streak,
+        "streak_updated": True
+    }
 
 # --------------------------------------------------------------------------------------
 # Dev server
