@@ -61,36 +61,35 @@ export function useUserRecents(/* userId not needed */) {
   const fetchRecents = useCallback(async () => {
     try {
       const token = await getToken();
-      console.log("useUserRecents: Fetching from", `${API}/api/recents?limit=8`);
       const res = await fetch(`${API}/api/recents?limit=8`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      console.log("useUserRecents: Response:", json);
       const list = Array.isArray(json?.items) ? json.items : [];
-      console.log("useUserRecents: Extracted items:", list);
-      setItems(list);
+      return list;
     } catch (e) {
       console.warn("useUserRecents failed:", e);
-      setItems([]);
+      return null;
     }
   }, [getToken]);
 
-  // Initial fetch
+  // Initial fetch — abort-safe so stale setState doesn't fire after unmount
   useEffect(() => {
-    let abort = false;
+    let cancelled = false;
     (async () => {
-      if (!abort) await fetchRecents();
+      const list = await fetchRecents();
+      if (!cancelled && list !== null) setItems(list);
     })();
-    return () => { abort = true; };
+    return () => { cancelled = true; };
   }, [fetchRecents]);
 
   // Refresh when page comes back into focus
   useEffect(() => {
     const handleFocus = () => {
-      console.log("useUserRecents: Page focused, refreshing recents");
-      fetchRecents();
+      fetchRecents().then((list) => {
+        if (list !== null) setItems(list);
+      });
     };
 
     window.addEventListener("focus", handleFocus);
@@ -113,7 +112,7 @@ export function useUserRecents(/* userId not needed */) {
     const fetched = Array.isArray(items) ? items : [];
     const local = Array.isArray(localItems) ? localItems : [];
 
-    const merged = [...local, ...fetched].filter((item) => item?.contentType !== "tool");
+    const merged = [...local, ...fetched];
 
     const unique = new Map();
     merged.forEach((item) => {

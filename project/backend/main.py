@@ -1379,7 +1379,7 @@ async def get_recent_items(
         print(f"DEBUG: Error in /api/recents: {str(e)}")
         import traceback
         traceback.print_exc()
-        return {"items": [], "error": str(e)}
+        return {"items": []}
 
 # ----- Track Tool Access -----
 @app.post("/api/track-access")
@@ -1389,30 +1389,27 @@ async def track_tool_access(
 ):
     """Track when a user accesses/opens a tool to keep recents updated"""
     uid = _resolve_user_id(request)
-    
+
     try:
-        # Try to get the item first
-        query = "SELECT * FROM c WHERE c.id = @id"
-        params = [{"name": "@id", "value": item_id}]
-        
+        query = "SELECT * FROM c WHERE c.id = @id AND c.userId = @uid"
+        params = [
+            {"name": "@id", "value": item_id},
+            {"name": "@uid", "value": uid},
+        ]
+
         items = list(container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
-        
+
         if not items:
             return {"success": False, "error": "Item not found"}
-        
+
         item = items[0]
-        
-        # Update the updatedAt timestamp
         item["updatedAt"] = datetime.utcnow().isoformat()
-        
-        # Upsert the item back to the database
         container.upsert_item(item)
-        
-        print(f"DEBUG: Tracked access to item {item_id} for user {uid}")
+
         return {"success": True, "message": "Access tracked"}
     except Exception as e:
         print(f"DEBUG: Error in track-access: {str(e)}")
-        return {"success": False, "error": str(e)}
+        return {"success": False}
 
 # ----- Voice Notes -----
 @app.get("/voice-notes")

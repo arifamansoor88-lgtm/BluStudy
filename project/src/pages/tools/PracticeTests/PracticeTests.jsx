@@ -22,8 +22,6 @@ const PracticeTests = () => {
   // Get folderId from URL query params if present
   const [searchParams] = useSearchParams();
   const folderId = searchParams.get('folderId');
-  const quizId = searchParams.get("quizId");
-  
   const quizId = searchParams.get('quizId');
   
   // State for quiz display
@@ -120,8 +118,9 @@ const PracticeTests = () => {
         console.log("Loading quiz from query string...", quizIdParam);
         const quizById = await fetchQuizById(quizIdParam);
         if (quizById) {
-          setGeneratedQuiz(quizById.data || quizById);
-          const questions = (quizById.data || quizById).questions || [];
+          const quizData = quizById.data || quizById;
+          setGeneratedQuiz({ ...quizData, id: quizById.id || quizData.id });
+          const questions = quizData.questions || [];
           setUserAnswers(Array(questions.length).fill(null));
           setQuizStatus("ready");
           setShowQuiz(false);
