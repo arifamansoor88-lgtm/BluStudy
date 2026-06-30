@@ -72,28 +72,14 @@ const StudyTools = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
+        className="mb-6"
       >
-        <motion.h1
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4"
-        >
-          Smart Study Tools
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-lg text-gray-600 max-w-2xl mx-auto"
-        >
-          Enhance your learning experience with our AI-powered study tools
-        </motion.p>
+        <h1 className="text-2xl font-bold text-gray-900">Study Tools</h1>
+        <p className="text-sm text-gray-500 mt-1">Pick a tool to get started</p>
       </motion.div>
 
       <motion.div

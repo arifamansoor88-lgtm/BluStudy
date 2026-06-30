@@ -25,8 +25,8 @@ const PracticeTests = () => {
   const quizId = searchParams.get('quizId');
   
   // State for quiz display
-  const [showQuiz, setShowQuiz] = useState(true);
-  const [showUpload, setShowUpload] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [showUpload, setShowUpload] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [generatedQuiz, setGeneratedQuiz] = useState(null);
   const [quizStatus, setQuizStatus] = useState("idle"); // idle, loading, ready, in-progress, completed
@@ -92,10 +92,10 @@ const PracticeTests = () => {
 
   // Fetch saved quizzes on component mount
   useEffect(() => {
-    if (showQuiz && !quizzesFetchedRef.current) {
+    if (!quizzesFetchedRef.current) {
       fetchSavedQuizzes();
     }
-  }, [showQuiz, fetchSavedQuizzes, quizzesFetchedRef]);
+  }, [fetchSavedQuizzes, quizzesFetchedRef]);
 
   // Load quiz from state or quiz Id param
   useEffect(() => {
@@ -786,8 +786,8 @@ const PracticeTests = () => {
   };
 
   const goBack = () => {
-    setShowQuiz(true);
-    setShowUpload(false);
+    setShowQuiz(false);
+    setShowUpload(true);
     setGeneratedQuiz(null);
     setQuizStatus("idle");
     setCurrentStep(1);
@@ -837,46 +837,28 @@ const PracticeTests = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Enhanced header with gradient underline */}
-      <div className="flex items-center mb-10">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <TestTube className="h-9 w-9 text-red-600" />
-          <h1 className="text-3xl font-bold text-gray-900">Practice Tests</h1>
+          <div className="bg-red-50 p-2.5 rounded-xl">
+            <TestTube className="h-6 w-6 text-red-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Practice Tests</h1>
+            <p className="text-sm text-gray-500">AI-powered assessments tailored to your topics</p>
+          </div>
         </div>
         {showUpload && quizStatus !== "idle" && (
           <button
             onClick={goBack}
-            className="ml-auto px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors shadow-sm"
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm"
           >
             Back to Tests
           </button>
         )}
       </div>
 
-      {showQuiz && (
-        <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-md mb-10 overflow-hidden">
-          <div className="relative">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 to-red-600"></div>
-            <div className="flex flex-col items-center justify-center py-12 px-6">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                Welcome to Practice Tests
-              </h2>
-              <p className="text-gray-600 text-center mb-8 max-w-2xl">
-                Create personalized quizzes based on your own content or choose
-                from saved quizzes below.
-              </p>
-              <button
-                onClick={handleCreateTest}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-md"
-              >
-                <PlusCircle className="h-5 w-5" />
-                Create New Test
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Quiz creation and display */}
       {showUpload && (
@@ -960,7 +942,7 @@ const PracticeTests = () => {
         </>
       )}
 
-      {showQuiz && !showUpload && (
+      {showUpload && quizStatus === "idle" && (
         <div>
           <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
             <span className="mr-2">Saved Quizzes</span>

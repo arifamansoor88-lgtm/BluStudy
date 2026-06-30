@@ -727,10 +727,9 @@ elif database.container is not None:
     except (CosmosResourceNotFoundError, CosmosHttpResponseError) as e:
         cosmos_error = str(e)
         err_status = getattr(e, "status_code", None)
-        is_not_found = isinstance(e, CosmosResourceNotFoundError) or err_status == 404
-        if _cosmos_fallback and is_not_found:
+        if _cosmos_fallback:
             print(
-                "WARNING: Cosmos database or container not found (404). "
+                f"WARNING: Cosmos not reachable (HTTP {err_status}). "
                 "Using local JSON store at ./_localdb. "
                 "Create the Azure resources, fix COSMOS_DB_* in .env, or set USE_LOCAL_JSON_STORE=1. "
                 "Set COSMOS_FALLBACK_TO_LOCAL=0 to disable this fallback."

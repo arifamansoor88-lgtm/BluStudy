@@ -142,16 +142,21 @@ const StudyPlans = () => {
   // Render the planner home view
   const renderPlannerHome = () => (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Calendar className="h-6 w-6 text-primary-500" />
-          Study Plans
-        </h1>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-3">
+          <div className="bg-indigo-50 p-2.5 rounded-xl">
+            <Calendar className="h-6 w-6 text-indigo-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Study Plans</h1>
+            <p className="text-sm text-gray-500">Create optimized study schedules</p>
+          </div>
+        </div>
         <button
           onClick={handleCreatePlan}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm"
         >
-          <PlusCircle className="h-5 w-5" />
+          <PlusCircle className="h-4 w-4" />
           New Plan
         </button>
       </div>
@@ -304,7 +309,7 @@ const StudyPlans = () => {
 
   // Main render method
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
        {/* Development Notice */}
             <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-6 flex items-center gap-3">
               <Info className="h-5 w-5 flex-shrink-0" />

@@ -358,8 +358,10 @@ const [loadingTopic, setLoadingTopic] = useState(null);
 
   // Get user information
   const userName = userData?.name || "User";
-  const firstName = userName.split(" ")[0];
   const email = userData?.email || "Not available";
+  // If B2C returns the email as the display name, use only the local part
+  const rawFirst = userName.split(" ")[0];
+  const firstName = rawFirst.includes("@") ? rawFirst.split("@")[0] : rawFirst;
 
 
   const studyGoals = [
@@ -402,207 +404,45 @@ const [loadingTopic, setLoadingTopic] = useState(null);
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+
+      {/* Hero: Greeting + Streak */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
-        className="bg-white rounded-lg shadow mb-6 p-4 flex flex-col md:flex-row gap-4 items-center justify-between"
+        className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-6 flex flex-col sm:flex-row gap-4 items-center justify-between"
       >
-        {/* User greeting */}
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome back, {firstName}!
-          </h1>
-          <p className="text-gray-600">
-            You're signed in as <span className="font-medium">{email}</span>
-          </p>
+        <div className="text-white">
+          <p className="text-primary-200 text-sm mb-1">Good to see you back</p>
+          <h1 className="text-3xl font-bold">Hey, {firstName}!</h1>
         </div>
 
-        {/* Study Streak Card */}
-        <div className="flex-1 bg-blue-50 rounded-xl shadow-sm p-5 border border-gray-100 w-full md:w-auto">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Study Streak
-          </h2>
-
+        {/* Streak pill */}
+        <div className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl px-6 py-4 text-center min-w-[180px]">
+          <p className="text-white/70 text-xs font-medium uppercase tracking-wide mb-1">Study Streak</p>
           {streakLoading ? (
-            <div>
-              <p className="text-lg font-semibold text-orange-500">
-                Checking your streak...
-              </p>
-              <p className="text-sm text-gray-500">
-                Syncing today's study activity.
-              </p>
-            </div>
+            <p className="text-white font-semibold text-sm mt-1">Syncing...</p>
           ) : streakLoadError ? (
-            <div>
-              <p className="text-lg font-semibold text-orange-500">
-                Streak unavailable
-              </p>
-              <p className="text-sm text-gray-500">
-                We couldn't load your streak right now.
-              </p>
-            </div>
+            <p className="text-orange-300 font-semibold text-sm mt-1">Unavailable</p>
           ) : streakDays === 0 ? (
-            <div>
-              <p className="text-lg font-semibold text-orange-500">
-                Start your first streak 🔥
-              </p>
-              <p className="text-sm text-gray-500">
-                Study today to begin building consistency.
-              </p>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between w-full">
-              <div>
-                <p
-                  className={`text-3xl font-bold text-orange-500 transition-all duration-300 ${
-                    glow ? "scale-110 drop-shadow-[0_0_10px_rgba(255,165,0,0.8)]" : ""
-                  }`}
-                >
-                  {displayStreak}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Day{streakDays === 1 ? "" : "s"} in a row
-                </p>
-              </div>
-
-              <div className="flex-1 flex items-center justify-center">
-                <p className="text-green-600 font-semibold text-lg text-center w-full">
-                  {randomMessage}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </motion.div>
-      {/* Recent Tools and Quizio Section */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"
-      >
-        {/* Recent Tools - Left Half */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <Clock className="h-5 w-5 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Jump back into your recent tools:
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {recentItems && recentItems.length > 0 ? (
-              recentItems.slice(0, 4).map((item, index) => (
-                <RecentItemCard key={item.id || index} item={item} navigate={navigate} />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-8 text-gray-500">
-                <Clock className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                <p>No recent tools yet. Start using tools to see them here!</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Quizio - Right Half */}
-        <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-200 flex flex-col gap-4">
-          {/* Header */}
-          
-            <div className="flex items-center justify-between mb-3">
-  <div className="flex items-center gap-3">
-  <div className="bg-purple-100 p-2 rounded-lg">
-    <Brain className="text-purple-600" size={18} />
-  </div>
-
-  <div>
-    <h2 className="text-lg font-bold text-gray-900">
-      Quizio
-    </h2>
-    <p className="text-xs text-gray-500">
-      AI-powered practice
-    </p>
-  </div>
-</div>
-
-  {focusAreas.length > 0 && (
-    <button
-      onClick={handleQuizio}
-      className="text-sm text-purple-600 hover:text-purple-700"
-    >
-      Re-analyze
-    </button>
-  )}
-</div>
-        
-          {/* Subtext */}
-          <p className="text-sm text-gray-500 mb-4">
-            Practice based on your weak areas.
-          </p>
-
-          {/* STATE 1: NO FOCUS AREAS */}
-          {focusAreas.length === 0 ? (
-            <button
-              onClick={handleQuizio}
-              className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white py-3 rounded-lg shadow hover:bg-purple-700 hover:shadow-lg hover:scale-[1.02] transition-all"
-            >
-              Analyze Weak Areas
-            </button>
+            <>
+              <p className="text-white text-2xl font-bold">🔥</p>
+              <p className="text-white/80 text-xs mt-1">Start today!</p>
+            </>
           ) : (
             <>
-              {/* Label */}
-              <p className="text-sm text-gray-600 mb-3">
-                Focus areas based on your performance:
+              <p
+                className={`text-4xl font-bold text-orange-300 transition-all duration-300 ${
+                  glow ? "scale-110 drop-shadow-[0_0_12px_rgba(255,165,0,0.9)]" : ""
+                }`}
+              >
+                {displayStreak}
               </p>
-
-              {/* Focus Area Cards */}
-              <div className="flex flex-col gap-3">
-                {focusAreas.map((item, idx) => {
-                  const topic = item.topic;
-                  const display = item.display || topic;
-                  const score = item.score;
-
-                  let status = "Weak";
-                  let color = "text-red-500";
-                  if (score >= 60) {
-                    status = "Improving";
-                    color = "text-yellow-500";
-                  }
-                  if (score >= 75) {
-                    status = "Strong";
-                    color = "text-green-500";
-                  }
-
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => startFocusQuiz(item)}
-                      disabled={loadingTopic !== null}
-                      className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-purple-300 transition-all flex justify-between items-center"
-                    >
-                      {/* Left Side */}
-                      <div className="text-left">
-                        <p className="text-sm font-semibold text-gray-900">
-                          {formatTopic(display)}
-                        </p>
-                        <p className={`text-xs font-medium ${color}`}>
-                          {status}
-                        </p>
-                      </div>
-
-                      {/* Right Side */}
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-700">
-                          {score}%
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {loadingTopic === topic ? "Generating..." : "Practice"}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              <p className="text-white/70 text-xs mt-1">
+                day{streakDays === 1 ? "" : "s"} in a row
+              </p>
+              <p className="text-green-300 text-xs font-medium mt-1">{randomMessage}</p>
             </>
           )}
         </div>
@@ -610,51 +450,130 @@ const [loadingTopic, setLoadingTopic] = useState(null);
 
       {/* Error message */}
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-          <p className="text-red-700">{error}</p>
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+          <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
 
-      {/* Study Goals Section */}
+      {/* Recent Tools + Quizio */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="bg-white rounded-xl shadow-sm p-6 mt-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.15 }}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-5"
       >
-        <h2 className="text-xl font-bold text-gray-900 mb-6">
-          Next in Your Study Plan:
-        </h2>
-        <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+        {/* Recent Tools */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="h-4 w-4 text-primary-600" />
+            <h2 className="text-base font-semibold text-gray-900">Jump back in</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {(() => {
+              const contentItems = (recentItems || []).filter(item => item.contentType !== "tool");
+              return contentItems.length > 0 ? (
+                contentItems.slice(0, 4).map((item, index) => (
+                  <RecentItemCard key={item.id || index} item={item} navigate={navigate} />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8 text-gray-400">
+                  <Clock className="h-10 w-10 mx-auto mb-2 text-gray-200" />
+                  <p className="text-sm">Nothing yet. Create a flashcard deck or take a quiz to see it here.</p>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* Quizio */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-purple-100 p-2 rounded-xl">
+                <Brain className="text-purple-600" size={18} />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-gray-900">Quizio</h2>
+                <p className="text-xs text-gray-400">AI-powered practice</p>
+              </div>
+            </div>
+            {focusAreas.length > 0 && (
+              <button
+                onClick={handleQuizio}
+                className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+              >
+                Re-analyze
+              </button>
+            )}
+          </div>
+
           <p className="text-sm text-gray-500">
-            Placeholder
+            Quizio looks at your past quiz scores, spots your weakest topics, and builds custom practice sets to help you catch up.
           </p>
+
+          {focusAreas.length === 0 ? (
+            <button
+              onClick={handleQuizio}
+              className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-purple-700 hover:shadow-md transition-all"
+            >
+              Analyze Weak Areas
+            </button>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Your focus areas</p>
+              {focusAreas.map((item, idx) => {
+                const topic = item.topic;
+                const display = item.display || topic;
+                const score = item.score;
+
+                let areaStatus = "Weak";
+                let color = "text-red-500";
+                if (score >= 60) { areaStatus = "Improving"; color = "text-yellow-500"; }
+                if (score >= 75) { areaStatus = "Strong"; color = "text-green-500"; }
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => startFocusQuiz(item)}
+                    disabled={loadingTopic !== null}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl hover:shadow-sm hover:border-purple-200 transition-all flex justify-between items-center"
+                  >
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-gray-900">{formatTopic(display)}</p>
+                      <p className={`text-xs font-medium ${color}`}>{areaStatus}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-gray-700">{score}%</p>
+                      <p className="text-xs text-gray-400">{loadingTopic === topic ? "Generating..." : "Practice"}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </motion.div>
 
-          {/* Suggested Next Steps */}
-          <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="bg-white rounded-xl shadow-sm p-6 mt-8"
-          >
-              <div className="flex items-center gap-2 mb-2">
-                  <BookOpen className="h-5 w-5 text-primary-600" />
-                  <h2 className="text-xl font-semibold text-gray-900">
-                      Suggested Next Steps
-                  </h2>
-              </div>
-              <p className="text-sm text-gray-500 mb-6">
-                  Smart recommendations based on your recent activity
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {suggestedNextSteps.map((step, index) => (
-                      <SuggestedStepCard key={index} step={step} navigate={navigate} />
-                  ))}
-              </div>
-          </motion.div>
+      {/* Suggested Next Steps */}
+      {suggestedNextSteps.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5"
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <BookOpen className="h-4 w-4 text-primary-600" />
+            <h2 className="text-base font-semibold text-gray-900">Suggested Next Steps</h2>
+          </div>
+          <p className="text-sm text-gray-400 mb-4">Smart picks based on your recent activity</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {suggestedNextSteps.map((step, index) => (
+              <SuggestedStepCard key={index} step={step} navigate={navigate} />
+            ))}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };
@@ -786,7 +705,7 @@ const RecentItemCard = ({ item, navigate }) => {
   const { instance, accounts } = useMsal();
 
   const contentTypeColors = {
-    voice_note: { bg: "bg-purple-50", text: "text-purple-700", Icon: Mic },
+    voice_note: { bg: "bg-purple-50", text: "text-purple-600", Icon: Mic },
     flashcard: { bg: "bg-primary-50", text: "text-primary-600", Icon: Brain },
     flashcard_deck: { bg: "bg-primary-50", text: "text-primary-600", Icon: Brain },
     quiz: { bg: "bg-red-50", text: "text-red-600", Icon: TestTube },
@@ -796,11 +715,23 @@ const RecentItemCard = ({ item, navigate }) => {
     folder: { bg: "bg-cyan-50", text: "text-cyan-700", Icon: Folder },
   };
 
-  const typeConfig = contentTypeColors[item.contentType] || {
-    bg: "bg-gray-50",
-    text: "text-gray-700",
-    Icon: BookOpen,
+  const toolRouteColors = {
+    "/tools/flashcards": { bg: "bg-primary-50", text: "text-primary-600", Icon: Brain },
+    "/tools/voice-notes": { bg: "bg-purple-50", text: "text-purple-600", Icon: Mic },
+    "/tools/mind-maps": { bg: "bg-green-50", text: "text-green-600", Icon: Network2 },
+    "/tools/practice-tests": { bg: "bg-red-50", text: "text-red-600", Icon: TestTube },
+    "/tools/summarizer": { bg: "bg-yellow-50", text: "text-yellow-600", Icon: Zap },
+    "/tools/study-planner": { bg: "bg-indigo-50", text: "text-indigo-600", Icon: PenTool },
   };
+
+  const routeBase = item.route ? item.route.split("?")[0] : "";
+  const typeConfig =
+    contentTypeColors[item.contentType] ||
+    toolRouteColors[routeBase] || {
+      bg: "bg-gray-50",
+      text: "text-gray-700",
+      Icon: BookOpen,
+    };
 
   const displayTitle =
     item.title ||

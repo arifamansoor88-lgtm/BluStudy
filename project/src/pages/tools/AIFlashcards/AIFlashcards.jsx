@@ -196,31 +196,35 @@ const AIFlashcards = () => {
   }, [fetchSavedDecks, decksFetchedRef]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
       {/* Processing Overlay */}
       {isProcessing && (
         <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin h-10 w-10 rounded-full border-2 border-blue-600 border-t-transparent mx-auto mb-4" />
             <p className="text-gray-700 font-medium">Generating flashcards…</p>
-            <p className="text-sm text-gray-500">
-              This usually takes under a minute
-            </p>
+            <p className="text-sm text-gray-500">This usually takes under a minute</p>
           </div>
         </div>
       )}
 
       {/* Header */}
-      <div className="text-center mb-16">
-        <h1 className="text-4xl font-bold text-gray-900">AI Flashcards</h1>
-        <p className="mt-3 text-gray-600 max-w-2xl mx-auto">
-          Upload a PDF and instantly generate study-ready flashcards using AI.
-        </p>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="bg-primary-50 p-2.5 rounded-xl">
+          <Brain className="h-6 w-6 text-primary-600" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">AI Flashcards</h1>
+          <p className="text-sm text-gray-500">Upload a PDF and generate study-ready flashcards instantly</p>
+        </div>
       </div>
 
+      {/* Topic Generator + Upload side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
       {/* Topic Generator */}
-      <div className="max-w-2xl mx-auto mb-24">
-        <div className="rounded-3xl border border-gray-200 bg-gradient-to-br from-blue-50 to-white p-10 shadow-sm">
+      <div>
+        <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-50 to-white p-8 shadow-sm h-full">
           <div className="flex items-center gap-3 mb-6">
             <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
               <Brain className="h-5 w-5 text-white" />
@@ -280,7 +284,7 @@ const AIFlashcards = () => {
       </div>
 
       {/* Upload Card */}
-      <div className="max-w-xl mx-auto mb-24">
+      <div>
         <div className="mb-4 flex items-end justify-between gap-4 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4">
           <div>
             <p className="text-sm font-medium text-gray-900">PDF flashcard count</p>
@@ -326,6 +330,8 @@ const AIFlashcards = () => {
           onChange={handleFileUpload}
         />
       </div>
+
+      </div>{/* end grid */}
 
       {/* Saved Decks */}
       <div>

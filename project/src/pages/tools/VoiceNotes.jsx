@@ -443,12 +443,15 @@ const VoiceNotes = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-4 mb-8">
-        <div className="bg-purple-100 p-3 rounded-full">
-          <Waveform className="h-8 w-8 text-purple-600" />
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="bg-purple-50 p-2.5 rounded-xl">
+          <Waveform className="h-6 w-6 text-purple-600" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900">Voice Notes</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Voice Notes</h1>
+          <p className="text-sm text-gray-500">Record, transcribe and organize your spoken notes</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">

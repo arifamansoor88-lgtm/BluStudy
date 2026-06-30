@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Brain, Menu, X, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMsal } from "@azure/msal-react";
@@ -166,22 +166,38 @@ const Navbar = ({ isPublicPage }) => {
   );
 };
 
-const NavLink = ({ to, children }) => (
-  <Link
-    to={to}
-    className="text-gray-900 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-  >
-    {children}
-  </Link>
-);
+const NavLink = ({ to, children }) => {
+  const { pathname } = useLocation();
+  const isActive = pathname === to || pathname.startsWith(to + "/");
+  return (
+    <Link
+      to={to}
+      className={`px-3 py-2 rounded-md text-sm transition-colors ${
+        isActive
+          ? "text-primary-600 font-semibold bg-primary-50"
+          : "text-gray-600 font-medium hover:text-gray-900 hover:bg-gray-100"
+      }`}
+    >
+      {children}
+    </Link>
+  );
+};
 
-const MobileNavLink = ({ to, children }) => (
-  <Link
-    to={to}
-    className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-primary-600 hover:bg-gray-50 transition-colors"
-  >
-    {children}
-  </Link>
-);
+const MobileNavLink = ({ to, children }) => {
+  const { pathname } = useLocation();
+  const isActive = pathname === to || pathname.startsWith(to + "/");
+  return (
+    <Link
+      to={to}
+      className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+        isActive
+          ? "text-primary-600 bg-primary-50"
+          : "text-gray-900 hover:text-primary-600 hover:bg-gray-50"
+      }`}
+    >
+      {children}
+    </Link>
+  );
+};
 
 export default Navbar;

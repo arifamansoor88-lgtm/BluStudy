@@ -1,21 +1,23 @@
 import os
 import json
 from dotenv import load_dotenv
-from openai import AzureOpenAI
+from openai import OpenAI
 from typing import List, Optional, Union, Dict, Any
 
 # Load environment variables from .env file
 load_dotenv()
 
-# ---------------------------
-# Summarization Client & Function
-# ---------------------------
-summarizer_client = AzureOpenAI(
-    azure_endpoint=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_ENDPOINT"),
-    api_key=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_API_KEY"),
-    api_version="2024-05-01-preview"
-)
-SUMMARIZER_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_DEPLOYMENT_NAME")
+# Single shared OpenAI client
+_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+MODEL = "gpt-4o-mini"
+
+# Aliases so existing call sites don't need to change
+summarizer_client = _client
+flashcard_client = _client
+quiz_client = _client
+SUMMARIZER_DEPLOYMENT_NAME = MODEL
+FLASHCARD_DEPLOYMENT_NAME = MODEL
+QUIZ_DEPLOYMENT_NAME = MODEL
 
 def summarize_text(text: str, style: str = "high", format: str = "bullet") -> str:
     """
@@ -90,8 +92,8 @@ def summarize_text(text: str, style: str = "high", format: str = "bullet") -> st
         return cleaned
 
     except Exception as e:
-        print("Azure summarization error:", str(e))
-        raise Exception("Azure summarization error: " + str(e))
+        print("Summarization error:", str(e))
+        raise Exception("Summarization error: " + str(e))
 
 
     
@@ -99,12 +101,6 @@ def summarize_text(text: str, style: str = "high", format: str = "bullet") -> st
 # ---------------------------
 # Flashcard Client & Function
 # ---------------------------
-flashcard_client = AzureOpenAI(
-    azure_endpoint=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_ENDPOINT"),
-    api_key=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_API_KEY"),
-    api_version="2024-05-01-preview"
-)
-FLASHCARD_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_DEPLOYMENT_NAME")
 
 def generate_flashcard(text: str, num_flashcards: int = 10) -> str:
     """
@@ -168,20 +164,14 @@ def generate_flashcard(text: str, num_flashcards: int = 10) -> str:
         return response.choices[0].message.content.strip()
 
     except Exception as e:
-        print(f"Azure OpenAI flashcard generation error: {str(e)}")
-        raise Exception(f"Azure OpenAI generation request failed: {str(e)}")
+        print(f"OpenAI flashcard generation error: {str(e)}")
+        raise Exception(f"OpenAI generation request failed: {str(e)}")
 
 
 
 # ---------------------------
 # Quiz and Study Plan Client & Functions
 # ---------------------------
-quiz_client = AzureOpenAI(
-    azure_endpoint=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_ENDPOINT"),
-    api_key=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_API_KEY"),
-    api_version="2024-05-01-preview"
-)
-QUIZ_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_DEPLOYMENT_NAME")
 
 def generate_quiz(
     text: str, 
@@ -940,7 +930,7 @@ Please provide a comprehensive analysis of this quiz performance, including topi
         return analysis_result
         
     except Exception as e:
-        print(f"Error while calling Azure OpenAI for quiz performance analysis: {str(e)}")
+        print(f"Error while calling OpenAI for quiz performance analysis: {str(e)}")
         # Return a fallback analysis if AI analysis fails
         return create_fallback_analysis(questions, user_answers, quiz_metadata)
 
