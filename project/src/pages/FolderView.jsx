@@ -5,7 +5,7 @@ import {
   Calendar as CalendarIcon, MoreVertical, Trash2, FolderSymlink, Folder, FolderPlus, ChevronRight, Upload, File as FileIcon, CheckSquare, Square
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Mic2, LayoutGrid as GridIcon, Edit3, Zap, NotebookPen, Pencil } from "lucide-react";
+import { Brain, Layers, Mic2, LayoutGrid as GridIcon, Edit3, Zap, NotebookPen, Pencil } from "lucide-react";
 
 // =======================
 // API helpers (uses MSAL)
@@ -53,7 +53,7 @@ async function apiFetch(path, options = {}) {
 
 // Tool tiles: link directly to real routes
 const toolTiles = [
-  { label: "AI Flashcards",    icon: <Brain className="text-2xl" />,   color: "from-indigo-500 to-violet-500",  path: "/tools/flashcards" },
+  { label: "AI Flashcards",    icon: <Layers className="text-2xl" />,   color: "from-indigo-500 to-violet-500",  path: "/tools/flashcards" },
   { label: "Voice Notes",      icon: <Mic2 className="text-2xl" />,    color: "from-purple-500 to-pink-500",    path: "/tools/voice-notes" },
   { label: "Mind Maps",        icon: <GridIcon className="text-2xl" />, color: "from-green-500 to-emerald-500",  path: "/tools/mind-maps" },
   { label: "Practice Tests",   icon: <Edit3 className="text-2xl" />,   color: "from-orange-500 to-yellow-500", path: "/tools/practice-tests" },

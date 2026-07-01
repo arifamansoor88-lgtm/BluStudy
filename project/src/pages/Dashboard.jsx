@@ -18,10 +18,11 @@ import {
   Calendar,
   ArrowRight,
   Brain,
+  Layers,
   Play,
   Mic,
   Network as Network2,
-  TestTube,
+  ClipboardList,
   Zap,
   PenTool,
   Folder,
@@ -47,6 +48,7 @@ const Dashboard = () => {
   const [streakLoadError, setStreakLoadError] = useState(false);
   const recentItems = useUserRecents();
   const [suggestedNextSteps, setSuggestedNextSteps] = useState([]);
+  const [loadingNextSteps, setLoadingNextSteps] = useState(true);
   const [focusAreas, setFocusAreas] = useState([]);
   const [displayStreak, setDisplayStreak] = useState(0);
   const [glow, setGlow] = useState(false);
@@ -56,11 +58,11 @@ const Dashboard = () => {
     accounts[0]?.username ||
     "";
   const streakMessages = [
-    "Keep it going 🔥",
-    "You're on fire 🚀",
-    "Consistency wins 💪",
-    "Small steps daily 📈",
-    "Don’t break the chain ⛓️",
+    "Keep it going",
+    "You’re on fire",
+    "Consistency wins",
+    "Small steps daily",
+    "Don’t break the chain",
   ];
 
   const [randomMessage] = useState(
@@ -164,16 +166,17 @@ const startFocusQuiz = async (item) => {
       body: JSON.stringify({
         topic: topicText,
         topic_key: topicKey,
-        num_questions: 10
+        num_questions: 10,
+        previous_questions: item.sampleQuestions || [],
       }),
     });
 
     const data = await res.json();
 
     navigate("/tools/practice-tests", {
-      state: { 
+      state: {
         quiz: data,
-        topic: topicKey   
+        autoStart: true,
       }
     });
 
@@ -319,28 +322,9 @@ const [loadingTopic, setLoadingTopic] = useState(null);
                 setSuggestedNextSteps(data.items || []);
             } catch (error) {
                 console.error("Error fetching suggested next steps:", error);
-
-                // fallback placeholder if backend fails
-                setSuggestedNextSteps([
-                    {
-                        title: "Resume AI Flashcards",
-                        description:
-                            "You recently used AI Flashcards for Biology 101. Continue with Cell Structure to reinforce learning.",
-                        buttonText: "Resume Tool",
-                    },
-                    {
-                        title: "Continue Practice Test",
-                        description:
-                            "You recently completed a Calculus quiz. Try another short practice test on derivatives.",
-                        buttonText: "Start Practice",
-                    },
-                    {
-                        title: "Open Smart Summarizer",
-                        description:
-                            "You recently summarized World History notes. Continue with Chapter 5 to stay on track.",
-                        buttonText: "Open Tool",
-                    },
-                ]);
+                setSuggestedNextSteps([]);
+            } finally {
+                setLoadingNextSteps(false);
             }
         };
 
@@ -470,7 +454,7 @@ const [loadingTopic, setLoadingTopic] = useState(null);
           </div>
           <div className="grid grid-cols-2 gap-3">
             {(() => {
-              const contentItems = (recentItems || []).filter(item => item.contentType !== "tool");
+              const contentItems = (recentItems || []).filter(item => item.contentType !== "tool" && item.contentType !== "study_streak");
               return contentItems.length > 0 ? (
                 contentItems.slice(0, 4).map((item, index) => (
                   <RecentItemCard key={item.id || index} item={item} navigate={navigate} />
@@ -555,25 +539,43 @@ const [loadingTopic, setLoadingTopic] = useState(null);
       </motion.div>
 
       {/* Suggested Next Steps */}
-      {suggestedNextSteps.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5"
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <BookOpen className="h-4 w-4 text-primary-600" />
-            <h2 className="text-base font-semibold text-gray-900">Suggested Next Steps</h2>
-          </div>
-          <p className="text-sm text-gray-400 mb-4">Smart picks based on your recent activity</p>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5"
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <BookOpen className="h-4 w-4 text-primary-600" />
+          <h2 className="text-base font-semibold text-gray-900">Suggested Next Steps</h2>
+        </div>
+        <p className="text-sm text-gray-400 mb-4">Smart picks based on your recent activity</p>
+        {loadingNextSteps ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {suggestedNextSteps.map((step, index) => (
-              <SuggestedStepCard key={index} step={step} navigate={navigate} />
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="rounded-xl border border-gray-100 p-4 space-y-3 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-2/3" />
+                <div className="h-3 bg-gray-100 rounded w-full" />
+                <div className="h-3 bg-gray-100 rounded w-5/6" />
+                <div className="h-8 bg-gray-200 rounded-lg w-1/3 mt-2" />
+              </div>
             ))}
           </div>
-        </motion.div>
-      )}
+        ) : suggestedNextSteps.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {suggestedNextSteps.map((step, index) => (
+              <SuggestedStepCard
+                key={index}
+                step={step}
+                navigate={navigate}
+                spanFull={suggestedNextSteps.length % 3 === 1 && index === suggestedNextSteps.length - 1}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400">No suggestions yet. Start using your study tools to get personalized recommendations.</p>
+        )}
+      </motion.div>
     </div>
   );
 };
@@ -599,69 +601,38 @@ const AchievementCard = ({
   </motion.div>
 );
 
-// Color theme per Suggested Next Step tool type (toolKey)
-const NEXT_STEP_THEME = {
-    flashcard_deck: {
-        card: "border-blue-200 bg-blue-50",
-        button: "bg-blue-600 hover:bg-blue-700",
-        text: "text-blue-900",
-    },
-    quiz: {
-        card: "border-red-200 bg-red-50",
-        button: "bg-red-600 hover:bg-red-700",
-        text: "text-red-900",
-    },
-    voice_note: {
-        card: "border-purple-200 bg-purple-50",
-        button: "bg-purple-600 hover:bg-purple-700",
-        text: "text-purple-900",
-    },
-    mind_map: {
-        card: "border-green-200 bg-green-50",
-        button: "bg-green-600 hover:bg-green-700",
-        text: "text-green-900",
-    },
-    summarizer: {
-        card: "border-yellow-200 bg-yellow-50",
-        button: "bg-yellow-600 hover:bg-yellow-700",
-        text: "text-yellow-900",
-    },
+const TOOL_ICON = {
+    flashcard_deck: { Icon: Layers,   accent: "bg-primary-100 text-primary-600" },
+    quiz:           { Icon: ClipboardList, accent: "bg-red-100 text-red-600" },
+    voice_note:     { Icon: Mic,      accent: "bg-purple-100 text-purple-600" },
+    mind_map:       { Icon: Network2, accent: "bg-green-100 text-green-600" },
+    summarizer:     { Icon: Zap,      accent: "bg-yellow-100 text-yellow-600" },
 };
 
-// Reusable card component for displaying a single Suggested Next Step recommendation.
-const SuggestedStepCard = ({ step, navigate }) => {
-    const theme = NEXT_STEP_THEME[step.toolKey] || {
-        card: "border-gray-200 bg-gray-50",
-        button: "bg-primary-600 hover:bg-primary-700",
-        text: "text-gray-900",
-    };
+const SuggestedStepCard = ({ step, navigate, spanFull }) => {
+    const { Icon = BookOpen, accent = "bg-gray-100 text-gray-500" } =
+        TOOL_ICON[step.toolKey] || {};
 
     return (
-        <motion.div
-            whileHover={{ scale: 1.02 }}
-            className={`border rounded-lg p-5 flex flex-col justify-between min-h-[190px] ${theme.card}`}
+        <div
+            onClick={() => step.actionPath && navigate(step.actionPath)}
+            className={`group bg-white border border-gray-100 rounded-xl p-5 flex flex-col gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer${spanFull ? " sm:col-span-2 lg:col-span-3" : ""}`}
         >
+            <div className={`h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 ${accent}`}>
+                <Icon className="h-4 w-4" />
+            </div>
             <div>
-                <h3 className={`font-semibold text-lg mb-3 ${theme.text}`}>
+                <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1">
                     {step.title}
                 </h3>
-                <p className="text-sm text-gray-700 leading-relaxed">
+                <p className="text-xs text-gray-500 leading-relaxed">
                     {step.description}
                 </p>
             </div>
-
-            <button
-                onClick={() => {
-                    if (!step.actionPath) return;
-                    navigate(step.actionPath);
-                }}
-                disabled={!step.actionPath}
-                className={`mt-5 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-white transition
-          ${step.actionPath ? theme.button : "bg-gray-300 cursor-not-allowed"}`}
-            >
-                {step.buttonText}
-            </button>
-        </motion.div>
+            <div className="flex items-center gap-1 text-xs font-medium text-primary-600 group-hover:gap-2 transition-all mt-auto">
+                {step.buttonText} <ArrowRight className="h-3 w-3" />
+            </div>
+        </div>
     );
 };
 const StudyGoalCard = ({ goal }) => (
@@ -706,9 +677,9 @@ const RecentItemCard = ({ item, navigate }) => {
 
   const contentTypeColors = {
     voice_note: { bg: "bg-purple-50", text: "text-purple-600", Icon: Mic },
-    flashcard: { bg: "bg-primary-50", text: "text-primary-600", Icon: Brain },
-    flashcard_deck: { bg: "bg-primary-50", text: "text-primary-600", Icon: Brain },
-    quiz: { bg: "bg-red-50", text: "text-red-600", Icon: TestTube },
+    flashcard: { bg: "bg-primary-50", text: "text-primary-600", Icon: Layers },
+    flashcard_deck: { bg: "bg-primary-50", text: "text-primary-600", Icon: Layers },
+    quiz: { bg: "bg-red-50", text: "text-red-600", Icon: ClipboardList },
     mindmap: { bg: "bg-green-50", text: "text-green-600", Icon: Network2 },
     study_plan: { bg: "bg-indigo-50", text: "text-indigo-600", Icon: PenTool },
     summary: { bg: "bg-yellow-50", text: "text-yellow-600", Icon: Zap },
@@ -716,10 +687,10 @@ const RecentItemCard = ({ item, navigate }) => {
   };
 
   const toolRouteColors = {
-    "/tools/flashcards": { bg: "bg-primary-50", text: "text-primary-600", Icon: Brain },
+    "/tools/flashcards": { bg: "bg-primary-50", text: "text-primary-600", Icon: Layers },
     "/tools/voice-notes": { bg: "bg-purple-50", text: "text-purple-600", Icon: Mic },
     "/tools/mind-maps": { bg: "bg-green-50", text: "text-green-600", Icon: Network2 },
-    "/tools/practice-tests": { bg: "bg-red-50", text: "text-red-600", Icon: TestTube },
+    "/tools/practice-tests": { bg: "bg-red-50", text: "text-red-600", Icon: ClipboardList },
     "/tools/summarizer": { bg: "bg-yellow-50", text: "text-yellow-600", Icon: Zap },
     "/tools/study-planner": { bg: "bg-indigo-50", text: "text-indigo-600", Icon: PenTool },
   };

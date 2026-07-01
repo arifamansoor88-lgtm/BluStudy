@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import Navbar from "./components/Navbar";
+import Navbar, { Sidebar, TopBar } from "./components/Navbar";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import StudyTools from "./pages/StudyTools";
@@ -21,6 +21,30 @@ import PublicLibrary from "./pages/publicLibrary";
 import FlashcardStudyPage from "./pages/tools/AIFlashcards/FlashcardStudy";
 import SharedItemPage from "./pages/shared/SharedItemPage";
 
+const appRoutes = (
+  <Routes>
+    <Route path="/" element={<Home />} />
+    <Route path="/dashboard" element={<Dashboard />} />
+    <Route path="/tools" element={<StudyTools />} />
+    <Route path="/signin" element={<SignIn />} />
+    <Route path="/signup" element={<SignUp />} />
+    <Route path="/tools/flashcards" element={<AIFlashcards />} />
+    <Route path="/tools/voice-notes" element={<VoiceNotes />} />
+    <Route path="/tools/mind-maps" element={<MindMapDashboard />} />
+    <Route path="/tools/maps/:id" element={<MindMaps />} />
+    <Route path="/tools/practice-tests" element={<PracticeTests />} />
+    <Route path="/tools/study-planner" element={<StudyPlans />} />
+    <Route path="/tools/summarizer" element={<Summarizer />} />
+    <Route path="/workspace" element={<Workspace />} />
+    <Route path="/workspace/unfiled" element={<UnfiledItems />} />
+    <Route path="/workspace/folder/:id" element={<FolderView />} />
+    <Route path="/workspace/trash" element={<TrashPage />} />
+    <Route path="/tools/flashcards/study/:deckId" element={<FlashcardStudyPage />} />
+    <Route path="/public_library" element={<PublicLibrary />} />
+    <Route path="/share/:token" element={<SharedItemPage />} />
+  </Routes>
+);
+
 function AppContent() {
   const location = useLocation();
 
@@ -29,30 +53,29 @@ function AppContent() {
     publicRoutes.includes(location.pathname) ||
     location.pathname.startsWith("/share/");
 
+  if (isPublicPage) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar isPublicPage={true} />
+        {appRoutes}
+      </div>
+    );
+  }
+
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar isPublicPage={isPublicPage} />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/tools" element={<StudyTools />} />
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/tools/flashcards" element={<AIFlashcards />} />
-        <Route path="/tools/voice-notes" element={<VoiceNotes />} />
-        <Route path="/tools/mind-maps" element={<MindMapDashboard />} />
-        <Route path="/tools/maps/:id" element={<MindMaps />} />
-        <Route path="/tools/practice-tests" element={<PracticeTests />} />
-        <Route path="/tools/study-planner" element={<StudyPlans />} />
-        <Route path="/tools/summarizer" element={<Summarizer />} />
-        <Route path="/workspace" element={<Workspace />} />
-        <Route path="/workspace/unfiled" element={<UnfiledItems />} />
-        <Route path="/workspace/folder/:id" element={<FolderView />} />
-        <Route path="/workspace/trash" element={<TrashPage />} />
-        <Route path="/tools/flashcards/study/:deckId" element={<FlashcardStudyPage />} />
-        <Route path="/public_library" element={<PublicLibrary />} />
-        <Route path="/share/:token" element={<SharedItemPage />} />
-      </Routes>
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen((o) => !o)} />
+      <div
+        className="flex-1 flex flex-col min-h-screen transition-all duration-300"
+        style={{ marginLeft: sidebarOpen ? "224px" : "64px" }}
+      >
+        <TopBar />
+        <main className="flex-1">
+          {appRoutes}
+        </main>
+      </div>
     </div>
   );
 }

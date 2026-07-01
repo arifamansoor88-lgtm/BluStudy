@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { TestTube, PlusCircle, Check, X } from "lucide-react";
+import { ClipboardList, PlusCircle, Check, X } from "lucide-react";
 import QuizWizard from "./QuizWizard";
 import QuizDisplay from "./QuizDisplay";
+import PerformanceSummary from "./PerformanceSummary";
 import SavedQuizzesList from "./SavedQuizzesList";
 import { useQuizTimer, useQuizData } from "./hooks";
 import { isAnswerCorrect, shouldUseAIEvaluation } from "./utils";
 import {
   getAnswerExplanation,
   evaluateShortAnswer,
+  generateHarderQuiz,
   recordStudyToolUse,
 } from "../../../api/apiService";
 import { useLocation } from "react-router-dom";
@@ -62,6 +64,9 @@ const PracticeTests = () => {
   const location = useLocation();
   const quizFromDashboard = location.state?.quiz;
   const topicFromDashboard = location.state?.topic;
+  const autoStartFromDashboard = location.state?.autoStart ?? false;
+  const flashcardsFromDeck = location.state?.flashcards;
+  const flashcardDeckTitle = location.state?.deckTitle;
   // Hooks for quiz functionality
   const { timer, resetTimer, setTimerValue } = useQuizTimer(quizStatus);
   const {
@@ -77,9 +82,15 @@ const PracticeTests = () => {
     fetchQuizById,
     generateQuiz,
     generateQuizFromTopic,
+    generateQuizFromFlashcards,
+    deleteQuiz,
     saveQuiz,
     saveQuizAttempt,
   } = useQuizData();
+
+  const isCompletingRef = useRef(false);
+  const [viewingAttempt, setViewingAttempt] = useState(null);
+  const { instance } = useMsal();
 
   // New state for AI-evaluated answers
   const [aiEvaluatedAnswers, setAiEvaluatedAnswers] = useState({});
@@ -97,19 +108,60 @@ const PracticeTests = () => {
     }
   }, [fetchSavedQuizzes, quizzesFetchedRef]);
 
+  // Auto-generate quiz from flashcard deck when navigated from flashcard end screen
+  useEffect(() => {
+    if (!flashcardsFromDeck?.length) return;
+    const run = async () => {
+      setQuizStatus("loading");
+      setShowUpload(true);
+      setCurrentStep(3);
+      try {
+        const quizData = await generateQuizFromFlashcards(
+          flashcardsFromDeck,
+          flashcardDeckTitle || "Flashcard Quiz",
+          Math.min(flashcardsFromDeck.length, 15)
+        );
+        setGeneratedQuiz(quizData);
+        setUserAnswers(Array((quizData.questions || []).length).fill(null));
+        setQuizStatus("ready");
+        setCurrentStep(1);
+      } catch (err) {
+        setError("Failed to generate quiz from flashcards. Please try again.");
+        setQuizStatus("idle");
+      }
+    };
+    run();
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
   // Load quiz from state or quiz Id param
   useEffect(() => {
     const quizIdParam = searchParams.get("quizId");
 
+    if (topicFromDashboard) {
+      setCreationMode("topic");
+      setMainTopic(topicFromDashboard);
+      return;
+    }
+
     if (quizFromDashboard) {
       console.log("Loading quiz from dashboard...");
+      const questions = quizFromDashboard.questions || [];
       setGeneratedQuiz(quizFromDashboard);
-      setQuizStatus("ready");
-      setShowQuiz(false);
-      setShowUpload(true);
+      setUserAnswers(Array(questions.length).fill(null));
       setCurrentQuizQuestion(0);
       setShowSummary(false);
       resetTimer();
+      if (autoStartFromDashboard) {
+        // Skip the start screen — go straight to Q1
+        setQuizMode("quiz");
+        setQuizStatus("in-progress");
+        setShowQuiz(false);
+        setShowUpload(true);
+      } else {
+        setQuizStatus("ready");
+        setShowQuiz(false);
+        setShowUpload(true);
+      }
       return;
     }
 
@@ -133,7 +185,7 @@ const PracticeTests = () => {
         }
       })();
     }
-  }, [quizFromDashboard, searchParams, fetchQuizById, fetchQuizWithHistory, resetTimer]);
+  }, [quizFromDashboard, topicFromDashboard, autoStartFromDashboard, searchParams, fetchQuizById, fetchQuizWithHistory, resetTimer]);
 
   const loadQuizIntoViewer = (quizDocument) => {
     const quizData = quizDocument?.data || {};
@@ -196,6 +248,7 @@ const PracticeTests = () => {
 
   // Create a new test
   const handleCreateTest = () => {
+    isCompletingRef.current = false;
     setShowQuiz(false);
     setShowUpload(true);
     setCurrentStep(1);
@@ -233,13 +286,12 @@ const PracticeTests = () => {
     quizzesFetchedRef.current = false;
   };
 
-  // Auto-enable numerical and short answer for quantitative subject
+  // Auto-enable short answer for quantitative subject (numerical disabled until grading is reliable)
   useEffect(() => {
     if (subjectCategory === "quantitative") {
       setQuestionFormats(prev => ({
         ...prev,
-        numerical: true,
-        short_response: true
+        short_response: true,
       }));
     }
   }, [subjectCategory]);
@@ -440,6 +492,7 @@ const PracticeTests = () => {
 
   // Quiz interaction
   const startQuiz = (mode) => {
+    isCompletingRef.current = false;
     setQuizMode(mode);
     setQuizStatus("in-progress");
     setCurrentQuizQuestion(0);
@@ -639,81 +692,31 @@ const PracticeTests = () => {
     await checkAnswerForQuestion(currentQuizQuestion);
   };
 
-  // For the final summary and score calculation, we need to evaluate all answers
-  const evaluateAllAnswers = async () => {
-    // Only do this in quiz mode when completing the quiz
-    if (quizMode !== "quiz" || quizStatus !== "in-progress") return;
+  const completeQuiz = async () => {
+    if (isCompletingRef.current) return;
+    isCompletingRef.current = true;
+    setQuizStatus("completed");
+    setShowSummary(true);
 
-    // Set loading state
-    setShowSummary(false);
+    await saveQuizAttempt(generatedQuiz, userAnswers, timer, quizMode);
+    await recordStudyToolUse("quiz", "complete_quiz");
 
-    // Questions that need AI evaluation
-    const questionsToEvaluate = generatedQuiz.questions
-      .map((q, idx) => ({ question: q, index: idx }))
-      .filter(
-        ({ question, index }) =>
-          shouldUseAIEvaluation(question.type) &&
-          userAnswers[index] !== null &&
-          !aiEvaluatedAnswers[index]
-      );
-
-    // If no questions need evaluation, proceed
-    if (questionsToEvaluate.length === 0) {
-      completeQuiz();
-      return;
-    }
-
-    // Evaluate all questions that need it
+    // Refresh weak areas after quiz
     try {
-      // We'll use Promise.all to evaluate all questions in parallel
-      await Promise.all(
-        questionsToEvaluate.map(({ index }) => evaluateAnswerWithAI(index))
-      );
-
-      // Once all evaluations are complete, complete the quiz
-      completeQuiz();
-    } catch (error) {
-      console.error("Error evaluating all answers:", error);
-      // Still complete the quiz even if there's an error
-      completeQuiz();
+      const account = instance.getActiveAccount();
+      const response = await instance.acquireTokenSilent({
+        scopes: protectedResources.todoListApi.scopes,
+        account: account,
+      });
+      const res = await fetch(`${protectedResources.todoListApi.endpoint}/weak-areas`, {
+        headers: { Authorization: `Bearer ${response.accessToken}` },
+      });
+      const data = await res.json();
+      localStorage.setItem("focusAreas", JSON.stringify(data.focusAreas));
+    } catch (err) {
+      console.error("Failed to refresh weak areas:", err);
     }
   };
-
-  // Function to complete the quiz after evaluation
-  const { instance } = useMsal();
-  const completeQuiz = async () => {
-  setQuizStatus("completed");
-  setShowSummary(true);
-
-  await saveQuizAttempt(generatedQuiz, userAnswers, timer, quizMode);
-
-  await recordStudyToolUse("quiz", "complete_quiz");
-
-  //Refresh weak areas after quiz
-  try {
-    const account = instance.getActiveAccount();
-    const response = await instance.acquireTokenSilent({
-      scopes: protectedResources.todoListApi.scopes,
-      account: account,
-    });
-
-    const weakAreasToken = response.accessToken;
-
-    const res = await fetch(`${protectedResources.todoListApi.endpoint}/weak-areas`, {
-      headers: {
-        Authorization: `Bearer ${weakAreasToken}`,
-      },
-    });
-
-    const data = await res.json();
-
-    //  store in localStorage so Dashboard updates
-    localStorage.setItem("focusAreas", JSON.stringify(data.focusAreas));
-
-  } catch (err) {
-    console.error("Failed to refresh weak areas:", err);
-  }
-};
 
   const nextQuizQuestion = () => {
     // In review mode, check if the current question has been answered and checked
@@ -749,9 +752,9 @@ const PracticeTests = () => {
         }
       }
     } else {
-      // If this is the last question, evaluate all answers before completing
+      // If this is the last question, complete the quiz
       if (quizMode === "quiz") {
-        evaluateAllAnswers();
+        completeQuiz();
       } else {
         // In review mode, just complete the quiz
         setQuizStatus("completed");
@@ -785,7 +788,60 @@ const PracticeTests = () => {
     setShowAttemptHistory(visible);
   };
 
+  const handleRetakeWrong = async (wrongQuestions) => {
+    if (!wrongQuestions?.length) return;
+    const flashcards = wrongQuestions.map((q) => ({
+      front: q.question,
+      back: formatCorrectAnswerForRetake(q),
+    }));
+    const title = `Retry: ${generatedQuiz?.quiz_title || generatedQuiz?.title || "Quiz"}`;
+    setQuizStatus("loading");
+    setShowUpload(true);
+    setShowSummary(false);
+    setCurrentStep(3);
+    try {
+      const quizData = await generateQuizFromFlashcards(flashcards, title, Math.min(flashcards.length * 2, 20));
+      setGeneratedQuiz(quizData);
+      setUserAnswers(Array((quizData.questions || []).length).fill(null));
+      setQuizStatus("ready");
+      setCurrentStep(1);
+      setCurrentQuizQuestion(0);
+      resetTimer();
+    } catch (err) {
+      setError("Failed to generate retake quiz. Please try again.");
+      setQuizStatus("idle");
+    }
+  };
+
+  const handleLevelUp = async () => {
+    const questions = generatedQuiz?.questions || [];
+    const title = generatedQuiz?.quiz_title || generatedQuiz?.title || "Quiz";
+    setQuizStatus("loading");
+    setShowSummary(false);
+    setShowUpload(true);
+    setCurrentStep(3);
+    isCompletingRef.current = false;
+    try {
+      const quizData = await generateHarderQuiz(questions, title, Math.min(questions.length + 3, 20), folderId);
+      setGeneratedQuiz(quizData);
+      setUserAnswers(Array((quizData.questions || []).length).fill(null));
+      setAiEvaluatedAnswers({});
+      setQuizStatus("ready");
+      setCurrentStep(1);
+      setCurrentQuizQuestion(0);
+      resetTimer();
+      quizzesFetchedRef.current = false;
+      await fetchSavedQuizzes();
+    } catch (err) {
+      setError("Failed to generate harder quiz. Please try again.");
+      setQuizStatus("completed");
+      setShowSummary(true);
+    }
+  };
+
   const goBack = () => {
+    isCompletingRef.current = false;
+    setViewingAttempt(null);
     setShowQuiz(false);
     setShowUpload(true);
     setGeneratedQuiz(null);
@@ -842,7 +898,7 @@ const PracticeTests = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="bg-red-50 p-2.5 rounded-xl">
-            <TestTube className="h-6 w-6 text-red-600" />
+            <ClipboardList className="h-6 w-6 text-red-600" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Practice Tests</h1>
@@ -860,8 +916,21 @@ const PracticeTests = () => {
       </div>
 
 
+      {/* Viewing a past attempt */}
+      {viewingAttempt && (
+        <PerformanceSummary
+          quiz={generatedQuiz}
+          userAnswers={viewingAttempt.userAnswers}
+          timer={viewingAttempt.timeTaken}
+          score={viewingAttempt.score}
+          onReturnToTests={() => setViewingAttempt(null)}
+          saveSuccess={false}
+          isSaving={false}
+        />
+      )}
+
       {/* Quiz creation and display */}
-      {showUpload && (
+      {!viewingAttempt && showUpload && (
         <>
           {quizStatus === "idle" ? (
             <QuizWizard
@@ -915,7 +984,10 @@ const PracticeTests = () => {
               onCheckAnswer={checkAnswer}
               onReviewQuestions={setShowSummary}
               onReturnToTests={goBack}
+              onRetakeWrong={handleRetakeWrong}
+              onLevelUp={handleLevelUp}
               onToggleHistory={toggleAttemptHistory}
+              onViewAttempt={setViewingAttempt}
               aiExplanation={aiExplanation}
               aiExplanations={aiExplanations}
               loadingExplanation={loadingExplanation}
@@ -942,7 +1014,7 @@ const PracticeTests = () => {
         </>
       )}
 
-      {showUpload && quizStatus === "idle" && (
+      {!viewingAttempt && showUpload && quizStatus === "idle" && (
         <div>
           <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
             <span className="mr-2">Saved Quizzes</span>
@@ -951,11 +1023,33 @@ const PracticeTests = () => {
           <SavedQuizzesList
             savedQuizzes={savedQuizzes}
             onQuizSelect={handleLoadSavedQuiz}
+            onQuizDelete={async (quizId) => {
+              await deleteQuiz(quizId);
+              fetchSavedQuizzes();
+            }}
           />
         </div>
       )}
     </div>
   );
 };
+
+function formatCorrectAnswerForRetake(question) {
+  if (!question) return "";
+  switch (question.type) {
+    case "multiple_choice":
+    case "short_answer":
+    case "fill_in_blank":
+      return String(question.correct_answer ?? "");
+    case "multi_select":
+      return (question.correct_answers || []).join(", ");
+    case "drag_and_drop":
+      return Object.entries(question.correct_mapping || {}).map(([k, v]) => `${k} → ${v}`).join("; ");
+    case "numerical":
+      return `${question.correct_answer_value}${question.units ? ` ${question.units}` : ""}`;
+    default:
+      return "";
+  }
+}
 
 export default PracticeTests;

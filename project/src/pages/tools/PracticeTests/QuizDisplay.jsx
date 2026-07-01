@@ -35,6 +35,9 @@ const QuizDisplay = ({
   onReviewQuestions,
   onReturnToTests,
   onToggleHistory,
+  onRetakeWrong,
+  onLevelUp,
+  onViewAttempt,
   aiExplanation,
   aiExplanations,
   loadingExplanation,
@@ -103,85 +106,90 @@ const QuizDisplay = ({
 
   // Ready to start
   if (status === "ready") {
-    return (
-        <div className="flex flex-col items-center justify-center py-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          {renderTextWithMath(quiz.quiz_title || quiz.title || "Practice Quiz")}
-        </h2>
-        <p className="text-gray-600 mb-8 text-center max-w-2xl">
-          This quiz contains {quiz.questions.length} questions of various types.
-          You'll be timed, but there's no time limit.
-        </p>
+    const hasAttempts = quizAttempts && quizAttempts.length > 0;
+    const bestScore = hasAttempts ? Math.max(...quizAttempts.map((a) => a.score)) : null;
 
-        {showAttemptHistory && quizAttempts && quizAttempts.length > 0 ? (
-          <div className="w-full max-w-3xl mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Past Attempts</h3>
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        {/* Quiz card */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            {renderTextWithMath(quiz.quiz_title || quiz.title || "Practice Quiz")}
+          </h2>
+          <p className="text-sm text-gray-400 mb-6">
+            {quiz.questions.length} questions · timed, no limit
+          </p>
+
+          {hasAttempts && (
+            <div className="flex items-center justify-center gap-6 mb-6 py-4 border-y border-gray-100">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-primary-600">{quizAttempts.length}</p>
+                <p className="text-xs text-gray-400 mt-0.5">attempts</p>
+              </div>
+              <div className="w-px h-8 bg-gray-200" />
+              <div className="text-center">
+                <p className="text-2xl font-bold text-primary-600">{bestScore}%</p>
+                <p className="text-xs text-gray-400 mt-0.5">best score</p>
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={() => onStartQuiz("quiz")}
+            className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors text-base"
+          >
+            Start Quiz
+          </button>
+        </div>
+
+        {/* Past attempts */}
+        {hasAttempts && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-700">Past Attempts</h3>
               <button
-                onClick={() => onToggleHistory(false)}
-                className="text-sm text-blue-600 hover:text-blue-800"
+                onClick={() => onToggleHistory(!showAttemptHistory)}
+                className="text-xs text-primary-500 hover:text-primary-700"
               >
-                Hide History
+                {showAttemptHistory ? "Hide" : "Show"}
               </button>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <table className="w-full">
+
+            {showAttemptHistory && (
+              <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2">Date</th>
-                    <th className="text-left py-2">Mode</th>
-                    <th className="text-left py-2">Score</th>
-                    <th className="text-left py-2">Time</th>
+                  <tr className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+                    <th className="text-left px-5 py-2 font-medium">Date</th>
+                    <th className="text-left px-5 py-2 font-medium">Score</th>
+                    <th className="text-left px-5 py-2 font-medium">Time</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {quizAttempts.map((attempt) => (
-                    <tr key={attempt.attemptId} className="border-b">
-                      <td className="py-2">
-                        {new Date(attempt.timestamp).toLocaleDateString()}{" "}
-                        {new Date(attempt.timestamp).toLocaleTimeString()}
+                  {quizAttempts.map((attempt, i) => (
+                    <tr
+                      key={attempt.attemptId || i}
+                      onClick={() => onViewAttempt?.(attempt)}
+                      className="border-t border-gray-100 hover:bg-primary-50 cursor-pointer transition-colors"
+                    >
+                      <td className="px-5 py-3 text-gray-600">
+                        {new Date(attempt.timestamp).toLocaleDateString("en-US", {
+                          month: "short", day: "numeric", year: "numeric",
+                        })}{" "}
+                        <span className="text-gray-400 text-xs">
+                          {new Date(attempt.timestamp).toLocaleTimeString("en-US", {
+                            hour: "2-digit", minute: "2-digit",
+                          })}
+                        </span>
                       </td>
-                      <td className="py-2 capitalize">{attempt.mode}</td>
-                      <td className="py-2">{attempt.score}%</td>
-                      <td className="py-2">{formatTime(attempt.timeTaken)}</td>
+                      <td className="px-5 py-3 font-semibold text-gray-800">{attempt.score}%</td>
+                      <td className="px-5 py-3 text-gray-500">{formatTime(attempt.timeTaken)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
+            )}
           </div>
-        ) : quizAttempts && quizAttempts.length > 0 ? (
-          <button
-            onClick={() => onToggleHistory(true)}
-            className="mb-8 text-blue-600 hover:text-blue-800 flex items-center"
-          >
-            <span className="mr-1">
-              View {quizAttempts.length} Past Attempts
-            </span>
-          </button>
-        ) : null}
-
-        <div className="space-y-4 w-full max-w-md">
-          <h3 className="text-lg font-medium text-center">Choose a mode:</h3>
-          <button
-            onClick={() => onStartQuiz("quiz")}
-            className="w-full px-6 py-3 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 transition"
-          >
-            Quiz Mode
-            <p className="text-sm font-normal mt-1">
-              Complete the entire quiz before seeing your results
-            </p>
-          </button>
-          <button
-            onClick={() => onStartQuiz("review")}
-            className="w-full px-6 py-3 border border-red-600 text-red-600 font-medium rounded-md hover:bg-red-50 transition"
-          >
-            Review Mode
-            <p className="text-sm font-normal mt-1">
-              Check your answers after each question
-            </p>
-          </button>
-        </div>
+        )}
       </div>
     );
   }
@@ -530,10 +538,9 @@ const QuizDisplay = ({
           userAnswers={userAnswers}
           timer={timer}
           score={score}
-          quizMode={quizMode}
-          onReviewQuestions={onGoToQuestion}
           onReturnToTests={onReturnToTests}
-          isSaving={isSaving}
+          onRetakeWrong={onRetakeWrong}
+          onLevelUp={onLevelUp}
           saveSuccess={saveSuccess}
           quizAttempts={quizAttempts}
           showAttemptHistory={showAttemptHistory}
@@ -541,7 +548,7 @@ const QuizDisplay = ({
         />
       );
     }
-    
+
     // For review mode, show the question review first
     if (!showSummary) {
       const currentQuestion = quiz.questions[currentQuestionIndex];
@@ -601,10 +608,8 @@ const QuizDisplay = ({
           userAnswers={userAnswers}
           timer={timer}
           score={score}
-          quizMode={quizMode}
-          onReviewQuestions={onGoToQuestion}
           onReturnToTests={onReturnToTests}
-          isSaving={isSaving}
+          onRetakeWrong={onRetakeWrong}
           saveSuccess={saveSuccess}
           quizAttempts={quizAttempts}
           showAttemptHistory={showAttemptHistory}
@@ -649,13 +654,40 @@ function formatCorrectAnswer(question) {
 }
 
 // Simple version of isAnswerCorrect for use within the component
+function normalizeAnswer(s) {
+  if (s == null) return "";
+  let v = String(s).trim();
+  v = v.replace(/^\$+|\$+$/g, "").trim();
+  v = v.toLowerCase();
+  v = v.replace(/−/g, "-").replace(/–/g, "-").replace(/×/g, "*").replace(/÷/g, "/").replace(/·/g, "*");
+  v = v.replace(/\s+/g, " ").trim();
+  v = v.replace(/\s*([-+*/=<>])\s*/g, "$1");
+  v = v.replace(/^[a-z_][a-z0-9_]*=/, "");
+  const parts = v.split(/[,;]+/).map((p) => p.trim()).filter(Boolean);
+  return parts.length > 1 ? parts.slice().sort().join(",") : v.trim();
+}
+
+function isAnswerMatch(a, b) {
+  if (a === b) return true;
+  const shorter = a.length <= b.length ? a : b;
+  const longer  = a.length <= b.length ? b : a;
+  return (
+    shorter.length >= 4 &&
+    shorter.length / longer.length >= 0.4 &&
+    longer.startsWith(shorter)
+  );
+}
+
 function isAnswerCorrectInline(question, userAnswer) {
   if (!question || userAnswer === null || userAnswer === undefined)
     return false;
 
   switch (question.type) {
     case "multiple_choice":
-      return userAnswer === question.correct_answer;
+      return (
+        userAnswer === question.correct_answer ||
+        normalizeAnswer(userAnswer) === normalizeAnswer(question.correct_answer)
+      );
     case "multi_select":
       if (!Array.isArray(userAnswer)) return false;
       return (
@@ -668,12 +700,11 @@ function isAnswerCorrectInline(question, userAnswer) {
         (key) => userAnswer[key] === question.correct_mapping[key]
       );
     case "short_answer":
-    case "fill_in_blank":
-      return (
-        userAnswer === question.correct_answer ||
-        (question.acceptable_answers &&
-          question.acceptable_answers.includes(userAnswer))
-      );
+    case "fill_in_blank": {
+      const normUser = normalizeAnswer(userAnswer);
+      const allCorrect = [question.correct_answer, ...(question.acceptable_answers || [])].map(normalizeAnswer);
+      return allCorrect.some((c) => isAnswerMatch(normUser, c));
+    }
     case "numerical": {
       if (!userAnswer) return false;
       const parsed = parseFloat(String(userAnswer).replace(/[^0-9.\-]/g, ""));

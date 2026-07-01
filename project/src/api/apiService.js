@@ -275,7 +275,7 @@ export const getTasks = async () => {
  * @returns {Promise<string>} - The AI-generated explanation
  */
 export const getAnswerExplanation = async (question, userAnswer, isCorrect) => {
-  const endpoint = "http://localhost:8000/explain-answer";
+  const endpoint = `${API_BASE}/explain-answer`;
 
   const requestBody = {
     question,
@@ -324,6 +324,30 @@ export const evaluateShortAnswer = async (question, userAnswer) => {
     // Return a default response if the API call fails
     return { isCorrect: false, aiResponse: "error" };
   }
+};
+
+/**
+ * Grade all quiz answers in one AI call.
+ * Returns an array of {isCorrect, aiResponse} in the same order as questions.
+ */
+export const batchEvaluateAnswers = async (questions, userAnswers) => {
+  try {
+    const response = await callProtectedApi("http://localhost:8000/evaluate-all-answers", {
+      method: "POST",
+      body: JSON.stringify({ questions, user_answers: userAnswers }),
+    });
+    return response.results; // [{isCorrect, aiResponse}, ...]
+  } catch (error) {
+    console.error("Batch evaluation error:", error);
+    return questions.map(() => ({ isCorrect: false, aiResponse: "error" }));
+  }
+};
+
+export const generateHarderQuiz = async (questions, title, numQuestions = 15, folderId = null) => {
+  return callProtectedApi("http://localhost:8000/generate-harder-quiz", {
+    method: "POST",
+    body: JSON.stringify({ questions, title, num_questions: numQuestions, folder_id: folderId }),
+  });
 };
 
 /**

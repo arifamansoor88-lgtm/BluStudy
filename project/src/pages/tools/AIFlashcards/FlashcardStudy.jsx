@@ -6,9 +6,13 @@ import {
   Volume2,
   Pencil,
   Shuffle,
-  Plus
+  Plus,
+  RotateCcw,
+  FileText,
+  CheckCircle2
 } from 'lucide-react';
-import { useLocation, Link, useParams } from 'react-router-dom';
+import { useLocation, Link, useParams, useNavigate } from 'react-router-dom';
+import { renderTextWithMath } from '../PracticeTests/MathText';
 import jsPDF from 'jspdf';
 import { useDeckData } from './hooks';
 import FlashcardDifficultySelector from './FlashcardDifficultySelector';
@@ -21,8 +25,10 @@ const FlashcardStudyPage = () => {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showEndScreen, setShowEndScreen] = useState(false);
   const location = useLocation();
   const { deckId } = useParams();
+  const navigate = useNavigate();
   const routeTitle = location.state?.title || '';
   const isPreGeneratedDeck = isPreGeneratedDeckId(deckId);
 
@@ -80,8 +86,18 @@ const FlashcardStudyPage = () => {
   const handleFlip = () => setFlipped((p) => !p);
 
   const handleNext = () => {
-    setIndex((i) => (i + 1) % flashcards.length);
+    if (index === flashcards.length - 1) {
+      setShowEndScreen(true);
+    } else {
+      setIndex((i) => i + 1);
+      setFlipped(false);
+    }
+  };
+
+  const handleRestart = () => {
+    setIndex(0);
     setFlipped(false);
+    setShowEndScreen(false);
   };
 
   const speakCard = () => {
@@ -177,6 +193,43 @@ const FlashcardStudyPage = () => {
 
   const currentCard = flashcards[index];
 
+  if (showEndScreen) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-10">
+        <div className="text-center bg-white rounded-2xl border border-gray-100 shadow-sm p-12">
+          <div className="flex justify-center mb-4">
+            <div className="bg-green-50 p-4 rounded-full">
+              <CheckCircle2 className="w-10 h-10 text-green-500" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">You finished the deck!</h2>
+          <p className="text-gray-500 mb-8">
+            You went through all {flashcards.length} cards in <span className="font-medium text-gray-700">{deckTitle}</span>. What do you want to do next?
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={handleRestart}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Retry flashcards
+            </button>
+            <button
+              onClick={() => navigate('/tools/practice-tests', { state: { flashcards, deckTitle } })}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-medium transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              Create a quiz on this topic
+            </button>
+          </div>
+          <Link to="/tools/flashcards" className="inline-block mt-6 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+            Back to all decks
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="flex justify-between mb-6">
@@ -205,32 +258,85 @@ const FlashcardStudyPage = () => {
 
       {!isEditing ? (
         <>
-          <div
-            className="h-64 bg-white rounded-lg shadow flex items-center justify-center text-2xl font-semibold cursor-pointer"
-            onClick={handleFlip}
-          >
-            {flipped ? currentCard.answer : currentCard.question}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                speakCard();
-              }}
-              className="absolute top-3 right-3"
-            >
-              <Volume2 />
-            </button>
+          {/* Progress + actions row */}
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-gray-500 font-medium">
+              {index + 1} / {flashcards.length}
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); speakCard(); }}
+                className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+                title="Read aloud"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={smartShuffle}
+                className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+                title="Smart shuffle"
+              >
+                <Shuffle className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          <div className="flex justify-between mt-6">
-            <button onClick={handleNext} className="bg-blue-600 text-white px-4 py-2 rounded">
-              Next Card
+          {/* Progress bar */}
+          <div className="w-full h-1.5 bg-gray-100 rounded-full mb-6">
+            <div
+              className="h-1.5 bg-primary-500 rounded-full transition-all duration-300"
+              style={{ width: `${((index + 1) / flashcards.length) * 100}%` }}
+            />
+          </div>
+
+          {/* Flip card */}
+          <div
+            className="relative h-72 cursor-pointer select-none"
+            style={{ perspective: '1200px' }}
+            onClick={handleFlip}
+          >
+            <div
+              className="relative w-full h-full transition-transform duration-500"
+              style={{
+                transformStyle: 'preserve-3d',
+                transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+              }}
+            >
+              {/* Front — question */}
+              <div
+                className="absolute inset-0 bg-white border border-gray-100 rounded-2xl shadow-md flex flex-col items-center justify-center p-8 text-center"
+                style={{ backfaceVisibility: 'hidden' }}
+              >
+                <span className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Question</span>
+                <div className="text-xl font-semibold text-gray-800 leading-relaxed">{renderTextWithMath(currentCard.question)}</div>
+                <span className="mt-6 text-xs text-gray-300">Click to reveal answer</span>
+              </div>
+
+              {/* Back — answer */}
+              <div
+                className="absolute inset-0 bg-primary-50 border border-primary-100 rounded-2xl shadow-md flex flex-col items-center justify-center p-8 text-center"
+                style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+              >
+                <span className="text-xs font-semibold uppercase tracking-widest text-primary-400 mb-4">Answer</span>
+                <div className="text-xl font-semibold text-primary-800 leading-relaxed">{renderTextWithMath(currentCard.answer)}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <button
+              onClick={() => { setIndex((i) => (i - 1 + flashcards.length) % flashcards.length); setFlipped(false); }}
+              className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors"
+            >
+              Previous
             </button>
-            <button onClick={smartShuffle} className="bg-purple-600 text-white px-4 py-2 rounded">
-              Smart Shuffle
+            <button
+              onClick={handleNext}
+              className="px-6 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-medium transition-colors"
+            >
+              Next
             </button>
-            <span className="text-gray-500">
-              Card {index + 1} of {flashcards.length}
-            </span>
           </div>
         </>
       ) : (

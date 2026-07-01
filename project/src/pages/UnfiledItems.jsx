@@ -6,7 +6,7 @@ import {
   CheckSquare, Square, FileQuestion
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Mic2, LayoutGrid as GridIcon, Edit3, Zap, NotebookPen, File as FileIcon } from "lucide-react";
+import { Brain, Layers, Mic2, LayoutGrid as GridIcon, Edit3, Zap, NotebookPen, File as FileIcon } from "lucide-react";
 
 import { msalInstance, protectedResources } from "../authConfig";
 const API_BASE = "http://localhost:8000";
@@ -37,7 +37,7 @@ function mapDatabaseItemsToUI(dbItems) {
     let description = "";
     let icon = <Brain className="text-4xl text-gray-600" />;
     if (contentType === "quiz") { title = item.data?.title || "Untitled Quiz"; description = item.data?.resourceName || `Quiz with ${item.data?.questions?.length || 0} questions`; icon = <Edit3 className="text-4xl text-orange-600" />; }
-    else if (contentType === "flashcard_deck") { title = item.title || item.data?.title || "Untitled Flashcards"; description = `${item.cards?.length || item.data?.cards?.length || 0} flashcards`; icon = <Brain className="text-4xl text-indigo-600" />; }
+    else if (contentType === "flashcard_deck") { title = item.title || item.data?.title || "Untitled Flashcards"; description = `${item.cards?.length || item.data?.cards?.length || 0} flashcards`; icon = <Layers className="text-4xl text-indigo-600" />; }
     else if (contentType === "study_plan") { title = item.data?.title || "Untitled Study Plan"; description = item.data?.description || ""; icon = <NotebookPen className="text-4xl text-blue-600" />; }
     else if (contentType === "voice_note") { title = item.title || "Untitled Voice Note"; description = item.text || ""; icon = <Mic2 className="text-4xl text-purple-600" />; }
     else if (contentType === "summary") { title = item.title || item.data?.title || "Untitled Summary"; description = item.data?.summary?.substring(0, 100) || item.description || ""; icon = <Zap className="text-4xl text-yellow-600" />; }

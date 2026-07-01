@@ -293,7 +293,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import database
 from pdf_utils import extract_text_from_pdf
-from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, evaluate_numerical_answer, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance, generate_suggested_next_steps_ai
+from openai_client import generate_quiz, generate_answer_explanation, evaluate_short_answer, evaluate_numerical_answer, evaluate_all_answers, generate_study_plan, update_study_plan, summarize_text, generate_flashcard as openai_generate_flashcard, analyze_quiz_performance, generate_harder_quiz
 from models import QuizDocument, SavedQuizResponse, SaveQuizAttemptRequest, SaveQuizAttemptResponse, QuizAttempt, StudyPlanDocument, SaveStudyPlanResponse, UpdateStudyPlanRequest, UpdateStudyPlanResponse, Flashcard, FlashcardDeck, FlashcardDocument, MindmapDocument, SaveMindmapResponse, CreateMindmapRequest, CreateFolderRequest, UpdateFolderRequest, FolderOut, ShareLinkCreateRequest, ShareLinkUpdateRequest, ShareLinkSettings
 from pydantic import BaseModel
 from azure.cosmos.exceptions import CosmosHttpResponseError, CosmosResourceNotFoundError
@@ -1734,165 +1734,132 @@ async def debug_voice_note(
     scrub.pop("audio_inline_b64", None)
     return JSONResponse(scrub)
 
-# Returns "Suggested Next Steps".
+# Returns "Suggested Next Steps" based on actual user performance data.
 @app.get("/dashboard/next-steps")
 def get_suggested_next_steps(user_claims: dict = Depends(validate_token)):
     uid = user_claims["sub"]
 
-    # Fetch all items for this user once, then filter in Python (more reliable than query params here)
     all_user_items = list(container.query_items(
         query="SELECT * FROM c WHERE c.userId = @uid",
         parameters=[{"name": "@uid", "value": uid}],
         enable_cross_partition_query=True
     ))
 
-    def get_latest_by_type(desired_types):
-        if isinstance(desired_types, str):
-            desired_types = [desired_types]
-        matches = [x for x in all_user_items if x.get("contentType") in desired_types]
-        matches.sort(key=lambda x: x.get("updatedAt") or x.get("createdAt") or "", reverse=True)
-        return matches[0] if matches else None
+    suggestions = []
 
-    latest_deck = get_latest_by_type("flashcard_deck")
-    latest_quiz = get_latest_by_type("quiz")
-    latest_note = get_latest_by_type("voice_note")
-    latest_mindmap = get_latest_by_type(["mind-map", "mindmap", "mind_map"])
-    latest_summary = get_latest_by_type(["summarizer", "summary"])
+    # --- QUIZZES: surface the lowest-scoring one first ---
+    all_quizzes = [x for x in all_user_items if x.get("contentType") == "quiz"]
+    scored_quizzes = [q for q in all_quizzes if q.get("data", {}).get("score") is not None]
+    scored_quizzes.sort(key=lambda q: q["data"]["score"])  # lowest score first
 
-    # Build targets list for AI
-    targets = []
-
-    if latest_deck:
-        deck_title = latest_deck.get("title") or latest_deck.get("data", {}).get("title") or "Flashcards"
-        targets.append({
-            "toolKey": "flashcard_deck",
-            "targetId": latest_deck["id"],
-            "toolName": "AI Flashcards",
-            "context": deck_title,
-        })
-
-    if latest_quiz:
-        quiz_title = latest_quiz.get("data", {}).get("title") or "Practice Test"
-        targets.append({
+    if scored_quizzes:
+        q = scored_quizzes[0]
+        qdata = q.get("data", {})
+        score = qdata.get("score")
+        qtitle = qdata.get("title") or "Practice Test"
+        if score < 70:
+            title = f"Retry: {qtitle}"
+            description = f"You scored {score}% — retaking this will help you find exactly what to review."
+            button = "Retry Quiz"
+        elif score < 85:
+            title = f"Improve Your Score on {qtitle}"
+            description = f"You got {score}% last time. One more attempt could push you past 85%."
+            button = "Retake Quiz"
+        else:
+            title = f"Can You Beat {score}% on {qtitle}?"
+            description = f"Strong score — see if you can get even closer to 100%."
+            button = "Take Again"
+        suggestions.append({
             "toolKey": "quiz",
-            "targetId": latest_quiz["id"],
-            "toolName": "Practice Tests",
-            "context": quiz_title,
+            "title": title,
+            "description": description,
+            "buttonText": button,
+            "actionPath": f"/tools/practice-tests?quizId={q['id']}",
+        })
+    elif all_quizzes:
+        q = sorted(all_quizzes, key=lambda x: x.get("updatedAt") or x.get("createdAt") or "", reverse=True)[0]
+        qtitle = q.get("data", {}).get("title") or "Practice Test"
+        suggestions.append({
+            "toolKey": "quiz",
+            "title": f"Take the {qtitle}",
+            "description": "You haven't completed this quiz yet — take it to see where you stand.",
+            "buttonText": "Start Quiz",
+            "actionPath": f"/tools/practice-tests?quizId={q['id']}",
         })
 
-    if latest_note:
-        note_title = latest_note.get("title") or "Voice Note"
-        targets.append({
-            "toolKey": "voice_note",
-            "targetId": latest_note["id"],
-            "toolName": "Voice Notes",
-            "context": note_title,
+    # --- FLASHCARD DECKS: most recently studied ---
+    all_decks = [x for x in all_user_items if x.get("contentType") == "flashcard_deck"]
+    if all_decks:
+        all_decks.sort(key=lambda x: x.get("updatedAt") or x.get("createdAt") or "", reverse=True)
+        deck = all_decks[0]
+        deck_title = deck.get("title") or deck.get("data", {}).get("title") or "Flashcard Deck"
+        cards = deck.get("cards") or deck.get("data", {}).get("cards") or []
+        count_str = f"{len(cards)}-card " if cards else ""
+        suggestions.append({
+            "toolKey": "flashcard_deck",
+            "title": f"Review {deck_title}",
+            "description": f"Go through your {count_str}deck again — spacing your reviews is the fastest way to make things stick.",
+            "buttonText": "Study Deck",
+            "actionPath": f"/tools/flashcards/study/{deck['id']}",
         })
 
-    if latest_mindmap:
-        mm_title = latest_mindmap.get("title") or "Mind Map"
-        targets.append({
-            "toolKey": "mind_map",
-            "targetId": latest_mindmap["id"],
-            "toolName": "Mind Maps",
-            "context": mm_title,
-        })
+    # --- FILL UP TO 3 with tools the user hasn't tried yet ---
+    if len(suggestions) < 3:
+        seed = next(
+            (item.get("title") or item.get("data", {}).get("title")
+             for item in all_user_items
+             if item.get("title") or item.get("data", {}).get("title")),
+            None
+        )
+        topic_str = f" {seed}" if seed else ""
+        used = {s["toolKey"] for s in suggestions}
 
-    if latest_summary:
-        s_title = latest_summary.get("title") or "Summary"
-        targets.append({
-            "toolKey": "summarizer",
-            "targetId": latest_summary["id"],
-            "toolName": "Smart Summarizer",
-            "context": s_title,
-        })
-
-    # ---- FILLER TARGETS: suggest creating new content for missing tools ----
-
-    # Decide the "seed" topic/context:
-    # - If we have any saved items, use the first available context/title
-    # - Otherwise use a generic topic
-    seed_context = next((t.get("context") for t in targets if t.get("context")), None)
-    if not seed_context:
-        seed_context = "your current study topic"
-
-    # Which toolKeys already exist from saved items
-    present = {t["toolKey"] for t in targets}
-
-    # Tools we want Suggested Next Steps to support (no study_planner for now)
-    ALL_TOOLS = [
-        ("flashcard_deck", "AI Flashcards"),
-        ("quiz", "Practice Tests"),
-        ("voice_note", "Voice Notes"),
-        ("mind_map", "Mind Maps"),
-        ("summarizer", "Smart Summarizer"),
-    ]
-
-    # Add a "create new" filler target for any tool not already present
-    for toolKey, toolName in ALL_TOOLS:
-        if toolKey not in present:
-            targets.append({
-                "toolKey": toolKey,
-                "targetId": "new",
-                "toolName": toolName,
-                "context": seed_context,
+        fillers = []
+        if "mind_map" not in used:
+            fillers.append({
+                "toolKey": "mind_map",
+                "title": f"Map Out{topic_str}",
+                "description": "A mind map helps you see how ideas connect — great for topics with a lot of moving parts.",
+                "buttonText": "Create Map",
+                "actionPath": "/tools/mind-maps",
+            })
+        if "summarizer" not in used:
+            fillers.append({
+                "toolKey": "summarizer",
+                "title": f"Summarize{topic_str}",
+                "description": "Condense your notes into a tight summary you can review in minutes.",
+                "buttonText": "Summarize",
+                "actionPath": "/tools/summarizer",
+            })
+        if "voice_note" not in used:
+            fillers.append({
+                "toolKey": "voice_note",
+                "title": "Explain It Out Loud",
+                "description": "Record yourself explaining the concept — if you can teach it, you know it.",
+                "buttonText": "Record",
+                "actionPath": "/tools/voice-notes",
+            })
+        if "flashcard_deck" not in used:
+            fillers.append({
+                "toolKey": "flashcard_deck",
+                "title": f"Make Flashcards{topic_str}",
+                "description": "Build a deck to drill the key terms and definitions.",
+                "buttonText": "Create Deck",
+                "actionPath": "/tools/flashcards",
+            })
+        if "quiz" not in used:
+            fillers.append({
+                "toolKey": "quiz",
+                "title": f"Test Yourself{topic_str}",
+                "description": "Take a practice test to find out what you actually know versus what you think you know.",
+                "buttonText": "Create Quiz",
+                "actionPath": "/tools/practice-tests",
             })
 
-    # If nothing exists yet, return safe fallback
-    if not targets:
-        return {"items": []}
+        random.shuffle(fillers)
+        suggestions.extend(fillers[:3 - len(suggestions)])
 
-    targets = targets[:5]
-
-    # Randomize order of suggested tools/cards
-    random.shuffle(targets)
-
-    ai_result = generate_suggested_next_steps_ai(targets)
-    items = ai_result.get("items", [])
-    items = items[:3]
-
-    # Map toolKey + targetId -> deep link actionPath
-    def to_action_path(toolKey: str, targetId: str) -> str:
-
-        if targetId == "new":
-            if toolKey == "voice_note":
-                return "/tools/voice-notes"
-            if toolKey == "mind_map":
-                return "/tools/mind-maps"  # or "/tools/maps" if that is your create page
-            if toolKey == "summarizer":
-                return "/tools/summarizer"
-            if toolKey == "quiz":
-                return "/tools/practice-tests"
-            if toolKey == "flashcard_deck":
-                return "/tools/flashcards"
-            return "/dashboard"
-
-        if toolKey == "flashcard_deck":
-            return f"/tools/flashcards/study/{targetId}"
-        if toolKey == "quiz":
-            return f"/tools/practice-tests?quizId={targetId}"
-        if toolKey == "voice_note":
-            return f"/tools/voice-notes?noteId={targetId}"
-        if toolKey == "mind_map":
-            return f"/tools/maps/{targetId}"
-        if toolKey == "summarizer":
-            return f"/tools/summarizer?summaryId={targetId}"
-        return "/dashboard"
-
-    # Build final response for frontend
-    final_items = []
-    for item in items:
-        toolKey = item.get("toolKey")
-        targetId = item.get("targetId")
-        final_items.append({
-            "toolKey": toolKey,
-            "title": item.get("title", "Suggested Next Step"),
-            "description": item.get("description", ""),
-            "buttonText": item.get("buttonText", "Open"),
-            "actionPath": to_action_path(toolKey, targetId),
-        })
-
-    return {"items": final_items}
+    return {"items": suggestions[:3]}
 
 # ----- Quizzes -----
 class QuizDataModel(BaseModel):
@@ -2053,6 +2020,7 @@ def _get_quizio_focus_areas(user_id: str) -> List[Dict[str, Any]]:
 
     topic_scores: Dict[str, int] = {}
     topic_display: Dict[str, str] = {}
+    topic_questions: Dict[str, list] = {}
 
     for quiz in quizzes:
         data = quiz.get("data", {}) or {}
@@ -2067,12 +2035,22 @@ def _get_quizio_focus_areas(user_id: str) -> List[Dict[str, Any]]:
         topic_display.setdefault(topic_key, display)
         topic_scores[topic_key] = max(topic_scores.get(topic_key, latest_score), latest_score)
 
+        # Collect up to 6 sample questions per topic to use as generation context
+        if topic_key not in topic_questions:
+            topic_questions[topic_key] = []
+        questions = data.get("questions", [])
+        for q in questions[:6]:
+            entry = {"question": q.get("question", ""), "type": q.get("type", "")}
+            if entry["question"] and entry not in topic_questions[topic_key]:
+                topic_questions[topic_key].append(entry)
+
     weak_topics = [
         {
             "topic": topic_key,
             "display": topic_display.get(topic_key, _topic_display(topic_key)),
             "score": score,
             "masteryScore": QUIZIO_MASTERY_SCORE,
+            "sampleQuestions": topic_questions.get(topic_key, [])[:6],
         }
         for topic_key, score in topic_scores.items()
         if score < QUIZIO_MASTERY_SCORE
@@ -2172,7 +2150,17 @@ async def create_quiz_from_topic(
         subject_category = payload.get("subject_category", "conceptual")
 
         # Use the topic string as synthetic "text" input for the quiz generator
+        previous_questions = payload.get("previous_questions") or []
         synthetic_text = f"Create a quiz for the following topic/chapter/concept:\n\n{topic}"
+        if previous_questions:
+            sample_lines = "\n".join(
+                f"- {q.get('question', q) if isinstance(q, dict) else q}"
+                for q in previous_questions[:6]
+            )
+            synthetic_text += (
+                f"\n\nThe student has previously seen questions like these on this topic "
+                f"(generate NEW questions of similar style, depth, and subject matter):\n{sample_lines}"
+            )
 
         quiz_json = generate_quiz(
             text=synthetic_text,
@@ -2229,6 +2217,74 @@ async def create_quiz_from_topic(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate topic-based quiz: {str(e)}",
         )
+
+@app.post("/generate-quiz-from-flashcards")
+async def create_quiz_from_flashcards(
+    payload: Dict[str, Any],
+    user_claims: dict = Depends(validate_token),
+):
+    """Generate a quiz whose questions are derived directly from a flashcard deck."""
+    try:
+        user_id = user_claims["sub"]
+        title: str = (payload.get("title") or "Flashcard Quiz").strip()
+        flashcards: list = payload.get("flashcards") or []
+        if not flashcards:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="flashcards array is required")
+
+        num_questions = max(5, min(40, int(payload.get("num_questions") or len(flashcards))))
+
+        # Format flashcards as structured text so the model tests exactly this content
+        lines = [f"Flashcard deck: {title}\n"]
+        for i, card in enumerate(flashcards, 1):
+            q = card.get("question") or card.get("front") or ""
+            a = card.get("answer") or card.get("back") or ""
+            lines.append(f"Card {i}:\n  Question: {q}\n  Answer: {a}")
+        flashcard_text = "\n".join(lines)
+
+        synthetic_text = (
+            f"Generate quiz questions that test knowledge of the following flashcard deck. "
+            f"Use the question/answer pairs as the source of truth — rephrase them as quiz questions "
+            f"rather than copying them verbatim.\n\n{flashcard_text}"
+        )
+
+        question_formats = payload.get("question_formats") or ["multiple_choice"]
+        if isinstance(question_formats, dict):
+            question_formats = [fmt for fmt, on in question_formats.items() if on]
+        if not question_formats:
+            question_formats = ["multiple_choice"]
+
+        quiz_json = generate_quiz(
+            text=synthetic_text,
+            num_questions=num_questions,
+            question_formats=question_formats,
+        )
+
+        quiz_data = _sanitize_quiz_payload(json.loads(quiz_json))
+        quiz_id = str(uuid.uuid4())
+        quiz_payload = _ensure_quiz_topic_metadata({
+            "title": quiz_data.get("quiz_title") or title,
+            "questions": quiz_data.get("questions", []),
+            "userAnswers": None,
+            "score": None,
+            "timeTaken": 0,
+            "resourceName": title,
+            "options": {"numQuestions": num_questions, "questionFormats": question_formats},
+            "contentType": "quiz",
+            "userId": user_id,
+            "id": quiz_id,
+        })
+
+        container.create_item(body=quiz_payload)
+        quiz_data["id"] = quiz_id
+        quiz_data["title"] = quiz_payload.get("title") or title
+        return quiz_data
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error generating flashcard quiz: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
 
 @app.post("/save-quiz", response_model=SavedQuizResponse)
 async def save_quiz(
@@ -2320,6 +2376,19 @@ async def get_quiz(quiz_id: str, user_claims: dict = Depends(validate_token)):
         return quiz
     except Exception as e:
         print(f"Error fetching quiz: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found")
+
+@app.delete("/quizzes/{quiz_id}")
+async def delete_quiz(quiz_id: str, user_claims: dict = Depends(validate_token)):
+    try:
+        quiz = container.read_item(item=quiz_id, partition_key=user_claims["sub"])
+        if quiz["userId"] != user_claims["sub"]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        container.delete_item(item=quiz_id, partition_key=user_claims["sub"])
+        return {"deleted": True}
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found")
 
 @app.get("/quizzes/{quiz_id}/with-history")
@@ -2542,6 +2611,45 @@ class ShortAnswerEvaluationRequest(BaseModel):
 class ShortAnswerEvaluationResponse(BaseModel):
     isCorrect: bool
     aiResponse: str
+
+class BatchEvaluationRequest(BaseModel):
+    questions: List[Dict[str, Any]]
+    user_answers: List[Any]
+
+@app.post("/evaluate-all-answers")
+async def evaluate_all_answers_endpoint(request: BatchEvaluationRequest, user_claims: dict = Depends(validate_token)):
+    try:
+        results = evaluate_all_answers(request.questions, request.user_answers)
+        return {"results": [{"isCorrect": r["is_correct"], "aiResponse": r.get("ai_response", "")} for r in results]}
+    except Exception as e:
+        print(f"Error in batch evaluation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Batch evaluation failed: {str(e)}")
+
+class HarderQuizRequest(BaseModel):
+    questions: List[Dict[str, Any]]
+    title: str
+    num_questions: int = 15
+    folder_id: Optional[str] = None
+
+@app.post("/generate-harder-quiz")
+async def generate_harder_quiz_endpoint(request: HarderQuizRequest, user_claims: dict = Depends(validate_token)):
+    try:
+        raw = generate_harder_quiz(request.questions, request.title, request.num_questions)
+        quiz_data = json.loads(raw)
+        quiz_data["questions"] = quiz_data.get("questions", [])
+
+        quiz_document = QuizDocument(
+            userId=user_claims.get("oid") or user_claims.get("sub"),
+            quiz_title=quiz_data.get("quiz_title", f"{request.title} — Advanced"),
+            questions=quiz_data["questions"],
+            folderId=request.folder_id,
+        )
+        created = await save_quiz_to_cosmos(quiz_document)
+        quiz_data["id"] = created.get("id")
+        return quiz_data
+    except Exception as e:
+        print(f"Error generating harder quiz: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate harder quiz: {str(e)}")
 
 @app.post("/evaluate-short-answer", response_model=ShortAnswerEvaluationResponse)
 async def evaluate_answer(request: ShortAnswerEvaluationRequest, user_claims: dict = Depends(validate_token)):

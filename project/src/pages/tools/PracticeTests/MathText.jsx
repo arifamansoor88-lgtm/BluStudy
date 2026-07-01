@@ -44,8 +44,9 @@ const FRACTION_PATTERN = String.raw`(?:\d+|[A-Za-z]+)\/(?:\d+|[A-Za-z]+)`;
 const STANDALONE_TOKEN_PATTERN = String.raw`-?(?:${COMMAND_PATTERN}|${FUNCTION_PATTERN}|${VARIABLE_TERM_PATTERN}|${FRACTION_PATTERN})`;
 const CHAIN_TERM_PATTERN = String.raw`-?(?:${COMMAND_PATTERN}|${FUNCTION_PATTERN}|\[[A-Z_]+\]|${VARIABLE_TERM_PATTERN}|${FRACTION_PATTERN}|\d+(?:\.\d+)?|[A-Za-z])`;
 
+// (?![a-z]) prevents matching mid-word, e.g. "y-coordinate" → "y - c" + "oordinate"
 const MATH_CHAIN_REGEX = new RegExp(
-  `${CHAIN_TERM_PATTERN}(?:\\s*(?:\\\\times|[=+\\-*/<>])\\s*${CHAIN_TERM_PATTERN})+`,
+  `${CHAIN_TERM_PATTERN}(?:\\s*(?:\\\\times|[=+\\-*/<>])\\s*${CHAIN_TERM_PATTERN})+(?![a-z])`,
   "g"
 );
 const MATH_CHAIN_FULL_REGEX = new RegExp(
@@ -232,10 +233,41 @@ const renderPlainTextWithMathCandidates = (text, useBlock = false) => {
   return rendered;
 };
 
+// Wrap bare LaTeX commands (not already inside $) so the renderer picks them up.
+// Handles \left...\right that may span across existing $...$, and standalone commands.
+const wrapBareLatex = (text) => {
+  // Step 1 — wrap \left...\right on the raw string before splitting.
+  // The AI sometimes stores: \left(-$\frac{b}{2a}$,...\right) where \frac is
+  // already dollar-wrapped but \left/\right are not. Splitting by $ first would
+  // put \left and \right in separate segments, breaking the match.
+  let result = text.replace(
+    /\\left[^\n]*\\right[)\]|.]/g,
+    (match, offset, original) => {
+      // Skip if already inside $...$ (odd number of $ signs before this offset)
+      const openDollars = (original.slice(0, offset).match(/\$/g) || []).length % 2;
+      if (openDollars !== 0) return match;
+      // Strip any inner $...$ wrappers — the outer $ will cover them
+      return `$${match.replace(/\$([^$]*)\$/g, "$1")}$`;
+    }
+  );
+
+  // Step 2 — wrap lone \frac / \sqrt / etc. that are still outside $
+  const segments = result.split(/(\$\$[\s\S]+?\$\$|\$[^$]+\$)/g);
+  return segments
+    .map((seg) => {
+      if (/^(\$\$[\s\S]+?\$\$|\$[^$]+\$)$/.test(seg)) return seg;
+      return seg.replace(
+        /\\(?:d?frac|sqrt|sum|prod|int|lim|binom)(?:\{[^{}]*\}){1,3}/g,
+        (m) => `$${m}$`
+      );
+    })
+    .join("");
+};
+
 export const renderTextWithMath = (text, useBlock = false) => {
   if (text === null || text === undefined || text === "") return null;
 
-  const value = String(text);
+  const value = wrapBareLatex(String(text));
   const dollarSegments = value
     .split(/(\$\$[\s\S]+?\$\$|\$[^$]+\$)/g)
     .filter(Boolean);

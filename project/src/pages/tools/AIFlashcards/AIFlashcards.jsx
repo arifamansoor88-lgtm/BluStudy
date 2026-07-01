@@ -1,103 +1,80 @@
 import { useState, useEffect } from "react";
-import { Brain, Plus, X, Save, Pencil, MoveRight } from "lucide-react";
+import { Layers, Plus, MoveRight, Upload, FileText } from "lucide-react";
 import { useDeckData } from "./hooks";
-import FlashcardDifficultySelector from "./FlashcardDifficultySelector";
-import StarSelector from "./StarSelector";
 import FlashcardDeckList from "./FlashcardDeckList";
 import PreGeneratedFlashcardSection from "./PreGeneratedFlashcardSection";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const MIN_FLASHCARDS = 1;
 const MAX_FLASHCARDS = 100;
 
 const AIFlashcards = () => {
-  // Get folderId from URL query params if present
   const [searchParams] = useSearchParams();
-  const folderId = searchParams.get('folderId');
-  
-  const [cards, setCards] = useState([]);
-  const [decks, setDecks] = useState([]);
+  const folderId = searchParams.get("folderId");
+
+  const [tab, setTab] = useState("topic"); // "topic" | "pdf"
   const [topicPrompt, setTopicPrompt] = useState("");
-  const [newQuestion, setNewQuestion] = useState("");
-  const [newAnswer, setNewAnswer] = useState("");
-  const [difficulty, setDifficulty] = useState(null);
-  const [selectedDeckID, setSelectedDeckID] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [numCards, setNumCards] = useState(10);
+  const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
 
   const {
     savedDecks,
-    isSaving,
-    saveSuccess,
-    error,
-    setError,
     decksFetchedRef,
     fetchSavedDecks,
     saveDeck,
-    deleteDeck,
     generateFlashcardsFromTopic,
     generateFlashcards,
     getFlashcardByID,
   } = useDeckData();
 
-  const addCard = () => {
-    if (newQuestion && newAnswer && difficulty) {
-      setCards([
-        ...cards,
-        {
-          question: newQuestion,
-          answer: newAnswer,
-          difficulty: difficulty,
-          important: false,
-        },
-      ]);
-      setNewQuestion("");
-      setNewAnswer("");
+  useEffect(() => {
+    if (!decksFetchedRef.current) fetchSavedDecks();
+  }, [fetchSavedDecks, decksFetchedRef]);
+
+  const handleNumCardsChange = (e) => {
+    const v = e.target.value;
+    if (v === "") { setNumCards(""); return; }
+    const n = parseInt(v, 10);
+    if (!isNaN(n)) setNumCards(Math.min(MAX_FLASHCARDS, Math.max(MIN_FLASHCARDS, n)));
+  };
+
+  const handleNumCardsBlur = () => {
+    if (numCards === "") setNumCards(10);
+    else setNumCards(Math.min(MAX_FLASHCARDS, Math.max(MIN_FLASHCARDS, Number(numCards))));
+  };
+
+  const handleTopicGenerate = async () => {
+    if (!topicPrompt) return;
+    setIsProcessing(true);
+    try {
+      const result = await generateFlashcardsFromTopic(topicPrompt, numCards, folderId);
+      navigate(`/tools/flashcards/study/${result.deckId}`, { state: { title: topicPrompt } });
+    } catch (err) {
+      alert("Failed to generate flashcards from topic");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleJSONUpload = async (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      try {
-        const text = await file.text();
-        const jsonData = JSON.parse(text);
-
-        // JSON can be either a single deck object or an array of decks
-        const decksToImport = Array.isArray(jsonData) ? jsonData : [jsonData];
-
-        decksToImport.forEach((deckObj) => {
-          if (deckObj.title && Array.isArray(deckObj.cards)) {
-            // Save to existing system
-            saveDeck(deckObj.title, deckObj.cards, folderId);
-          } else {
-            console.error("Invalid JSON format:", deckObj);
-          }
-        });
-
-        alert("JSON flashcards uploaded successfully!");
-      } catch (err) {
-        console.error("Error reading JSON:", err);
-        alert("Invalid JSON file. Please check the format.");
-      }
+    if (!file) return;
+    setIsProcessing(true);
+    try {
+      await generateFlashcards(file, numCards, folderId);
+      window.location.reload();
+    } catch (error) {
+      alert(error.message || "Failed to generate flashcards from PDF");
+    } finally {
+      setIsProcessing(false);
     }
-  };
-
-  const removeCard = (index) => {
-    setCards(cards.filter((_, i) => i !== index));
   };
 
   const handleDeckSelect = async (deckId) => {
     try {
       const fullDeck = await getFlashcardByID(deckId);
-
-      navigate(`/tools/flashcards/study/${deckId}`, {
-        state: {
-          title: fullDeck.title,
-          flashcards: fullDeck.cards,
-        },
-      });
+      navigate(`/tools/flashcards/study/${deckId}`, { state: { title: fullDeck.title, flashcards: fullDeck.cards } });
     } catch (err) {
       console.error("Failed to open deck", err);
     }
@@ -107,102 +84,15 @@ const AIFlashcards = () => {
     navigate(`/tools/flashcards/study/${deck.id}`);
   };
 
-  const saveCard = () => {
-    let deckName = prompt("Choose a name for this deck");
-    saveDeck(deckName, cards, folderId);
-  };
-
-  const handleTopicGenerate = async () => {
-    if (!topicPrompt) return;
-
-    setIsProcessing(true);
-    try {
-      const result = await generateFlashcardsFromTopic(topicPrompt, numCards, folderId);
-
-      navigate(`/tools/flashcards/study/${result.deckId}`, {
-        state: {
-          title: topicPrompt,
-        },
-      });
-    } catch (err) {
-      console.error(err);
-      alert("Failed to generate flashcards from topic");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const saveCardTestDeck = async () => {
-    let deckName = prompt("Choose a name for this deck");
-    let id = await saveDeck(deckName, cards, folderId);
-    navigate(`/tools/flashcards/study/${id}`, {
-      state: {
-        flashcards: cards,
-        title: deckName,
-      },
-    });
-  };
-
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setIsProcessing(true);
-      try {
-        await generateFlashcards(file, numCards, folderId);
-        window.location.reload();
-      } catch (error) {
-        console.error("Error processing PDF:", error);
-        alert(error.message || "Failed to generate flashcards from PDF");
-      } finally {
-        setIsProcessing(false);
-      }
-    }
-  };
-
-  const handleNumCardsChange = (e) => {
-    const rawValue = e.target.value;
-
-    if (rawValue === "") {
-      setNumCards("");
-      return;
-    }
-
-    const parsedValue = Number.parseInt(rawValue, 10);
-    if (Number.isNaN(parsedValue)) {
-      return;
-    }
-
-    setNumCards(
-      Math.min(MAX_FLASHCARDS, Math.max(MIN_FLASHCARDS, parsedValue))
-    );
-  };
-
-  const handleNumCardsBlur = () => {
-    if (numCards === "") {
-      setNumCards(10);
-      return;
-    }
-
-    setNumCards(
-      Math.min(MAX_FLASHCARDS, Math.max(MIN_FLASHCARDS, Number(numCards)))
-    );
-  };
-
-  // Fetch saved decks on component mount
-  useEffect(() => {
-    if (!decksFetchedRef.current) {
-      fetchSavedDecks();
-    }
-  }, [fetchSavedDecks, decksFetchedRef]);
-
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-      {/* Processing Overlay */}
+
+      {/* Processing overlay */}
       {isProcessing && (
         <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin h-10 w-10 rounded-full border-2 border-blue-600 border-t-transparent mx-auto mb-4" />
-            <p className="text-gray-700 font-medium">Generating flashcards…</p>
+            <div className="animate-spin h-10 w-10 rounded-full border-2 border-primary-600 border-t-transparent mx-auto mb-4" />
+            <p className="text-gray-700 font-medium">Generating flashcards...</p>
             <p className="text-sm text-gray-500">This usually takes under a minute</p>
           </div>
         </div>
@@ -211,149 +101,124 @@ const AIFlashcards = () => {
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="bg-primary-50 p-2.5 rounded-xl">
-          <Brain className="h-6 w-6 text-primary-600" />
+          <Layers className="h-6 w-6 text-primary-600" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">AI Flashcards</h1>
-          <p className="text-sm text-gray-500">Upload a PDF and generate study-ready flashcards instantly</p>
+          <p className="text-sm text-gray-500">Generate study-ready flashcards from a topic or PDF</p>
         </div>
       </div>
 
-      {/* Topic Generator + Upload side by side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      {/* Creation panel */}
+      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm mb-8">
 
-      {/* Topic Generator */}
-      <div>
-        <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-50 to-white p-8 shadow-sm h-full">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
-              <Brain className="h-5 w-5 text-white" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900">
-              Generate Flashcards from a Topic
-            </h3>
-          </div>
-
-          <p className="text-sm text-gray-600 mb-6 max-w-xl">
-            Type any topic, concept, or course name and let AI generate a
-            complete flashcard deck for you.
-          </p>
-
-          <textarea
-            value={topicPrompt}
-            onChange={(e) => setTopicPrompt(e.target.value)}
-            placeholder="e.g. Linear systems, cell division, World War II, etc."
-            className="
-        w-full rounded-xl border border-gray-300 p-4 text-sm
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-        resize-none h-28
-      "
-          />
-
-          <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-gray-700">
-                Number of flashcards
-              </span>
-              <input
-                type="number"
-                min={MIN_FLASHCARDS}
-                max={MAX_FLASHCARDS}
-                value={numCards}
-                onChange={handleNumCardsChange}
-                onBlur={handleNumCardsBlur}
-                className="w-32 rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="mt-2 text-xs text-gray-500">
-                Choose between {MIN_FLASHCARDS} and {MAX_FLASHCARDS} cards.
-              </p>
-            </label>
-
+        {/* Tabs */}
+        <div className="flex border-b border-gray-100">
+          {[
+            { key: "topic", label: "From a Topic", icon: Layers },
+            { key: "pdf",   label: "Upload PDF",   icon: FileText },
+          ].map(({ key, label, icon: Icon }) => (
             <button
-              disabled={!topicPrompt || numCards === ""}
-              onClick={handleTopicGenerate}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3
-             text-sm font-medium text-white hover:bg-blue-700 transition
-             disabled:opacity-50 disabled:cursor-not-allowed"
+              key={key}
+              onClick={() => setTab(key)}
+              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                tab === key
+                  ? "border-primary-600 text-primary-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
             >
-              Generate Flashcards
-              <MoveRight className="h-4 w-4" />
+              <Icon className="h-4 w-4" />
+              {label}
             </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Upload Card */}
-      <div>
-        <div className="mb-4 flex items-end justify-between gap-4 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4">
-          <div>
-            <p className="text-sm font-medium text-gray-900">PDF flashcard count</p>
-            <p className="text-xs text-gray-500">
-              The uploaded PDF will use the same card count.
-            </p>
-          </div>
-
-          <input
-            type="number"
-            min={MIN_FLASHCARDS}
-            max={MAX_FLASHCARDS}
-            value={numCards}
-            onChange={handleNumCardsChange}
-            onBlur={handleNumCardsBlur}
-            className="w-28 rounded-xl border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          ))}
         </div>
 
-        <label
-          htmlFor="pdf-upload"
-          className="group cursor-pointer block rounded-3xl border border-gray-200 bg-white p-10 text-center shadow-sm hover:shadow-md transition"
-        >
-          <div className="mx-auto mb-6 h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center group-hover:scale-105 transition">
-            <Plus className="h-7 w-7 text-blue-600" />
-          </div>
+        <div className="p-6">
+          {tab === "topic" ? (
+            <div>
+              <p className="text-sm text-gray-500 mb-4">
+                Type any topic, concept, or course name and let AI build a complete deck for you.
+              </p>
+              <textarea
+                value={topicPrompt}
+                onChange={(e) => setTopicPrompt(e.target.value)}
+                placeholder="e.g. Cell division, World War II, Linear systems..."
+                className="w-full rounded-xl border border-gray-200 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none h-28"
+              />
+              <div className="flex items-end justify-between mt-4">
+                <label className="block">
+                  <span className="text-xs font-medium text-gray-600 mb-1 block">Number of cards</span>
+                  <input
+                    type="number"
+                    min={MIN_FLASHCARDS}
+                    max={MAX_FLASHCARDS}
+                    value={numCards}
+                    onChange={handleNumCardsChange}
+                    onBlur={handleNumCardsBlur}
+                    className="w-24 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">1 – 100 cards</p>
+                </label>
+                <button
+                  disabled={!topicPrompt || numCards === ""}
+                  onClick={handleTopicGenerate}
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Generate Flashcards
+                  <MoveRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <p className="text-sm text-gray-500 mb-4">
+                Upload lecture notes, slides, or a textbook chapter and AI will extract the key concepts.
+              </p>
 
-          <h3 className="text-lg font-semibold text-gray-900">Upload a PDF</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Lecture notes, slides, textbooks
-          </p>
+              <label
+                htmlFor="pdf-upload"
+                className="group cursor-pointer flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 hover:border-primary-400 hover:bg-primary-50 transition p-10 text-center"
+              >
+                <div className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                  <Upload className="h-5 w-5 text-primary-600" />
+                </div>
+                <p className="text-sm font-medium text-gray-700">Click to upload a PDF</p>
+                <p className="text-xs text-gray-400 mt-1">PDF only</p>
+              </label>
+              <input id="pdf-upload" type="file" accept="application/pdf" className="hidden" onChange={handleFileUpload} />
 
-          <p className="mt-4 text-xs text-gray-400">
-            PDF only • AI-generated flashcards
-          </p>
-        </label>
-
-        <input
-          id="pdf-upload"
-          type="file"
-          accept="application/pdf"
-          className="hidden"
-          onChange={handleFileUpload}
-        />
+              <div className="flex items-center justify-between mt-4">
+                <label className="block">
+                  <span className="text-xs font-medium text-gray-600 mb-1 block">Number of cards</span>
+                  <input
+                    type="number"
+                    min={MIN_FLASHCARDS}
+                    max={MAX_FLASHCARDS}
+                    value={numCards}
+                    onChange={handleNumCardsChange}
+                    onBlur={handleNumCardsBlur}
+                    className="w-24 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">1 – 100 cards</p>
+                </label>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-
-      </div>{/* end grid */}
 
       {/* Saved Decks */}
-      <div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-          Your Flashcard Decks
-        </h2>
-
+      <div className="mb-10">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Flashcard Decks</h2>
         {savedDecks.length > 0 ? (
-          <FlashcardDeckList
-            decks={savedDecks}
-            onDeckSelect={handleDeckSelect}
-          />
+          <FlashcardDeckList decks={savedDecks} onDeckSelect={handleDeckSelect} />
         ) : (
-          <div className="rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-500">
-            No flashcard decks yet. Upload a PDF to get started.
-          </div>
+          <p className="text-sm text-gray-400">No decks yet. Generate one above to get started.</p>
         )}
       </div>
 
-      <PreGeneratedFlashcardSection
-        onDeckSelect={handlePreGeneratedDeckSelect}
-      />
+      {/* Pre-generated carousel */}
+      <PreGeneratedFlashcardSection onDeckSelect={handlePreGeneratedDeckSelect} />
     </div>
   );
 };

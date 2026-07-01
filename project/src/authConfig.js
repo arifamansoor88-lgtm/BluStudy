@@ -18,7 +18,7 @@ export const msalConfig = {
     clientId: "966d3bf1-5512-4c9c-9af0-554ad974a7f5",
     authority: b2cPolicies.authorities.signUpSignIn.authority,
     knownAuthorities: [b2cPolicies.authorityDomain],
-    redirectUri: "http://localhost:5173",
+    redirectUri: window.location.origin,
   },
   cache: {
     cacheLocation: "sessionStorage",

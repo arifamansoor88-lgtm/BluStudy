@@ -223,6 +223,7 @@ export const useQuizData = () => {
       subjectCategory = "conceptual"
     ) => {
       try {
+        setQuizAttempts([]);
         console.log("=== generateQuiz Hook Called ===");
         console.log("Generating quiz with:", {
           file: selectedFile?.name,
@@ -352,6 +353,7 @@ export const useQuizData = () => {
       subjectCategory = "conceptual"
     ) => {
       try {
+        setQuizAttempts([]);
         console.log("=== generateQuizFromTopic Hook Called ===");
         console.log("Topic text:", topicText);
         console.log("Number of questions:", numQuestions);
@@ -517,7 +519,7 @@ export const useQuizData = () => {
 
   // Save a quiz attempt
   const saveQuizAttempt = useCallback(
-    async (generatedQuiz, userAnswers, timer, mode) => {
+    async (generatedQuiz, userAnswers, timer, mode, precomputedScore = null) => {
       if (!generatedQuiz || !generatedQuiz.id) return;
 
       try {
@@ -526,10 +528,9 @@ export const useQuizData = () => {
 
         const token = await getToken();
 
-        // Prepare attempt data
         const attemptData = {
           quizId: generatedQuiz.id,
-          score: calculateQuizScore(generatedQuiz.questions, userAnswers),
+          score: precomputedScore ?? calculateQuizScore(generatedQuiz.questions, userAnswers),
           timeTaken: timer,
           userAnswers: userAnswers,
           mode: mode,
@@ -580,6 +581,24 @@ export const useQuizData = () => {
     fetchQuizById,
     generateQuiz,
     generateQuizFromTopic,
+    deleteQuiz: async (quizId) => {
+      const token = await getToken();
+      if (!token) throw new Error("No authentication token available");
+      await axios.delete(`http://127.0.0.1:8000/quizzes/${quizId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+    generateQuizFromFlashcards: async (flashcards, title, numQuestions = 10) => {
+      setQuizAttempts([]);
+      const token = await getToken();
+      if (!token) throw new Error("No authentication token available");
+      const response = await axios.post(
+        "http://127.0.0.1:8000/generate-quiz-from-flashcards",
+        { flashcards, title, num_questions: numQuestions, question_formats: ["multiple_choice"] },
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+      );
+      return response.data;
+    },
     saveQuiz,
     saveQuizAttempt,
   };

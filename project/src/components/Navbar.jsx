@@ -1,42 +1,177 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Brain, Menu, X, LogOut } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  Brain,
+  Home,
+  LayoutGrid,
+  Library,
+  Layers,
+  ClipboardList,
+  FileText,
+  CalendarDays,
+  Settings,
+  Bell,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+} from "lucide-react";
+import { motion } from "framer-motion";
 import { useMsal } from "@azure/msal-react";
 
-const Navbar = ({ isPublicPage }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+const NAV_ITEMS = [
+  { icon: Home,          label: "Home",           to: "/dashboard" },
+  { icon: LayoutGrid,    label: "Study Tools",    to: "/tools" },
+  { icon: Library,       label: "My Library",     to: "/workspace" },
+  { icon: Layers,        label: "Flashcards",     to: "/tools/flashcards" },
+  { icon: ClipboardList, label: "Practice Tests", to: "/tools/practice-tests" },
+  { icon: FileText,      label: "Summarizer",     to: "/tools/summarizer" },
+  { icon: CalendarDays,  label: "Study Planner",  to: "/tools/study-planner" },
+  { icon: Settings,      label: "Settings",       to: "/settings" },
+];
+
+export const Sidebar = ({ isOpen, onToggle }) => {
+  const { pathname } = useLocation();
+  const exactMatch = NAV_ITEMS.find((item) => pathname === item.to)?.to;
+
+  return (
+    <aside
+      className="fixed left-0 top-0 h-screen bg-white border-r border-gray-100 flex flex-col z-40 transition-all duration-300"
+      style={{ width: isOpen ? "224px" : "64px" }}
+    >
+      {/* Logo + toggle */}
+      <div className="px-3 py-4 border-b border-gray-100 flex items-center justify-between min-h-[64px]">
+        {isOpen ? (
+          <Link to="/dashboard" className="flex items-center gap-3 group">
+            <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
+              <Brain className="h-8 w-8 text-primary-600 flex-shrink-0" />
+            </motion.div>
+            <span className="text-lg font-bold text-gray-900">BluStudy</span>
+          </Link>
+        ) : (
+          <Link to="/dashboard" className="mx-auto">
+            <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
+              <Brain className="h-7 w-7 text-primary-600" />
+            </motion.div>
+          </Link>
+        )}
+        {isOpen && (
+          <button
+            onClick={onToggle}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
+            title="Collapse sidebar"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Nav items */}
+      <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
+        {NAV_ITEMS.map(({ icon: Icon, label, to }) => {
+          const isActive = pathname === to || (!exactMatch && to !== "/dashboard" && pathname.startsWith(to + "/"));
+          return (
+            <Link
+              key={to}
+              to={to}
+              title={!isOpen ? label : undefined}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                isOpen ? "" : "justify-center"
+              } ${
+                isActive
+                  ? "bg-primary-50 text-primary-600"
+                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+              }`}
+            >
+              <Icon className="h-4 w-4 flex-shrink-0" />
+              {isOpen && label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Expand button when collapsed */}
+      {!isOpen && (
+        <div className="px-2 pb-4">
+          <button
+            onClick={onToggle}
+            className="w-full flex items-center justify-center p-2.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            title="Expand sidebar"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+    </aside>
+  );
+};
+
+export const TopBar = () => {
   const { instance, accounts } = useMsal();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const isAuthenticated = accounts.length > 0;
+  const account = instance.getActiveAccount() || accounts[0];
+  const rawName =
+    account?.name ||
+    account?.idTokenClaims?.name ||
+    account?.idTokenClaims?.given_name ||
+    account?.username?.split("@")[0] ||
+    "User";
+  const displayName = rawName.includes("@") ? rawName.split("@")[0] : rawName;
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      const account = instance.getActiveAccount() || accounts[0];
-      console.log("Active account details:", account);
-    }
-  }, [isAuthenticated, instance, accounts]);
-
-  const extractUserName = () => {
-    if (!isAuthenticated) return "";
-
-    const account = instance.getActiveAccount() || accounts[0];
-
-    return (
-      account?.name ||
-      account?.idTokenClaims?.name ||
-      account?.idTokenClaims?.given_name ||
-      account?.idTokenClaims?.identity?.displayName ||
-      account?.idTokenClaims?.identity?.firstName ||
-      (account?.idTokenClaims?.emails && account?.idTokenClaims?.emails[0]) ||
-      account?.username?.split("@")[0] ||
-      "User"
-    );
+  const handleSignOut = async () => {
+    await instance.logoutPopup();
+    navigate("/signin");
   };
 
-  const userName = extractUserName();
-  const displayName = userName.split(" ")[0] || "User";
+  return (
+    <header className="h-14 bg-white border-b border-gray-100 flex items-center justify-end px-6 sticky top-0 z-30">
+      <div className="flex items-center gap-3">
+        <button className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
+          <Bell className="h-5 w-5" />
+        </button>
+
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen((o) => !o)}
+            className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            <div className="h-7 w-7 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs font-semibold">
+              {initials}
+            </div>
+            <span className="text-sm font-medium text-gray-700">{displayName}</span>
+            <ChevronDown className="h-4 w-4 text-gray-400" />
+          </button>
+
+          {menuOpen && (
+            <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-100 rounded-xl shadow-lg py-1 z-50">
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+};
+
+/* ── Public top nav (used on landing / sign-in / sign-up) ── */
+const Navbar = ({ isPublicPage }) => {
+  const { instance, accounts } = useMsal();
+  const navigate = useNavigate();
+  const isAuthenticated = accounts.length > 0;
 
   const handleSignOut = async () => {
     await instance.logoutPopup();
@@ -46,157 +181,31 @@ const Navbar = ({ isPublicPage }) => {
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center group">
-              <motion.div
-                whileHover={{ rotate: 360 }}
-                transition={{ duration: 0.5 }}
-                className="relative"
-              >
-                <Brain className="h-8 w-8 text-primary-600" />
-              </motion.div>
-              <span className="ml-2 text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
-                BluStudy
-              </span>
-            </Link>
+        <div className="flex justify-between h-16 items-center">
+          <Link to="/" className="flex items-center gap-2 group">
+            <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
+              <Brain className="h-8 w-8 text-primary-600" />
+            </motion.div>
+            <span className="text-xl font-bold text-gray-900">BluStudy</span>
+          </Link>
 
-            {!isPublicPage && (
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <NavLink to="/dashboard">Dashboard</NavLink>
-                <NavLink to="/tools">Study Tools</NavLink>
-                <NavLink to="/workspace">Workspace</NavLink>
-                {/* <NavLink to="/public_library">Public Library</NavLink> */}
-              </div>
-            )}
-          </div>
-
-          <div className="hidden sm:flex sm:items-center sm:space-x-4">
+          <div className="flex items-center gap-3">
             {isAuthenticated ? (
               <>
-                {!isPublicPage ? (
-                  <>
-                    <span className="text-gray-700 font-medium">{displayName}</span>
-                    <button
-                      onClick={handleSignOut}
-                      className="flex items-center button-secondary"
-                    >
-                      <LogOut className="h-4 w-4 mr-1" />
-                      Sign Out
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => navigate("/tools")}
-                    className="button-primary"
-                  >
-                    Go to Study Tools
-                  </button>
-                )}
+                <button onClick={() => navigate("/dashboard")} className="button-primary">
+                  Go to Dashboard
+                </button>
+                <button onClick={handleSignOut} className="button-secondary flex items-center gap-1">
+                  <LogOut className="h-4 w-4" /> Sign Out
+                </button>
               </>
             ) : (
-              <Link to="/signin" className="button-primary">
-                Log In
-              </Link>
+              <Link to="/signin" className="button-primary">Log In</Link>
             )}
-          </div>
-
-          <div className="flex items-center sm:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
           </div>
         </div>
       </div>
-
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="sm:hidden bg-white border-t border-gray-200"
-          >
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {!isPublicPage && (
-                <>
-                  <MobileNavLink to="/dashboard">Dashboard</MobileNavLink>
-                  <MobileNavLink to="/tools">Study Tools</MobileNavLink>
-                  <MobileNavLink to="/workspace">Workspace</MobileNavLink>
-                  {/* <MobileNavLink to="/public_library">Public Library</MobileNavLink> */}
-                </>
-              )}
-
-              {isAuthenticated ? (
-                <>
-                  {isPublicPage ? (
-                    <button
-                      onClick={() => {
-                        setIsMobileMenuOpen(false);
-                        navigate("/tools");
-                      }}
-                      className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-primary-600 hover:bg-gray-50 transition-colors"
-                    >
-                      Go to Study Tools
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-primary-600 hover:bg-gray-50 transition-colors"
-                    >
-                      Sign Out
-                    </button>
-                  )}
-                </>
-              ) : (
-                <MobileNavLink to="/signin">Log In</MobileNavLink>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </nav>
-  );
-};
-
-const NavLink = ({ to, children }) => {
-  const { pathname } = useLocation();
-  const isActive = pathname === to || pathname.startsWith(to + "/");
-  return (
-    <Link
-      to={to}
-      className={`px-3 py-2 rounded-md text-sm transition-colors ${
-        isActive
-          ? "text-primary-600 font-semibold bg-primary-50"
-          : "text-gray-600 font-medium hover:text-gray-900 hover:bg-gray-100"
-      }`}
-    >
-      {children}
-    </Link>
-  );
-};
-
-const MobileNavLink = ({ to, children }) => {
-  const { pathname } = useLocation();
-  const isActive = pathname === to || pathname.startsWith(to + "/");
-  return (
-    <Link
-      to={to}
-      className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-        isActive
-          ? "text-primary-600 bg-primary-50"
-          : "text-gray-900 hover:text-primary-600 hover:bg-gray-50"
-      }`}
-    >
-      {children}
-    </Link>
   );
 };
 
