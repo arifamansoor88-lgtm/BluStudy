@@ -4,11 +4,13 @@ import { useDeckData } from "./hooks";
 import FlashcardDeckList from "./FlashcardDeckList";
 import PreGeneratedFlashcardSection from "./PreGeneratedFlashcardSection";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useGuest } from "../../../context/GuestContext";
 
 const MIN_FLASHCARDS = 1;
 const MAX_FLASHCARDS = 100;
 
 const AIFlashcards = () => {
+  const { isGuest } = useGuest();
   const [searchParams] = useSearchParams();
   const folderId = searchParams.get("folderId");
 
@@ -29,8 +31,8 @@ const AIFlashcards = () => {
   } = useDeckData();
 
   useEffect(() => {
-    if (!decksFetchedRef.current) fetchSavedDecks();
-  }, [fetchSavedDecks, decksFetchedRef]);
+    if (!isGuest && !decksFetchedRef.current) fetchSavedDecks();
+  }, [fetchSavedDecks, decksFetchedRef, isGuest]);
 
   const handleNumCardsChange = (e) => {
     const v = e.target.value;
@@ -207,15 +209,17 @@ const AIFlashcards = () => {
         </div>
       </div>
 
-      {/* Saved Decks */}
-      <div className="mb-10">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Flashcard Decks</h2>
-        {savedDecks.length > 0 ? (
-          <FlashcardDeckList decks={savedDecks} onDeckSelect={handleDeckSelect} />
-        ) : (
-          <p className="text-sm text-gray-400">No decks yet. Generate one above to get started.</p>
-        )}
-      </div>
+      {/* Saved Decks — hidden for guests */}
+      {!isGuest && (
+        <div className="mb-10">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Flashcard Decks</h2>
+          {savedDecks.length > 0 ? (
+            <FlashcardDeckList decks={savedDecks} onDeckSelect={handleDeckSelect} />
+          ) : (
+            <p className="text-sm text-gray-400">No decks yet. Generate one above to get started.</p>
+          )}
+        </div>
+      )}
 
       {/* Pre-generated carousel */}
       <PreGeneratedFlashcardSection onDeckSelect={handlePreGeneratedDeckSelect} />

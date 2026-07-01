@@ -50,6 +50,8 @@ const Dashboard = () => {
   const [suggestedNextSteps, setSuggestedNextSteps] = useState([]);
   const [loadingNextSteps, setLoadingNextSteps] = useState(true);
   const [focusAreas, setFocusAreas] = useState([]);
+  const [quizioLoaded, setQuizioLoaded] = useState(false);
+  const [quizioLoading, setQuizioLoading] = useState(false);
   const [displayStreak, setDisplayStreak] = useState(0);
   const [glow, setGlow] = useState(false);
   const activeAccountId =
@@ -117,6 +119,7 @@ const Dashboard = () => {
   handleQuizio(); 
 }, []);
 const handleQuizio = async () => {
+  setQuizioLoading(true);
   try {
     const account = instance.getActiveAccount();
     const response = await instance.acquireTokenSilent({
@@ -133,11 +136,13 @@ const handleQuizio = async () => {
     });
 
     const data = await res.json();
-
     setFocusAreas(data.focusAreas || []);
-
+    setQuizioLoaded(true);
   } catch (err) {
     console.error("Failed to fetch focus areas:", err);
+    setQuizioLoaded(true);
+  } finally {
+    setQuizioLoading(false);
   }
 };
 
@@ -481,7 +486,7 @@ const [loadingTopic, setLoadingTopic] = useState(null);
                 <p className="text-xs text-gray-400">AI-powered practice</p>
               </div>
             </div>
-            {focusAreas.length > 0 && (
+            {quizioLoaded && !quizioLoading && (
               <button
                 onClick={handleQuizio}
                 className="text-xs text-purple-600 hover:text-purple-700 font-medium"
@@ -495,14 +500,26 @@ const [loadingTopic, setLoadingTopic] = useState(null);
             Quizio looks at your past quiz scores, spots your weakest topics, and builds custom practice sets to help you catch up.
           </p>
 
-          {focusAreas.length === 0 ? (
-            <button
-              onClick={handleQuizio}
-              className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-purple-700 hover:shadow-md transition-all"
-            >
-              Analyze Weak Areas
-            </button>
-          ) : (
+          {quizioLoading ? (
+            <div className="flex items-center justify-center gap-2 py-4 text-purple-500 text-sm">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+              Analyzing your quiz history…
+            </div>
+          ) : quizioLoaded && focusAreas.length === 0 ? (
+            <div className="text-center py-4 space-y-2">
+              <p className="text-sm text-gray-500">No weak areas found — nice work! 🎉</p>
+              <p className="text-xs text-gray-400">Take some quizzes and come back to see your focus areas.</p>
+              <button
+                onClick={() => navigate("/tools/practice-tests")}
+                className="mt-1 text-xs text-purple-600 hover:text-purple-700 font-medium underline underline-offset-2"
+              >
+                Go to Practice Tests →
+              </button>
+            </div>
+          ) : focusAreas.length > 0 ? (
             <div className="flex flex-col gap-2">
               <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Your focus areas</p>
               {focusAreas.map((item, idx) => {
@@ -534,7 +551,7 @@ const [loadingTopic, setLoadingTopic] = useState(null);
                 );
               })}
             </div>
-          )}
+          ) : null}
         </div>
       </motion.div>
 

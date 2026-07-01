@@ -311,7 +311,21 @@ def _parse_origins() -> List[str]:
         return [o.strip() for o in env.split(",") if o.strip()]
     return ["http://localhost:5173", "http://127.0.0.1:5173"]
 
+try:
+    from slowapi import Limiter, _rate_limit_exceeded_handler
+    from slowapi.util import get_remote_address
+    from slowapi.errors import RateLimitExceeded
+    _limiter = Limiter(key_func=get_remote_address)
+    _slowapi_available = True
+except ImportError:
+    _slowapi_available = False
+    _limiter = None
+
 app = FastAPI(title="AI Education Backend")
+
+if _slowapi_available:
+    app.state.limiter = _limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -2671,6 +2685,57 @@ async def evaluate_answer(request: ShortAnswerEvaluationRequest, user_claims: di
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to evaluate answer: {str(e)}")
 
 # ----- Summarize -----
+# ── Public (no-auth) guest endpoints ─────────────────────────────────────────
+# Rate-limited to prevent abuse of OpenAI credits.
+
+def _rate_limit(limit_string: str):
+    """Decorator factory: apply slowapi limit when available, else no-op."""
+    def decorator(fn):
+        if _slowapi_available and _limiter:
+            return _limiter.limit(limit_string)(fn)
+        return fn
+    return decorator
+
+@app.post("/public/summarize")
+@_rate_limit("8/hour")
+async def public_summarize(request: Request, payload: Dict[str, Any] = Body(...)):
+    """Guest summarizer — no auth, rate limited to 8 uses per IP per hour."""
+    text = (payload.get("text") or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="text is required")
+    if len(text) > 15000:
+        raise HTTPException(status_code=400, detail="Text too long (max 15 000 chars for guest mode)")
+    style = payload.get("style", "high")
+    fmt   = payload.get("format", "bullet")
+    try:
+        result = summarize_text(text, style=style, format=fmt)
+        return {"summary": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/public/generate-quiz")
+@_rate_limit("5/hour")
+async def public_generate_quiz(request: Request, payload: Dict[str, Any] = Body(...)):
+    """Guest quiz generator — no auth, rate limited to 5 uses per IP per hour."""
+    topic = (payload.get("topic") or "").strip()
+    if not topic:
+        raise HTTPException(status_code=400, detail="topic is required")
+    num_questions = min(int(payload.get("num_questions", 8)), 10)
+    formats = ["multiple_choice", "multi_select", "short_answer"]
+    synthetic_text = f"Create a quiz for the following topic:\n\n{topic}"
+    try:
+        quiz_json = generate_quiz(
+            text=synthetic_text,
+            num_questions=num_questions,
+            question_formats=formats,
+        )
+        quiz_data = _sanitize_quiz_payload(json.loads(quiz_json))
+        return quiz_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ── End public endpoints ──────────────────────────────────────────────────────
+
 @app.post("/summarize")
 async def summarize_file(
     file: UploadFile = None,

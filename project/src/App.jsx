@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Navbar, { Sidebar, TopBar } from "./components/Navbar";
+import GuestBanner from "./components/GuestBanner";
+import { GuestProvider, useGuest } from "./context/GuestContext";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import StudyTools from "./pages/StudyTools";
@@ -47,13 +49,27 @@ const appRoutes = (
   </Routes>
 );
 
+// Routes guests are allowed to visit without signing in
+const GUEST_ALLOWED = [
+  "/tools/summarizer",
+  "/tools/practice-tests",
+  "/tools/flashcards",
+];
+
 function AppContent() {
   const location = useLocation();
+  const { isGuest } = useGuest();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const publicRoutes = ["/", "/signin", "/signup"];
   const isPublicPage =
     publicRoutes.includes(location.pathname) ||
     location.pathname.startsWith("/share/");
+
+  // Sign-in page is full-screen — no navbar wrapper
+  if (location.pathname === "/signin") {
+    return <div className="min-h-screen">{appRoutes}</div>;
+  }
 
   if (isPublicPage) {
     return (
@@ -64,7 +80,25 @@ function AppContent() {
     );
   }
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Guest users can only access GUEST_ALLOWED routes
+  if (isGuest) {
+    const allowed = GUEST_ALLOWED.some((p) => location.pathname.startsWith(p));
+    if (!allowed) {
+      return <Navigate to="/tools/summarizer" replace />;
+    }
+    return (
+      <div className="flex min-h-screen bg-gray-50">
+        <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen((o) => !o)} guestMode />
+        <div
+          className="flex-1 flex flex-col min-h-screen transition-all duration-300"
+          style={{ marginLeft: sidebarOpen ? "224px" : "64px" }}
+        >
+          <GuestBanner />
+          <main className="flex-1">{appRoutes}</main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -85,7 +119,9 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <GuestProvider>
+        <AppContent />
+      </GuestProvider>
     </Router>
   );
 }

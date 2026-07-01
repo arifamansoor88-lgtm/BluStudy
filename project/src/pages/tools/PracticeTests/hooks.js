@@ -4,6 +4,7 @@ import { useMsal } from "@azure/msal-react";
 import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { protectedResources } from "../../../authConfig";
 import { recordStudyToolUse } from "../../../api/apiService";
+import { useGuest, guestFetch } from "../../../context/GuestContext";
 
 /**
  * Custom hook for timer functionality
@@ -53,6 +54,7 @@ export const useQuizTimer = (status) => {
  */
 export const useQuizData = () => {
   const { instance, accounts, inProgress } = useMsal();
+  const { isGuest } = useGuest();
   const quizzesFetchedRef = useRef(false);
   const [savedQuizzes, setSavedQuizzes] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -126,6 +128,7 @@ export const useQuizData = () => {
 
   // Fetch saved quizzes
   const fetchSavedQuizzes = useCallback(async () => {
+    if (isGuest) return [];
     try {
       // Check if MSAL is initialized
       if (inProgress !== "none") {
@@ -354,13 +357,19 @@ export const useQuizData = () => {
     ) => {
       try {
         setQuizAttempts([]);
+
+        // Guest mode: call public endpoint, no auth or Cosmos needed
+        if (isGuest) {
+          const quizData = await guestFetch("/public/generate-quiz", {
+            method: "POST",
+            body: JSON.stringify({ topic: topicText, num_questions: Math.min(numQuestions, 10) }),
+          });
+          return quizData;
+        }
+
         console.log("=== generateQuizFromTopic Hook Called ===");
         console.log("Topic text:", topicText);
         console.log("Number of questions:", numQuestions);
-        console.log("Selected topics:", selectedTopics);
-        console.log("Custom topics:", customTopics);
-        console.log("Question formats:", questionFormats);
-        console.log("Subject category:", subjectCategory);
 
         const token = await getToken();
         if (!token) {
@@ -440,7 +449,7 @@ export const useQuizData = () => {
         );
       }
     },
-    [getToken]
+    [getToken, isGuest]
   );
 
   // Save a quiz

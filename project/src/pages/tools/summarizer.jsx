@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { generateSummary, recordStudyToolUse } from '../../api/apiService';
 import { msalInstance, protectedResources } from '../../authConfig';
+import { useGuest, guestFetch } from '../../context/GuestContext';
 
 // reusable save-to-folder button
 import SaveToFolderButton from '../../components/SaveToFolderButton';
@@ -29,6 +30,7 @@ import ShareItemButton from '../../components/ShareItemButton';
 const API_BASE = "http://localhost:8000";
 
 const Summarizer = () => {
+  const { isGuest } = useGuest();
   // Get folderId from URL query params if present
   const [searchParams] = useSearchParams();
   const folderId = searchParams.get('folderId');
@@ -192,6 +194,15 @@ const Summarizer = () => {
   };
 
   const callGenerateSummary = async (input) => {
+    if (isGuest) {
+      // File uploads aren't supported in guest mode — only text
+      const text = input instanceof FormData ? null : input.text;
+      if (!text) throw new Error("File upload requires an account. Please paste your text instead.");
+      return await guestFetch("/public/summarize", {
+        method: "POST",
+        body: JSON.stringify({ text, style: summaryStyle, format: summaryFormat }),
+      });
+    }
     if (input instanceof FormData) {
       input.append('style', summaryStyle);
       input.append("format", summaryFormat);

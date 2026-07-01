@@ -20,19 +20,21 @@ import { motion } from "framer-motion";
 import { useMsal } from "@azure/msal-react";
 
 const NAV_ITEMS = [
-  { icon: Home,          label: "Home",           to: "/dashboard" },
-  { icon: LayoutGrid,    label: "Study Tools",    to: "/tools" },
-  { icon: Library,       label: "My Library",     to: "/workspace" },
-  { icon: Layers,        label: "Flashcards",     to: "/tools/flashcards" },
-  { icon: ClipboardList, label: "Practice Tests", to: "/tools/practice-tests" },
-  { icon: FileText,      label: "Summarizer",     to: "/tools/summarizer" },
-  { icon: CalendarDays,  label: "Study Planner",  to: "/tools/study-planner" },
-  { icon: Settings,      label: "Settings",       to: "/settings" },
+  { icon: Home,          label: "Home",           to: "/dashboard",             guestAllowed: false },
+  { icon: LayoutGrid,    label: "Study Tools",    to: "/tools",                 guestAllowed: false },
+  { icon: Library,       label: "My Library",     to: "/workspace",             guestAllowed: false },
+  { icon: Layers,        label: "Flashcards",     to: "/tools/flashcards",      guestAllowed: true  },
+  { icon: ClipboardList, label: "Practice Tests", to: "/tools/practice-tests",  guestAllowed: true  },
+  { icon: FileText,      label: "Summarizer",     to: "/tools/summarizer",      guestAllowed: true  },
+  { icon: CalendarDays,  label: "Study Planner",  to: "/tools/study-planner",   guestAllowed: false },
+  { icon: Settings,      label: "Settings",       to: "/settings",              guestAllowed: false },
 ];
 
-export const Sidebar = ({ isOpen, onToggle }) => {
+export const Sidebar = ({ isOpen, onToggle, guestMode = false }) => {
   const { pathname } = useLocation();
-  const exactMatch = NAV_ITEMS.find((item) => pathname === item.to)?.to;
+  const visibleItems = guestMode ? NAV_ITEMS.filter((i) => i.guestAllowed) : NAV_ITEMS;
+  const exactMatch = visibleItems.find((item) => pathname === item.to)?.to;
+  const logoTo = guestMode ? "/" : "/dashboard";
 
   return (
     <aside
@@ -42,14 +44,14 @@ export const Sidebar = ({ isOpen, onToggle }) => {
       {/* Logo + toggle */}
       <div className="px-3 py-4 border-b border-gray-100 flex items-center justify-between min-h-[64px]">
         {isOpen ? (
-          <Link to="/dashboard" className="flex items-center gap-3 group">
+          <Link to={logoTo} className="flex items-center gap-3 group">
             <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
               <Brain className="h-8 w-8 text-primary-600 flex-shrink-0" />
             </motion.div>
             <span className="text-lg font-bold text-gray-900">BluStudy</span>
           </Link>
         ) : (
-          <Link to="/dashboard" className="mx-auto">
+          <Link to={logoTo} className="mx-auto">
             <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
               <Brain className="h-7 w-7 text-primary-600" />
             </motion.div>
@@ -68,7 +70,7 @@ export const Sidebar = ({ isOpen, onToggle }) => {
 
       {/* Nav items */}
       <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map(({ icon: Icon, label, to }) => {
+        {visibleItems.map(({ icon: Icon, label, to }) => {
           const isActive = pathname === to || (!exactMatch && to !== "/dashboard" && pathname.startsWith(to + "/"));
           return (
             <Link

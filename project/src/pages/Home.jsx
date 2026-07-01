@@ -1,7 +1,8 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import { Brain, BookOpen, FileText, Network, Mic, CalendarDays, Zap, ArrowRight } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Brain, BookOpen, FileText, Network, Mic, CalendarDays, Zap, ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { useGuest } from "../context/GuestContext";
 
 const tools = [
   { icon: BookOpen,    title: "Flashcards",      bg: "bg-blue-500",   lightBg: "bg-blue-50",   border: "border-blue-100",   text: "text-blue-700" },
@@ -14,6 +15,14 @@ const tools = [
 
 
 const Home = () => {
+  const { enterGuest } = useGuest();
+  const navigate = useNavigate();
+
+  const handleTryOut = () => {
+    enterGuest();
+    navigate("/tools/flashcards");
+  };
+
   return (
     <div className="min-h-screen bg-white">
 
@@ -44,15 +53,16 @@ const Home = () => {
                 to="/signup"
                 className="inline-flex items-center gap-2 px-7 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl text-base transition-colors"
               >
-                Get started free
+                Create an account
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link
-                to="/signin"
-                className="inline-flex items-center px-7 py-3 border border-gray-200 hover:border-gray-300 text-gray-700 font-semibold rounded-xl text-base transition-colors"
+              <button
+                onClick={handleTryOut}
+                className="inline-flex items-center gap-2 px-7 py-3 border-2 border-dashed border-gray-300 hover:border-primary-400 hover:bg-primary-50 text-gray-600 hover:text-primary-700 font-semibold rounded-xl text-base transition-all"
               >
-                Sign in
-              </Link>
+                <Sparkles className="h-4 w-4" />
+                Try it out
+              </button>
             </div>
           </motion.div>
 
@@ -112,7 +122,7 @@ const Home = () => {
               to="/signup"
               className="inline-flex items-center gap-2 px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl text-base transition-colors"
             >
-              Start for free
+              Create an account
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

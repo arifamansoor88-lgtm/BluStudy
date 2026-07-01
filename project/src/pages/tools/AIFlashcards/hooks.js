@@ -3,6 +3,7 @@ import axios from "axios";
 import { useMsal } from "@azure/msal-react";
 import { protectedResources } from "../../../authConfig";
 import { recordStudyToolUse } from "../../../api/apiService";
+import { useGuest } from "../../../context/GuestContext";
 
 /**
  * Custom hook for managing flashcard data fetching and saving
@@ -10,6 +11,7 @@ import { recordStudyToolUse } from "../../../api/apiService";
  */
 export const useDeckData = () => {
     const { instance, accounts, inProgress } = useMsal();
+    const { isGuest } = useGuest();
     const decksFetchedRef = useRef(false);
     const [savedDecks, setSavedDecks] = useState([]);
     const [savedSpecificDeck, setSavedSpecificDeck] = useState([]);
@@ -48,6 +50,7 @@ export const useDeckData = () => {
 
     // Fetch saved decks
     const fetchSavedDecks = useCallback(async () => {
+        if (isGuest) return [];
         try {
             // Check if MSAL is initialized
             if (inProgress !== "none") {
@@ -70,7 +73,7 @@ export const useDeckData = () => {
             setError("Failed to load your saved flashcard decks. Please try again later.");
             return [];
         }
-    }, [getToken, inProgress]);
+    }, [getToken, inProgress, isGuest]);
 
     // Save a deck
     const saveDeck = useCallback(
