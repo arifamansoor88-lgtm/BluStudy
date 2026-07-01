@@ -20,6 +20,7 @@ import TrashPage from "./pages/Trash";
 import PublicLibrary from "./pages/publicLibrary";
 import FlashcardStudyPage from "./pages/tools/AIFlashcards/FlashcardStudy";
 import SharedItemPage from "./pages/shared/SharedItemPage";
+import Settings from "./pages/Settings";
 
 const appRoutes = (
   <Routes>
@@ -42,6 +43,7 @@ const appRoutes = (
     <Route path="/tools/flashcards/study/:deckId" element={<FlashcardStudyPage />} />
     <Route path="/public_library" element={<PublicLibrary />} />
     <Route path="/share/:token" element={<SharedItemPage />} />
+    <Route path="/settings" element={<Settings />} />
   </Routes>
 );
 
