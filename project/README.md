@@ -1,117 +1,171 @@
+# BluStudy
 
+**Live app: [blustudy.ca](https://blustudy.ca)**
 
-# AI Education
+An AI-powered study platform that helps students learn more effectively with flashcards, practice tests, mind maps, summaries, voice notes, and personalized study plans.
 
-Welcome to the **AI Education** project. This repository hosts a project designed to explore and educate users about artificial intelligence through interactive web experiences and learning resources. The project leverages modern web development technologies alongside AI-related integrations.
+## Features
 
-## Table of Contents
+- **AI Flashcards** — generate flashcard decks from uploaded PDFs or text
+- **Practice Tests** — multi-format quizzes (multiple choice, multi-select, drag-and-drop, short answer, fill-in-blank, numerical) with LaTeX math support
+- **Quizio** — AI analyzes past quiz scores to identify weak topics and builds targeted practice sets
+- **AI Summarizer** — condense documents or text into bullet points, key points, or Q&A pairs
+- **Mind Maps** — interactive visual mind maps with AI generation
+- **Voice Notes** — record, store, and review audio notes
+- **Study Planner** — generate structured multi-week study plans from uploaded materials
+- **Workspace** — organize all your content into folders, with soft-delete trash
+- **Dashboard** — study streak tracking, recent items, and AI-suggested next steps
+- **Guest mode** — limited access to flashcards, practice tests, and summarizer without signing in
+- **Share links** — share individual items with others
 
-- [Overview](#overview)
-- [Project Structure](#project-structure)
-- [Technologies Used](#technologies-used)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
+## Tech Stack
 
-## Overview
-
-The **AI Education** project is intended as a platform for exploring AI concepts in an educational setting. It includes both frontend and backend components with dedicated folders for various parts of the project. Whether you are an educator, student, or developer, this project aims to offer a practical introduction to AI and related technologies.
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, Vite, Tailwind CSS, Framer Motion |
+| Backend | FastAPI (Python 3.11) |
+| Auth | Azure AD B2C (MSAL) |
+| Database | Azure Cosmos DB |
+| AI | OpenAI (`gpt-4o-mini`) |
+| Storage | Azure Blob Storage (voice notes) |
+| Deployment | Render (frontend: Static Site, backend: Web Service) |
 
 ## Project Structure
 
-The repository is organized as follows:
-
 ```
-ai_education/
-├── b_m_a/
-│   └── project/
-│       ├── .ai/          # (AI configuration or assets)
-│       ├── backend/      # (Backend code and API services)
-│       ├── project/      # (Additional project-specific files)
-│       ├── src/          # (Frontend source code)
-│       ├── index.html    # (Entry point for the web application)
-│       ├── package.json  # (NPM project configuration)
-│       ├── package-lock.json
-│       ├── vite.config.js
-│       ├── tailwind.config.js
-│       ├── postcss.config.js
-│       ├── .gitignore
-│       └── eslint.config.js
+project/
+├── backend/              # FastAPI backend
+│   ├── main.py           # API routes
+│   ├── openai_client.py  # OpenAI integration (quiz, flashcard, summarizer, study plan)
+│   ├── database.py       # Cosmos DB helpers
+│   ├── models.py         # Pydantic models
+│   ├── pdf_utils.py      # PDF text extraction
+│   ├── requirements.txt
+│   ├── runtime.txt       # Python 3.11.9
+│   └── .env.example      # Environment variable template
+├── src/
+│   ├── api/
+│   │   └── apiService.js # Centralized API calls + study streak logic
+│   ├── components/       # Navbar, Sidebar, GuestBanner
+│   ├── context/          # GuestContext
+│   ├── hooks/            # useUserRecents
+│   ├── pages/
+│   │   ├── Dashboard.jsx
+│   │   ├── StudyTools.jsx
+│   │   ├── Workspace.jsx / FolderView.jsx / Trash.jsx
+│   │   ├── Settings.jsx
+│   │   └── tools/        # AIFlashcards, PracticeTests, MindMaps, VoiceNotes, StudyPlans, summarizer
+│   ├── App.jsx
+│   ├── authConfig.js     # MSAL / Azure B2C config
+│   └── main.jsx
+├── index.html
+├── package.json
+├── vite.config.js
+└── tailwind.config.js
 ```
 
-This structure separates concerns to keep the codebase organized:
-- **Frontend:** Managed under `src/` with an HTML entry point.
-- **Backend:** Housed in the `backend/` folder for server-side logic.
-- **AI Assets/Config:** Located under the `.ai` folder.
+## Local Development
 
-## Technologies Used
+### Prerequisites
 
-- **JavaScript/TypeScript:** Main language for frontend and build tools.
-- **Python:** Used in backend or AI modules (if applicable).
-- **Vite:** Fast development server and build tool.
-- **Tailwind CSS:** Utility-first CSS framework for styling.
-- **ESLint:** For linting JavaScript code.
+- Node.js 18+
+- Python 3.11+
+- An OpenAI API key
+- Azure AD B2C tenant (for auth)
+- Azure Cosmos DB (for data)
 
-## Installation
+### 1. Clone the repo
 
-To get started with the project locally, follow these steps:
+```bash
+git clone https://github.com/BlueMarbleAcademy/ai_education.git
+cd ai_education/project
+```
 
-1. **Clone the repository:**
+### 2. Frontend setup
 
-   ```bash
-   git clone https://github.com/BlueMarbleAcademy/ai_education.git
-   cd ai_education/b_m_a/project
-   ```
+```bash
+npm install
+```
 
+Create a `.env` file in `project/`:
 
-2.  Setup Python Environment:**
+```env
+VITE_API_BASE_URL=http://localhost:8000
+```
 
-   If the backend requires Python dependencies, navigate to the backend directory and install the necessary packages (ensure you have Python installed):
+Start the dev server:
 
-   ```bash
-   cd backend
-   .\venv\Scripts\activate
-   pip install -r requirements.txt
-   uvicorn main:app --host 0.0.0.0 --port 8000
-   ```
+```bash
+npm run dev
+# Runs on http://localhost:5173
+```
 
+### 3. Backend setup
 
-Once the installation is complete, you can run the development server:
-Open a new terminal and keep the backend terminal open
-Dirct to src folder
+```bash
+cd backend
+python -m venv venv
 
-3. **Start the frontend development server:**
+# Windows
+venv\Scripts\activate
+# macOS/Linux
+source venv/bin/activate
 
-   ```bash
-   cd src
-   npm i/ npm install
-   npm run dev
-   ```
+pip install -r requirements.txt
+```
 
-   This will launch the project on a local server (usually at `http://localhost:3000` or as specified by Vite).
+Copy `.env.example` to `.env` and fill in your values:
 
-4. To access azure here are the credentials where you can find the azure keys and database models
-    username: bluemarbleai@outlook.com
-    password: 4<Fid=)6cV/Va4;
+```bash
+cp .env.example .env
+```
+
+Start the backend:
+
+```bash
+uvicorn main:app --reload
+# Runs on http://localhost:8000
+# API docs: http://localhost:8000/docs
+```
+
+## Environment Variables
+
+### Frontend (`project/.env`)
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_BASE_URL` | Backend URL (e.g. `http://localhost:8000`) |
+
+### Backend (`project/backend/.env`)
+
+See [`backend/.env.example`](backend/.env.example) for the full list. Key variables:
+
+| Variable | Description |
+|----------|-------------|
+| `OPENAI_API_KEY` | OpenAI API key |
+| `COSMOS_DB_URL` | Azure Cosmos DB endpoint |
+| `COSMOS_DB_KEY` | Azure Cosmos DB key |
+| `CLIENT_ID` | Azure AD B2C application client ID |
+| `CLIENT_SECRET` | Azure AD B2C client secret |
+| `AUTHORITY` | Azure AD B2C authority URL |
+| `AZURE_STORAGE_CONNECTION_STRING` | Azure Blob Storage connection string (voice notes) |
+| `FRONTEND_ORIGINS` | Comma-separated allowed CORS origins |
+
+## Deployment
+
+The app is deployed on Render:
+
+- **Frontend** — Static Site, auto-deploys from `main` branch
+- **Backend** — Web Service (Python 3), root directory: `project/backend`
+
+The backend service requires all environment variables above to be set in the Render dashboard under **Environment**.
+
+## Authentication
+
+Protected routes require a valid Azure AD B2C JWT token. The frontend acquires tokens silently via MSAL and passes them as `Authorization: Bearer <token>` headers. The backend validates tokens on every protected endpoint.
 
 ## Contributing
 
-Contributions are welcome! If you have suggestions, improvements, or bug fixes, please open an issue or submit a pull request. For major changes, it’s best to open an issue first to discuss what you would like to change.
-
-## License
-
-This project does not currently have a license. Please add a license if you intend to open source it or share it with the community.
-
-## Contact
-
-For any questions or feedback, feel free to reach out via [GitHub Issues](https://github.com/Sagar387/ai_education/issues) or contact the repository owner directly on GitHub.
-
----
-
-*Created by [Sagar387](https://github.com/Sagar387)*
-
----
-
-Feel free to adjust the sections and details as your project evolves. Enjoy building and learning with AI!
+1. Fork the repo and create a branch from `main`
+2. Make your changes and test locally
+3. Open a pull request — the team reviews before merging to `main`

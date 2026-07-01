@@ -1,86 +1,96 @@
-# Blue Marble Academy API Backend
+# BluStudy Backend
 
-This backend provides a FastAPI-based API for the Blue Marble Academy platform, with Azure AD B2C authentication.
+FastAPI backend for the BluStudy platform. Handles AI generation, data storage, authentication, and study streak tracking.
 
 ## Setup
 
-1. Create a Python virtual environment:
+### 1. Create and activate a virtual environment
 
-   ```bash
-   python -m venv venv
-   ```
+```bash
+python -m venv venv
 
-2. Activate the virtual environment:
+# Windows
+venv\Scripts\activate
+# macOS/Linux
+source venv/bin/activate
+```
 
-   - On Windows:
-     ```bash
-     venv\Scripts\activate
-     ```
-   - On macOS/Linux:
-     ```bash
-     source venv/bin/activate
-     ```
+### 2. Install dependencies
 
-3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 3. Configure environment variables
 
-4. Update the `.env` file with your Azure AD B2C credentials:
-   - CLIENT_ID: Your Azure B2C application client ID
-   - CLIENT_SECRET: Your Azure B2C application client secret
-   - TENANT_NAME: Your Azure B2C tenant name
-   - AUTHORITY: Your Azure B2C authority URL
-   - API_SCOPE: The scope required to access your API
+```bash
+cp .env.example .env
+```
 
-## Running the Server
+Fill in `.env` with your credentials (see `.env.example` for descriptions).
 
-Run the FastAPI server:
+### 4. Run the server
 
 ```bash
 uvicorn main:app --reload
 ```
 
-Or use the provided script:
+- API: `http://localhost:8000`
+- Swagger docs: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
-```bash
-chmod +x run.sh  # Make it executable (first time only)
-./run.sh
-```
+## Environment Variables
 
-## Maintaining Dependencies
+See `.env.example` for the full list. Required variables:
 
-Whenever you install a new Python package during development, make sure to update `requirements.txt` so new development environments remain consistent.
+| Variable | Description |
+|----------|-------------|
+| `OPENAI_API_KEY` | OpenAI API key (used for all AI features) |
+| `COSMOS_DB_URL` | Azure Cosmos DB endpoint |
+| `COSMOS_DB_KEY` | Azure Cosmos DB key |
+| `CLIENT_ID` | Azure AD B2C application client ID |
+| `CLIENT_SECRET` | Azure AD B2C client secret |
+| `AUTHORITY` | Azure AD B2C authority URL |
+| `AZURE_STORAGE_CONNECTION_STRING` | Azure Blob Storage (voice notes) |
+| `FRONTEND_ORIGINS` | Comma-separated allowed CORS origins |
 
-To check the installed version of a package:
+## Key Files
 
-```bash
-pip show <package_name>
-```
+| File | Purpose |
+|------|---------|
+| `main.py` | All API routes |
+| `openai_client.py` | OpenAI calls — quiz, flashcard, summarizer, study plan, answer evaluation |
+| `database.py` | Azure Cosmos DB helpers |
+| `models.py` | Pydantic request/response models |
+| `pdf_utils.py` | PDF text extraction (PyMuPDF) |
+| `runtime.txt` | Pins Python to 3.11.9 for Render |
 
-and promptly add it to the `requirements.txt` file.
+## AI Model
 
-
-## API Documentation
-
-When running the server, access the auto-generated API documentation at:
-
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-## Endpoints
-
-- `GET /`: Root endpoint - public
-- `GET /health`: Health check endpoint - public
-- `GET /tasks`: Get all tasks - protected with Azure AD B2C authentication
+All AI features use `gpt-4o-mini` via the standard OpenAI SDK. The client is initialized in `openai_client.py` using `OPENAI_API_KEY`.
 
 ## Authentication
 
-This API uses Azure AD B2C for authentication. To access protected endpoints, include a valid JWT token in the Authorization header:
+Protected endpoints require a valid Azure AD B2C JWT passed as:
 
 ```
 Authorization: Bearer <token>
 ```
 
-The token should be obtained from the frontend after a successful Azure AD B2C login.
+Tokens are validated on every request. The frontend (MSAL) acquires tokens silently and passes them automatically.
+
+## Adding Dependencies
+
+When you install a new package, pin the version in `requirements.txt`:
+
+```bash
+pip install some-package
+pip show some-package   # check the version
+# then add "some-package==x.y.z" to requirements.txt
+```
+
+## Deployment (Render)
+
+- Runtime: Python 3.11 (pinned via `runtime.txt`)
+- Root directory must be set to `project/backend` in Render service settings
+- All environment variables must be added in the Render dashboard under **Environment**
