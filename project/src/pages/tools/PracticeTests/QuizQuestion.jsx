@@ -1,4 +1,54 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
+import { renderTextWithMath } from "./MathText";
+
+const MathSelect = ({ value, options, onChange, placeholder = "Select an option" }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative flex-1">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-2 px-3 py-2 border border-gray-300 rounded-lg bg-white text-left hover:border-gray-400 transition-colors"
+      >
+        <span className="flex-1 min-w-0">
+          {value ? renderTextWithMath(value) : <span className="text-gray-400">{placeholder}</span>}
+        </span>
+        <ChevronDown className={`h-4 w-4 text-gray-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg py-1 max-h-60 overflow-y-auto">
+          <button
+            type="button"
+            onClick={() => { onChange(""); setOpen(false); }}
+            className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:bg-gray-50"
+          >
+            {placeholder}
+          </button>
+          {options.map((opt, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => { onChange(opt); setOpen(false); }}
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-primary-50 hover:text-primary-700 transition-colors ${opt === value ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-800"}`}
+            >
+              {renderTextWithMath(opt)}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 function hashString(str) {
   let hash = 0;
@@ -34,7 +84,7 @@ const DragAndDropQuestion = ({ question, index, userAnswer, onAnswerChange }) =>
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-medium text-gray-900 mb-6">
-        {question.question}
+        {renderTextWithMath(question.question)}
       </h2>
       {question.prompts.map((prompt, promptIndex) => {
         const currentMapping =
@@ -44,23 +94,17 @@ const DragAndDropQuestion = ({ question, index, userAnswer, onAnswerChange }) =>
             key={promptIndex}
             className="flex flex-col md:flex-row items-start md:items-center gap-3 p-3 border rounded-lg"
           >
-            <div className="font-medium min-w-[200px]">{prompt}</div>
-            <select
+            <div className="font-medium min-w-[200px]">{renderTextWithMath(prompt)}</div>
+            <MathSelect
               value={currentMapping}
-              onChange={(e) => {
+              options={shuffledTargets}
+              placeholder="-- Select an option --"
+              onChange={(val) => {
                 const newMapping = { ...(userAnswer || {}) };
-                newMapping[prompt] = e.target.value;
+                newMapping[prompt] = val;
                 onAnswerChange(index, newMapping);
               }}
-              className="flex-1 p-2 border rounded-md"
-            >
-              <option value="">-- Select an option --</option>
-              {shuffledTargets.map((target, targetIndex) => (
-                <option key={targetIndex} value={target}>
-                  {target}
-                </option>
-              ))}
-            </select>
+            />
           </div>
         );
       })}
@@ -79,20 +123,20 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
       return (
         <div className="space-y-4">
           <h2 className="text-xl font-medium text-gray-900 mb-6">
-            {question.question}
+            {renderTextWithMath(question.question)}
           </h2>
           {question.options.map((option, optionIndex) => (
             <button
               key={optionIndex}
               onClick={() => onAnswerChange(index, option)}
-              className={`w-full p-4 text-left rounded-lg border 
+              className={`w-full p-4 text-left rounded-lg border
                 ${
                   userAnswer === option
                     ? "bg-blue-50 border-blue-500"
                     : "border-gray-200 hover:border-blue-300"
                 }`}
             >
-              {option}
+              {renderTextWithMath(option)}
             </button>
           ))}
         </div>
@@ -102,7 +146,7 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
       return (
         <div className="space-y-4">
           <h2 className="text-xl font-medium text-gray-900 mb-2">
-            {question.question}
+            {renderTextWithMath(question.question)}
           </h2>
           <p className="text-sm text-gray-500 mb-4">Select all that apply</p>
           {question.options.map((option, optionIndex) => {
@@ -134,7 +178,7 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
                   htmlFor={`option-${index}-${optionIndex}`}
                   className="flex-1 cursor-pointer"
                 >
-                  {option}
+                  {renderTextWithMath(option)}
                 </label>
               </div>
             );
@@ -156,7 +200,7 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
       return (
         <div className="space-y-4">
           <h2 className="text-xl font-medium text-gray-900 mb-6">
-            {question.question}
+            {renderTextWithMath(question.question)}
           </h2>
           <textarea
             value={userAnswer || ""}
@@ -180,7 +224,7 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
           <div className="flex items-center flex-wrap gap-2">
             {parts.map((part, partIndex) => (
               <React.Fragment key={partIndex}>
-                <span>{part}</span>
+                <span>{renderTextWithMath(part)}</span>
                 {partIndex < parts.length - 1 && (
                   <input
                     type="text"
@@ -195,54 +239,43 @@ const QuizQuestion = ({ question, index, userAnswer, onAnswerChange }) => {
         </div>
       );
 
-    case "numerical":
+    case "numerical": {
+      const FAKE_UNITS = ["unitless", "none", "n/a", "na", "-", ""];
+      const displayUnits = question.units && !FAKE_UNITS.includes(String(question.units).toLowerCase().trim())
+        ? question.units : null;
       return (
         <div className="space-y-6">
           <h2 className="text-xl font-medium text-gray-900 mb-4">
-            {question.question}
+            {renderTextWithMath(question.question)}
           </h2>
 
-          {/* Display given values in a structured card if available */}
-          {question.given_values && Object.keys(question.given_values).length > 0 && (
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 shadow-sm">
-              <p className="text-sm text-gray-500 mb-2 font-semibold uppercase tracking-wider">Given Data:</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {Object.entries(question.given_values).map(([key, value]) => (
-                  <div key={key} className="flex justify-between items-center text-sm border-b border-gray-100 pb-1">
-                    <span className="text-gray-600 font-medium">{key.replace(/_/g, ' ')}:</span>
-                    <span className="text-gray-900 font-mono bg-white px-2 py-0.5 rounded border border-gray-100 shadow-inner">{value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Answer input with units label */}
           <div className="mt-8">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Your Numerical Answer:</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Your Answer:</label>
             <div className="flex items-center gap-3">
               <div className="relative flex-1">
                 <input
                   type="text"
-                  inputMode="decimal"
                   value={userAnswer || ""}
                   onChange={(e) => onAnswerChange(index, e.target.value)}
-                  placeholder="Enter value..."
+                  placeholder="Enter your answer..."
                   className="w-full bg-white border-2 border-gray-200 text-gray-900 rounded-lg px-4 py-3 font-mono text-xl focus:border-red-500 focus:ring-0 transition-all shadow-sm"
                 />
               </div>
-              {question.units && (
+              {displayUnits && (
                 <div className="bg-gray-100 px-4 py-3 rounded-lg border border-gray-200 text-gray-700 font-bold text-lg font-mono min-w-[60px] flex items-center justify-center">
-                  {question.units}
+                  {displayUnits}
                 </div>
               )}
             </div>
-            <p className="text-xs text-gray-500 mt-2 italic">
-              * Enter the numeric value only or include the units. Tolerance of ±{question.tolerance || 0.01} will be applied.
-            </p>
+            {displayUnits && (
+              <p className="text-xs text-gray-500 mt-2 italic">
+                * Tolerance of ±{question.tolerance || 0.01} will be applied.
+              </p>
+            )}
           </div>
         </div>
       );
+    }
 
     default:
       return <div>Unsupported question type: {question.type}</div>;

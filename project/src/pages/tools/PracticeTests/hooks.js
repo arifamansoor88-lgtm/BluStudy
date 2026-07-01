@@ -3,6 +3,8 @@ import axios from "axios";
 import { useMsal } from "@azure/msal-react";
 import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { protectedResources } from "../../../authConfig";
+import { recordStudyToolUse } from "../../../api/apiService";
+import { useGuest, guestFetch } from "../../../context/GuestContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -54,6 +56,7 @@ export const useQuizTimer = (status) => {
  */
 export const useQuizData = () => {
   const { instance, accounts, inProgress } = useMsal();
+  const { isGuest } = useGuest();
   const quizzesFetchedRef = useRef(false);
   const [savedQuizzes, setSavedQuizzes] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -127,6 +130,7 @@ export const useQuizData = () => {
 
   // Fetch saved quizzes
   const fetchSavedQuizzes = useCallback(async () => {
+    if (isGuest) return [];
     try {
       // Check if MSAL is initialized
       if (inProgress !== "none") {
@@ -189,6 +193,29 @@ export const useQuizData = () => {
     [getToken, inProgress]
   );
 
+  // Fetch specific quiz by ID
+  const fetchQuizById = useCallback(
+    async (quizId) => {
+      if (inProgress !== "none") {
+        return null;
+      }
+      try {
+        const token = await getToken();
+        const response = await axios.get(`http://127.0.0.1:8000/quizzes/${quizId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching quiz by id:", error);
+        return null;
+      }
+    },
+    [getToken, inProgress]
+  );
+
   // Generate a new quiz
   const generateQuiz = useCallback(
     async (
@@ -201,6 +228,7 @@ export const useQuizData = () => {
       subjectCategory = "conceptual"
     ) => {
       try {
+        setQuizAttempts([]);
         console.log("=== generateQuiz Hook Called ===");
         console.log("Generating quiz with:", {
           file: selectedFile?.name,
@@ -291,6 +319,7 @@ export const useQuizData = () => {
 
         // The backend now automatically saves the quiz and returns it with an ID
         // We don't need to call saveQuiz separately
+        await recordStudyToolUse("quiz", "generate_quiz");
         return response.data;
       } catch (err) {
         console.error("=== generateQuiz Hook Error ===");
@@ -329,13 +358,20 @@ export const useQuizData = () => {
       subjectCategory = "conceptual"
     ) => {
       try {
+        setQuizAttempts([]);
+
+        // Guest mode: call public endpoint, no auth or Cosmos needed
+        if (isGuest) {
+          const quizData = await guestFetch("/public/generate-quiz", {
+            method: "POST",
+            body: JSON.stringify({ topic: topicText, num_questions: Math.min(numQuestions, 10) }),
+          });
+          return quizData;
+        }
+
         console.log("=== generateQuizFromTopic Hook Called ===");
         console.log("Topic text:", topicText);
         console.log("Number of questions:", numQuestions);
-        console.log("Selected topics:", selectedTopics);
-        console.log("Custom topics:", customTopics);
-        console.log("Question formats:", questionFormats);
-        console.log("Subject category:", subjectCategory);
 
         const token = await getToken();
         if (!token) {
@@ -402,6 +438,7 @@ export const useQuizData = () => {
         console.log("Response status:", response.status);
         console.log("Response data:", response.data);
 
+        await recordStudyToolUse("quiz", "generate_quiz");
         return response.data;
       } catch (err) {
         console.error("=== generateQuizFromTopic Hook Error ===");
@@ -414,7 +451,7 @@ export const useQuizData = () => {
         );
       }
     },
-    [getToken]
+    [getToken, isGuest]
   );
 
   // Save a quiz
@@ -473,6 +510,7 @@ export const useQuizData = () => {
         );
 
         setSaveSuccess(true);
+        await recordStudyToolUse("quiz", "save_quiz");
         quizzesFetchedRef.current = false;
         await fetchSavedQuizzes();
         return response.data;
@@ -492,7 +530,7 @@ export const useQuizData = () => {
 
   // Save a quiz attempt
   const saveQuizAttempt = useCallback(
-    async (generatedQuiz, userAnswers, timer, mode) => {
+    async (generatedQuiz, userAnswers, timer, mode, precomputedScore = null) => {
       if (!generatedQuiz || !generatedQuiz.id) return;
 
       try {
@@ -501,10 +539,9 @@ export const useQuizData = () => {
 
         const token = await getToken();
 
-        // Prepare attempt data
         const attemptData = {
           quizId: generatedQuiz.id,
-          score: calculateQuizScore(generatedQuiz.questions, userAnswers),
+          score: precomputedScore ?? calculateQuizScore(generatedQuiz.questions, userAnswers),
           timeTaken: timer,
           userAnswers: userAnswers,
           mode: mode,
@@ -523,6 +560,7 @@ export const useQuizData = () => {
         );
 
         setSaveSuccess(true);
+        await recordStudyToolUse("quiz", "save_quiz_attempt");
         quizzesFetchedRef.current = false;
         await fetchQuizWithHistory(generatedQuiz.id);
         await fetchSavedQuizzes();
@@ -551,8 +589,27 @@ export const useQuizData = () => {
     quizzesFetchedRef,
     fetchSavedQuizzes,
     fetchQuizWithHistory,
+    fetchQuizById,
     generateQuiz,
     generateQuizFromTopic,
+    deleteQuiz: async (quizId) => {
+      const token = await getToken();
+      if (!token) throw new Error("No authentication token available");
+      await axios.delete(`http://127.0.0.1:8000/quizzes/${quizId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+    generateQuizFromFlashcards: async (flashcards, title, numQuestions = 10) => {
+      setQuizAttempts([]);
+      const token = await getToken();
+      if (!token) throw new Error("No authentication token available");
+      const response = await axios.post(
+        "http://127.0.0.1:8000/generate-quiz-from-flashcards",
+        { flashcards, title, num_questions: numQuestions, question_formats: ["multiple_choice"] },
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+      );
+      return response.data;
+    },
     saveQuiz,
     saveQuizAttempt,
   };

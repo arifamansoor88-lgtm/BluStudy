@@ -1,20 +1,23 @@
 import os
+import json
 from dotenv import load_dotenv
-from openai import AzureOpenAI
+from openai import OpenAI
 from typing import List, Optional, Union, Dict, Any
 
 # Load environment variables from .env file
 load_dotenv()
 
-# ---------------------------
-# Summarization Client & Function
-# ---------------------------
-summarizer_client = AzureOpenAI(
-    azure_endpoint=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_ENDPOINT"),
-    api_key=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_API_KEY"),
-    api_version="2024-05-01-preview"
-)
-SUMMARIZER_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_DEPLOYMENT_NAME")
+# Single shared OpenAI client
+_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+MODEL = "gpt-4o-mini"
+
+# Aliases so existing call sites don't need to change
+summarizer_client = _client
+flashcard_client = _client
+quiz_client = _client
+SUMMARIZER_DEPLOYMENT_NAME = MODEL
+FLASHCARD_DEPLOYMENT_NAME = MODEL
+QUIZ_DEPLOYMENT_NAME = MODEL
 
 def summarize_text(text: str, style: str = "high", format: str = "bullet") -> str:
     """
@@ -89,8 +92,8 @@ def summarize_text(text: str, style: str = "high", format: str = "bullet") -> st
         return cleaned
 
     except Exception as e:
-        print("Azure summarization error:", str(e))
-        raise Exception("Azure summarization error: " + str(e))
+        print("Summarization error:", str(e))
+        raise Exception("Summarization error: " + str(e))
 
 
     
@@ -98,12 +101,6 @@ def summarize_text(text: str, style: str = "high", format: str = "bullet") -> st
 # ---------------------------
 # Flashcard Client & Function
 # ---------------------------
-flashcard_client = AzureOpenAI(
-    azure_endpoint=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_ENDPOINT"),
-    api_key=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_API_KEY"),
-    api_version="2024-05-01-preview"
-)
-FLASHCARD_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_DEPLOYMENT_NAME")
 
 def generate_flashcard(text: str, num_flashcards: int = 10) -> str:
     """
@@ -167,20 +164,14 @@ def generate_flashcard(text: str, num_flashcards: int = 10) -> str:
         return response.choices[0].message.content.strip()
 
     except Exception as e:
-        print(f"Azure OpenAI flashcard generation error: {str(e)}")
-        raise Exception(f"Azure OpenAI generation request failed: {str(e)}")
+        print(f"OpenAI flashcard generation error: {str(e)}")
+        raise Exception(f"OpenAI generation request failed: {str(e)}")
 
 
 
 # ---------------------------
 # Quiz and Study Plan Client & Functions
 # ---------------------------
-quiz_client = AzureOpenAI(
-    azure_endpoint=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_ENDPOINT"),
-    api_key=os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_API_KEY"),
-    api_version="2024-05-01-preview"
-)
-QUIZ_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_QUIZ_GENERATOR_DEPLOYMENT_NAME")
 
 def generate_quiz(
     text: str, 
@@ -194,19 +185,39 @@ def generate_quiz(
     if "multiple_choice" in question_formats:
         question_types_instruction += "\n  - **Multiple-choice (single correct answer).**"
     if "multi_select" in question_formats:
-        question_types_instruction += "\n  - **Multi-select (more than one correct answer).**"
+        question_types_instruction += "\n  - **Multi-select (more than one correct answer).** CRITICAL: `correct_answers` MUST include EVERY option that is genuinely valid. The distractor options must be clearly and factually incorrect — never include an option that could plausibly be considered correct while leaving it out of `correct_answers`. Phrase the question so there is no ambiguity about which options belong in the correct set."
     if "drag_and_drop" in question_formats:
         question_types_instruction += "\n  - **Drag-and-drop** (e.g., matching terms to definitions, ordering events, categorizing items)."
     if "short_answer" in question_formats:
-        question_types_instruction += "\n  - **Short-answer** (brief text responses to specific questions)."
+        question_types_instruction += "\n  - **Short-answer** (brief text responses). Use this type for: any answer with multiple values (e.g. two roots, a coordinate pair, a set), any answer that is inherently text (e.g. a method name, a formula). CRITICAL: Store `correct_answer` and `acceptable_answers` as PLAIN TEXT without $ LaTeX delimiters — write 'y = 2x - 3' not '$y = 2x - 3$'. Use regular ASCII hyphens not Unicode minus signs. `acceptable_answers` MUST be exhaustive — include full forms, abbreviations, alternate spellings, with/without spaces around operators. Examples: 'y-intercept' → also include 'y-int', 'y intercept'; 'y = 2x - 3' → also 'y=2x-3', '2x-3'."
     if "fill_in_blank" in question_formats:
-        question_types_instruction += "\n  - **Fill-in-the-blank** (sentences with missing words to be completed)."
+        question_types_instruction += "\n  - **Fill-in-the-blank** (sentences with missing words). Use [BLANK] as the placeholder. `acceptable_answers` must cover all valid spellings/phrasings."
     if "numerical" in question_formats:
-        question_types_instruction += "\n  - **Numerical** (computational problems requiring a specific numerical answer with units and tolerance-based grading)."
+        question_types_instruction += "\n  - **Numerical** (exactly ONE numeric value with optional units — e.g. a speed, a mass, a time, a single root). Fields: `correct_answer_value` (a number), `units` (the unit string, or omit if truly dimensionless — do NOT set units to 'unitless', 'none', or 'N/A'). NEVER use numerical for: multiple roots, intercepts, coordinates, sets of values, or any problem where the student must give more than one number — use short_answer instead."
     
     focus_instruction = f"\n\n# Focus Areas:\nPay special attention to these topics: {focus_topics}" if focus_topics else ""
     
-    system_prompt = f"""You are an AI quiz generator that creates quizzes based on input text containing a specific topic. The quiz will consist of {num_questions} questions using the following question types: {', '.join(question_formats)}. The output should be a structured JSON object.{focus_instruction}
+    system_prompt = f"""You are an AI quiz generator that creates quizzes based on input text containing a specific topic.
+
+IMPORTANT FORMATTING RULES FOR MATHEMATICS:
+- Any mathematical expression MUST be written using LaTeX.
+- Do NOT write raw math like x^2 or sin(x). Always wrap math using $...$.
+- Use LaTeX functions like \\sin, \\cos, \\ln, \\sqrt.
+- Use ^ for powers.
+- Because the response is JSON, every LaTeX backslash MUST be double-escaped inside strings.
+- Write \\\\frac{{1}}{{x}}, \\\\ln(x), \\\\sin(x), \\\\cos(x), \\\\sqrt{{x}} inside JSON values, never \\\\frac{{1}}{{x}} or \\\\ln(x) with single backslashes.
+- Prefer \\\\ln(x), \\\\sin(x), \\\\cos(x) instead of \\\\text{{ln}}(x), \\\\text{{sin}}(x), \\\\text{{cos}}(x).
+- Always use braces with square roots: write \\\\sqrt{{x}}, never sqrtx or \\\\sqrtx.
+- Use e^x, not \\\\text{{e}}^x.
+
+Examples:
+x squared → $x^2$
+sin(x) → $\\sin(x)$
+ln(x) → $\\ln(x)$
+square root of x → $\\sqrt{{x}}$
+absolute value → $|x|$
+
+The quiz will consist of {num_questions} questions using the following question types: {', '.join(question_formats)}. The output should be a structured JSON object.{focus_instruction}
 
 ---
 
@@ -371,9 +382,13 @@ Return a JSON object structured as follows:
 
 # Notes:
 - Focus on generating questions that reflect critical concepts from the given text.
+- EVERY piece of mathematical notation — equations, formulas, variables, fractions, exponents, Greek letters, hints — MUST be wrapped in $...$ (inline) or $$...$$ (block). This applies everywhere in the JSON: question text, hints, options, correct_answer, solution_steps, etc. Never emit raw LaTeX commands (like \\left, \\frac, \\sqrt) outside of $ delimiters.
+- When LaTeX is used in JSON strings, double-escape all backslashes (e.g. $\\frac{b}{2a}$ becomes $\\\\frac{b}{2a}$ in JSON).
 - Ensure clarity and correctness in both questions and answers.
 - Proportionately balance the mix of question types across the quiz.
 - Avoid ambiguity in "correct_answer" or "correct_answers" fields by making answers explicit.
+- For multi_select questions: before finalising, ask yourself "is every option I left out of correct_answers genuinely, unambiguously wrong?" If any option could be argued as correct, either add it to correct_answers or replace the option with a clearer distractor.
+- For multiple_choice questions: NEVER include two options that are mathematically equivalent or just reorderings of each other (e.g. "-1, 5" and "5, -1" are the same set of roots — pick one canonical form for the correct answer and use clearly distinct wrong values as distractors).
 This structured format will maintain consistency and ensure the generated quizzes are high-quality and easily parsable."""
     
     response = quiz_client.chat.completions.create(
@@ -385,6 +400,70 @@ This structured format will maintain consistency and ensure the generated quizze
         response_format={"type": "json_object"}
     )
     return response.choices[0].message.content
+
+def generate_harder_quiz(previous_questions: list, title: str, num_questions: int = 15) -> str:
+    """Generate a harder quiz on the same topics as the previous quiz."""
+
+    topic_sample = "\n".join(
+        f"- {q.get('question', '')}" for q in previous_questions[:8]
+    )
+
+    system_prompt = f"""You are an AI quiz generator. A student has just scored 70%+ on the quiz titled "{title}".
+
+The previous quiz covered questions like:
+{topic_sample}
+
+Your task: generate {num_questions} NEW questions on the SAME topic area but meaningfully HARDER.
+Rules:
+- Increase depth: require multi-step reasoning, application, or analysis — not just recall.
+- Do NOT repeat any of the previous questions verbatim.
+- Vary question types across: multiple_choice, multi_select, drag_and_drop, short_answer.
+- For multiple_choice: NEVER include two options that are mathematically equivalent or reorderings of each other.
+- Short_answer: store `correct_answer` and `acceptable_answers` as PLAIN TEXT without $ LaTeX delimiters. Use ASCII hyphens not Unicode minus. Set acceptable_answers to cover all valid phrasings, abbreviations, and operator-spacing variants.
+- EVERY math expression in question text and options MUST be wrapped in $...$ (inline) or $$...$$ (block). Never emit raw LaTeX outside $ delimiters. Double-escape backslashes in JSON strings.
+
+Return a JSON object in exactly this structure:
+{{
+  "quiz_title": "{title} — Advanced",
+  "questions": [
+    {{
+      "type": "multiple_choice",
+      "question": "...",
+      "options": ["...", "...", "...", "..."],
+      "correct_answer": "..."
+    }},
+    {{
+      "type": "multi_select",
+      "question": "...",
+      "options": ["...", "...", "...", "..."],
+      "correct_answers": ["...", "..."]
+    }},
+    {{
+      "type": "drag_and_drop",
+      "question": "...",
+      "prompts": ["...", "..."],
+      "options": ["...", "..."],
+      "correct_mapping": {{"prompt": "answer"}}
+    }},
+    {{
+      "type": "short_answer",
+      "question": "...",
+      "correct_answer": "...",
+      "acceptable_answers": ["...", "..."]
+    }}
+  ]
+}}"""
+
+    response = quiz_client.chat.completions.create(
+        model=QUIZ_DEPLOYMENT_NAME,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": "Generate the harder follow-up quiz now."}
+        ],
+        response_format={"type": "json_object"}
+    )
+    return response.choices[0].message.content
+
 
 def generate_answer_explanation(
     question: dict,
@@ -506,40 +585,63 @@ def evaluate_numerical_answer(
     user_answer: str
 ) -> Dict[str, Any]:
     """
-    Evaluate a numerical answer using tolerance-based comparison.
-    Falls back to AI evaluation if the user answer can't be parsed as a number.
-
-    Args:
-        question: Question dict with correct_answer_value, tolerance, units fields.
-        user_answer: The student's answer as a string (may include units).
-
-    Returns:
-        {"is_correct": bool, "ai_response": str, "parsed_value": float|None}
+    Evaluate a numerical answer by having the AI independently solve the problem.
+    Does NOT trust correct_answer_value — the AI recomputes the answer from the
+    question text so that quiz-generation errors don't affect grading.
     """
-    import re
+    import json as _json
 
-    correct_value = question.get("correct_answer_value")
-    tolerance = question.get("tolerance", 0.01)
+    question_text = question.get("question", "")
     units = question.get("units", "")
 
-    # Strip units and whitespace from user answer to extract the number
-    cleaned = str(user_answer).strip()
-    if units:
-        cleaned = cleaned.replace(units, "").strip()
-    # Remove common unit variations
-    cleaned = re.sub(r'[a-zA-Z°/²³]+$', '', cleaned).strip()
+    system_prompt = (
+        "You are a precise mathematical grader. "
+        "Solve the given problem completely from scratch — do NOT rely on any stored correct answer. "
+        "Then decide whether the student's answer is correct (allow small rounding differences). "
+        "Return ONLY a JSON object with three keys:\n"
+        '  "is_correct": true or false\n'
+        '  "computed_answer": your computed value as a number\n'
+        '  "explanation": one short sentence showing the key step\n'
+        "No markdown, no extra text."
+    )
+
+    units_line = f"\nExpected units: {units}" if units else ""
+    user_message = (
+        f"Problem: {question_text}{units_line}\n"
+        f"Student's answer: {user_answer}\n\n"
+        "Solve the problem yourself and return the JSON."
+    )
 
     try:
-        user_value = float(cleaned)
-        is_correct = abs(user_value - float(correct_value)) <= float(tolerance)
+        response = quiz_client.chat.completions.create(
+            model=QUIZ_DEPLOYMENT_NAME,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            response_format={"type": "json_object"},
+            max_tokens=200,
+        )
+        data = _json.loads(response.choices[0].message.content)
+        is_correct = bool(data.get("is_correct", False))
+        explanation = data.get("explanation", "")
         return {
             "is_correct": is_correct,
-            "ai_response": "correct" if is_correct else "incorrect",
-            "parsed_value": user_value,
+            "ai_response": explanation,
+            "computed_answer": data.get("computed_answer"),
         }
-    except (ValueError, TypeError):
-        # Can't parse as number — fall back to AI evaluation
-        return evaluate_short_answer(question, str(user_answer))
+    except Exception:
+        # Hard fallback: tolerance check against stored value
+        import re
+        correct_value = question.get("correct_answer_value")
+        tolerance = question.get("tolerance", 0.01)
+        cleaned = re.sub(r'[a-zA-Z°/²³\s]+$', '', str(user_answer)).strip()
+        try:
+            user_value = float(cleaned)
+            is_correct = abs(user_value - float(correct_value)) <= float(tolerance)
+            return {"is_correct": is_correct, "ai_response": "correct" if is_correct else "incorrect"}
+        except (ValueError, TypeError):
+            return {"is_correct": False, "ai_response": "could not parse answer"}
 
 def evaluate_short_answer(
     question: Dict[str, Any],
@@ -565,23 +667,23 @@ def evaluate_short_answer(
         correct_answer_text += f" (Acceptable alternatives: {', '.join(acceptable_answers)})"
     
     system_prompt = """You are an educational assessment AI that evaluates student answers.
-Your task is to determine if a student's response to a short answer or fill-in-blank question is semantically correct.
+Your task is to determine if a student's response to a short answer or fill-in-blank question is correct.
 
-Consider the following guidelines:
-1. Focus on the meaning/concept rather than exact wording.
-2. Ignore minor spelling errors if the intent is clear.
-3. Ignore capitalization and punctuation differences.
-4. Accept synonyms or equivalent phrases.
-5. For numerical answers, consider if different formats are semantically equivalent.
+Guidelines:
+1. Judge based on the QUESTION itself — the student's answer must actually be correct given the question, regardless of what the "provided answer" says.
+2. The "provided answer" is a hint, not ground truth — it may be incomplete or wrong. If the student's answer is factually correct for the question, mark it correct even if it differs from the provided answer.
+3. Accept synonyms, equivalent phrases, different valid formulations (e.g. "table of values" and "plotting points" are both valid methods to graph a parabola).
+4. Ignore minor spelling errors, capitalisation, and punctuation.
+5. For questions asking to "list one method/example", any single correct example is acceptable.
 Respond with ONLY "correct" or "incorrect" without any explanation.
 """
     user_message = f"""
 Question: {question_text}
 Question Type: {question_type}
-Correct Answer(s): {correct_answer_text}
+Provided Answer (may be incomplete — verify independently): {correct_answer_text}
 Student's Answer: {user_answer}
 
-Is the student's answer semantically correct? Respond with ONLY "correct" or "incorrect".
+Is the student's answer correct for this question? Respond with ONLY "correct" or "incorrect".
 """
     response = quiz_client.chat.completions.create(
         model=QUIZ_DEPLOYMENT_NAME,
@@ -597,6 +699,82 @@ Is the student's answer semantically correct? Respond with ONLY "correct" or "in
         "is_correct": is_correct,
         "ai_response": result
     }
+
+def evaluate_all_answers(questions: List[Dict], user_answers: List[Any]) -> List[Dict]:
+    """
+    Grade all quiz answers in a single AI call.
+    AI independently verifies correctness — does NOT trust stored correct_answer fields.
+    """
+    import json as _json
+
+    lines = []
+    for i, (q, ua) in enumerate(zip(questions, user_answers)):
+        qtype = q.get("type", "")
+        qtext = q.get("question", "")
+        stored_hint = ""
+
+        if qtype == "multiple_choice":
+            opts = " | ".join(q.get("options", []))
+            stored_hint = f"Stored answer (unverified): {q.get('correct_answer', '')}"
+            student = ua or "(no answer)"
+            lines.append(f"Q{i+1} [multiple_choice]\nQuestion: {qtext}\nOptions: {opts}\nStudent chose: {student}\n{stored_hint}")
+
+        elif qtype == "multi_select":
+            opts = " | ".join(q.get("options", []))
+            stored_hint = f"Stored answers (may be incomplete): {', '.join(q.get('correct_answers', []))}"
+            student = ", ".join(ua) if isinstance(ua, list) else str(ua or "(no answer)")
+            lines.append(f"Q{i+1} [multi_select]\nQuestion: {qtext}\nOptions: {opts}\nStudent selected: {student}\n{stored_hint}")
+
+        elif qtype == "drag_and_drop":
+            mapping = ua or {}
+            stored = q.get("correct_mapping", {})
+            student_pairs = "; ".join(f'"{p}" → "{mapping.get(p, "(blank)")}"' for p in q.get("prompts", []))
+            stored_pairs = "; ".join(f'"{p}" → "{stored.get(p, "")}"' for p in q.get("prompts", []))
+            lines.append(f"Q{i+1} [drag_and_drop]\nQuestion: {qtext}\nStudent mapped: {student_pairs}\nStored mapping (unverified): {stored_pairs}")
+
+        elif qtype in ("short_answer", "fill_in_blank"):
+            acc = q.get("acceptable_answers", [])
+            stored_hint = q.get("correct_answer", "") + (f" (also: {', '.join(acc)})" if acc else "")
+            lines.append(f"Q{i+1} [{qtype}]\nQuestion: {qtext}\nStudent answered: {ua or '(no answer)'}\nStored answer (unverified): {stored_hint}")
+
+        elif qtype == "numerical":
+            units = q.get("units", "")
+            lines.append(f"Q{i+1} [numerical]\nQuestion: {qtext}\nStudent answered: {ua or '(no answer)'}{' ' + units if units else ''}\nStored answer (unverified): {q.get('correct_answer_value', '')}{' ' + units if units else ''}")
+
+        else:
+            lines.append(f"Q{i+1} [{qtype}]\nQuestion: {qtext}\nStudent: {ua or '(no answer)'}")
+
+    system_prompt = """You are an expert quiz grader. Grade every question using your own knowledge — the stored answers are hints only and may be WRONG.
+
+Rules:
+- multiple_choice: choose the single best correct option independently; ignore stored answer if it is wrong.
+- multi_select: mark correct only if the student selected ALL valid options and NO invalid ones. If a student selected a valid option not in the stored list, that is still correct.
+- drag_and_drop: verify each mapping is factually/conceptually correct.
+- short_answer / fill_in_blank: accept any correct phrasing, synonym, or equivalent formulation.
+- numerical: SOLVE the problem yourself from the question text. Do not trust the stored value.
+
+Return ONLY a JSON object: {"grades": [{"index": 0, "is_correct": true}, ...]}
+One entry per question in the same order. No extra text."""
+
+    response = quiz_client.chat.completions.create(
+        model=QUIZ_DEPLOYMENT_NAME,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": "\n\n---\n\n".join(lines)},
+        ],
+        response_format={"type": "json_object"},
+        max_tokens=600,
+    )
+
+    try:
+        data = _json.loads(response.choices[0].message.content)
+        grades = data.get("grades", [])
+        result_map = {g["index"]: g["is_correct"] for g in grades if isinstance(g, dict)}
+        return [{"is_correct": bool(result_map.get(i, False)), "ai_response": ""} for i in range(len(questions))]
+    except Exception as e:
+        print(f"Error parsing batch evaluation: {e}")
+        return [{"is_correct": False, "ai_response": "error"} for _ in questions]
+
 
 def generate_study_plan(
     text: str, 
@@ -917,7 +1095,7 @@ Please provide a comprehensive analysis of this quiz performance, including topi
         return analysis_result
         
     except Exception as e:
-        print(f"Error while calling Azure OpenAI for quiz performance analysis: {str(e)}")
+        print(f"Error while calling OpenAI for quiz performance analysis: {str(e)}")
         # Return a fallback analysis if AI analysis fails
         return create_fallback_analysis(questions, user_answers, quiz_metadata)
 
@@ -1006,8 +1184,78 @@ def create_fallback_analysis(
             "totalQuestions": total_questions,
             "correctAnswers": correct_answers,
             "overallAccuracy": overall_accuracy,
-            "performanceLevel": "Excellent" if overall_accuracy >= 90 else "Good" if overall_accuracy >= 80 else "Fair" if overall_accuracy >= 70 else "Needs Improvement",
+            "performanceLevel": "Outstanding" if overall_accuracy >= 90 else "Strong" if overall_accuracy >= 80 else "On Track" if overall_accuracy >= 70 else "Keep Going" if overall_accuracy >= 60 else "Needs Review",
             "keyInsights": [f"Scored {correct_answers} out of {total_questions} questions correctly"],
             "studyPriorities": ["Review incorrect answers", "Practice weak areas"]
         }
     }
+
+# Generates "Suggested Next Steps"
+def generate_suggested_next_steps_ai(targets: list[dict]):
+    """
+    AI generates titles/descriptions/buttons, BUT the backend controls IDs.
+    targets input example:
+      [
+        {"toolKey":"flashcard_deck","targetId":"abc","toolName":"AI Flashcards","context":"Biology 101 - Cell Structure"},
+        {"toolKey":"quiz","targetId":"def","toolName":"Practice Tests","context":"Calculus - Derivatives"},
+        {"toolKey":"voice_note","targetId":"ghi","toolName":"Voice Notes","context":"World History - Chapter 5"}
+        {"toolKey":"mind_map","targetId":"mmm","toolName":"Mind Maps","context":"..."},
+        {"toolKey":"summarizer","targetId":"sss","toolName":"Summarizer","context":"..."}
+      ]
+    Output schema:
+      {"items": [{"toolKey","targetId","title","description","buttonText"}]}
+    """
+    prompt = f"""
+You are a study coach inside an education platform.
+
+Generate EXACTLY {len(targets)} suggested next steps using the targets below.
+IMPORTANT:
+Generate EXACTLY {len(targets)} suggested next steps using the targets below.
+
+IMPORTANT RULES:
+- You MUST keep each toolKey and targetId exactly as provided.
+- Each suggestion must clearly be about the specific item described by the target.
+- Your title and description MUST reference the target’s "context" (or paraphrase it clearly).
+  Example: if context is "Biology 101 - Cell Structure", mention "Cell Structure" or "Biology 101" in the title/description.
+- Do NOT use generic titles like "Review with AI Flashcards" or "Test Knowledge with Quiz".
+  Every title must be specific to the context.
+- Title: 4–7 words
+- Description: exactly 1 sentence
+- ButtonText: 1–3 words (e.g., "Resume Deck", "Start Quiz", "Open Notes")
+
+Return ONLY valid JSON in this exact schema:
+
+{{
+  "items": [
+    {{
+      "toolKey": "flashcard_deck|quiz|voice_note|mind_map|summarizer",
+      "targetId": "string",
+      "title": "string",
+      "description": "string",
+      "buttonText": "string"
+    }}
+  ]
+}}
+
+Targets (do NOT change toolKey/targetId). Use toolName + context to make wording specific:
+{json.dumps(targets)}
+"""
+
+    resp = quiz_client.chat.completions.create(
+        model=QUIZ_DEPLOYMENT_NAME,
+        messages=[
+            {"role": "system", "content": "Return ONLY JSON. No extra text."},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.4,
+    )
+
+    content = resp.choices[0].message.content.strip()
+
+    # Strip ```json fences if present
+    if content.startswith("```"):
+        parts = content.split("```")
+        if len(parts) >= 2:
+            content = parts[1].strip()
+
+    return json.loads(content)

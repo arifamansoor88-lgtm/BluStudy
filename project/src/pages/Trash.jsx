@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Trash2, RotateCcw, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Mic2, LayoutGrid as GridIcon, Edit3, Zap, NotebookPen, File as FileIcon, Folder } from "lucide-react";
+import { Brain, Layers, ClipboardList, Mic2, LayoutGrid as GridIcon, Edit3, Zap, NotebookPen, File as FileIcon, Folder } from "lucide-react";
 
 import { msalInstance, protectedResources } from "../authConfig";
 const API_BASE = "http://localhost:8000";
@@ -29,8 +29,8 @@ async function apiFetch(path, options = {}) {
 function getItemDisplay(item) {
   const ct = item.contentType;
   if (ct === "folder") return { title: item.data?.name || "Folder", icon: <Folder className="w-8 h-8 text-slate-600" />, type: "Folder" };
-  if (ct === "quiz") return { title: item.data?.title || "Quiz", icon: <Edit3 className="w-8 h-8 text-orange-600" />, type: "Quiz" };
-  if (ct === "flashcard_deck") return { title: item.title || item.data?.title || "Flashcards", icon: <Brain className="w-8 h-8 text-indigo-600" />, type: "Flashcards" };
+  if (ct === "quiz") return { title: item.data?.title || "Quiz", icon: <ClipboardList className="w-8 h-8 text-red-500" />, type: "Quiz" };
+  if (ct === "flashcard_deck") return { title: item.title || item.data?.title || "Flashcards", icon: <Layers className="w-8 h-8 text-indigo-600" />, type: "Flashcards" };
   if (ct === "study_plan") return { title: item.data?.title || "Study Plan", icon: <NotebookPen className="w-8 h-8 text-blue-600" />, type: "Study Plan" };
   if (ct === "voice_note") return { title: item.title || "Voice Note", icon: <Mic2 className="w-8 h-8 text-purple-600" />, type: "Voice Note" };
   if (ct === "summary") return { title: item.title || item.data?.title || "Summary", icon: <Zap className="w-8 h-8 text-yellow-600" />, type: "Summary" };

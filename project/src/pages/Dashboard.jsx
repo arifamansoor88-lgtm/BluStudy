@@ -1,18 +1,40 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import confetti from "canvas-confetti";
 import { useMsal } from "@azure/msal-react";
-import { getTasks } from "../api/apiService";
+import { protectedResources } from "../authConfig";
+import {
+  getTasks,
+  getSuggestedNextSteps,
+  getStudyStreak,
+  getCachedStudyStreak,
+  consumeRecentStudyStreakUpdate,
+} from "../api/apiService";
 import { useNavigate } from "react-router-dom";
 import {
   Clock,
-  Trophy,
   Star,
   Target,
   BookOpen,
   Calendar,
-  User,
-  Info
+  ArrowRight,
+  Brain,
+  Layers,
+  Play,
+  Mic,
+  Network as Network2,
+  ClipboardList,
+  Zap,
+  PenTool,
+  Folder,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useUserRecents } from "../hooks/useUserRecents";
+
+const formatTopic = (t) => {
+  return t
+    .replace(/(^|\s)\S/g, l => l.toUpperCase())
+    .replace(/\band\b/g, "and");
+};
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -24,7 +46,154 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
   const [streakDays, setStreakDays] = useState(0);
+  const [streakLoading, setStreakLoading] = useState(true);
+  const [streakLoadError, setStreakLoadError] = useState(false);
+  const recentItems = useUserRecents();
+  const [suggestedNextSteps, setSuggestedNextSteps] = useState([]);
+  const [loadingNextSteps, setLoadingNextSteps] = useState(true);
+  const [focusAreas, setFocusAreas] = useState([]);
+  const [quizioLoaded, setQuizioLoaded] = useState(false);
+  const [quizioLoading, setQuizioLoading] = useState(false);
+  const [displayStreak, setDisplayStreak] = useState(0);
+  const [glow, setGlow] = useState(false);
+  const activeAccountId =
+    accounts[0]?.homeAccountId ||
+    accounts[0]?.localAccountId ||
+    accounts[0]?.username ||
+    "";
+  const streakMessages = [
+    "Keep it going",
+    "You’re on fire",
+    "Consistency wins",
+    "Small steps daily",
+    "Don’t break the chain",
+  ];
 
+  const [randomMessage] = useState(
+    streakMessages[Math.floor(Math.random() * streakMessages.length)]
+  );
+
+  const animateStreakCount = useCallback((from, to) => {
+    if (from === to) {
+      setDisplayStreak(to);
+      return;
+    }
+
+    const startTime = performance.now();
+    const duration = 900;
+    const startValue = Math.max(from, 0);
+    const distance = to - startValue;
+
+    const animate = (currentTime) => {
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const nextValue = Math.round(startValue + distance * easeOut);
+
+      setDisplayStreak(nextValue);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setDisplayStreak(to);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, []);
+
+  const celebrateStreak = useCallback((from, to) => {
+    setGlow(true);
+
+    setTimeout(() => {
+      setGlow(false);
+    }, 900);
+
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
+
+    animateStreakCount(from, to);
+  }, [animateStreakCount]);
+
+  useEffect(() => {
+  handleQuizio(); 
+}, []);
+const handleQuizio = async () => {
+  setQuizioLoading(true);
+  try {
+    const account = instance.getActiveAccount();
+    const response = await instance.acquireTokenSilent({
+      scopes: protectedResources.todoListApi.scopes,
+      account: account,
+    });
+
+    const token = response.accessToken;
+
+    const res = await fetch(`${protectedResources.todoListApi.endpoint}/weak-areas`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+    setFocusAreas(data.focusAreas || []);
+    setQuizioLoaded(true);
+  } catch (err) {
+    console.error("Failed to fetch focus areas:", err);
+    setQuizioLoaded(true);
+  } finally {
+    setQuizioLoading(false);
+  }
+};
+
+// Quizio Quiz Generation
+const startFocusQuiz = async (item) => {
+  const topicKey = item.topic;
+  const topicText = item.display || item.topic;
+
+  try {
+    setLoadingTopic(topicKey); 
+
+    const account = instance.getActiveAccount();
+    const response = await instance.acquireTokenSilent({
+      scopes: protectedResources.todoListApi.scopes,
+      account: account,
+    });
+
+    const token = response.accessToken;
+
+    const res = await fetch(`${protectedResources.todoListApi.endpoint}/generate-quiz-from-topic`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        topic: topicText,
+        topic_key: topicKey,
+        num_questions: 10,
+        previous_questions: item.sampleQuestions || [],
+      }),
+    });
+
+    const data = await res.json();
+
+    navigate("/tools/practice-tests", {
+      state: {
+        quiz: data,
+        autoStart: true,
+      }
+    });
+
+  } catch (err) {
+    console.error("Failed to start quiz:", err);
+  } finally {
+    setLoadingTopic(null); 
+  }
+};
+const [loadingTopic, setLoadingTopic] = useState(null);
   // Redirect to sign in if not authenticated
   useEffect(() => {
     // If no accounts, redirect to sign in
@@ -90,41 +259,84 @@ const Dashboard = () => {
     fetchTasks();
   }, [userData]);
 
-  // Fetch Study Streak
-useEffect(() => {
-  if (!accounts.length) return;
+  // Fetch the saved streak once the signed-in account is available.
+  useEffect(() => {
+    let cancelled = false;
 
-  const account = instance.getActiveAccount() || accounts[0];
-  const token = account?.idToken;
-
-  const updateAndFetchStreak = async () => {
-    try {
-      await fetch(`${API_BASE_URL}/update-streak`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const res = await fetch(`${API_BASE_URL}/streak`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-
-      // 3️⃣ Set new streak value
-      setStreakDays(data.current_streak || 0);
-
-    } catch (err) {
-      console.error("Error fetching streak:", err);
-      setStreakDays(0);
+    if (!accounts.length) {
+      setStreakLoading(true);
+      return () => {
+        cancelled = true;
+      };
     }
-  };
 
-  updateAndFetchStreak();
-}, [accounts, instance]);
+    const fetchStreak = async () => {
+      setStreakLoading(true);
+      setStreakLoadError(false);
+
+      try {
+        const data = await getStudyStreak();
+        if (cancelled) return;
+
+        const newStreak = data.current_streak || 0;
+        const streakUpdate = consumeRecentStudyStreakUpdate();
+        const shouldCelebrate =
+          streakUpdate && streakUpdate.currentStreak === newStreak;
+
+        setStreakDays(newStreak);
+
+        if (shouldCelebrate) {
+          celebrateStreak(streakUpdate.previousStreak || 0, newStreak);
+        } else {
+          setDisplayStreak(newStreak);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error("Error fetching streak:", err);
+
+        const cachedStreak = getCachedStudyStreak();
+        if (cachedStreak !== null) {
+          setStreakLoadError(false);
+          setStreakDays(cachedStreak);
+          setDisplayStreak(cachedStreak);
+        } else {
+          setStreakLoadError(true);
+          setStreakDays(0);
+          setDisplayStreak(0);
+        }
+      } finally {
+        if (!cancelled) {
+          setStreakLoading(false);
+        }
+      }
+    };
+
+    fetchStreak();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accounts.length, activeAccountId, celebrateStreak]);
+
+    // Loads Suggested Next Steps for the dashboard.
+    // If the backend request fails, fallback placeholder data is used so the UI still renders.
+    useEffect(() => {
+        if (!userData) return;
+
+        const fetchSuggestedNextSteps = async () => {
+            try {
+                const data = await getSuggestedNextSteps();
+                setSuggestedNextSteps(data.items || []);
+            } catch (error) {
+                console.error("Error fetching suggested next steps:", error);
+                setSuggestedNextSteps([]);
+            } finally {
+                setLoadingNextSteps(false);
+            }
+        };
+
+        fetchSuggestedNextSteps();
+    }, [userData]);
 
   // Display loading state if still loading
   if (loading && !userData) {
@@ -137,47 +349,11 @@ useEffect(() => {
 
   // Get user information
   const userName = userData?.name || "User";
-  const firstName = userName.split(" ")[0];
   const email = userData?.email || "Not available";
+  // If B2C returns the email as the display name, use only the local part
+  const rawFirst = userName.split(" ")[0];
+  const firstName = rawFirst.includes("@") ? rawFirst.split("@")[0] : rawFirst;
 
-  const teachers = [
-    {
-      name: "Dr. Sarah Wilson",
-      subject: "Mathematics",
-      image:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
-    },
-    {
-      name: "Prof. Michael Chen",
-      subject: "Physics",
-      image:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
-    },
-  ];
-
-  const schedule = [
-    {
-      subject: "Mathematics",
-      time: "09:00 - 10:30 AM",
-      teacher: "Dr. Sarah Wilson",
-    },
-    {
-      subject: "Physics",
-      time: "11:00 - 12:30 PM",
-      teacher: "Prof. Michael Chen",
-    },
-    {
-      subject: "Study Group",
-      time: "02:00 - 03:30 PM",
-      teacher: "Peer Learning",
-    },
-  ];
-
-  const goals = [
-    { title: "Complete Calculus Module", progress: 75 },
-    { title: "Physics Lab Report", progress: 40 },
-    { title: "Weekly Quiz Prep", progress: 90 },
-  ];
 
   const studyGoals = [
     {
@@ -219,232 +395,205 @@ useEffect(() => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Development Notice */}
-      <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-6 flex items-center gap-3">
-        <Info className="h-5 w-5 flex-shrink-0" />
-        <p className="text-sm">
-          The BluStudy dashboard is currently under active development. Some features may change or be unavailable as we continue improving the platform.
-        </p>
-      </div>
-      {/* User greeting */}
-      <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Welcome back, {firstName}!
-        </h1>
-        <p className="text-gray-600">
-          You're signed in as <span className="font-medium">{email}</span>
-        </p>
-      </div>
-      {/* Study Streak Box */}
-      <div className="bg-gradient-to-r from-orange-500 to-yellow-400 text-black px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 w-fit border border-orange-500">
-        <span className="text-2xl">🔥</span>
-          <span className="text-lg font-bold tracking-wide">
-            {streakDays === 0
-    ? "Hey! Let's create a study streak 🚀"
-    : `${streakDays} Day${streakDays === 1 ? "" : "s"} Streak`}
-</span>
-  <span className="text-2xl">⭐</span>
-</div>
-      {/* Achievements Section */}
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+
+      {/* Hero: Greeting + Streak */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        className="bg-white rounded-xl shadow-sm p-6 mb-6"
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-6 flex flex-col sm:flex-row gap-4 items-center justify-between"
       >
-        <div className="flex items-center gap-2 mb-6">
-          <Trophy className="h-5 w-5 text-primary-600" />
-          <h2 className="text-xl font-semibold text-gray-900">
-            Recent Achievements
-          </h2>
+        <div className="text-white">
+          <p className="text-primary-200 text-sm mb-1">Good to see you back</p>
+          <h1 className="text-3xl font-bold">Hey, {firstName}!</h1>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <AchievementCard
-            icon={Trophy}
-            title="7 Day Streak"
-            description="Consistent learning pays off!"
-            color="text-blue-600"
-            bgColor="bg-blue-100"
-          />
-          <AchievementCard
-            icon={Star}
-            title="Top Student"
-            description="Ranked #1 in Physics"
-            color="text-yellow-600"
-            bgColor="bg-yellow-100"
-          />
-          <AchievementCard
-            icon={BookOpen}
-            title="Quick Learner"
-            description="Completed 5 modules this week"
-            color="text-green-600"
-            bgColor="bg-green-100"
-          />
+
+        {/* Streak pill */}
+        <div className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl px-6 py-4 text-center min-w-[180px]">
+          <p className="text-white/70 text-xs font-medium uppercase tracking-wide mb-1">Study Streak</p>
+          {streakLoading ? (
+            <p className="text-white font-semibold text-sm mt-1">Syncing...</p>
+          ) : streakLoadError ? (
+            <p className="text-orange-300 font-semibold text-sm mt-1">Unavailable</p>
+          ) : streakDays === 0 ? (
+            <>
+              <p className="text-white text-2xl font-bold">🔥</p>
+              <p className="text-white/80 text-xs mt-1">Start today!</p>
+            </>
+          ) : (
+            <>
+              <p
+                className={`text-4xl font-bold text-orange-300 transition-all duration-300 ${
+                  glow ? "scale-110 drop-shadow-[0_0_12px_rgba(255,165,0,0.9)]" : ""
+                }`}
+              >
+                {displayStreak}
+              </p>
+              <p className="text-white/70 text-xs mt-1">
+                day{streakDays === 1 ? "" : "s"} in a row
+              </p>
+              <p className="text-green-300 text-xs font-medium mt-1">{randomMessage}</p>
+            </>
+          )}
         </div>
       </motion.div>
 
       {/* Error message */}
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-          <p className="text-red-700">{error}</p>
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+          <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
 
-      {/* Tasks section */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Tasks</h2>
-
-        {loading ? (
-          <p className="text-gray-500">Loading tasks...</p>
-        ) : tasks.length > 0 ? (
-          <ul className="divide-y divide-gray-200">
-            {tasks.map((task, index) => (
-              <li key={index} className="py-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    readOnly
-                    className="h-4 w-4 text-blue-600 rounded border-gray-300"
-                  />
-                  <span className="ml-3 text-gray-900">{task.title}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-gray-500">No tasks available.</p>
-        )}
-      </div>
-
+      {/* Recent Tools + Quizio */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.15 }}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-5"
       >
-        {/* Teachers Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white rounded-xl shadow-sm p-6"
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <User className="h-5 w-5 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Your Teachers
-            </h2>
+        {/* Recent Tools */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="h-4 w-4 text-primary-600" />
+            <h2 className="text-base font-semibold text-gray-900">Jump back in</h2>
           </div>
-          <div className="space-y-4">
-            {teachers.map((teacher, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <img
-                  src={teacher.image}
-                  alt={teacher.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div>
-                  <h3 className="font-medium text-gray-900">{teacher.name}</h3>
-                  <p className="text-sm text-gray-500">{teacher.subject}</p>
+          <div className="grid grid-cols-2 gap-3">
+            {(() => {
+              const contentItems = (recentItems || []).filter(item => item.contentType !== "tool" && item.contentType !== "study_streak");
+              return contentItems.length > 0 ? (
+                contentItems.slice(0, 4).map((item, index) => (
+                  <RecentItemCard key={item.id || index} item={item} navigate={navigate} />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8 text-gray-400">
+                  <Clock className="h-10 w-10 mx-auto mb-2 text-gray-200" />
+                  <p className="text-sm">Nothing yet. Create a flashcard deck or take a quiz to see it here.</p>
                 </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Schedule Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-xl shadow-sm p-6"
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <Calendar className="h-5 w-5 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Today's Schedule
-            </h2>
-          </div>
-          <div className="space-y-4">
-            {schedule.map((item, index) => (
-              <div key={index} className="p-4 rounded-lg bg-gray-50">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium text-gray-900">{item.subject}</h3>
-                  <span className="text-sm text-primary-600">{item.time}</span>
-                </div>
-                <p className="text-sm text-gray-500">{item.teacher}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Goals Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-xl shadow-sm p-6"
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <Target className="h-5 w-5 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Learning Goals
-            </h2>
-          </div>
-          <div className="space-y-6">
-            {goals.map((goal, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-medium text-gray-900">
-                    {goal.title}
-                  </h3>
-                  <span className="text-sm text-gray-500">
-                    {goal.progress}%
-                  </span>
-                </div>
-                <div className="h-2 bg-gray-100 rounded-full">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${goal.progress}%` }}
-                    transition={{ duration: 1, delay: 0.5 }}
-                    className="h-full bg-primary-600 rounded-full"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      </motion.div>
-
-      {/* Study Goals Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="bg-white rounded-xl shadow-sm p-6 mt-8"
-      >
-        <h2 className="text-xl font-bold text-gray-900 mb-6">
-          Next in Your Study Plan:
-        </h2>
-        <div className="relative">
-          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-            {studyGoals.map((goal, index) => (
-              <StudyGoalCard key={index} goal={goal} />
-            ))}
-          </div>
-          {/* Scroll indicator */}
-          <div className="flex justify-center mt-2">
-            <div className="flex space-x-1">
-              <div className="w-2 h-2 bg-primary-600 rounded-full"></div>
-              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-            </div>
+              );
+            })()}
           </div>
         </div>
+
+        {/* Quizio */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-purple-100 p-2 rounded-xl">
+                <Brain className="text-purple-600" size={18} />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-gray-900">Quizio</h2>
+                <p className="text-xs text-gray-400">AI-powered practice</p>
+              </div>
+            </div>
+            {quizioLoaded && !quizioLoading && (
+              <button
+                onClick={handleQuizio}
+                className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+              >
+                Re-analyze
+              </button>
+            )}
+          </div>
+
+          <p className="text-sm text-gray-500">
+            Quizio looks at your past quiz scores, spots your weakest topics, and builds custom practice sets to help you catch up.
+          </p>
+
+          {quizioLoading ? (
+            <div className="flex items-center justify-center gap-2 py-4 text-purple-500 text-sm">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+              Analyzing your quiz history…
+            </div>
+          ) : quizioLoaded && focusAreas.length === 0 ? (
+            <div className="text-center py-4 space-y-2">
+              <p className="text-sm text-gray-500">No weak areas found — nice work! 🎉</p>
+              <p className="text-xs text-gray-400">Take some quizzes and come back to see your focus areas.</p>
+              <button
+                onClick={() => navigate("/tools/practice-tests")}
+                className="mt-1 text-xs text-purple-600 hover:text-purple-700 font-medium underline underline-offset-2"
+              >
+                Go to Practice Tests →
+              </button>
+            </div>
+          ) : focusAreas.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Your focus areas</p>
+              {focusAreas.map((item, idx) => {
+                const topic = item.topic;
+                const display = item.display || topic;
+                const score = item.score;
+
+                let areaStatus = "Weak";
+                let color = "text-red-500";
+                if (score >= 60) { areaStatus = "Improving"; color = "text-yellow-500"; }
+                if (score >= 75) { areaStatus = "Strong"; color = "text-green-500"; }
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => startFocusQuiz(item)}
+                    disabled={loadingTopic !== null}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl hover:shadow-sm hover:border-purple-200 transition-all flex justify-between items-center"
+                  >
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-gray-900">{formatTopic(display)}</p>
+                      <p className={`text-xs font-medium ${color}`}>{areaStatus}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-gray-700">{score}%</p>
+                      <p className="text-xs text-gray-400">{loadingTopic === topic ? "Generating..." : "Practice"}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+      </motion.div>
+
+      {/* Suggested Next Steps */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5"
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <BookOpen className="h-4 w-4 text-primary-600" />
+          <h2 className="text-base font-semibold text-gray-900">Suggested Next Steps</h2>
+        </div>
+        <p className="text-sm text-gray-400 mb-4">Smart picks based on your recent activity</p>
+        {loadingNextSteps ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="rounded-xl border border-gray-100 p-4 space-y-3 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-2/3" />
+                <div className="h-3 bg-gray-100 rounded w-full" />
+                <div className="h-3 bg-gray-100 rounded w-5/6" />
+                <div className="h-8 bg-gray-200 rounded-lg w-1/3 mt-2" />
+              </div>
+            ))}
+          </div>
+        ) : suggestedNextSteps.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {suggestedNextSteps.map((step, index) => (
+              <SuggestedStepCard
+                key={index}
+                step={step}
+                navigate={navigate}
+                spanFull={suggestedNextSteps.length % 3 === 1 && index === suggestedNextSteps.length - 1}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400">No suggestions yet. Start using your study tools to get personalized recommendations.</p>
+        )}
       </motion.div>
     </div>
   );
@@ -471,6 +620,40 @@ const AchievementCard = ({
   </motion.div>
 );
 
+const TOOL_ICON = {
+    flashcard_deck: { Icon: Layers,   accent: "bg-primary-100 text-primary-600" },
+    quiz:           { Icon: ClipboardList, accent: "bg-red-100 text-red-600" },
+    voice_note:     { Icon: Mic,      accent: "bg-purple-100 text-purple-600" },
+    mind_map:       { Icon: Network2, accent: "bg-green-100 text-green-600" },
+    summarizer:     { Icon: Zap,      accent: "bg-yellow-100 text-yellow-600" },
+};
+
+const SuggestedStepCard = ({ step, navigate, spanFull }) => {
+    const { Icon = BookOpen, accent = "bg-gray-100 text-gray-500" } =
+        TOOL_ICON[step.toolKey] || {};
+
+    return (
+        <div
+            onClick={() => step.actionPath && navigate(step.actionPath)}
+            className={`group bg-white border border-gray-100 rounded-xl p-5 flex flex-col gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer${spanFull ? " sm:col-span-2 lg:col-span-3" : ""}`}
+        >
+            <div className={`h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 ${accent}`}>
+                <Icon className="h-4 w-4" />
+            </div>
+            <div>
+                <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1">
+                    {step.title}
+                </h3>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                    {step.description}
+                </p>
+            </div>
+            <div className="flex items-center gap-1 text-xs font-medium text-primary-600 group-hover:gap-2 transition-all mt-auto">
+                {step.buttonText} <ArrowRight className="h-3 w-3" />
+            </div>
+        </div>
+    );
+};
 const StudyGoalCard = ({ goal }) => (
   <motion.div
     whileHover={{ scale: 1.02 }}
@@ -507,5 +690,121 @@ const StudyGoalCard = ({ goal }) => (
     </div>
   </motion.div>
 );
+
+const RecentItemCard = ({ item, navigate }) => {
+  const { instance, accounts } = useMsal();
+
+  const contentTypeColors = {
+    voice_note: { bg: "bg-purple-50", text: "text-purple-600", Icon: Mic },
+    flashcard: { bg: "bg-primary-50", text: "text-primary-600", Icon: Layers },
+    flashcard_deck: { bg: "bg-primary-50", text: "text-primary-600", Icon: Layers },
+    quiz: { bg: "bg-red-50", text: "text-red-600", Icon: ClipboardList },
+    mindmap: { bg: "bg-green-50", text: "text-green-600", Icon: Network2 },
+    study_plan: { bg: "bg-indigo-50", text: "text-indigo-600", Icon: PenTool },
+    summary: { bg: "bg-yellow-50", text: "text-yellow-600", Icon: Zap },
+    folder: { bg: "bg-cyan-50", text: "text-cyan-700", Icon: Folder },
+  };
+
+  const toolRouteColors = {
+    "/tools/flashcards": { bg: "bg-primary-50", text: "text-primary-600", Icon: Layers },
+    "/tools/voice-notes": { bg: "bg-purple-50", text: "text-purple-600", Icon: Mic },
+    "/tools/mind-maps": { bg: "bg-green-50", text: "text-green-600", Icon: Network2 },
+    "/tools/practice-tests": { bg: "bg-red-50", text: "text-red-600", Icon: ClipboardList },
+    "/tools/summarizer": { bg: "bg-yellow-50", text: "text-yellow-600", Icon: Zap },
+    "/tools/study-planner": { bg: "bg-indigo-50", text: "text-indigo-600", Icon: PenTool },
+  };
+
+  const routeBase = item.route ? item.route.split("?")[0] : "";
+  const typeConfig =
+    contentTypeColors[item.contentType] ||
+    toolRouteColors[routeBase] || {
+      bg: "bg-gray-50",
+      text: "text-gray-700",
+      Icon: BookOpen,
+    };
+
+  const displayTitle =
+    item.title ||
+    item.rawTitle ||
+    (item.contentType === "quiz" ? "Practice Test" : "Untitled");
+
+  const handleNavigate = useCallback(async () => {
+    const routeMap = {
+      voice_note: `/tools/voice-notes?noteId=${item.id}`,
+      flashcard: `/tools/flashcards/study/${item.id}`,
+      flashcard_deck: `/tools/flashcards/study/${item.id}`,
+      quiz: `/tools/practice-tests?quizId=${item.id}`,
+      mindmap: `/tools/maps/${item.id}`,
+      study_plan: `/tools/study-planner?planId=${item.id}`,
+      summary: `/tools/summarizer`,
+      folder: `/workspace/folder/${item.id}`,
+      tool: item.route || "/tools",
+    };
+
+    let route = item.contentType === "tool" ? item.route : routeMap[item.contentType];
+    route = route || item.route || "/tools";
+    console.log("RecentItemCard navigation:", { item: item.id, contentType: item.contentType, route });
+
+    const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+    try {
+      const acct = instance.getActiveAccount() || accounts[0];
+      const tokenRes = await instance.acquireTokenSilent({
+        account: acct,
+        scopes: ["openid", "profile"],
+      });
+
+      const token = tokenRes.accessToken || tokenRes.idToken;
+      const res = await fetch(`${API}/api/track-access`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ item_id: item.id }),
+      });
+
+      if (res.ok) {
+        console.log("Track-access successful for item:", item.id);
+      } else {
+        console.warn("Track-access returned status:", res.status);
+      }
+    } catch (e) {
+      console.warn("Failed to track access:", e);
+    }
+
+    if (route) {
+      navigate(route);
+    } else {
+      console.warn(`No route found for content type: ${item.contentType}`);
+    }
+  }, [item, navigate, instance, accounts]);
+
+  const Icon = typeConfig.Icon;
+
+  return (
+    <motion.div
+      whileHover={{ scale: 1.05, y: -4 }}
+      onClick={handleNavigate}
+      className={`${typeConfig.bg} rounded-lg p-4 cursor-pointer transition-all`}
+    >
+      <div className="flex items-start justify-between mb-2">
+        <Icon className={`h-6 w-6 ${typeConfig.text}`} />
+        <ArrowRight className={`h-4 w-4 ${typeConfig.text}`} />
+      </div>
+      <h3 className={`font-semibold ${typeConfig.text} text-sm truncate`}>
+        {displayTitle}
+      </h3>
+      <p className="text-xs text-gray-500 mt-1 capitalize">
+        {item.contentType?.replace(/_/g, " ")}
+      </p>
+      {(item.updatedAt || item.createdAt) && (
+        <p className="text-[10px] text-gray-400 mt-1">
+          last accessed {new Date(item.updatedAt || item.createdAt).toLocaleString()}
+        </p>
+      )}
+    </motion.div>
+  );
+};
 
 export default Dashboard;

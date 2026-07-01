@@ -2,23 +2,25 @@ import React from "react";
 import { Link } from "react-router-dom";
 import {
   Brain,
+  Layers,
   Mic,
   Network as Network2,
-  TestTube,
+  ClipboardList,
   Sparkles,
   BookOpen,
   PenTool,
   Zap,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { addLocalRecentTool } from "../hooks/useUserRecents";
 
 const StudyTools = () => {
   const tools = [
     {
       to: "/tools/flashcards",
-      icon: Brain,
+      icon: Layers,
       title: "AI Flashcards",
-      description: "Generate smart flashcards from your notes",
+      description: "Turn any topic or PDF into a deck you can actually study from",
       color: "text-primary-600",
       bgColor: "bg-primary-50",
       borderColor: "border-primary-100",
@@ -27,7 +29,7 @@ const StudyTools = () => {
       to: "/tools/voice-notes",
       icon: Mic,
       title: "Voice Notes",
-      description: "Convert speech to organized notes",
+      description: "Talk through your notes instead of typing them",
       color: "text-purple-600",
       bgColor: "bg-purple-50",
       borderColor: "border-purple-100",
@@ -36,16 +38,16 @@ const StudyTools = () => {
       to: "/tools/mind-maps",
       icon: Network2,
       title: "Mind Maps",
-      description: "Visual learning aids for complex topics",
+      description: "See how ideas connect before things get confusing",
       color: "text-green-600",
       bgColor: "bg-green-50",
       borderColor: "border-green-100",
     },
     {
       to: "/tools/practice-tests",
-      icon: TestTube,
+      icon: ClipboardList,
       title: "Practice Tests",
-      description: "AI-powered assessments",
+      description: "Find out what you actually know before the real test does",
       color: "text-red-600",
       bgColor: "bg-red-50",
       borderColor: "border-red-100",
@@ -54,7 +56,7 @@ const StudyTools = () => {
       to: "/tools/summarizer",
       icon: Zap,
       title: "Smart Summarizer",
-      description: "Get concise summaries of any text",
+      description: "Too much to read? Get the key points in seconds",
       color: "text-yellow-600",
       bgColor: "bg-yellow-50",
       borderColor: "border-yellow-100",
@@ -63,7 +65,7 @@ const StudyTools = () => {
       to: "/tools/study-planner",
       icon: PenTool,
       title: "Study Planner",
-      description: "Create optimized study schedules",
+      description: "Build a study schedule you might actually stick to",
       color: "text-indigo-600",
       bgColor: "bg-indigo-50",
       borderColor: "border-indigo-100",
@@ -71,28 +73,14 @@ const StudyTools = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
+        className="mb-6"
       >
-        <motion.h1
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4"
-        >
-          Smart Study Tools
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-lg text-gray-600 max-w-2xl mx-auto"
-        >
-          Enhance your learning experience with our AI-powered study tools
-        </motion.p>
+        <h1 className="text-2xl font-bold text-gray-900">Study Tools</h1>
+        <p className="text-sm text-gray-500 mt-1">Pick a tool to get started</p>
       </motion.div>
 
       <motion.div
@@ -137,25 +125,36 @@ const ToolCard = ({
   bgColor,
   borderColor,
   index,
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.1 * index }}
-  >
-    <Link
-      to={to}
-      className={`block p-6 rounded-xl bg-white border ${borderColor} hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}
+}) => {
+  const handleRecent = async () => {
+    addLocalRecentTool({ to, title, contentType: "tool" });
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 * index }}
     >
-      <div
-        className={`${bgColor} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}
+      <Link
+        to={to}
+        onClick={async (e) => {
+          e.preventDefault();
+          await handleRecent();
+          window.location.href = to;
+        }}
+        className={`block p-6 rounded-xl bg-white border ${borderColor} hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}
       >
-        <Icon className={`h-6 w-6 ${color}`} />
-      </div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
-    </Link>
-  </motion.div>
-);
+        <div
+          className={`${bgColor} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}
+        >
+          <Icon className={`h-6 w-6 ${color}`} />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
+        <p className="text-gray-600">{description}</p>
+      </Link>
+    </motion.div>
+  );
+};
 
 export default StudyTools;

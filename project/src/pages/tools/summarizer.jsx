@@ -19,8 +19,9 @@ import {
   PlusCircle,
   BookOpen
 } from 'lucide-react';
-import { generateSummary } from '../../api/apiService';
+import { generateSummary, recordStudyToolUse } from '../../api/apiService';
 import { msalInstance, protectedResources } from '../../authConfig';
+import { useGuest, guestFetch } from '../../context/GuestContext';
 
 // reusable save-to-folder button
 import SaveToFolderButton from '../../components/SaveToFolderButton';
@@ -29,6 +30,7 @@ import ShareItemButton from '../../components/ShareItemButton';
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const Summarizer = () => {
+  const { isGuest } = useGuest();
   // Get folderId from URL query params if present
   const [searchParams] = useSearchParams();
   const folderId = searchParams.get('folderId');
@@ -148,6 +150,25 @@ const Summarizer = () => {
     }
   }, [viewMode, fetchSavedSummaries]);
 
+  // If we deep-link with ?summaryId=..., switch to Saved view so the list is loaded
+  useEffect(() => {
+      if (!summaryId) return;
+      setViewMode('saved');
+  }, [summaryId]);
+
+  // After saved summaries are loaded, auto-select the one specified in the URL (?summaryId=...)
+  useEffect(() => {
+      if (!summaryId) return;
+      if (!savedSummaries || savedSummaries.length === 0) return;
+
+      const match = savedSummaries.find((s) => s.id === summaryId);
+      if (match) {
+          handleSelectSummary(match);
+      } else {
+          setError("That saved summary was not found.");
+      }
+  }, [summaryId, savedSummaries]);
+
   // Handle creating a new summary
   const handleCreateNew = () => {
     setViewMode('create');
@@ -173,6 +194,15 @@ const Summarizer = () => {
   };
 
   const callGenerateSummary = async (input) => {
+    if (isGuest) {
+      // File uploads aren't supported in guest mode — only text
+      const text = input instanceof FormData ? null : input.text;
+      if (!text) throw new Error("File upload requires an account. Please paste your text instead.");
+      return await guestFetch("/public/summarize", {
+        method: "POST",
+        body: JSON.stringify({ text, style: summaryStyle, format: summaryFormat }),
+      });
+    }
     if (input instanceof FormData) {
       input.append('style', summaryStyle);
       input.append("format", summaryFormat);
@@ -302,14 +332,17 @@ const Summarizer = () => {
   };
 
   // called by SaveToFolderButton after successful save
-  const handleSaved = () => {
+ const handleSaved = async () => {
     setDirty(false);
     setLastSavedAt(Date.now());
+    await recordStudyToolUse("summarizer", "save_summary");
     // Refresh saved summaries list (if not in a folder, always refresh)
     if (!folderId) {
       fetchSavedSummaries();
     }
   };
+
+  
 
   // State for saving to folder directly (when folderId is in URL)
   const [isSavingToFolder, setIsSavingToFolder] = useState(false);
@@ -364,6 +397,9 @@ const Summarizer = () => {
 
       setDirty(false);
       setLastSavedAt(Date.now());
+
+      await recordStudyToolUse("summarizer", "save_summary");
+
       // Refresh saved summaries list
       if (viewMode === 'saved') {
         fetchSavedSummaries();
@@ -377,37 +413,37 @@ const Summarizer = () => {
   };
 
   return (
-    <div className="relative bg-gradient-to-br from-[#edf2ff] to-[#fef9ff] min-h-screen py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-purple-100 via-white to-transparent opacity-30 animate-pulse pointer-events-none" />
-
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl p-8 ring-1 ring-gray-200 backdrop-blur"
+        transition={{ duration: 0.4 }}
       >
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <FileSearch className="h-8 w-8 text-indigo-600" />
-            <h1 className="text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
-              Smart Summarizer
-            </h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="bg-yellow-50 p-2.5 rounded-xl">
+              <FileSearch className="h-6 w-6 text-yellow-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Smart Summarizer</h1>
+              <p className="text-sm text-gray-500">Get concise summaries of any text or document</p>
+            </div>
           </div>
           {viewMode === 'saved' && (
             <button
               onClick={handleCreateNew}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 transition-colors text-sm"
             >
-              <PlusCircle className="w-5 h-5" />
+              <PlusCircle className="w-4 h-4" />
               Create New
             </button>
           )}
           {viewMode === 'create' && (
             <button
               onClick={() => { setViewMode('saved'); setSelectedSummary(null); }}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors text-sm"
             >
-              <BookOpen className="w-5 h-5" />
+              <BookOpen className="w-4 h-4" />
               Saved Summaries
             </button>
           )}

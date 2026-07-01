@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { useMsal } from "@azure/msal-react";
 import { protectedResources } from "../../../authConfig";
+import { recordStudyToolUse } from "../../../api/apiService";
+import { useGuest } from "../../../context/GuestContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -11,6 +13,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
  */
 export const useDeckData = () => {
     const { instance, accounts, inProgress } = useMsal();
+    const { isGuest } = useGuest();
     const decksFetchedRef = useRef(false);
     const [savedDecks, setSavedDecks] = useState([]);
     const [savedSpecificDeck, setSavedSpecificDeck] = useState([]);
@@ -49,6 +52,7 @@ export const useDeckData = () => {
 
     // Fetch saved decks
     const fetchSavedDecks = useCallback(async () => {
+        if (isGuest) return [];
         try {
             // Check if MSAL is initialized
             if (inProgress !== "none") {
@@ -71,7 +75,7 @@ export const useDeckData = () => {
             setError("Failed to load your saved flashcard decks. Please try again later.");
             return [];
         }
-    }, [getToken, inProgress]);
+    }, [getToken, inProgress, isGuest]);
 
     // Save a deck
     const saveDeck = useCallback(
@@ -113,6 +117,7 @@ export const useDeckData = () => {
                 );
 
                 setSaveSuccess(true);
+                await recordStudyToolUse("flashcard_deck", "save_flashcard_deck");
                 decksFetchedRef.current = false;
                 await fetchSavedDecks();
                 return response.data.id;
@@ -192,6 +197,7 @@ export const useDeckData = () => {
 
             decksFetchedRef.current = false;
             await fetchSavedDecks();
+            await recordStudyToolUse("flashcard_deck", "generate_flashcards");
 
             return response.data;
         } catch (err) {
@@ -237,6 +243,7 @@ export const useDeckData = () => {
                         "Content-Type": "multipart/form-data",
                     },
                 });
+                await recordStudyToolUse("flashcard_deck", "generate_flashcards");
                 return response.data;
             } catch (err) {
                 console.error("Error generating quiz:", err);
@@ -306,6 +313,7 @@ export const useDeckData = () => {
                 );
 
                 setSaveSuccess(true);
+                await recordStudyToolUse("flashcard_deck", "update_flashcard_deck");
                 decksFetchedRef.current = false;
                 await fetchSavedDecks(); // Refresh the saved decks
                 return response.data;

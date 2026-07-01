@@ -23,11 +23,11 @@ const getScoreColor = (score) => {
 
 // Helper function to get performance level
 const getPerformanceLevel = (score) => {
-  if (score >= 90) return "Excellent";
-  if (score >= 80) return "Good";
-  if (score >= 70) return "Fair";
-  if (score >= 60) return "Needs Work";
-  return "Poor";
+  if (score >= 90) return "Outstanding";
+  if (score >= 80) return "Strong";
+  if (score >= 70) return "On Track";
+  if (score >= 60) return "Keep Going";
+  return "Needs Review";
 };
 
 // Helper function to get correct answer count

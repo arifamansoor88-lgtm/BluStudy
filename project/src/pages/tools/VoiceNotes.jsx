@@ -5,6 +5,7 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import { useMsal } from '@azure/msal-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Mic, Save, Trash2, Download, Share2, Tag as TagIcon, AudioWaveform as Waveform, PauseCircle, PlayCircle } from 'lucide-react';
+import { recordStudyToolUse } from '../../api/apiService';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -31,7 +32,9 @@ const VoiceNotes = () => {
   // Get folderId from URL query params if present
   const [searchParams] = useSearchParams();
   const folderId = searchParams.get('folderId');
-  
+
+  const noteId = searchParams.get("noteId");
+
   const { instance, accounts } = useMsal();
   const navigate = useNavigate();
   
@@ -104,6 +107,18 @@ const VoiceNotes = () => {
   };
 
   useEffect(() => { fetchNotes(); }, [selectedTagFilter, userId]);
+
+    // If we navigated here with ?noteId=..., move that note to the top so it's visible immediately
+    useEffect(() => {
+        if (!noteId || notes.length === 0) return;
+
+        const idx = notes.findIndex((n) => n.id === noteId);
+        if (idx === -1) return;
+
+        const selected = notes[idx];
+        const remaining = notes.filter((n) => n.id !== noteId);
+        setNotes([selected, ...remaining]);
+    }, [noteId, notes.length]);
 
   // Refresh notes when page becomes visible after being hidden (handles browser back button)
   // Only refresh if page was hidden for more than 1 second
@@ -344,6 +359,8 @@ const VoiceNotes = () => {
       const newNote = res.data;
       setNotes(prev => [newNote, ...prev]);
 
+      await recordStudyToolUse("voice_note", "save_voice_note");
+
       // refresh tag universe
       const tags = new Set(allTags);
       (newNote.tags || []).forEach(t => tags.add(t));
@@ -426,12 +443,15 @@ const VoiceNotes = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-4 mb-8">
-        <div className="bg-purple-100 p-3 rounded-full">
-          <Waveform className="h-8 w-8 text-purple-600" />
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="bg-purple-50 p-2.5 rounded-xl">
+          <Waveform className="h-6 w-6 text-purple-600" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900">Voice Notes</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Voice Notes</h1>
+          <p className="text-sm text-gray-500">Record, transcribe and organize your spoken notes</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">

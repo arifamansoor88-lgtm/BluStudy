@@ -1,41 +1,22 @@
+# Secrets — never commit these
+.env
+.env.local
+.env.*.local
+
 # Notes (local only)
 notes/
 
-# Local notes (not tracked)
-notes/
-
-# --- Added ignores (feature branch cleanup) ---
-node_modules/
-dist/
-build/
-.vite/
-.parcel-cache/
-.env
-
+# Python
 venv/
-backend/venv/
-b_m_a/project/backend/venv/
 **/__pycache__/
 **/*.py[cod]
-node_modules/
-dist/
-build/
-.vite/
-.parcel-cache/
-venv/
-backend/venv/
-b_m_a/project/backend/venv/
-**/__pycache__/
-**/*.py[cod]
-# Snapshot ignores
+
+# Frontend build output
 node_modules/
 dist/
 build/
 .vite/
 .parcel-cache/
 
-venv/
-backend/venv/
-b_m_a/project/backend/venv/
-**/__pycache__/
-**/*.py[cod]
+# Misc
+runApp.txt

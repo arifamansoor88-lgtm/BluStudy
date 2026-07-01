@@ -41,5 +41,4 @@ tqdm==4.67.1
 typing-extensions==4.13.2
 urllib3==2.2.3
 uvicorn==0.33.0
-json_repair
-pydantic_core
+slowapi==0.1.9

@@ -131,10 +131,15 @@ const MindMapDashboard = () => {
   }, [isAuthenticated, inProgress, fetchSavedMindmaps]);
 
     return (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex items-center gap-4 mb-8">
-                <Network className="h-8 w-8 text-green-600" />
-                <h1 className="text-2xl font-bold text-gray-900">Mind Maps</h1>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+            <div className="flex items-center gap-3 mb-6">
+                <div className="bg-green-50 p-2.5 rounded-xl">
+                    <Network className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Mind Maps</h1>
+                    <p className="text-sm text-gray-500">Visual learning aids for complex topics</p>
+                </div>
             </div>
             <div className="flex justify-between items-center mb-4 gap-4">
                 <div className="relative flex-1 w-full">
