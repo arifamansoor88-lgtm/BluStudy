@@ -2775,6 +2775,42 @@ Generate exactly {num_cards} cards.
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/public/generate-quiz-from-flashcards")
+@_rate_limit("5/hour")
+async def public_generate_quiz_from_flashcards(request: Request, payload: Dict[str, Any] = Body(...)):
+    """Guest quiz-from-flashcards generator — no auth, not persisted, rate limited to 5 uses per IP per hour."""
+    title: str = (payload.get("title") or "Flashcard Quiz").strip()
+    flashcards: list = payload.get("flashcards") or []
+    if not flashcards:
+        raise HTTPException(status_code=400, detail="flashcards array is required")
+
+    num_questions = max(5, min(10, int(payload.get("num_questions") or len(flashcards))))
+
+    lines = [f"Flashcard deck: {title}\n"]
+    for i, card in enumerate(flashcards, 1):
+        q = card.get("question") or card.get("front") or ""
+        a = card.get("answer") or card.get("back") or ""
+        lines.append(f"Card {i}:\n  Question: {q}\n  Answer: {a}")
+    flashcard_text = "\n".join(lines)
+
+    synthetic_text = (
+        f"Generate quiz questions that test knowledge of the following flashcard deck. "
+        f"Use the question/answer pairs as the source of truth — rephrase them as quiz questions "
+        f"rather than copying them verbatim.\n\n{flashcard_text}"
+    )
+
+    try:
+        quiz_json = generate_quiz(
+            text=synthetic_text,
+            num_questions=num_questions,
+            question_formats=["multiple_choice"],
+        )
+        quiz_data = _sanitize_quiz_payload(json.loads(quiz_json))
+        quiz_data["title"] = quiz_data.get("quiz_title") or title
+        return quiz_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ── End public endpoints ──────────────────────────────────────────────────────
 
 @app.post("/summarize")

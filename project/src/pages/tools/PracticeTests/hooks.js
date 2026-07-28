@@ -601,10 +601,19 @@ export const useQuizData = () => {
     },
     generateQuizFromFlashcards: async (flashcards, title, numQuestions = 10) => {
       setQuizAttempts([]);
+
+      // Guest mode: call public endpoint, no auth or Cosmos needed
+      if (isGuest) {
+        return await guestFetch("/public/generate-quiz-from-flashcards", {
+          method: "POST",
+          body: JSON.stringify({ flashcards, title, num_questions: Math.min(numQuestions, 10) }),
+        });
+      }
+
       const token = await getToken();
       if (!token) throw new Error("No authentication token available");
       const response = await axios.post(
-        "http://127.0.0.1:8000/generate-quiz-from-flashcards",
+        `${API_BASE_URL}/generate-quiz-from-flashcards`,
         { flashcards, title, num_questions: numQuestions, question_formats: ["multiple_choice"] },
         { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
       );

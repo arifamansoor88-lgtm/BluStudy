@@ -1,22 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import {
-  Brain, Layers, ClipboardList, Zap, CalendarDays,
-  ArrowRight, Sparkles, BookOpen, TrendingUp,
-} from "lucide-react";
+import { Brain, ArrowRight, Sparkles } from "lucide-react";
 import { useMsal } from "@azure/msal-react";
 import { motion } from "framer-motion";
 import { protectedResources } from "../authConfig";
 import { useGuest } from "../context/GuestContext";
-
-const FEATURES = [
-  { icon: Zap,           label: "AI Summarizer",      desc: "Turn any PDF or notes into a clean summary in seconds." },
-  { icon: Layers,        label: "Smart Flashcards",   desc: "Auto-generate decks from your material, study with spaced repetition." },
-  { icon: ClipboardList, label: "Practice Tests",     desc: "Custom quizzes with instant feedback and performance tracking." },
-  { icon: TrendingUp,    label: "Quizio",             desc: "AI detects your weakest topics and builds targeted practice sets." },
-  { icon: CalendarDays,  label: "Study Planner",      desc: "Build a smart study schedule around your exams." },
-  { icon: BookOpen,      label: "My Library",         desc: "All your study materials in one organised place." },
-];
 
 export default function SignIn() {
   const { instance, accounts } = useMsal();
@@ -59,14 +47,14 @@ export default function SignIn() {
     <div className="min-h-screen flex">
 
       {/* ── Left panel ── */}
-      <div className="hidden lg:flex lg:w-[58%] bg-gradient-to-br from-gray-950 via-primary-950 to-gray-900 flex-col justify-between p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[58%] bg-gradient-to-br from-gray-950 via-primary-950 to-gray-900 flex-col justify-center p-12 relative overflow-hidden">
 
         {/* Background glow */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-primary-600/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
         <div className="absolute bottom-0 right-0 w-80 h-80 bg-primary-500/10 rounded-full blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
         {/* Logo */}
-        <div className="flex items-center gap-3 relative z-10">
+        <div className="absolute top-12 left-12 z-10 flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary-600 flex items-center justify-center">
             <Brain className="h-6 w-6 text-white" />
           </div>
@@ -74,51 +62,25 @@ export default function SignIn() {
         </div>
 
         {/* Hero copy */}
-        <div className="relative z-10 space-y-10">
-          <div>
-            <motion.h1
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-4xl xl:text-5xl font-extrabold text-white leading-tight tracking-tight"
-            >
-              Study smarter.<br />
-              <span className="text-primary-400">Score higher.</span>
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="mt-4 text-base text-gray-400 leading-relaxed max-w-md"
-            >
-              BluStudy turns your notes and PDFs into flashcards, quizzes, summaries, and personalised study plans — all powered by AI.
-            </motion.p>
-          </div>
-
-          {/* Feature grid */}
-          <div className="grid grid-cols-2 gap-3">
-            {FEATURES.map((f, i) => (
-              <motion.div
-                key={f.label}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 + i * 0.07 }}
-                className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/8 transition-colors"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <f.icon className="h-4 w-4 text-primary-400 flex-shrink-0" />
-                  <span className="text-sm font-semibold text-white">{f.label}</span>
-                </div>
-                <p className="text-xs text-gray-500 leading-relaxed">{f.desc}</p>
-              </motion.div>
-            ))}
-          </div>
+        <div className="relative z-10">
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-4xl xl:text-5xl font-extrabold text-white leading-tight tracking-tight"
+          >
+            Study smarter.<br />
+            <span className="text-primary-400">Score higher.</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mt-4 text-base text-gray-400 leading-relaxed max-w-md"
+          >
+            BluStudy turns your notes and PDFs into flashcards, quizzes, summaries, and personalised study plans — all powered by AI.
+          </motion.p>
         </div>
-
-        {/* Footer quote */}
-        <p className="text-xs text-gray-600 relative z-10">
-          Built for students who want results, not busywork.
-        </p>
       </div>
 
       {/* ── Right panel ── */}
