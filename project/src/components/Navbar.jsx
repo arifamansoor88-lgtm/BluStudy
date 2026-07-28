@@ -15,9 +15,11 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Sparkles,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useMsal } from "@azure/msal-react";
+import { useGuest } from "../context/GuestContext";
 
 const NAV_ITEMS = [
   { icon: Home,          label: "Home",           to: "/dashboard",             guestAllowed: false },
@@ -32,9 +34,16 @@ const NAV_ITEMS = [
 
 export const Sidebar = ({ isOpen, onToggle, guestMode = false }) => {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { exitGuest } = useGuest();
   const visibleItems = guestMode ? NAV_ITEMS.filter((i) => i.guestAllowed) : NAV_ITEMS;
   const exactMatch = visibleItems.find((item) => pathname === item.to)?.to;
   const logoTo = guestMode ? "/" : "/dashboard";
+
+  const handleCreateAccount = () => {
+    exitGuest();
+    navigate("/signin");
+  };
 
   return (
     <aside
@@ -91,6 +100,33 @@ export const Sidebar = ({ isOpen, onToggle, guestMode = false }) => {
           );
         })}
       </nav>
+
+      {/* Guest upsell banner */}
+      {guestMode && isOpen && (
+        <div className="mx-2 mb-3 p-3 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 text-white">
+          <Sparkles className="h-4 w-4 text-primary-200 mb-1.5" />
+          <p className="text-xs font-medium text-primary-50 leading-snug mb-2">
+            Want to unlock more tools? Create an account.
+          </p>
+          <button
+            onClick={handleCreateAccount}
+            className="w-full px-2.5 py-1.5 rounded-lg bg-white text-primary-700 text-xs font-semibold hover:bg-primary-50 transition-colors"
+          >
+            Create free account
+          </button>
+        </div>
+      )}
+      {guestMode && !isOpen && (
+        <div className="px-2 pb-3">
+          <button
+            onClick={handleCreateAccount}
+            title="Want to unlock more tools? Create an account."
+            className="w-full flex items-center justify-center p-2.5 rounded-xl text-primary-600 hover:bg-primary-50 transition-colors"
+          >
+            <Sparkles className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Expand button when collapsed */}
       {!isOpen && (

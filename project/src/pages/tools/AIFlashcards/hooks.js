@@ -3,7 +3,7 @@ import axios from "axios";
 import { useMsal } from "@azure/msal-react";
 import { protectedResources } from "../../../authConfig";
 import { recordStudyToolUse } from "../../../api/apiService";
-import { useGuest } from "../../../context/GuestContext";
+import { useGuest, guestFetch } from "../../../context/GuestContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -178,6 +178,15 @@ export const useDeckData = () => {
     const generateFlashcardsFromTopic = useCallback(
     async (topic, numCards = 10, folderId = null) => {
         try {
+            // Guest mode: call public endpoint, no auth or Cosmos needed
+            if (isGuest) {
+                const deck = await guestFetch("/public/generate-flashcard-topic", {
+                    method: "POST",
+                    body: JSON.stringify({ topic, num_cards: Math.min(numCards, 20) }),
+                });
+                return deck;
+            }
+
             const token = await getToken();
 
             const response = await axios.post(
@@ -209,7 +218,7 @@ export const useDeckData = () => {
             );
         }
     },
-    [getToken, fetchSavedDecks]
+    [getToken, fetchSavedDecks, isGuest]
 );
 
 
@@ -221,6 +230,9 @@ export const useDeckData = () => {
             folderId = null
         ) => {
             try {
+                if (isGuest) {
+                    throw new Error("PDF upload requires an account. Please use the topic option instead.");
+                }
                 const token = await getToken();
 
                 // Create a FormData object to send the file
@@ -252,7 +264,7 @@ export const useDeckData = () => {
                 );
             }
         },
-        [getToken]
+        [getToken, isGuest]
     );
 
     // Get Flashcard by ID

@@ -51,9 +51,16 @@ const AIFlashcards = () => {
     setIsProcessing(true);
     try {
       const result = await generateFlashcardsFromTopic(topicPrompt, numCards, folderId);
-      navigate(`/tools/flashcards/study/${result.deckId}`, { state: { title: topicPrompt } });
+      if (isGuest) {
+        // Guest decks aren't persisted — carry the cards in navigation state instead of a deckId
+        navigate(`/tools/flashcards/study/guest-preview`, {
+          state: { title: result.title || topicPrompt, flashcards: result.cards },
+        });
+      } else {
+        navigate(`/tools/flashcards/study/${result.deckId}`, { state: { title: topicPrompt } });
+      }
     } catch (err) {
-      alert("Failed to generate flashcards from topic");
+      alert(err.message || "Failed to generate flashcards from topic");
     } finally {
       setIsProcessing(false);
     }

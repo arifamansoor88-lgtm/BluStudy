@@ -31,6 +31,8 @@ const FlashcardStudyPage = () => {
   const navigate = useNavigate();
   const routeTitle = location.state?.title || '';
   const isPreGeneratedDeck = isPreGeneratedDeckId(deckId);
+  // Guest decks aren't persisted to the backend — cards arrive via navigation state
+  const isUnsavedDeck = Boolean(location.state?.flashcards?.length);
 
   const { getFlashcardByID, updateDeck } = useDeckData();
 
@@ -56,6 +58,13 @@ const FlashcardStudyPage = () => {
      LOAD FROM BACKEND
   -----------------------------------------*/
   useEffect(() => {
+    if (isUnsavedDeck) {
+      setDeckTitle(location.state.title || routeTitle || 'Flashcards');
+      setFlashcards(location.state.flashcards.map(normalizeCard));
+      setLoading(false);
+      return;
+    }
+
     if (!deckId) {
       setLoading(false);
       return;
@@ -78,7 +87,7 @@ const FlashcardStudyPage = () => {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [deckId, getFlashcardByID, isPreGeneratedDeck, routeTitle]);
+  }, [deckId, getFlashcardByID, isPreGeneratedDeck, routeTitle, isUnsavedDeck, location.state]);
 
   /* ----------------------------------------
      STUDY MODE CONTROLS
@@ -158,7 +167,7 @@ const FlashcardStudyPage = () => {
       return;
     }
 
-    if (isEditing) {
+    if (isEditing && !isUnsavedDeck) {
       await updateDeck(deckTitle, deckId, flashcards);
     }
     setIsEditing((p) => !p);

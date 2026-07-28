@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Brain, Layers, ClipboardList, Zap, CalendarDays,
-  Check, ArrowRight, Sparkles, BookOpen, TrendingUp,
+  ArrowRight, Sparkles, BookOpen, TrendingUp,
 } from "lucide-react";
 import { useMsal } from "@azure/msal-react";
 import { motion } from "framer-motion";
@@ -17,10 +17,6 @@ const FEATURES = [
   { icon: CalendarDays,  label: "Study Planner",      desc: "Build a smart study schedule around your exams." },
   { icon: BookOpen,      label: "My Library",         desc: "All your study materials in one organised place." },
 ];
-
-const GUEST_CAN  = ["AI Summarizer (3 uses)", "Generate & take quizzes", "Try AI flashcards"];
-const GUEST_CANT = ["Save your work", "Progress tracking & streaks", "Quizio weakness detector", "My Library & folders"];
-const FULL_PERKS = ["Everything in guest mode", "Unlimited AI generation", "Save & organise everything", "Study streaks & progress", "Quizio personalised practice", "My Library with folders"];
 
 export default function SignIn() {
   const { instance, accounts } = useMsal();
@@ -131,17 +127,18 @@ export default function SignIn() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
-          className="w-full max-w-md space-y-6"
+          className="w-full max-w-sm bg-white rounded-3xl shadow-xl shadow-gray-200/60 border border-gray-100 p-8 space-y-5"
         >
           {/* Mobile logo */}
-          <div className="flex items-center gap-2 lg:hidden mb-2">
+          <div className="flex items-center gap-2 lg:hidden mb-1">
             <Brain className="h-7 w-7 text-primary-600" />
             <span className="text-lg font-bold text-gray-900">BluStudy</span>
           </div>
 
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-            <p className="text-sm text-gray-500 mt-1">Sign in to your account or try it first.</p>
+          <div className="text-center">
+            <span className="text-3xl">👋</span>
+            <h2 className="text-2xl font-bold text-gray-900 mt-2">Welcome back</h2>
+            <p className="text-sm text-gray-500 mt-1">Sign in, or jump right in as a guest.</p>
           </div>
 
           {error && (
@@ -154,7 +151,7 @@ export default function SignIn() {
           <button
             onClick={handleLogin}
             disabled={loggingIn}
-            className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm transition-colors disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-full bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm transition-colors disabled:opacity-60"
           >
             {loggingIn ? (
               <span className="flex items-center gap-2">
@@ -165,7 +162,7 @@ export default function SignIn() {
                 Signing in…
               </span>
             ) : (
-              <>Sign in to your account <ArrowRight className="h-4 w-4" /></>
+              <>Sign in <ArrowRight className="h-4 w-4" /></>
             )}
           </button>
 
@@ -178,50 +175,13 @@ export default function SignIn() {
           {/* Try as guest */}
           <button
             onClick={handleGuest}
-            className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl border-2 border-dashed border-gray-300 hover:border-primary-400 hover:bg-primary-50 text-gray-600 hover:text-primary-700 font-semibold text-sm transition-all group"
+            className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-full border-2 border-dashed border-gray-300 hover:border-primary-400 hover:bg-primary-50 text-gray-600 hover:text-primary-700 font-semibold text-sm transition-all group"
           >
             <Sparkles className="h-4 w-4 text-gray-400 group-hover:text-primary-500 transition-colors" />
-            Try it without an account
+            Continue as guest
           </button>
-
-          {/* Guest vs Full comparison */}
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            {/* Guest */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2.5">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Guest</p>
-              <div className="space-y-1.5">
-                {GUEST_CAN.map((item) => (
-                  <div key={item} className="flex items-start gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-xs text-gray-600">{item}</span>
-                  </div>
-                ))}
-                {GUEST_CANT.map((item) => (
-                  <div key={item} className="flex items-start gap-1.5 opacity-40">
-                    <span className="text-gray-400 text-xs mt-0.5 leading-none flex-shrink-0">✕</span>
-                    <span className="text-xs text-gray-500 line-through">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Full account */}
-            <div className="bg-primary-600 rounded-xl p-4 space-y-2.5 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-8 translate-x-8 pointer-events-none" />
-              <p className="text-xs font-bold text-primary-200 uppercase tracking-wide relative z-10">Free account</p>
-              <div className="space-y-1.5 relative z-10">
-                {FULL_PERKS.map((item) => (
-                  <div key={item} className="flex items-start gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-primary-200 mt-0.5 flex-shrink-0" />
-                    <span className="text-xs text-white">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
           <p className="text-center text-xs text-gray-400">
-            No credit card required · Free forever
+            Free forever · no credit card needed
           </p>
         </motion.div>
       </div>

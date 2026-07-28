@@ -2734,6 +2734,47 @@ async def public_generate_quiz(request: Request, payload: Dict[str, Any] = Body(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/public/generate-flashcard-topic")
+@_rate_limit("5/hour")
+async def public_generate_flashcard_topic(request: Request, payload: Dict[str, Any] = Body(...)):
+    """Guest flashcard generator — no auth, not persisted, rate limited to 5 uses per IP per hour."""
+    topic = (payload.get("topic") or "").strip()
+    if len(topic) < 5:
+        raise HTTPException(status_code=422, detail="Topic is too short")
+    num_cards = min(int(payload.get("num_cards", 10)), 20)
+
+    prompt = f"""
+You are an expert tutor.
+
+Generate a flashcard deck for the following topic:
+"{topic}"
+
+Rules:
+- Output VALID JSON ONLY
+- No markdown
+- No commentary
+- Structure:
+
+{{
+  "title": "<concise deck title>",
+  "cards": [
+    {{
+      "question": "...",
+      "answer": "...",
+      "difficulty": "easy|medium|hard",
+      "important": false
+    }}
+  ]
+}}
+
+Generate exactly {num_cards} cards.
+"""
+    try:
+        deck = generate_exact_flashcard_deck(prompt, num_cards, topic)
+        return {"title": deck.get("title", topic), "cards": deck["cards"]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ── End public endpoints ──────────────────────────────────────────────────────
 
 @app.post("/summarize")
