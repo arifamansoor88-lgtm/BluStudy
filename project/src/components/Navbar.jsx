@@ -205,19 +205,39 @@ export const TopBar = () => {
   );
 };
 
+const LANDING_LINKS = [
+  { label: "Features", href: "#features" },
+  { label: "How it Works", href: "#how-it-works" },
+  { label: "FAQ", href: "#faq" },
+];
+
 /* ── Public top nav (used on landing / sign-in / sign-up) ── */
 const Navbar = ({ isPublicPage }) => {
   const { instance, accounts } = useMsal();
+  const { enterGuest } = useGuest();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const isAuthenticated = accounts.length > 0;
+  const isHome = pathname === "/";
+  const isAuthPage = pathname === "/signin" || pathname === "/signup";
 
   const handleSignOut = async () => {
     await instance.logoutPopup();
     navigate("/signin");
   };
 
+  const handleTryOut = () => {
+    enterGuest();
+    navigate("/tools/flashcards");
+  };
+
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50">
+    <motion.nav
+      className="bg-white shadow-sm sticky top-0 z-50"
+      initial={{ y: -16, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <Link to="/" className="flex items-center gap-2 group">
@@ -226,6 +246,20 @@ const Navbar = ({ isPublicPage }) => {
             </motion.div>
             <span className="text-xl font-bold text-gray-900">BluStudy</span>
           </Link>
+
+          {isHome && !isAuthenticated && (
+            <div className="hidden md:flex items-center gap-8">
+              {LANDING_LINKS.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium text-gray-500 hover:text-primary-600 transition-colors"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          )}
 
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
@@ -238,12 +272,25 @@ const Navbar = ({ isPublicPage }) => {
                 </button>
               </>
             ) : (
-              <Link to="/signin" className="button-primary">Log In</Link>
+              <>
+                {isHome && (
+                  <button
+                    onClick={handleTryOut}
+                    className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-primary-600 transition-colors"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Try it out
+                  </button>
+                )}
+                {!isAuthPage && (
+                  <Link to="/signin" className="button-primary">Log In</Link>
+                )}
+              </>
             )}
           </div>
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 };
 

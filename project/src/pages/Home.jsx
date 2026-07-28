@@ -21,7 +21,7 @@ const toolDetails = [
   {
     icon: BookOpen, bg: "bg-blue-500", lightBg: "bg-blue-50", border: "border-blue-100", text: "text-blue-700",
     title: "Flashcards",
-    desc: "Paste your notes or a topic and get a full deck in seconds — perfect for cramming vocab on the bus or reviewing before a quiz.",
+    desc: "Paste your notes or a topic and get a full deck in seconds. Perfect for cramming vocab on the bus or reviewing before a quiz.",
   },
   {
     icon: FileText, bg: "bg-red-500", lightBg: "bg-red-50", border: "border-red-100", text: "text-red-700",
@@ -36,7 +36,7 @@ const toolDetails = [
   {
     icon: Network, bg: "bg-cyan-500", lightBg: "bg-cyan-50", border: "border-cyan-100", text: "text-cyan-700",
     title: "Mind Maps",
-    desc: "See how ideas connect instead of memorizing them in isolation — great for essay outlines and big-picture units.",
+    desc: "See how ideas connect instead of memorizing them in isolation. Great for essay outlines and big-picture units.",
   },
   {
     icon: Mic, bg: "bg-purple-500", lightBg: "bg-purple-50", border: "border-purple-100", text: "text-purple-700",
@@ -51,16 +51,16 @@ const toolDetails = [
 ];
 
 const perks = [
-  { icon: ShieldCheck,  title: "Free to start",       desc: "Try every tool as a guest — no account, no credit card." },
-  { icon: Clock,        title: "Available 24/7",      desc: "Study at 7am before class or 11pm the night before a test." },
-  { icon: Smartphone,   title: "Works anywhere",      desc: "Laptop, Chromebook, or phone — it's all in your browser." },
-  { icon: TrendingUp,   title: "Gets smarter with you", desc: "Quizio tracks your weak spots and tells you what to review next." },
+  { icon: ShieldCheck,  title: "Free to start",          desc: "Try every tool as a guest, no account and no credit card needed." },
+  { icon: Clock,        title: "Available 24/7",         desc: "Study at 7am before class or 11pm the night before a test." },
+  { icon: Smartphone,   title: "Works anywhere",         desc: "Laptop, Chromebook, or phone, it's all right in your browser." },
+  { icon: TrendingUp,   title: "Gets smarter with you",  desc: "Quizio tracks your weak spots and tells you what to review next." },
 ];
 
 const subjects = [
-  "Biology", "Chemistry", "Physics", "U.S. History", "World History",
-  "English Lit", "Algebra", "Geometry", "Spanish", "French",
-  "Psychology", "Government", "AP Exams", "SAT / ACT Prep",
+  "Biology", "Chemistry", "Physics", "Canadian History", "World History",
+  "English", "Functions", "Calculus & Vectors", "French", "Spanish",
+  "Civics", "EQAO Prep", "OSSLT Prep", "IB & AP",
 ];
 
 const testimonials = [
@@ -72,7 +72,7 @@ const testimonials = [
 const faqs = [
   {
     q: "Is BluStudy actually free?",
-    a: "Yes — you can try every tool as a guest with no account and no credit card. Creating a free account just lets you save your work and track your streaks.",
+    a: "Yup! You can try every tool as a guest with no account and no credit card. Creating a free account just lets you save your work and track your streaks.",
   },
   {
     q: "Do I need to download anything?",
@@ -80,17 +80,40 @@ const faqs = [
   },
   {
     q: "Can I use my own notes and PDFs?",
-    a: "Definitely. Upload lecture notes, a textbook chapter, or a slideshow — or just type in a topic if you don't have anything to upload yet.",
+    a: "Definitely. Upload lecture notes, a textbook chapter, or a slideshow, or just type in a topic if you don't have anything to upload yet.",
   },
   {
     q: "What subjects does it work for?",
-    a: "Any subject with text works — math, science, history, languages, AP classes, you name it. The AI adapts to whatever you give it.",
+    a: "Any subject with text works: math, science, history, languages, IB and AP classes, you name it. The AI adapts to whatever you give it.",
   },
   {
-    q: "Will this actually help me study for finals or the SAT?",
+    q: "Will this actually help me study for finals or tests like EQAO and the OSSLT?",
     a: "That's exactly what it's built for. Build a study plan around your exam dates, generate practice tests, and let Quizio point out what to review next.",
   },
 ];
+
+// Reusable scroll-triggered fade-up wrapper
+const FadeIn = ({ children, delay = 0, className = "" }) => (
+  <motion.div
+    className={className}
+    initial={{ opacity: 0, y: 24 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, amount: 0.3 }}
+    transition={{ duration: 0.5, delay, ease: "easeOut" }}
+  >
+    {children}
+  </motion.div>
+);
+
+// Reusable staggered-grid wrapper: pair with StaggerItem for each child
+const staggerContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
+};
+const staggerItem = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+};
 
 const Home = () => {
   const { enterGuest } = useGuest();
@@ -104,7 +127,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-white">
 
-      {/* Hero — split layout */}
+      {/* Hero, split layout */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-20">
         <div className="flex flex-col lg:flex-row items-center gap-12">
 
@@ -127,20 +150,24 @@ const Home = () => {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                to="/signup"
-                className="inline-flex items-center gap-2 px-7 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl text-base transition-colors"
-              >
-                Create an account
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <button
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <Link
+                  to="/signup"
+                  className="inline-flex items-center gap-2 px-7 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl text-base transition-colors"
+                >
+                  Create an account
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </motion.div>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={handleTryOut}
                 className="inline-flex items-center gap-2 px-7 py-3 border-2 border-dashed border-gray-300 hover:border-primary-400 hover:bg-primary-50 text-gray-600 hover:text-primary-700 font-semibold rounded-xl text-base transition-all"
               >
                 <Sparkles className="h-4 w-4" />
                 Try it out
-              </button>
+              </motion.button>
             </div>
 
             <p className="mt-4 text-sm text-gray-400">
@@ -162,12 +189,16 @@ const Home = () => {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 * i + 0.3 }}
-                  whileHover={{ y: -3, transition: { duration: 0.2 } }}
+                  whileHover={{ y: -4, scale: 1.02, transition: { duration: 0.2 } }}
                   className={`${tool.lightBg} ${tool.border} border rounded-2xl p-6 flex items-center gap-4`}
                 >
-                  <div className={`${tool.bg} w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0`}>
+                  <motion.div
+                    className={`${tool.bg} w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0`}
+                    animate={{ y: [0, -4, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: i * 0.25 }}
+                  >
                     <tool.icon className="h-6 w-6 text-white" />
-                  </div>
+                  </motion.div>
                   <span className={`text-lg font-semibold ${tool.text}`}>{tool.title}</span>
                 </motion.div>
               ))}
@@ -177,120 +208,179 @@ const Home = () => {
       </div>
 
       {/* How it works */}
-      <div className="bg-gray-50 border-t border-gray-100">
+      <div id="how-it-works" className="bg-gray-50 border-t border-gray-100 scroll-mt-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
-          <div className="text-center mb-12">
+          <FadeIn className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900">From notes to mastery in 3 steps</h2>
             <p className="mt-2 text-gray-500">No setup. No complicated workflows. Just results.</p>
-          </div>
+          </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             {[
               { n: "01", title: "Upload your material", desc: "Drop in a PDF, paste your notes, record your voice, or just type in a topic you need to study.", color: "text-primary-600", bar: "bg-primary-500" },
               { n: "02", title: "Let AI do the work",   desc: "BluStudy generates flashcards, quizzes, and summaries instantly.", color: "text-purple-600", bar: "bg-purple-500" },
               { n: "03", title: "Study and improve",    desc: "Practice with your tools, track your streak, and get personalized recommendations on what to cover next based on what you have studied so far.", color: "text-green-600", bar: "bg-green-500" },
             ].map((step) => (
-              <div key={step.n} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <motion.div
+                key={step.n}
+                variants={staggerItem}
+                whileHover={{ y: -4 }}
+                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm"
+              >
                 <div className={`text-3xl font-black ${step.color} mb-3`}>{step.n}</div>
                 <div className={`h-1 w-10 ${step.bar} rounded-full mb-4`} />
                 <h3 className="text-base font-bold text-gray-900 mb-1">{step.title}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Tool deep-dive */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
-        <div className="text-center mb-12">
+      <div id="features" className="max-w-6xl mx-auto px-4 sm:px-6 py-20 scroll-mt-16">
+        <FadeIn className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900">Everything you need, in one place</h2>
           <p className="mt-2 text-gray-500 max-w-2xl mx-auto">
-            Six tools that cover the whole study grind — from your first read-through to the night before the test.
+            Six friendly tools that cover the whole study grind, from your first read-through to the night before the test.
           </p>
-        </div>
+        </FadeIn>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+        >
           {toolDetails.map((tool) => (
-            <div key={tool.title} className={`${tool.lightBg} ${tool.border} border rounded-2xl p-6`}>
+            <motion.div
+              key={tool.title}
+              variants={staggerItem}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              className={`${tool.lightBg} ${tool.border} border rounded-2xl p-6`}
+            >
               <div className={`${tool.bg} w-12 h-12 rounded-xl flex items-center justify-center mb-4`}>
                 <tool.icon className="h-5 w-5 text-white" />
               </div>
               <h3 className={`text-base font-bold mb-1.5 ${tool.text}`}>{tool.title}</h3>
               <p className="text-sm text-gray-600 leading-relaxed">{tool.desc}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
 
       {/* Why students like it */}
       <div className="bg-gray-50 border-t border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
-          <div className="text-center mb-12">
+          <FadeIn className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900">Why students actually stick with it</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          </FadeIn>
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             {perks.map((perk) => (
-              <div key={perk.title} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center">
+              <motion.div
+                key={perk.title}
+                variants={staggerItem}
+                whileHover={{ y: -4 }}
+                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center"
+              >
                 <div className="mx-auto mb-4 h-11 w-11 rounded-xl bg-primary-50 flex items-center justify-center">
                   <perk.icon className="h-5 w-5 text-primary-600" />
                 </div>
                 <h3 className="text-sm font-bold text-gray-900 mb-1">{perk.title}</h3>
                 <p className="text-xs text-gray-500 leading-relaxed">{perk.desc}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Subjects */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
-        <div className="text-center mb-10">
+        <FadeIn className="text-center mb-10">
           <h2 className="text-3xl font-bold text-gray-900">Works for whatever class is stressing you out</h2>
           <p className="mt-2 text-gray-500">If it has notes or a textbook, BluStudy can help you study it.</p>
-        </div>
-        <div className="flex flex-wrap justify-center gap-2.5 max-w-3xl mx-auto">
+        </FadeIn>
+        <motion.div
+          className="flex flex-wrap justify-center gap-2.5 max-w-3xl mx-auto"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.4 }}
+        >
           {subjects.map((subject) => (
-            <span
+            <motion.span
               key={subject}
-              className="px-4 py-2 rounded-full bg-white border border-gray-200 text-sm font-medium text-gray-700 shadow-sm"
+              variants={staggerItem}
+              whileHover={{ scale: 1.06, y: -2 }}
+              className="px-4 py-2 rounded-full bg-white border border-gray-200 text-sm font-medium text-gray-700 shadow-sm cursor-default"
             >
               {subject}
-            </span>
+            </motion.span>
           ))}
-        </div>
+        </motion.div>
       </div>
 
       {/* Testimonials */}
       <div className="bg-gray-50 border-t border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
-          <div className="text-center mb-12">
+          <FadeIn className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900">What students are saying</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          </FadeIn>
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             {testimonials.map((t) => (
-              <div key={t.name} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col">
+              <motion.div
+                key={t.name}
+                variants={staggerItem}
+                whileHover={{ y: -4 }}
+                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col"
+              >
                 <Quote className="h-5 w-5 text-primary-300 mb-3" />
                 <p className="text-sm text-gray-600 leading-relaxed flex-1">"{t.quote}"</p>
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <p className="text-sm font-semibold text-gray-900">{t.name}</p>
                   <p className="text-xs text-gray-400">{t.meta}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* FAQ */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-20">
-        <div className="text-center mb-10">
+      <div id="faq" className="max-w-3xl mx-auto px-4 sm:px-6 py-20 scroll-mt-16">
+        <FadeIn className="text-center mb-10">
           <h2 className="text-3xl font-bold text-gray-900">Questions? We got you.</h2>
-        </div>
-        <div className="space-y-3">
+        </FadeIn>
+        <motion.div
+          className="space-y-3"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+        >
           {faqs.map((faq) => (
-            <details
+            <motion.details
               key={faq.q}
+              variants={staggerItem}
               className="group bg-white border border-gray-100 rounded-2xl shadow-sm px-5 py-4 [&_summary::-webkit-details-marker]:hidden"
             >
               <summary className="flex items-center justify-between cursor-pointer list-none font-semibold text-gray-900 text-sm">
@@ -298,45 +388,57 @@ const Home = () => {
                 <span className="ml-4 flex-shrink-0 text-gray-400 transition-transform group-open:rotate-45 text-lg leading-none">+</span>
               </summary>
               <p className="mt-3 text-sm text-gray-500 leading-relaxed">{faq.a}</p>
-            </details>
+            </motion.details>
           ))}
-        </div>
+        </motion.div>
       </div>
 
       {/* Final CTA */}
       <div className="bg-gradient-to-br from-gray-950 via-primary-900 to-gray-900 relative overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[36rem] h-[36rem] bg-primary-600/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-20 text-center relative z-10">
-          <div className="h-12 w-12 rounded-2xl bg-primary-600 flex items-center justify-center mx-auto mb-6">
+        <motion.div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[36rem] h-[36rem] bg-primary-600/20 rounded-full blur-3xl pointer-events-none"
+          animate={{ opacity: [0.6, 1, 0.6] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <FadeIn className="max-w-3xl mx-auto px-4 sm:px-6 py-20 text-center relative z-10">
+          <motion.div
+            className="h-12 w-12 rounded-2xl bg-primary-600 flex items-center justify-center mx-auto mb-6"
+            whileHover={{ rotate: 360 }}
+            transition={{ duration: 0.6 }}
+          >
             <Brain className="h-6 w-6 text-white" />
-          </div>
+          </motion.div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Ready to make studying suck less?
+            Ready to make studying way less stressful?
           </h2>
           <p className="mt-4 text-gray-400 text-lg">
             Jump in as a guest right now, or create a free account to save your progress.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link
-              to="/signup"
-              className="inline-flex items-center gap-2 px-7 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl text-base transition-colors"
-            >
-              Create a free account
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <button
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Link
+                to="/signup"
+                className="inline-flex items-center gap-2 px-7 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl text-base transition-colors"
+              >
+                Create a free account
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </motion.div>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={handleTryOut}
               className="inline-flex items-center gap-2 px-7 py-3 border-2 border-dashed border-white/20 hover:border-primary-400 hover:bg-white/5 text-white font-semibold rounded-xl text-base transition-all"
             >
               <Sparkles className="h-4 w-4" />
               Try it without an account
-            </button>
+            </motion.button>
           </div>
           <p className="mt-6 flex items-center justify-center gap-1.5 text-xs text-gray-500">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            Free forever · no credit card needed
+            Free forever, no credit card needed
           </p>
-        </div>
+        </FadeIn>
       </div>
     </div>
   );

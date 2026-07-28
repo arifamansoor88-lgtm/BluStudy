@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Brain, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { useMsal } from "@azure/msal-react";
 import { motion } from "framer-motion";
 import { protectedResources } from "../authConfig";
@@ -44,7 +44,7 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-[calc(100vh-4rem)] flex">
 
       {/* ── Left panel ── */}
       <div className="hidden lg:flex lg:w-[58%] bg-gradient-to-br from-gray-950 via-primary-950 to-gray-900 flex-col justify-center p-12 relative overflow-hidden">
@@ -52,14 +52,6 @@ export default function SignIn() {
         {/* Background glow */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-primary-600/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
         <div className="absolute bottom-0 right-0 w-80 h-80 bg-primary-500/10 rounded-full blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none" />
-
-        {/* Logo */}
-        <div className="absolute top-12 left-12 z-10 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary-600 flex items-center justify-center">
-            <Brain className="h-6 w-6 text-white" />
-          </div>
-          <span className="text-xl font-bold text-white tracking-tight">BluStudy</span>
-        </div>
 
         {/* Hero copy */}
         <div className="relative z-10">
@@ -78,7 +70,7 @@ export default function SignIn() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="mt-4 text-base text-gray-400 leading-relaxed max-w-md"
           >
-            BluStudy turns your notes and PDFs into flashcards, quizzes, summaries, and personalised study plans — all powered by AI.
+            BluStudy turns your notes and PDFs into flashcards, quizzes, summaries, and personalised study plans, all powered by AI.
           </motion.p>
         </div>
       </div>
@@ -91,12 +83,6 @@ export default function SignIn() {
           transition={{ duration: 0.45 }}
           className="w-full max-w-sm bg-white rounded-3xl shadow-xl shadow-gray-200/60 border border-gray-100 p-8 space-y-5"
         >
-          {/* Mobile logo */}
-          <div className="flex items-center gap-2 lg:hidden mb-1">
-            <Brain className="h-7 w-7 text-primary-600" />
-            <span className="text-lg font-bold text-gray-900">BluStudy</span>
-          </div>
-
           <div className="text-center">
             <span className="text-3xl">👋</span>
             <h2 className="text-2xl font-bold text-gray-900 mt-2">Welcome back</h2>

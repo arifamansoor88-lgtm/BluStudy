@@ -7,7 +7,6 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import StudyTools from "./pages/StudyTools";
 import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
 import AIFlashcards from "./pages/tools/AIFlashcards/AIFlashcards";
 import VoiceNotes from "./pages/tools/VoiceNotes";
 import MindMaps from "./pages/tools/Mindmaps/MindMap";
@@ -30,7 +29,7 @@ const appRoutes = (
     <Route path="/dashboard" element={<Dashboard />} />
     <Route path="/tools" element={<StudyTools />} />
     <Route path="/signin" element={<SignIn />} />
-    <Route path="/signup" element={<SignUp />} />
+    <Route path="/signup" element={<SignIn />} />
     <Route path="/tools/flashcards" element={<AIFlashcards />} />
     <Route path="/tools/voice-notes" element={<VoiceNotes />} />
     <Route path="/tools/mind-maps" element={<MindMapDashboard />} />
@@ -65,11 +64,6 @@ function AppContent() {
   const isPublicPage =
     publicRoutes.includes(location.pathname) ||
     location.pathname.startsWith("/share/");
-
-  // Sign-in page is full-screen — no navbar wrapper
-  if (location.pathname === "/signin") {
-    return <div className="min-h-screen">{appRoutes}</div>;
-  }
 
   if (isPublicPage) {
     return (
