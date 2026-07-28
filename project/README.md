@@ -1,6 +1,6 @@
 # BluStudy
 
-**Live app: [blustudy.ca](https://blustudy.ca)**
+**Live app: https://blustudy-app.onrender.com/**
 
 An AI-powered study platform that helps students learn more effectively with flashcards, practice tests, mind maps, summaries, voice notes, and personalized study plans.
 
